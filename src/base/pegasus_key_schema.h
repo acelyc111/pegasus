@@ -52,11 +52,15 @@ void pegasus_generate_next_blob(::dsn::blob &key, const T &hash_key)
     *((int16_t *)buf.get()) = htobe16((int16_t)hash_key_len);
     ::memcpy(buf.get() + 2, hash_key.data(), hash_key_len);
 
+    //the next key:
+    //1.find the last valid char
     char *p = buf.get() + hash_key_len + 1;
     while (*p == 0xFF)
         p--;
+    //2.plus number 1
     (*p)++;
 
+    //3.update length
     int len = p - buf.get() + 1;
     key.assign(std::move(buf), 0, len);
 }

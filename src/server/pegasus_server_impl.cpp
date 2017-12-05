@@ -61,7 +61,7 @@ pegasus_server_impl::pegasus_server_impl(dsn_gpid gpid)
 
     // init db options
 
-    // rocksdb default: 4MB
+    // rocksdb default: 16MB
     _db_opts.write_buffer_size =
         (size_t)dsn_config_get_value_uint64("pegasus.server",
                                             "rocksdb_write_buffer_size",
@@ -75,25 +75,25 @@ pegasus_server_impl::pegasus_server_impl(dsn_gpid gpid)
                                          2,
                                          "rocksdb options.max_write_buffer_number, default 2");
 
-    // rocksdb default: 1
+    // rocksdb default: 2
     _db_opts.max_background_compactions =
         (int)dsn_config_get_value_uint64("pegasus.server",
                                          "rocksdb_max_background_compactions",
                                          2,
                                          "rocksdb options.max_background_compactions, default 2");
 
-    // rocksdb default: 7
+    // rocksdb default: 6
     _db_opts.num_levels = dsn_config_get_value_uint64(
         "pegasus.server", "rocksdb_num_levels", 6, "rocksdb options.num_levels, default 6");
 
-    // rocksdb default: 2MB
+    // rocksdb default: 8MB
     _db_opts.target_file_size_base =
         dsn_config_get_value_uint64("pegasus.server",
                                     "rocksdb_target_file_size_base",
                                     8388608,
                                     "rocksdb options.target_file_size_base, default 8MB");
 
-    // rocksdb default: 10MB
+    // rocksdb default: 40MB
     _db_opts.max_bytes_for_level_base =
         dsn_config_get_value_uint64("pegasus.server",
                                     "rocksdb_max_bytes_for_level_base",
@@ -128,7 +128,7 @@ pegasus_server_impl::pegasus_server_impl(dsn_gpid gpid)
                                          24,
                                          "rocksdb options.level0_stop_writes_trigger, default 24");
 
-    // disable table block cache, default: false
+    // disable table block cache, default: true
     if ((bool)dsn_config_get_value_bool(
             "pegasus.server",
             "rocksdb_disable_table_block_cache",

@@ -151,7 +151,7 @@ void available_detector::stop()
 
 void available_detector::detect_available()
 {
-    if (!generate_hash_keys()) {
+    if (!generate_hash_keys()) {    //TODO if not change, we can gen only once
         dassert(false, "Initialize hash_keys failed and can't detect the available");
         return;
     }

@@ -130,7 +130,7 @@ private:
         marshalling(s, value);
         s.commit_buffer();
         entry.response = resp;
-        // released when dequeue fro the pending_response queue
+        // released when dequeue from the pending_response queue
         dsn_msg_add_ref(entry.response);
 
         reply_all_ready();

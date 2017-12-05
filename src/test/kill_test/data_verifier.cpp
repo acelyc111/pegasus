@@ -68,6 +68,7 @@ long long get_min_thread_setting_id()
     return id;
 }
 
+//线程thread_id执行set操作
 void do_set(int thread_id)
 {
     char buf[1024];
@@ -141,7 +142,7 @@ void do_set(int thread_id)
                    info.server.c_str());
             try_count++;
             if (try_count > 3) {
-                sleep(1);
+                sleep(1);   //TODO should update last_time
             }
         }
     }
@@ -189,7 +190,7 @@ void do_get_range(int thread_id, int round_id, long long start_id, long long end
                        info.app_id,
                        info.partition_index,
                        info.server.c_str());
-                exit(-1);
+                exit(-1);   //TODO too violence
             } else if (value != get_value) {
                 dfatal("GetThread[%d]: round(%d): get mismatched: id=%lld, try=%d, time=%ld, "
                        "expect_value=%s, real_value=%s (gpid=%d.%d, server=%s), and exit",
@@ -203,7 +204,7 @@ void do_get_range(int thread_id, int round_id, long long start_id, long long end
                        info.app_id,
                        info.partition_index,
                        info.server.c_str());
-                exit(-1);
+                exit(-1);   //TODO too violence
             } else {
                 dinfo("GetThread[%d]: round(%d): get succeed: id=%lld, try=%d, time=%ld "
                       "(gpid=%d.%d, server=%s)",
@@ -217,7 +218,7 @@ void do_get_range(int thread_id, int round_id, long long start_id, long long end
                       info.server.c_str());
                 stat_time[stat_count++] = cur_time - last_time;
                 if (stat_count == stat_batch) {
-                    std::sort(stat_time.begin(), stat_time.end());
+                    std::sort(stat_time.begin(), stat_time.end());  //TODO full sort may cost too much time, should optimize as leveldb bench
                     long total_time = 0;
                     for (auto t : stat_time)
                         total_time += t;
@@ -263,12 +264,13 @@ void do_get_range(int thread_id, int round_id, long long start_id, long long end
            end_id);
 }
 
+//多线程调用do_get_range
 void do_check(int thread_count)
 {
     int round_id = 1;
     while (true) {
         long long range_end = get_min_thread_setting_id() - 1;
-        if (range_end < thread_count) {
+        if (range_end < thread_count) { //TODO what's the meaning of range_end and thread_count
             sleep(1);
             continue;
         }
@@ -316,6 +318,7 @@ void do_check(int thread_count)
     }
 }
 
+//set "set_next" "" $min_thread_setting_id
 void do_mark()
 {
     char buf[1024];
@@ -358,8 +361,8 @@ void verifier_initialize(const char *config_file)
 
     app_name = dsn_config_get_value_string(
         section, "verify_app_name", "temp", "verify app name"); // default using temp
-    pegasus_cluster_name =
-        dsn_config_get_value_string(section, "pegasus_cluster_name", "", "pegasus cluster name");
+    pegasus_cluster_name = dsn_config_get_value_string(
+        section, "pegasus_cluster_name", "", "pegasus cluster name");
     if (pegasus_cluster_name.empty()) {
         derror("Should config the cluster name for verifier");
         exit(-1);
@@ -372,8 +375,8 @@ void verifier_initialize(const char *config_file)
 
     set_and_get_timeout_milliseconds = (uint32_t)dsn_config_get_value_uint64(
         section, "set_and_get_timeout_milliseconds", 3000, "set and get timeout milliseconds");
-    set_thread_count =
-        (uint32_t)dsn_config_get_value_uint64(section, "set_thread_count", 5, "set thread count");
+    set_thread_count = (uint32_t)dsn_config_get_value_uint64(
+        section, "set_thread_count", 5, "set thread count");
     get_thread_count = (uint32_t)dsn_config_get_value_uint64(
         section, "get_thread_count", set_thread_count * 4, "get thread count");
 }

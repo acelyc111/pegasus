@@ -100,6 +100,7 @@ TEST(basic, multi_set_get_del)
     ret = client->multi_get("basic_test_hash_key_1", sortkeys, new_kvs);
     ASSERT_EQ(PERR_OK, ret);
     ASSERT_EQ(4, new_kvs.size());
+
     auto it = new_kvs.begin();
     ASSERT_EQ("basic_test_sort_key_1", it->first);
     ASSERT_EQ("basic_test_value_1", it->second);
@@ -176,7 +177,7 @@ TEST(basic, multi_set_get_del)
     sortkeys.insert("basic_test_sort_key_2");
     ret = client->multi_del("basic_test_hash_key_1", sortkeys, deleted_count);
     ASSERT_EQ(PERR_OK, ret);
-    ASSERT_EQ(3, deleted_count);
+    ASSERT_EQ(3, deleted_count);    //include not exist ones
 
     // sortkey_count
     ret = client->sortkey_count("basic_test_hash_key_1", count);
@@ -269,6 +270,7 @@ TEST(basic, set_get_del_async)
                           ASSERT_GT(info.partition_index, 0);
                           ASSERT_EQ(info.decree, -1);
                           ASSERT_FALSE(info.server.empty());
+                          //TODO judge value
                           callbacked.store(true, std::memory_order_seq_cst);
                       });
     while (!callbacked.load(std::memory_order_seq_cst))

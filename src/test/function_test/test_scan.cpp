@@ -121,7 +121,7 @@ static void clear_database()
     pegasus_client::scan_options option;
     std::vector<pegasus_client::pegasus_scanner *> scanners;
     int ret = client->get_unordered_scanners(1, option, scanners);
-    ASSERT_EQ(0, ret) << "Error occurred when get scanners, error="
+    ASSERT_EQ(PERR_OK, ret) << "Error occurred when get scanners, error="
                       << client->get_error_string(ret);
     ASSERT_EQ(1, scanners.size());
     ASSERT_NE(nullptr, scanners[0]);
@@ -129,24 +129,25 @@ static void clear_database()
     std::string hash_key;
     std::string sort_key;
     std::string value;
-    while (!(ret = (scanners[0]->next(hash_key, sort_key, value)))) {
+    while ((ret = (scanners[0]->next(hash_key, sort_key, value))) == PERR_OK) {
         int r = client->del(hash_key, sort_key);
-        ASSERT_EQ(0, r) << "Error occurred when del, hash_key=" << hash_key
+        ASSERT_EQ(PERR_OK, r) << "Error occurred when del, hash_key=" << hash_key
                         << ", sort_key=" << sort_key << ", error=" << client->get_error_string(r);
     }
     delete scanners[0];
 
     ASSERT_EQ(PERR_SCAN_COMPLETE, ret) << "Error occurred when next() in clearing database. error="
                                        << client->get_error_string(ret);
+
     ret = client->get_unordered_scanners(1, option, scanners);
-    ASSERT_EQ(0, ret) << "Error occurred when get scanners, error="
+    ASSERT_EQ(PERR_OK, ret) << "Error occurred when get scanners, error="
                       << client->get_error_string(ret);
     ASSERT_EQ(1, scanners.size());
     ASSERT_NE(nullptr, scanners[0]);
 
     ret = scanners[0]->next(hash_key, sort_key, value);
     delete scanners[0];
-    ASSERT_NE(0, ret) << "Database is cleared but not empty, hash_key=" << hash_key
+    ASSERT_NE(PERR_OK, ret) << "Database is cleared but not empty, hash_key=" << hash_key
                       << ", sort_key=" << sort_key;
     ASSERT_EQ(PERR_SCAN_COMPLETE, ret) << "Error occurred when clearing database. error="
                                        << client->get_error_string(ret);
@@ -196,7 +197,7 @@ TEST(scan, ALL_SORT_KEY)
     std::map<std::string, std::string> data;
     pegasus_client::pegasus_scanner *scanner = nullptr;
     int ret = client->get_scanner(expected_hash_key, "", "", options, scanner);
-    ASSERT_EQ(0, ret) << "Error occurred when getting scanner. error="
+    ASSERT_EQ(PERR_OK, ret) << "Error occurred when getting scanner. error="
                       << client->get_error_string(ret);
     ASSERT_NE(nullptr, scanner);
 

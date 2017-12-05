@@ -34,7 +34,7 @@ bool buf2int(const char *buffer, int length, int &result)
         return false;
     std::string s(buffer, length);
     char *p = nullptr;
-    long long v = ::strtoll(s.data(), &p, 10);
+    long long v = ::strtoll(s.data(), &p, 10);      //TODO why not use strtol?
     if (*p != 0)
         return false;
     if (v < INT_MIN || v > INT_MAX) // out of range
@@ -123,7 +123,7 @@ inline unsigned int hex_digit_to_int(char c)
     assert(isxdigit(c));
     unsigned int x = static_cast<unsigned char>(c);
     if (x > '9') {
-        x += 9;
+        x += 9;     //both 'a' and 'A' are 0x**01
     }
     return x & 0xf;
 }

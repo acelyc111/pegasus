@@ -45,7 +45,7 @@ inline bool scanfWord(std::string &str, char endFlag, char *&line_read, int &pos
 
     if (endFlag == '\'') {
         while ((ch = line_read[pos++]) != endFlag) {
-            if (ch == '\0') {
+            if (ch == '\0') {   //multi lines
                 str += '\n';
                 rl_gets(line_read, false);
                 pos = 0;
@@ -61,7 +61,7 @@ inline bool scanfWord(std::string &str, char endFlag, char *&line_read, int &pos
         }
     } else if (endFlag == '\"') {
         while ((ch = line_read[pos++]) != endFlag) {
-            if (ch == '\0') {
+            if (ch == '\0') {   //multi lines
                 str += '\n';
                 rl_gets(line_read, false);
                 pos = 0;
@@ -102,10 +102,11 @@ inline void scanfCommand(int &Argc, std::string Argv[], int paraNum)
     }
 
     char ch;
-    int index;
-    int pos;
+    int index;      //word
+    int pos;        //char
     Argc = 0;
     for (pos = 0, index = 0; index < paraNum; ++index) {
+        //skip head space
         while ((ch = line_read[pos++]) == ' ')
             ;
 

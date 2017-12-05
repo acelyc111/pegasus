@@ -104,7 +104,7 @@ public:
         async_multi_get_sortkeys_callback_t;
     typedef std::function<void(int /*error_code*/, internal_info && /*info*/)> async_del_callback_t;
     typedef std::function<void(
-        int /*error_code*/, int64_t /*deleted_count*/, internal_info && /*info*/)>
+        int /*error_code*/, int64_t /*deleted_count*/, internal_info && /*info*/)> //deleted_count include not exist ones
         async_multi_del_callback_t;
     typedef std::function<void(int /*error_code*/,
                                std::string && /*hash_key*/,
@@ -124,7 +124,7 @@ public:
         /// \brief get the next key-value pair of this scanner
         /// thread-safe
         /// \param hashkey
-        /// used to decide which partition to put this k-v
+        /// used to decide which partition to get this k-v
         /// \param sortkey
         /// all the k-v under hashkey will be sorted by sortkey.
         /// \param value
@@ -182,7 +182,7 @@ public:
     virtual ~pegasus_client() {}
 
     ///
-    /// \brief get_app_name
+    /// \brief get_cluster_name
     /// \return cluster_name
     ///
     virtual const char *get_cluster_name() const = 0;
@@ -529,7 +529,7 @@ public:
     /// \param sortkeys
     /// all the k-v under hashkey will be sorted by sortkey. should not be empty.
     /// \param deleted_count
-    /// return count of deleted k-v pairs.
+    /// return count of deleted k-v pairs, include not exist ones
     /// \param timeout_milliseconds
     /// if wait longer than this value, will return time out error
     /// \return
@@ -591,7 +591,7 @@ public:
     /// \param hashkey
     /// cannot be empty
     /// \param start_sortkey
-    /// sortkey to start with
+    /// sortkey to start with. ""(empty string) represents the min key
     /// \param stop_sortkey
     /// sortkey to stop. ""(empty string) represents the max key
     /// \param options
@@ -616,7 +616,7 @@ public:
     /// \param hashkey
     /// cannot be empty
     /// \param start_sortkey
-    /// sortkey to start with
+    /// sortkey to start with. ""(empty string) represents the min key
     /// \param stop_sortkey
     /// sortkey to stop. ""(empty string) represents the max key
     /// \param options

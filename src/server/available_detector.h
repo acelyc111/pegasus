@@ -57,7 +57,7 @@ private:
     std::vector<::dsn::task_ptr> _detect_tasks;
     int32_t _app_id;
     int32_t _partition_count;
-    std::vector<::dsn::partition_configuration> partitions;
+    std::vector<::dsn::partition_configuration> partitions; //TODO rename as _partitions
     uint32_t _detect_timeout;
 
     std::string _send_alert_email_cmd;
@@ -76,7 +76,7 @@ private:
     std::string _old_day;
     std::string _old_hour;
     std::string _old_minute;
-    ::dsn::perf_counter_ _pfc_detect_times_day;
+    ::dsn::perf_counter_ _pfc_detect_times_day;         //TODO 没有使用吗?
     ::dsn::perf_counter_ _pfc_fail_times_day;
     ::dsn::perf_counter_ _pfc_available_day;
     ::dsn::perf_counter_ _pfc_detect_times_hour;

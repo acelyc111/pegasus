@@ -269,7 +269,7 @@ void register_all_commands()
 
 void execute_command(command_executor *e, int argc, std::string str_args[])
 {
-    static char buffer[max_params_count][512]; // 512*32
+    static char buffer[max_params_count][512]; // 10*512
     static char *argv[max_params_count];
     for (int i = 0; i < max_params_count; ++i) {
         argv[i] = buffer[i];
@@ -345,6 +345,7 @@ void run()
         std::string args[max_params_count];
         scanfCommand(arg_count, args, max_params_count);
         if (arg_count > 0) {
+            //command check
             int i = 0;
             for (; i < arg_count; ++i) {
                 std::string &s = args[i];
@@ -361,6 +362,7 @@ void run()
             }
             if (i < arg_count)
                 continue;
+
             auto iter = commands_map.find(args[0]);
             if (iter != commands_map.end()) {
                 execute_command(iter->second, arg_count, args);
