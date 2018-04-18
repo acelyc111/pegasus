@@ -31,7 +31,7 @@ set(MY_PROJ_LIBS
     PocoNetSSL
     PocoJSON
     crypto
-    )
+    fmt)
 
 if (UNIX)
     set(MY_PROJ_LIBS rocksdb ${MY_PROJ_LIBS} z bz2 snappy rt aio pthread)
