@@ -6,7 +6,6 @@
 #include <pegasus_key_schema.h>
 #include <pegasus_value_schema.h>
 #include <pegasus_utils.h>
-#include <dsn/cpp/smart_pointers.h>
 #include <dsn/utility/utils.h>
 #include <dsn/utility/filesystem.h>
 #include <rocksdb/utilities/checkpoint.h>
@@ -2435,5 +2434,9 @@ void pegasus_server_impl::manual_compact()
     ddebug("%s: CompactRange finished", replica_name());
 }
 
+uint64_t pegasus_server_impl::last_compact_finish_time()
+{
+    return _db->GetLastManualCompactFinishTime();
+}
 }
 } // namespace
