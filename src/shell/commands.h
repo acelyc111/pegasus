@@ -3691,10 +3691,10 @@ inline bool enable_backup_policy(command_executor *e, shell_context *sc, argumen
 }
 
 inline bool parse_compact_policy(arguments args,
-                                 std::string& policy_name,
-                                 std::set<int32_t>& app_ids,
-                                 int64_t& interval_seconds,
-                                 int32_t& start_time)
+                                 std::string* policy_name,
+                                 std::set<int32_t>* app_ids = nullptr,
+                                 int64_t* interval_seconds = nullptr,
+                                 int32_t* start_time = nullptr)
 {
     static struct option long_options[] = {{"policy_name", required_argument, 0, 'p'},
                                            {"app_ids", required_argument, 0, 'a'},
@@ -3712,36 +3712,49 @@ inline bool parse_compact_policy(arguments args,
 
         switch (c) {
         case 'p':
-            policy_name = optarg;
+            assert(policy_name != nullptr);
+            *policy_name = optarg;
             break;
         case 'a': {
-            std::vector<std::string> app_list;
-            ::dsn::utils::split_args(optarg, app_list, ',');
-            for (const auto &app : app_list) {
-                int32_t id = atoi(app.c_str());
-                if (id <= 0) {
-                    fprintf(stderr, "invalid app_id, %d\n", id);
-                    return false;
-                } else {
-                    app_ids.emplace(id);
+            if (app_ids != nullptr) {
+                std::vector <std::string> app_list;
+                ::dsn::utils::split_args(optarg, app_list, ',');
+                for (const auto &app : app_list) {
+                    int32_t id = atoi(app.c_str());
+                    if (id <= 0) {
+                        std::cerr << "invalid app_id:" << id << std::endl;
+                        return false;
+                    } else {
+                        app_ids->emplace(id);
+                    }
                 }
+            } else {
+                std::cerr << "app_id will be ignored" << std::endl;
             }
             break;
         }
         case 'i':
-            interval_seconds = atoi(optarg);
-            if (interval_seconds <= 0) {
-                std::cerr << "invalid interval_seconds: " << interval_seconds
-                          << ", should > 0" << std::endl;
-                return false;
+            if (interval_seconds != nullptr) {
+                *interval_seconds = atoi(optarg);
+                if (*interval_seconds <= 0) {
+                    std::cerr << "invalid interval_seconds: " << *interval_seconds
+                              << ", should > 0" << std::endl;
+                    return false;
+                }
+            } else {
+                std::cerr << "interval_seconds will be ignored" << std::endl;
             }
             break;
         case 's':
-            ::dsn::utils::hm_of_day_to_sec(optarg, start_time);
-            if (start_time == -1) {
-                std::cerr << "invalid start time: " << optarg
-                          << ", should like this hour:minute, and in range [00:00,23:59]" << std::endl;
-                return false;
+            if (start_time != nullptr) {
+                ::dsn::utils::hm_of_day_to_sec(optarg, *start_time);
+                if (*start_time == -1) {
+                    std::cerr << "invalid start time: " << optarg
+                              << ", should like this hour:minute, and in range [00:00,23:59]" << std::endl;
+                    return false;
+                }
+            } else {
+                std::cerr << "start_time will be ignored" << std::endl;
             }
             break;
         default:
@@ -3749,7 +3762,7 @@ inline bool parse_compact_policy(arguments args,
         }
     }
 
-    if (policy_name.empty()) {
+    if (policy_name->empty()) {
         std::cerr << "policy_name should not be empty" << std::endl;
         return false;
     }
@@ -3766,10 +3779,10 @@ inline bool add_compact_policy(command_executor *e,
     int64_t interval_seconds = 0;
     int32_t start_time = -1;
     if (!parse_compact_policy(args,
-                              policy_name,
-                              app_ids,
-                              interval_seconds,
-                              start_time)) {
+                              &policy_name,
+                              &app_ids,
+                              &interval_seconds,
+                              &start_time)) {
         return false;
     }
 
@@ -3809,10 +3822,10 @@ inline bool modify_compact_policy(command_executor *e, shell_context *sc, argume
     int64_t interval_seconds = 0;
     int32_t start_time = -1;
     if (!parse_compact_policy(args,
-                              policy_name,
-                              app_ids,
-                              interval_seconds,
-                              start_time)) {
+                              &policy_name,
+                              &app_ids,
+                              &interval_seconds,
+                              &start_time)) {
         return false;
     }
 
@@ -3844,10 +3857,11 @@ inline bool query_compact_policy(command_executor *e, shell_context *sc, argumen
     optind = 0;
     while (true) {
         int option_index = 0;
-        int c = getopt_long(args.argc, args.argv, "p:b:", long_options, &option_index);
+        int c = getopt_long(args.argc, args.argv, "p:", long_options, &option_index);
         if (c == -1) {
             break;
         }
+
         switch (c) {
         case 'p': {
             std::vector<std::string> names;
@@ -3873,6 +3887,42 @@ inline bool query_compact_policy(command_executor *e, shell_context *sc, argumen
         return false;
     } else {
         std::cout << std::endl << "query compact policy succeed" << std::endl;
+        return true;
+    }
+}
+
+inline bool disable_compact_policy(command_executor *e, shell_context *sc, arguments args)
+{
+    std::string policy_name;
+    if (!parse_compact_policy(args,
+                              &policy_name)) {
+        return false;
+    }
+
+    ::dsn::error_code ret = sc->ddl_client->switch_compact_policy(policy_name, false);
+    if (ret != ::dsn::ERR_OK) {
+        std::cerr << "disable compact policy failed, err = " << ret.to_string() << std::endl;
+        return false;
+    } else {
+        std::cout << std::endl << "disable compact policy succeed" << std::endl;
+        return true;
+    }
+}
+
+inline bool enable_compact_policy(command_executor *e, shell_context *sc, arguments args)
+{
+    std::string policy_name;
+    if (!parse_compact_policy(args,
+                              &policy_name)) {
+        return false;
+    }
+
+    ::dsn::error_code ret = sc->ddl_client->switch_compact_policy(policy_name, true);
+    if (ret != ::dsn::ERR_OK) {
+        std::cerr << "enable compact policy failed, err = " << ret.to_string() << std::endl;
+        return false;
+    } else {
+        std::cout << std::endl << "enable compact policy succeed" << std::endl;
         return true;
     }
 }

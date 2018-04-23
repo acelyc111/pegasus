@@ -359,6 +359,18 @@ command_executor commands[] = {
         query_compact_policy,
     },
     {
+        "disable_compact_policy",
+        "stop policy continue compact",
+        "<-p|--policy_name p1>",
+        disable_compact_policy,
+    },
+    {
+        "enable_compact_policy",
+        "start policy to backup again",
+        "<-p|--policy_name p1>",
+        enable_compact_policy,
+    },
+    {
         "exit", "exit shell", "", exit_shell,
     },
     {
