@@ -334,23 +334,24 @@ command_executor commands[] = {
         "<restore_app_id> [-d|--detailed]",
         query_restore_status,
     },
-    // TODO add manual compact commands, include add, modify(include remove), query, enable, disable
     {
         "add_compact_policy",
         "add storage engine manual compact policy",
         "<-p|--policy_name p1> "
-        "<-a|--app_ids 1,2,3..> "
+        "<-a|--app_ids 1,2,3...> "
         "<-i|--interval_seconds sec> "
-        "<-s|--start_time hour:minute> ",
+        "<-s|--start_time hour:minute> "
+        "<-o|--options k1=v1,k2=v2...> ",
         add_compact_policy,
     },
     {
         "modify_compact_policy",
         "modify storage engine manual compact policy",
         "<-p|--policy_name p1> "
-        "<-a|--app_ids 1,2,3..> "
+        "<-a|--app_ids 1,2,3...> "
         "<-i|--interval_seconds sec> "
-        "<-s|--start_time hour:minute> ",
+        "<-s|--start_time hour:minute> "
+        "<-o|--options k1=v1,k2=v2...> ",
         modify_compact_policy,
     },
     {

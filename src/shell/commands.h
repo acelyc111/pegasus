@@ -3688,18 +3688,20 @@ inline bool parse_compact_policy(arguments args,
                                  std::string* policy_name,
                                  std::set<int32_t>* app_ids = nullptr,
                                  int64_t* interval_seconds = nullptr,
-                                 int32_t* start_time = nullptr)
+                                 int32_t* start_time = nullptr,
+                                 std::map<std::string, std::string>* opts = nullptr)
 {
     static struct option long_options[] = {{"policy_name", required_argument, 0, 'p'},
                                            {"app_ids", required_argument, 0, 'a'},
                                            {"interval_seconds", required_argument, 0, 'i'},
                                            {"start_time", required_argument, 0, 's'},
+                                           {"options", required_argument, 0, 'o'},
                                            {0, 0, 0, 0}};
 
     optind = 0;
     while (true) {
         int option_index = 0;
-        int c = getopt_long(args.argc, args.argv, "p:a:i:s:", long_options, &option_index);
+        int c = getopt_long(args.argc, args.argv, "p:a:i:s:o:", long_options, &option_index);
         if (c == -1) {
             break;
         }
@@ -3744,13 +3746,24 @@ inline bool parse_compact_policy(arguments args,
                 ::dsn::utils::hm_of_day_to_sec(optarg, *start_time);
                 if (*start_time == -1) {
                     std::cerr << "invalid start time: " << optarg
-                              << ", should like this hour:minute, and in range [00:00,23:59]" << std::endl;
+                              << ", should like this: hour:minute, and in range [00:00,23:59]" << std::endl;
                     return false;
                 }
             } else {
                 std::cerr << "start_time will be ignored" << std::endl;
             }
             break;
+        case 'o': {
+            if (opts != nullptr) {
+                if (!dsn::utils::parse_kv_map(optarg, *opts, ',', '=')) {
+                    std::cerr << "invalid options: " << optarg
+                              << ", should like this: k1=v1,k2=v2..." << std::endl;
+                }
+            } else {
+                std::cerr << "options will be ignored" << std::endl;
+            }
+            break;
+        }
         default:
             return false;
         }
@@ -3772,11 +3785,13 @@ inline bool add_compact_policy(command_executor *e,
     std::set<int32_t> app_ids;
     int64_t interval_seconds = 0;
     int32_t start_time = -1;
+    std::map<std::string, std::string> opts;
     if (!parse_compact_policy(args,
                               &policy_name,
                               &app_ids,
                               &interval_seconds,
-                              &start_time)) {
+                              &start_time,
+                              &opts)) {
         return false;
     }
 
@@ -3800,7 +3815,8 @@ inline bool add_compact_policy(command_executor *e,
     ::dsn::error_code ret = sc->ddl_client->add_compact_policy(policy_name,
                                                                app_ids,
                                                                interval_seconds,
-                                                               start_time);
+                                                               start_time,
+                                                               opts);
     if (ret != ::dsn::ERR_OK) {
         std::cerr << "add compact policy failed, err = " << ret.to_string() << std::endl;
         return false;
@@ -3815,11 +3831,13 @@ inline bool modify_compact_policy(command_executor *e, shell_context *sc, argume
     std::set<int32_t> app_ids;
     int64_t interval_seconds = 0;
     int32_t start_time = -1;
+    std::map<std::string, std::string> opts;
     if (!parse_compact_policy(args,
                               &policy_name,
                               &app_ids,
                               &interval_seconds,
-                              &start_time)) {
+                              &start_time,
+                              &opts)) {
         return false;
     }
 
@@ -3833,7 +3851,8 @@ inline bool modify_compact_policy(command_executor *e, shell_context *sc, argume
     dsn::error_code ret = sc->ddl_client->modify_compact_policy(policy_name,
                                                                 app_ids,
                                                                 interval_seconds,
-                                                                start_time);
+                                                                start_time,
+                                                                opts);
     if (ret != dsn::ERR_OK) {
         std::cerr << "modify compact policy failed, err = " << ret.to_string() << std::endl;
         return false;
