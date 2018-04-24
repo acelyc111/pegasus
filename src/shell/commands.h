@@ -238,6 +238,7 @@ inline bool create_app(command_executor *e, shell_context *sc, arguments args)
 {
     static struct option long_options[] = {{"partition_count", required_argument, 0, 'p'},
                                            {"replica_count", required_argument, 0, 'r'},
+                                           {"envs", required_argument, 0, 'e'},
                                            {0, 0, 0, 0}};
 
     if (args.argc < 2)
@@ -246,11 +247,12 @@ inline bool create_app(command_executor *e, shell_context *sc, arguments args)
     std::string app_name = args.argv[1];
 
     int pc = 4, rc = 3;
+    std::map<std::string, std::string> envs;
     optind = 0;
     while (true) {
         int option_index = 0;
         int c;
-        c = getopt_long(args.argc, args.argv, "p:r:", long_options, &option_index);
+        c = getopt_long(args.argc, args.argv, "p:r:e:", long_options, &option_index);
         if (c == -1)
             break;
         switch (c) {
@@ -266,12 +268,17 @@ inline bool create_app(command_executor *e, shell_context *sc, arguments args)
                 return false;
             }
             break;
+        case 'e':
+            if (!::dsn::utils::parse_kv_map(optarg, envs, ',', '=')) {
+                fprintf(stderr, "invalid envs: %s\n", optarg);
+                return false;
+            }
+            break;
         default:
             return false;
         }
     }
 
-    std::map<std::string, std::string> envs;
     ::dsn::error_code err = sc->ddl_client->create_app(app_name, "pegasus", pc, rc, envs, false);
     if (err == ::dsn::ERR_OK)
         std::cout << "create app " << app_name << " succeed" << std::endl;
@@ -1170,7 +1177,7 @@ inline bool multi_del_range(command_executor *e, shell_context *sc, arguments ar
         case 'o':
             file = fopen(optarg, "w");
             if (!file) {
-                fprintf(stderr, "open filename %s failed", optarg);
+                fprintf(stderr, "open filename %s failed\n", optarg);
                 return false;
             }
             break;
@@ -1402,7 +1409,7 @@ inline bool hash_scan(command_executor *e, shell_context *sc, arguments args)
         case 'o':
             file = fopen(optarg, "w");
             if (!file) {
-                fprintf(stderr, "open filename %s failed", optarg);
+                fprintf(stderr, "open filename %s failed\n", optarg);
                 return false;
             }
             break;
@@ -1584,7 +1591,7 @@ inline bool full_scan(command_executor *e, shell_context *sc, arguments args)
         case 'o':
             file = fopen(optarg, "w");
             if (!file) {
-                fprintf(stderr, "open filename %s failed", optarg);
+                fprintf(stderr, "open filename %s failed\n", optarg);
                 return false;
             }
             break;
@@ -3293,10 +3300,8 @@ inline bool restore(command_executor *e, shell_context *sc, arguments args)
                                                        skip_bad_partition);
     if (err != ::dsn::ERR_OK) {
         fprintf(stderr, "restore app failed with err(%s)\n", err.to_string());
-        return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 inline bool query_restore_status(command_executor *e, shell_context *sc, arguments args)
@@ -3308,7 +3313,7 @@ inline bool query_restore_status(command_executor *e, shell_context *sc, argumen
 
     int32_t restore_app_id = boost::lexical_cast<int32_t>(args.argv[1]);
     if (restore_app_id <= 0) {
-        fprintf(stderr, "invalid restore_app_id(%d)", restore_app_id);
+        fprintf(stderr, "invalid restore_app_id(%d)\n", restore_app_id);
         return false;
     }
     static struct option long_options[] = {{"detailed", no_argument, 0, 'd'}, {0, 0, 0, 0}};
@@ -3335,10 +3340,8 @@ inline bool query_restore_status(command_executor *e, shell_context *sc, argumen
                 "query restore status failed, restore_app_id(%d), err = %s\n",
                 restore_app_id,
                 ret.to_string());
-        return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 inline bool add_backup_policy(command_executor *e, shell_context *sc, arguments args)
@@ -3440,10 +3443,8 @@ inline bool add_backup_policy(command_executor *e, shell_context *sc, arguments 
                                                               start_time);
     if (ret != ::dsn::ERR_OK) {
         fprintf(stderr, "add backup policy failed, err = %s\n", ret.to_string());
-        return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 inline bool ls_backup_policy(command_executor *e, shell_context *sc, arguments args)
@@ -3478,7 +3479,7 @@ inline bool query_backup_policy(command_executor *e, shell_context *sc, argument
             ::dsn::utils::split_args(optarg, names, ',');
             for (const auto &policy_name : names) {
                 if (policy_name.empty()) {
-                    fprintf(stderr, "invalid, empty policy_name, just ignore");
+                    fprintf(stderr, "invalid, empty policy_name, just ignore\n");
                     continue;
                 } else {
                     policy_names.emplace_back(policy_name);
@@ -3497,17 +3498,16 @@ inline bool query_backup_policy(command_executor *e, shell_context *sc, argument
         }
     }
     if (policy_names.empty()) {
-        fprintf(stderr, "empty policy_name, please assign policy_name you want to query");
+        fprintf(stderr, "empty policy_name, please assign policy_name you want to query\n");
         return false;
     }
     ::dsn::error_code ret = sc->ddl_client->query_backup_policy(policy_names, backup_info_cnt);
     if (ret != ::dsn::ERR_OK) {
         fprintf(stderr, "query backup policy failed, err = %s\n", ret.to_string());
-        return false;
     } else {
         std::cout << std::endl << "query backup policy succeed" << std::endl;
-        return true;
     }
+    return true;
 }
 
 inline bool modify_backup_policy(command_executor *e, shell_context *sc, arguments args)
@@ -3613,10 +3613,8 @@ inline bool modify_backup_policy(command_executor *e, shell_context *sc, argumen
                                                                start_time);
     if (ret != dsn::ERR_OK) {
         fprintf(stderr, "modify backup policy failed, with err = %s\n", ret.to_string());
-        return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 inline bool disable_backup_policy(command_executor *e, shell_context *sc, arguments args)
@@ -3649,10 +3647,8 @@ inline bool disable_backup_policy(command_executor *e, shell_context *sc, argume
     ::dsn::error_code ret = sc->ddl_client->disable_backup_policy(policy_name);
     if (ret != dsn::ERR_OK) {
         fprintf(stderr, "disable backup policy failed, with err = %s\n", ret.to_string());
-        return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 inline bool enable_backup_policy(command_executor *e, shell_context *sc, arguments args)
@@ -3684,10 +3680,8 @@ inline bool enable_backup_policy(command_executor *e, shell_context *sc, argumen
     ::dsn::error_code ret = sc->ddl_client->enable_backup_policy(policy_name);
     if (ret != dsn::ERR_OK) {
         fprintf(stderr, "enable backup policy failed, with err = %s\n", ret.to_string());
-        return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 inline bool parse_compact_policy(arguments args,
@@ -3930,5 +3924,102 @@ inline bool enable_compact_policy(command_executor *e, shell_context *sc, argume
 inline bool exit_shell(command_executor *e, shell_context *sc, arguments args)
 {
     dsn_exit(0);
+    return true;
+}
+
+inline bool set_app_envs(command_executor *e, shell_context *sc, arguments args)
+{
+    if (sc->current_app_name.empty()) {
+        fprintf(stderr, "No app is using now\nUSAGE: use [app_name]\n");
+        return true;
+    }
+
+    if (args.argc < 3) {
+        return false;
+    }
+
+    if (((args.argc - 1) & 0x01) == 1) {
+        // key & value count must equal 2*n(n >= 1)
+        fprintf(stderr, "need speficy the value for key = %s\n", args.argv[args.argc - 1]);
+        return true;
+    }
+    std::vector<std::string> keys;
+    std::vector<std::string> values;
+    int idx = 1;
+    while (idx < args.argc) {
+        keys.emplace_back(args.argv[idx++]);
+        values.emplace_back(args.argv[idx++]);
+    }
+
+    ::dsn::error_code ret = sc->ddl_client->set_app_envs(sc->current_app_name, keys, values);
+
+    if (ret != ::dsn::ERR_OK) {
+        fprintf(stderr, "set app env failed with err = %s\n", ret.to_string());
+    }
+    return true;
+}
+
+inline bool del_app_envs(command_executor *e, shell_context *sc, arguments args)
+{
+    if (sc->current_app_name.empty()) {
+        fprintf(stderr, "No app is using now\nUSAGE: use [app_name]\n");
+        return true;
+    }
+
+    if (args.argc <= 1) {
+        return false;
+    }
+
+    std::vector<std::string> keys;
+    for (int idx = 1; idx < args.argc; idx++) {
+        keys.emplace_back(args.argv[idx]);
+    }
+
+    ::dsn::error_code ret = sc->ddl_client->del_app_envs(sc->current_app_name, keys);
+
+    if (ret != ::dsn::ERR_OK) {
+        fprintf(stderr, "del app env failed with err = %s\n", ret.to_string());
+    }
+    return true;
+}
+
+inline bool clear_app_envs(command_executor *e, shell_context *sc, arguments args)
+{
+    if (sc->current_app_name.empty()) {
+        fprintf(stderr, "No app is using now\nUSAGE: use [app_name]\n");
+        return true;
+    }
+
+    static struct option long_options[] = {
+        {"all", no_argument, 0, 'a'}, {"prefix", required_argument, 0, 'p'}, {0, 0, 0, 0}};
+
+    bool clear_all = false;
+    std::string prefix;
+    optind = 0;
+    while (true) {
+        int option_index = 0;
+        int c;
+        c = getopt_long(args.argc, args.argv, "ap:", long_options, &option_index);
+        if (c == -1)
+            break;
+        switch (c) {
+        case 'a':
+            clear_all = true;
+            break;
+        case 'p':
+            prefix = optarg;
+            break;
+        default:
+            return false;
+        }
+    }
+    if (!clear_all && prefix.empty()) {
+        fprintf(stderr, "must specify one of --all and --prefix options\n");
+        return false;
+    }
+    ::dsn::error_code ret = sc->ddl_client->clear_app_envs(sc->current_app_name, clear_all, prefix);
+    if (ret != dsn::ERR_OK) {
+        fprintf(stderr, "clear app envs failed with err = %s\n", ret.to_string());
+    }
     return true;
 }
