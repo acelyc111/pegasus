@@ -1,0 +1,11 @@
+add_compact_policy -p p1 -a 1 -s 01:05 -i 3600
+query_compact_policy
+modify_compact_policy -p p1 -s 01:12
+query_compact_policy
+create test -r 3 -p 16
+query_compact_policy
+modify_compact_policy -p p1 -s 01:12 -a 1,2
+query_compact_policy
+modify_compact_policy -p p1 -s 01:12 -a 1
+query_compact_policy
+

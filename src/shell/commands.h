@@ -3743,7 +3743,7 @@ inline bool parse_compact_policy(arguments args,
             break;
         case 's':
             if (start_time != nullptr) {
-                ::dsn::utils::hm_of_day_to_sec(optarg, *start_time);
+                *start_time = ::dsn::utils::hm_of_day_to_sec(optarg);
                 if (*start_time == -1) {
                     std::cerr << "invalid start time: " << optarg
                               << ", should like this: hour:minute, and in range [00:00,23:59]" << std::endl;
@@ -3818,7 +3818,7 @@ inline bool add_compact_policy(command_executor *e,
                                                                start_time,
                                                                opts);
     if (ret != ::dsn::ERR_OK) {
-        std::cerr << "add compact policy failed, err = " << ret.to_string() << std::endl;
+        std::cout << "Add compact policy failed, err = " << ret.to_string() << std::endl;
         return false;
     } else {
         return true;
@@ -3854,7 +3854,7 @@ inline bool modify_compact_policy(command_executor *e, shell_context *sc, argume
                                                                 start_time,
                                                                 opts);
     if (ret != dsn::ERR_OK) {
-        std::cerr << "modify compact policy failed, err = " << ret.to_string() << std::endl;
+        std::cout << "Modify compact policy failed, err = " << ret.to_string() << std::endl;
         return false;
     } else {
         return true;
@@ -3865,7 +3865,7 @@ inline bool query_compact_policy(command_executor *e, shell_context *sc, argumen
 {
     static struct option long_options[] = {{"policy_name", required_argument, 0, 'p'},
                                            {0, 0, 0, 0}};
-    std::vector<std::string> policy_names;
+    std::set<std::string> policy_names;
 
     optind = 0;
     while (true) {
@@ -3884,7 +3884,7 @@ inline bool query_compact_policy(command_executor *e, shell_context *sc, argumen
                     fprintf(stderr, "invalid, empty policy_name, just ignore");
                     continue;
                 } else {
-                    policy_names.emplace_back(policy_name);
+                    policy_names.emplace(policy_name);
                 }
             }
             break;
@@ -3896,10 +3896,9 @@ inline bool query_compact_policy(command_executor *e, shell_context *sc, argumen
 
     ::dsn::error_code ret = sc->ddl_client->query_compact_policy(policy_names);
     if (ret != ::dsn::ERR_OK) {
-        std::cerr << "query compact policy failed, err = " << ret.to_string() << std::endl;
+        std::cout << "Query compact policy failed, err = " << ret.to_string() << std::endl;
         return false;
     } else {
-        std::cout << std::endl << "query compact policy succeed" << std::endl;
         return true;
     }
 }

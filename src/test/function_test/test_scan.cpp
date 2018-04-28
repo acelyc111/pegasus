@@ -391,5 +391,3 @@ TEST(scan, OVERALL)
     }
     compare(data, base);
 }
-
-void test_scan_global_init() { testing::AddGlobalTestEnvironment(new InitData()); }

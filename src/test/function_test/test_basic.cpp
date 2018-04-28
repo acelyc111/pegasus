@@ -1614,5 +1614,3 @@ TEST(basic, multi_set_get_del_async)
     ASSERT_EQ(PERR_OK, ret);
     ASSERT_EQ(0, count);
 }
-
-void test_basic_global_init() {}
