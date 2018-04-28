@@ -279,6 +279,7 @@ TEST_F(integration_test_compact, verify_data_after_compact) {
     // test records on replica after restart
     restart_all_replica();
     sleep(5);
+    wait_util_app_full_health(test_app_name, 30);
     {
         std::list<std::string> finish_time_2;
         get_last_compact_finish_time(*policy.app_ids.begin(), finish_time_2);

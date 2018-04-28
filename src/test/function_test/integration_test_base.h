@@ -30,6 +30,8 @@ protected:
     void verify_data(int count);
     void restart_all_meta();
     void restart_all_replica();
+    void wait_util_app_full_health(const std::string &table_name,
+                                   int max_wait_seconds);
 
     void init_ddl_client();
     void init_pg_client(const std::string &table_name);
@@ -47,6 +49,7 @@ public:
     static int32_t replica_count;
 
     static const std::string pegasus_root;
+    static const std::string test_app_name;
     static const std::string key_prefix;
     static const std::string value_prefix;
     static const int32_t partition_count = 4;

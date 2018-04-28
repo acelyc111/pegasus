@@ -24,6 +24,7 @@ int32_t integration_test_base::test_app_id = 0;
 int32_t integration_test_base::meta_count = 2;
 int32_t integration_test_base::replica_count = 3;
 const std::string integration_test_base::pegasus_root = "/home/mi/dev/my_pegasus";
+const std::string integration_test_base::test_app_name = "integration_test";
 const std::string integration_test_base::key_prefix = "hello_key";
 const std::string integration_test_base::value_prefix = "world_key";
 
@@ -32,8 +33,8 @@ void integration_test_base::SetUp() {
     start_onebox(meta_count, replica_count);
 
     init_ddl_client();
-    test_app_id = create_table("integration_test");
-    init_pg_client("integration_test");
+    test_app_id = create_table(test_app_name);
+    init_pg_client(test_app_name);
 }
 
 void integration_test_base::TearDown() {
@@ -68,11 +69,11 @@ void integration_test_base::init_pg_client(const std::string &table_name) {
 
 int32_t integration_test_base::create_table(const std::string &table_name) {
     int ret = ddl_client->create_app(table_name,
-                                                 "pegasus",
-                                                 partition_count,
-                                                 3,
-                                                 {},
-                                                 false);
+                                     "pegasus",
+                                     partition_count,
+                                     3,
+                                     {},
+                                     false);
     assert(dsn::ERR_OK == ret);
 
     int32_t ret_app_id;
@@ -120,6 +121,42 @@ void integration_test_base::restart_all_replica() {
     for (int i = 1; i <= replica_count; ++i) {
         operate_on_server("replica", "restart", i);
     }
+}
+
+void integration_test_base::wait_util_app_full_health(const std::string &table_name,
+                                                      int max_wait_seconds) {
+    bool health = true;
+    do
+    {
+        health = true;
+        int32_t ret_app_id;
+        int32_t ret_partition_count;
+        std::vector <dsn::partition_configuration> ret_partitions;
+        int ret = ddl_client->list_app(table_name,
+                                       ret_app_id,
+                                       ret_partition_count,
+                                       ret_partitions);
+        if (ret != dsn::ERR_OK) {
+            std::cout << "ret: " << ret << std::endl;
+            health = false;
+            sleep(1);
+            continue;
+        }
+
+        int total_fully_healthy_partition = 0;
+        for (int i = 0; i < ret_partitions.size(); i++) {
+            const dsn::partition_configuration &pc = ret_partitions[i];
+            int rc = (!pc.primary.is_invalid() ? 1 : 0) +
+                     pc.secondaries.size();
+            std::cout << "rc: " << rc << std::endl;
+            if (rc != replica_count) {
+                health = false;
+                sleep(1);
+                break;
+            }
+        }
+    } while(--max_wait_seconds > 0 && !health);
+    ASSERT_TRUE(health);
 }
 
 std::vector<std::string> integration_test_base::gen_key_value(int index) {
