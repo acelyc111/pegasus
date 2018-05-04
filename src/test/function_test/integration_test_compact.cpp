@@ -9,9 +9,9 @@ using namespace dsn::replication;
 
 class integration_test_compact : public integration_test_base {
 public:
-    class compact_policy_entry_test: public compact_policy_entry {
+    class compact_policy_test: public compact_policy {
     public:
-        compact_policy_entry_test() {
+        compact_policy_test() {
             init();
         }
 
@@ -26,15 +26,15 @@ public:
         }
     };
 
-    friend compact_policy_entry_test;
+    friend compact_policy_test;
 
 public:
-    void add_compact_policy(const compact_policy_entry_test &policy,
+    void add_compact_policy(const compact_policy_test &policy,
                             bool ok) {
         std::stringstream cmd;
         cmd << "echo \"add_compact_policy"
             << " -p " << policy.policy_name
-            << " -a " << ::dsn::utils::sequence_container_to_string(policy.app_ids, ',')
+            << " -a " << ::dsn::utils::sequence_container_to_string(policy.app_ids, ",")
             << " -s " << ::dsn::utils::sec_of_day_to_hm(policy.start_time)
             << " -i " << policy.interval_seconds;
         if (!policy.opts.empty()) {
@@ -70,7 +70,7 @@ public:
                 << ret.str();
     }
 
-    void check_compact_policy(const std::map<std::string, compact_policy_entry_test> &name_policys) {
+    void check_compact_policy(const std::map<std::string, compact_policy_test> &name_policys) {
         std::set<std::string> policy_names;
         for (const auto& name_policy : name_policys) {
             policy_names.insert(name_policy.first);
@@ -82,7 +82,7 @@ public:
 
         for (const auto &policy_record : policy_records) {
             ASSERT_EQ(name_policys.count(policy_record.policy.policy_name), 1);
-            const compact_policy_entry_test &req = name_policys.at(policy_record.policy.policy_name);
+            const compact_policy_test &req = name_policys.at(policy_record.policy.policy_name);
             ASSERT_EQ(policy_record.policy.policy_name, req.policy_name);
             ASSERT_EQ(policy_record.policy.interval_seconds, req.interval_seconds);
             ASSERT_EQ(policy_record.policy.app_ids, req.app_ids);
@@ -149,12 +149,12 @@ public:
 };
 
 TEST_F(integration_test_compact, add_compact_policy) {
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
     add_compact_policy(policy, true);
 }
 
 TEST_F(integration_test_compact, check_compact_policy) {
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
     std::set<std::string> policy_names({policy.policy_name});
 
     add_compact_policy(policy, true);
@@ -162,7 +162,7 @@ TEST_F(integration_test_compact, check_compact_policy) {
 }
 
 TEST_F(integration_test_compact, check_compact_policy_after_restart_meta) {
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
     std::set<std::string> policy_names({policy.policy_name});
 
     add_compact_policy(policy, true);
@@ -174,7 +174,7 @@ TEST_F(integration_test_compact, check_compact_policy_after_restart_meta) {
 }
 
 TEST_F(integration_test_compact, add_compact_policy_bad_params) {
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
 
     // interval_seconds
     policy.init();
@@ -206,7 +206,7 @@ TEST_F(integration_test_compact, add_compact_policy_bad_params) {
 }
 
 TEST_F(integration_test_compact, add_compact_policy_empty_opts_ok) {
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
 
     policy.opts.clear();
     add_compact_policy(policy, true);
@@ -215,7 +215,7 @@ TEST_F(integration_test_compact, add_compact_policy_empty_opts_ok) {
 }
 
 TEST_F(integration_test_compact, add_compact_policy_dup_policy_name) {
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
 
     add_compact_policy(policy, true);
     add_compact_policy(policy, false);
@@ -224,7 +224,7 @@ TEST_F(integration_test_compact, add_compact_policy_dup_policy_name) {
 }
 
 TEST_F(integration_test_compact, add_compact_policy_no_exist_app) {
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
     policy.app_ids = {999};
 
     add_compact_policy(policy, false);
@@ -232,7 +232,7 @@ TEST_F(integration_test_compact, add_compact_policy_no_exist_app) {
 }
 
 TEST_F(integration_test_compact, switch_compact_policy_ok) {
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
 
     add_compact_policy(policy, true);
 
@@ -249,7 +249,7 @@ TEST_F(integration_test_compact, verify_data_after_compact) {
     int data_count = 10000;
     write_data(data_count);
 
-    compact_policy_entry_test policy;
+    compact_policy_test policy;
     policy.start_time = ::dsn::utils::sec_of_day();
     policy.start_time -= (policy.start_time % 60);
     uint64_t start_time = dsn_now_ms();
