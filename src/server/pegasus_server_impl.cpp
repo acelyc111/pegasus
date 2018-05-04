@@ -2686,9 +2686,9 @@ bool pegasus_server_impl::set_usage_scenario(const std::string &usage_scenario)
     }
 }
 
-uint64_t pegasus_server_impl::last_compact_finish_time()
+std::chrono::milliseconds pegasus_server_impl::last_compact_finish_time()
 {
-    return _db->GetLastManualCompactFinishTime();
+    return std::chrono::milliseconds(_db->GetLastManualCompactFinishTime());
 }
 
 bool pegasus_server_impl::set_options(

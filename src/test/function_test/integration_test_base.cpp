@@ -148,7 +148,6 @@ void integration_test_base::wait_util_app_full_health(const std::string &table_n
             const dsn::partition_configuration &pc = ret_partitions[i];
             int rc = (!pc.primary.is_invalid() ? 1 : 0) +
                      pc.secondaries.size();
-            std::cout << "rc: " << rc << std::endl;
             if (rc != replica_count) {
                 health = false;
                 sleep(1);

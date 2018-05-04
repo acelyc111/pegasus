@@ -250,7 +250,7 @@ TEST_F(integration_test_compact, verify_data_after_compact) {
     write_data(data_count);
 
     compact_policy_entry_test policy;
-    policy.start_time = ::dsn::utils::sec_of_day();         // TODO unit test
+    policy.start_time = ::dsn::utils::sec_of_day();
     policy.start_time -= (policy.start_time % 60);
     uint64_t start_time = dsn_now_ms();
     add_compact_policy(policy, true);

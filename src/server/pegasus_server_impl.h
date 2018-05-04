@@ -133,7 +133,7 @@ public:
 
     virtual int64_t last_durable_decree() const { return _last_durable_decree.load(); }
 
-    virtual uint64_t last_compact_finish_time();
+    virtual std::chrono::milliseconds last_compact_finish_time();
 
 private:
     // parse checkpoint directories in the data dir
