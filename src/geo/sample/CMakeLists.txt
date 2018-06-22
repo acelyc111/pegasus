@@ -10,12 +10,20 @@ set(MY_PROJ_SRC "")
 # "GLOB" for non-recursive search
 set(MY_SRC_SEARCH_MODE "GLOB")
 
+set(MY_PROJ_INC_PATH "../../../rocksdb")
+set(MY_PROJ_LIB_PATH "../../../rocksdb")
+
 set(MY_PROJ_LIBS
         s2
         s2testing
         pegasus_geo_lib
         pegasus_client_static
-        fmt)
+        fmt
+        rocksdb
+        lz4
+        z
+        bz2
+        snappy)
 
 set(MY_BOOST_PACKAGES system filesystem)
 
