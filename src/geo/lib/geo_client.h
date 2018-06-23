@@ -280,6 +280,10 @@ public:
         return _common_data_client->get_error_string(error_code);
     }
 
+    void set_max_level(int level) {
+        _max_level = level;
+    }
+
 private:
     friend class geo_client_test;
 

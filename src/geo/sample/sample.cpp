@@ -16,8 +16,8 @@ static const int data_count = 10000;
 
 int main(int argc, char **argv)
 {
-    if (argc != 6) {
-        std::cerr << "USAGE: " << argv[0] << " <cluster_name> <app_name> <geo_app_name> <radius> <test_count>"
+    if (argc != 7) {
+        std::cerr << "USAGE: " << argv[0] << " <cluster_name> <app_name> <geo_app_name> <radius> <test_count> <max_level>"
                   << std::endl;
         return -1;
     }
@@ -35,11 +35,17 @@ int main(int argc, char **argv)
         std::cerr << "test_count is invalid: " << argv[5] << std::endl;
         return -1;
     }
+    int max_level = 16;
+    if (!dsn::buf2int32(argv[6], max_level)) {
+        std::cerr << "max_level is invalid: " << argv[6] << std::endl;
+        return -1;
+    }
     pegasus::geo::geo_client my_geo("config.ini",
                                     cluster_name.c_str(),
                                     app_name.c_str(),
                                     geo_app_name.c_str(),
                                     new pegasus::geo::latlng_extractor_for_lbs());
+    my_geo.set_max_level(max_level);
 
     // cover beijing 5th ring road
     S2LatLngRect rect(S2LatLng::FromDegrees(39.810151, 116.194511),
