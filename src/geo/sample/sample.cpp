@@ -17,7 +17,7 @@ static const int data_count = 10000;
 int main(int argc, char **argv)
 {
     if (argc != 6) {
-        std::cerr << "USAGE: " << argv[0] << "<cluster-name> <app-name> <geo-app-name>"
+        std::cerr << "USAGE: " << argv[0] << " <cluster_name> <app_name> <geo_app_name> <radius> <test_count>"
                   << std::endl;
         return -1;
     }
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
                              result);
         hist.Add(env->NowNanos() - start_nanos);
 
-        std::cout << "count: " << result.size() << std::endl;
+        //std::cout << "count: " << result.size() << std::endl;
         //        for (auto &data : result) {
         //            std::cout << data.to_string() << std::endl;
         //        }
