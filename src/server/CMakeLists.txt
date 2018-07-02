@@ -32,7 +32,7 @@ set(MY_PROJ_LIBS
     PocoJSON
     crypto
     fmt
-    )
+    lz4)
 
 if (UNIX)
     set(MY_PROJ_LIBS rocksdb ${MY_PROJ_LIBS} z bz2 snappy rt aio pthread)
@@ -52,4 +52,5 @@ if (UNIX)
 endif()
 
 add_definitions(-Wno-attributes)
+
 dsn_add_executable()

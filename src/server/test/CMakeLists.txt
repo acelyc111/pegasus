@@ -37,7 +37,7 @@ set(MY_PROJ_LIBS
         pegasus.base
         gtest
         z bz2 snappy rt aio pthread
-        )
+        lz4)
 add_definitions(-DPEGASUS_UNIT_TEST)
 
 set(MY_BOOST_PACKAGES system filesystem)
