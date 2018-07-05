@@ -1,4 +1,4 @@
-set(MY_PROJ_NAME pegasus_geo_sample)
+set(MY_PROJ_NAME pegasus_geo_bench)
 project(${MY_PROJ_NAME} C CXX)
 
 # Source files under CURRENT project directory will be automatically included.
