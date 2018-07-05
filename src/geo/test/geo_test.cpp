@@ -21,7 +21,7 @@ public:
     geo_client_test()
     {
         _geo_client.reset(new pegasus::geo::geo_client(
-            "config.ini", "onebox", "temp", "temp_geo", new latlng_extractor_for_lbs()));
+            "config.ini", "c4tst-geo", "cell_position_data", "cell_position_data_geo", new latlng_extractor_for_lbs()));
     }
 
     pegasus_client *common_data_client() { return _geo_client->_common_data_client; }

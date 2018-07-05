@@ -679,19 +679,18 @@ void geo_client::start_scan(const std::string &hash_key,
     dsn::tasking::enqueue(
         LPC_GEO_SCAN_DATA,
         &_tracker,
-        [/*this, hash_key, start_sort_key, stop_sort_key, cap, count, cb, &result*/ cb]() {
-            cb();
-            //            pegasus_client::scan_options options;
-            //            options.start_inclusive = true;
-            //            options.stop_inclusive = true;
-            //            pegasus_client::pegasus_scanner *scanner = nullptr;
-            //            int ret = _geo_data_client->get_scanner(
-            //                hash_key, start_sort_key, stop_sort_key, options, scanner);
-            //            if (ret == PERR_OK) {
-            //                pegasus_client::pegasus_scanner_wrapper scanner_wrapper =
-            //                    scanner->get_smart_wrapper();
-            //                do_scan(scanner_wrapper, cap, count, cb, result);
-            //            }
+        [&]() {
+            pegasus_client::scan_options options;
+            options.start_inclusive = true;
+            options.stop_inclusive = true;
+            pegasus_client::pegasus_scanner *scanner = nullptr;
+            int ret = _geo_data_client->get_scanner(
+                hash_key, start_sort_key, stop_sort_key, options, scanner);
+            if (ret == PERR_OK) {
+                pegasus_client::pegasus_scanner_wrapper scanner_wrapper =
+                    scanner->get_smart_wrapper();
+                do_scan(scanner_wrapper, cap, count, cb, result);
+            }
         });
 }
 
@@ -702,11 +701,11 @@ void geo_client::do_scan(pegasus_client::pegasus_scanner_wrapper scanner_wrapper
                          std::vector<SearchResult> &result)
 {
     scanner_wrapper->async_next(
-        [this, cap, count, scanner_wrapper, cb, &result](int ret,
-                                                         std::string &&geo_hash_key,
-                                                         std::string &&geo_sort_key,
-                                                         std::string &&value,
-                                                         pegasus_client::internal_info &&info) {
+            [&](int ret,
+                std::string &&geo_hash_key,
+                std::string &&geo_sort_key,
+                std::string &&value,
+                pegasus_client::internal_info &&info) {
             if (ret == PERR_SCAN_COMPLETE) {
                 cb();
                 return;
