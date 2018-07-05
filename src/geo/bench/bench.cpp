@@ -95,7 +95,8 @@ int main(int argc, char **argv)
     tracker.wait_outstanding_tasks();
     uint64_t end = env->NowNanos();
 
-    std::cout << "QPS: " << test_count / ((end - start) / 1e9) << std::endl;
+    std::cout << "start time: " << start << ", end time: " << end
+              << ", QPS: " << test_count / ((end - start) / 1e9) << std::endl;
     std::cout << "latency_histogram: " << std::endl;
     std::cout << latency_histogram.ToString() << std::endl;
     std::cout << "result_count_histogram: " << std::endl;
