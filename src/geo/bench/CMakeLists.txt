@@ -20,7 +20,6 @@ set(MY_PROJ_LIBS
         pegasus_client_static
         fmt
         rocksdb
-        lz4
         z
         bz2
         snappy)

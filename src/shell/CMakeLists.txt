@@ -31,7 +31,7 @@ set(MY_PROJ_LIBS
     fmt
     pegasus_geo_lib
     s2
-    lz4)
+    )
 
 if (UNIX)
     set(MY_PROJ_LIBS rocksdb ${MY_PROJ_LIBS} z bz2 snappy rt aio pthread)
