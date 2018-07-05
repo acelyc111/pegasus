@@ -34,6 +34,7 @@ protected:
     };
     struct redis_base_type
     {
+        virtual ~redis_base_type() = default;
         virtual void marshalling(::dsn::binary_writer &write_stream) const = 0;
     };
     struct redis_integer : public redis_base_type
@@ -160,12 +161,12 @@ protected:
                                      int &count,
                                      bool &WITHCOORD,
                                      bool &WITHDIST,
-                                     bool &WITHVALUE);
+                                     bool &WITHHASH);
     void process_geo_radius_result(message_entry &entry,
                                    const std::string &unit,
                                    bool WITHCOORD,
                                    bool WITHDIST,
-                                   bool WITHVALUE,
+                                   bool WITHHASH,
                                    int ec,
                                    std::list<geo::SearchResult> &&results);
 

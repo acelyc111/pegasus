@@ -547,9 +547,8 @@ bool geo_client::generate_geo_keys(const std::string &hash_key,
     // generate sort key
     dsn::blob sort_key_postfix;
     pegasus_generate_key(sort_key_postfix, hash_key, sort_key);
-    geo_sort_key =
-        leaf_cell_id.ToString().substr(geo_hash_key.length()) + ":" +
-                  sort_key_postfix.to_string(); // [0,3]{30-_min_level}:combine_keys
+    geo_sort_key = leaf_cell_id.ToString().substr(geo_hash_key.length()) + ":" +
+                   sort_key_postfix.to_string(); // [0,3]{30-_min_level}:combine_keys
 
     return true;
 }

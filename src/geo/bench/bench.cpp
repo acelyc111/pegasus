@@ -11,13 +11,17 @@
 #include <dsn/utility/strings.h>
 #include <rocksdb/env.h>
 #include <dsn/utility/string_conv.h>
+#include <dsn/cpp/clientlet.h>
 
 static const int data_count = 10000;
+DEFINE_THREAD_POOL_CODE(THREAD_POOL_GEO_BENCH)
+DEFINE_TASK_CODE(LPC_GEO_BENCH_TEST, TASK_PRIORITY_COMMON, THREAD_POOL_GEO_BENCH)
 
 int main(int argc, char **argv)
 {
     if (argc != 7) {
-        std::cerr << "USAGE: " << argv[0] << " <cluster_name> <app_name> <geo_app_name> <radius> <test_count> <max_level>"
+        std::cerr << "USAGE: " << argv[0]
+                  << " <cluster_name> <app_name> <geo_app_name> <radius> <test_count> <max_level>"
                   << std::endl;
         return -1;
     }
@@ -65,43 +69,37 @@ int main(int argc, char **argv)
     //        }
     //    }
 
-    rocksdb::HistogramImpl hist;
+    rocksdb::HistogramImpl latency_histogram;
+    rocksdb::HistogramImpl result_count_histogram;
     rocksdb::Env *env = rocksdb::Env::Default();
+    dsn::task_tracker tracker;
+    uint64_t start = env->NowNanos();
     // test search_radial by lat & lng
     for (int i = 0; i < test_count; ++i) {
-        S2LatLng latlng(S2Testing::SamplePoint(rect));
+        dsn::tasking::enqueue(LPC_GEO_BENCH_TEST, &tracker, [&]() {
+            S2LatLng latlng(S2Testing::SamplePoint(rect));
 
-        uint64_t start_nanos = env->NowNanos();
-        std::list<pegasus::geo::SearchResult> result;
-        my_geo.search_radial(latlng.lat().degrees(),
-                             latlng.lng().degrees(),
-                             radius,
-                             -1,
-                             pegasus::geo::geo_client::SortType::asc,
-                             500,
-                             result);
-        hist.Add(env->NowNanos() - start_nanos);
-
-        // std::cout << "count: " << result.size() << std::endl;
-        //        for (auto &data : result) {
-        //            std::cout << data.to_string() << std::endl;
-        //        }
+            uint64_t start_nanos = env->NowNanos();
+            std::list<pegasus::geo::SearchResult> result;
+            my_geo.search_radial(latlng.lat().degrees(),
+                                 latlng.lng().degrees(),
+                                 radius,
+                                 -1,
+                                 pegasus::geo::geo_client::SortType::asc,
+                                 500,
+                                 result);
+            latency_histogram.Add(env->NowNanos() - start_nanos);
+            result_count_histogram.Add(result.size());
+        });
     }
+    tracker.wait_outstanding_tasks();
+    uint64_t end = env->NowNanos();
 
-    std::cout << hist.ToString() << std::endl;
-
-    //    // test search_radial by key
-    //    for (int i = 0; i < test_count; ++i) {
-    //        std::string id = std::to_string(i);
-    //        std::list<pegasus::geo::SearchResult> result;
-    //        my_geo.search_radial(
-    //            id, "", radius, 20, pegasus::geo::geo_client::SortType::asc, 500, result);
-    //
-    //        std::cout << "count: " << result.size() << std::endl;
-    //        for (auto &data : result) {
-    //            std::cout << data.to_string() << std::endl;
-    //        }
-    //    }
+    std::cout << "QPS: " << test_count / ((end - start) / 1e9) << std::endl;
+    std::cout << "latency_histogram: " << std::endl;
+    std::cout << latency_histogram.ToString() << std::endl;
+    std::cout << "result_count_histogram: " << std::endl;
+    std::cout << result_count_histogram.ToString() << std::endl;
 
     return 0;
 }
