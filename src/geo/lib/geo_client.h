@@ -82,9 +82,7 @@ public:
                const char *geo_app_name,
                latlng_extractor *extractor);
 
-    ~geo_client() {
-        _tracker.wait_outstanding_tasks();
-    }
+    ~geo_client() { _tracker.wait_outstanding_tasks(); }
 
     ///
     /// \brief set
@@ -284,9 +282,7 @@ public:
         return _common_data_client->get_error_string(error_code);
     }
 
-    void set_max_level(int level) {
-        _max_level = level;
-    }
+    void set_max_level(int level) { _max_level = level; }
 
 private:
     friend class geo_client_test;
@@ -381,13 +377,13 @@ private:
                     const std::string &stop_sort_key,
                     const S2Cap &cap,
                     int count,
-                    scan_one_area_callback cb,
+                    scan_one_area_callback &&callback,
                     std::vector<SearchResult> &result);
 
     void do_scan(pegasus_client::pegasus_scanner_wrapper scanner_wrapper,
                  const S2Cap &cap,
                  int count,
-                 scan_one_area_callback cb,
+                 scan_one_area_callback &&callback,
                  std::vector<SearchResult> &result);
 
 private:
