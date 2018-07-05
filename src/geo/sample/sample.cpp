@@ -82,7 +82,7 @@ int main(int argc, char **argv)
                              result);
         hist.Add(env->NowNanos() - start_nanos);
 
-        //std::cout << "count: " << result.size() << std::endl;
+        // std::cout << "count: " << result.size() << std::endl;
         //        for (auto &data : result) {
         //            std::cout << data.to_string() << std::endl;
         //        }
