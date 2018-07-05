@@ -82,6 +82,10 @@ public:
                const char *geo_app_name,
                latlng_extractor *extractor);
 
+    ~geo_client() {
+        _tracker.wait_outstanding_tasks();
+    }
+
     ///
     /// \brief set
     ///     store the k-v to the cluster, both app/table `common_app_name` and `geo_app_name`
@@ -397,6 +401,8 @@ private:
     // value
     // to improve performance in their scenario.
     int _max_level = 16;
+
+    dsn::task_tracker _tracker;
 
     std::shared_ptr<const latlng_extractor> _extractor = nullptr;
     pegasus_client *_common_data_client = nullptr;

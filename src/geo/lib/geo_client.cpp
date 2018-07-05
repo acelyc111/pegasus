@@ -264,18 +264,19 @@ int geo_client::search_radial(double lat_degrees,
         return PERR_GEO_INVALID_LATLNG_ERROR;
     }
     dsn::utils::notify_event search_completed;
-    async_search_radial(latlng,
-                        radius_m,
-                        count,
-                        sort_type,
-                        timeout_milliseconds,
-                        [&](int ec_, std::list<SearchResult> &&result_) {
-                            if (PERR_OK == ec_) {
-                                result = std::move(result_);
-                            }
-                            ret = ec_;
-                            search_completed.notify();
-                        });
+    async_search_radial(
+        latlng,
+        radius_m,
+        count,
+        sort_type,
+        timeout_milliseconds,
+        [&ret, &result, &search_completed](int ec_, std::list<SearchResult> &&result_) {
+            if (PERR_OK == ec_) {
+                result = std::move(result_);
+            }
+            ret = ec_;
+            search_completed.notify();
+        });
     search_completed.wait();
     return ret;
 }
@@ -425,14 +426,17 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
         new std::list<std::vector<SearchResult>>());
     std::shared_ptr<std::atomic<bool>> send_finish(new std::atomic<bool>(false));
     std::shared_ptr<std::atomic<int>> scan_count(new std::atomic<int>(0));
-    auto single_scan_finish_callback = [ =, cb = std::move(callback) ]()
+    auto single_scan_finish_callback =
+        [ send_finish, scan_count, results, cb = std::move(callback) ]()
     {
-        // NOTE: make sure fetch_sub is at first of the if expression to make it always happen
+        // NOTE: make sure fetch_sub is at first of the if expression to make it always execute
+        // NOTE: make sure fetch_sub is at first of the if expression to make it always execute
         if (scan_count->fetch_sub(1) == 1 && send_finish->load()) {
             cb(std::move(*results.get()));
         }
     };
 
+    std::shared_ptr<dsn::task_tracker> tracker(new dsn::task_tracker);
     for (const auto &cid : cids) {
         if (cap.Contains(S2Cell(cid))) {
             // for the full contained cell, scan all data in this cell(which is at the `_min_level`)
@@ -502,6 +506,11 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
         }
     }
     send_finish->store(true);
+
+    // when all scan rpc have received before send_finish is set to true, the callback will never be
+    // called, so we add 2 lines tricky code as follows
+    scan_count->fetch_add(1);
+    single_scan_finish_callback();
 }
 
 void geo_client::normalize_result(const std::list<std::vector<SearchResult>> &results,
@@ -669,19 +678,20 @@ void geo_client::start_scan(const std::string &hash_key,
 {
     dsn::tasking::enqueue(
         LPC_GEO_SCAN_DATA,
-        nullptr,
-        [this, hash_key, start_sort_key, stop_sort_key, cap, count, cb, &result]() {
-            pegasus_client::scan_options options;
-            options.start_inclusive = true;
-            options.stop_inclusive = true;
-            pegasus_client::pegasus_scanner *scanner = nullptr;
-            int ret = _geo_data_client->get_scanner(
-                hash_key, start_sort_key, stop_sort_key, options, scanner);
-            if (ret == PERR_OK) {
-                pegasus_client::pegasus_scanner_wrapper scanner_wrapper =
-                    scanner->get_smart_wrapper();
-                do_scan(scanner_wrapper, cap, count, cb, result);
-            }
+        &_tracker,
+        [/*this, hash_key, start_sort_key, stop_sort_key, cap, count, cb, &result*/ cb]() {
+            cb();
+            //            pegasus_client::scan_options options;
+            //            options.start_inclusive = true;
+            //            options.stop_inclusive = true;
+            //            pegasus_client::pegasus_scanner *scanner = nullptr;
+            //            int ret = _geo_data_client->get_scanner(
+            //                hash_key, start_sort_key, stop_sort_key, options, scanner);
+            //            if (ret == PERR_OK) {
+            //                pegasus_client::pegasus_scanner_wrapper scanner_wrapper =
+            //                    scanner->get_smart_wrapper();
+            //                do_scan(scanner_wrapper, cap, count, cb, result);
+            //            }
         });
 }
 

@@ -74,25 +74,35 @@ int main(int argc, char **argv)
     rocksdb::Env *env = rocksdb::Env::Default();
     dsn::task_tracker tracker;
     uint64_t start = env->NowNanos();
+    std::atomic<uint64_t> count(test_count);
+    dsn::utils::notify_event get_completed;
     // test search_radial by lat & lng
     for (int i = 0; i < test_count; ++i) {
         dsn::tasking::enqueue(LPC_GEO_BENCH_TEST, &tracker, [&]() {
             S2LatLng latlng(S2Testing::SamplePoint(rect));
 
             uint64_t start_nanos = env->NowNanos();
-            std::list<pegasus::geo::SearchResult> result;
-            my_geo.search_radial(latlng.lat().degrees(),
-                                 latlng.lng().degrees(),
-                                 radius,
-                                 -1,
-                                 pegasus::geo::geo_client::SortType::asc,
-                                 500,
-                                 result);
-            latency_histogram.Add(env->NowNanos() - start_nanos);
-            result_count_histogram.Add(result.size());
+            my_geo.async_search_radial(
+                latlng.lat().degrees(),
+                latlng.lng().degrees(),
+                radius,
+                -1,
+                pegasus::geo::geo_client::SortType::asc,
+                500,
+                [&, start_nanos](int error_code, std::list<pegasus::geo::SearchResult> &&results) {
+                    latency_histogram.Add(env->NowNanos() - start_nanos);
+                    result_count_histogram.Add(results.size());
+                    uint64_t left = count.fetch_sub(1);
+                    if (left == 1) {
+                        get_completed.notify();
+                    }
+                });
         });
     }
+    std::cout << "wait_outstanding_tasks" << std::endl;
     tracker.wait_outstanding_tasks();
+    std::cout << "get_completed.wait" << std::endl;
+    get_completed.wait();
     uint64_t end = env->NowNanos();
 
     std::cout << "start time: " << start << ", end time: " << end
