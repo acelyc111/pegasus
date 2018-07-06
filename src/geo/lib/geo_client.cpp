@@ -7,6 +7,7 @@
 #include <s2/s2earth.h>
 #include <s2/s2region_coverer.h>
 #include <s2/s2cap.h>
+#include <monitoring/histogram.h>
 #include <dsn/service_api_cpp.h>
 #include <dsn/dist/fmt_logging.h>
 #include <base/pegasus_key_schema.h>
@@ -468,44 +469,59 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
             // calculating here.
             std::string hash_key = cid.parent(_min_level).ToString();
             std::pair<std::string, std::string> start_stop_sort_keys;
-            S2CellId pre;
+            S2CellId pre; // `pre` is the last cell in Hilbert curve contained by the cap
             // traverse all sub cell ids of `cid` on `_max_level` along the Hilbert curve, to find
             // the needed ones.
+            uint64_t skip_cid_count = 0;
+            bool stop_changed = false;
             for (S2CellId cur = cid.child_begin(_max_level); cur != cid.child_end(_max_level);
                  cur = cur.next()) {
+                if ("1/2233200220102020" == cur.ToString()) {
+                    int a = 0;
+                }
+                // only cells whose any vertex is contained by the cap is needed
                 if (cap_ptr->MayIntersect(S2Cell(cur))) {
-                    // only cells whose any vertex is contained by the cap is needed
-                    if (!pre.is_valid()) {
-                        // `cur` is the very first cell in Hilbert curve contained by the cap
-                        pre = cur;
-                        start_stop_sort_keys.first = gen_start_sort_key(pre, hash_key);
-                    } else {
-                        if (pre.next() != cur) {
-                            // `pre` is the last cell in Hilbert curve contained by the cap
-                            // `cur` is a new start cell in Hilbert curve contained by the cap
-                            start_stop_sort_keys.second = gen_stop_sort_key(pre, hash_key);
-                            results->emplace_back(std::vector<SearchResult>());
-                            scan_count->fetch_add(1);
-                            start_scan(hash_key,
-                                       std::move(start_stop_sort_keys.first),
-                                       std::move(start_stop_sort_keys.second),
-                                       cap_ptr,
-                                       single_scan_count,
-                                       single_scan_finish_callback,
-                                       results->back());
+                    if (skip_cid_count != 0) {
+                        skip_cid_count = 0;
+                    }
 
-                            start_stop_sort_keys.first = gen_start_sort_key(cur, hash_key);
-                            start_stop_sort_keys.second.clear();
-                        }
-                        pre = cur;
+                    // `cur` is a new start cell in Hilbert curve contained by the cap
+                    if (start_stop_sort_keys.first.empty()) {
+                        start_stop_sort_keys.first = gen_start_sort_key(cur, hash_key);
+                    }
+
+                    if (!stop_changed && !start_stop_sort_keys.second.empty()) {
+                        stop_changed = true;
+                    }
+
+                    pre = cur;
+                } else {
+                    if (!start_stop_sort_keys.first.empty() && stop_changed) {
+                        start_stop_sort_keys.second = gen_stop_sort_key(pre, hash_key);
+                        stop_changed = false;
+                    }
+                    skip_cid_count++;
+                    if (skip_cid_count >= 5 && !start_stop_sort_keys.second.empty()) {
+                        results->emplace_back(std::vector<SearchResult>());
+                        scan_count->fetch_add(1);
+                        start_scan(hash_key,
+                                   std::move(start_stop_sort_keys.first),
+                                   std::move(start_stop_sort_keys.second),
+                                   cap_ptr,
+                                   single_scan_count,
+                                   single_scan_finish_callback,
+                                   results->back());
+                        start_stop_sort_keys.first.clear();
+                        start_stop_sort_keys.second.clear();
                     }
                 }
             }
 
-            dassert(!start_stop_sort_keys.first.empty(), "");
             // the last sub slice of current `cid` on `_max_level` in Hilbert curve covered by `cap`
-            if (start_stop_sort_keys.second.empty()) {
-                start_stop_sort_keys.second = gen_stop_sort_key(pre, hash_key);
+            if (!start_stop_sort_keys.first.empty()) {
+                if (start_stop_sort_keys.second.empty()) {
+                    start_stop_sort_keys.second = gen_stop_sort_key(pre, hash_key);
+                }
                 results->emplace_back(std::vector<SearchResult>());
                 scan_count->fetch_add(1);
                 start_scan(hash_key,
@@ -518,6 +534,7 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
             }
         }
     }
+
     // when all scan rpc have received before send_finish is set to true, the callback will never be
     // called, so we add 2 lines tricky code as follows
     scan_count->fetch_add(1);
@@ -688,6 +705,7 @@ void geo_client::start_scan(const std::string &hash_key,
                             scan_one_area_callback &&callback,
                             std::vector<SearchResult> &result)
 {
+    derror_f("{}->{}", hash_key + start_sort_key, hash_key + stop_sort_key);
     dsn::tasking::enqueue(LPC_GEO_SCAN_DATA, &_tracker, [
         this,
         hash_key,
