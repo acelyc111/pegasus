@@ -7,7 +7,6 @@
 #include <s2/s2earth.h>
 #include <s2/s2region_coverer.h>
 #include <s2/s2cap.h>
-#include <monitoring/histogram.h>
 #include <dsn/service_api_cpp.h>
 #include <dsn/dist/fmt_logging.h>
 #include <base/pegasus_key_schema.h>
@@ -501,7 +500,7 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
                         stop_changed = false;
                     }
                     skip_cid_count++;
-                    if (skip_cid_count >= 5 && !start_stop_sort_keys.second.empty()) {
+                    if (skip_cid_count >= 3 && !start_stop_sort_keys.second.empty()) {
                         results->emplace_back(std::vector<SearchResult>());
                         scan_count->fetch_add(1);
                         start_scan(hash_key,
@@ -705,7 +704,6 @@ void geo_client::start_scan(const std::string &hash_key,
                             scan_one_area_callback &&callback,
                             std::vector<SearchResult> &result)
 {
-    derror_f("{}->{}", hash_key + start_sort_key, hash_key + stop_sort_key);
     dsn::tasking::enqueue(LPC_GEO_SCAN_DATA, &_tracker, [
         this,
         hash_key,
@@ -719,6 +717,7 @@ void geo_client::start_scan(const std::string &hash_key,
         pegasus_client::scan_options options;
         options.start_inclusive = true;
         options.stop_inclusive = true;
+        options.batch_size = 1000;
         pegasus_client::pegasus_scanner *scanner = nullptr;
         int ret = _geo_data_client->get_scanner(hash_key, start, stop, options, scanner);
         if (ret == PERR_OK) {
