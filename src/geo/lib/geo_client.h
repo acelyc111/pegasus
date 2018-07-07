@@ -378,7 +378,8 @@ private:
                     std::shared_ptr<S2Cap> cap_ptr,
                     int count,
                     scan_one_area_callback &&callback,
-                    std::vector<SearchResult> &result);
+                    std::vector<SearchResult> &result,
+                    bool start_inclusive = true);
 
     void do_scan(pegasus_client::pegasus_scanner_wrapper scanner_wrapper,
                  std::shared_ptr<S2Cap> cap_ptr,

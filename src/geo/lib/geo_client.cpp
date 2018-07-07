@@ -698,7 +698,8 @@ void geo_client::start_scan(const std::string &hash_key,
                             std::shared_ptr<S2Cap> cap_ptr,
                             int count,
                             scan_one_area_callback &&callback,
-                            std::vector<SearchResult> &result)
+                            std::vector<SearchResult> &result,
+                            bool start_inclusive)
 {
     dsn::tasking::enqueue(
         LPC_GEO_SCAN_DATA,
@@ -709,10 +710,11 @@ void geo_client::start_scan(const std::string &hash_key,
          stop_sort_key = std::move(stop_sort_key),
          cap_ptr,
          count,
+         start_inclusive,
          cb = std::move(callback),
          &result]() mutable {
             pegasus_client::multi_get_options options;
-            options.start_inclusive = true;
+            options.start_inclusive = start_inclusive;
             options.stop_inclusive = true;
 
             _geo_data_client->async_multi_get(
@@ -722,9 +724,7 @@ void geo_client::start_scan(const std::string &hash_key,
                 options,
                 [this,
                  hash_key,
-                 start_sort_key = std::move(start_sort_key),
                  stop_sort_key = std::move(stop_sort_key),
-                 options,
                  cap_ptr,
                  count,
                  cb = std::move(cb),
@@ -738,6 +738,13 @@ void geo_client::start_scan(const std::string &hash_key,
                         return;
                     }
 
+                    if (sortkey_values.empty()) {
+                        cb();
+                        return;
+                    }
+
+                    std::string new_start_sort_key(sortkey_values.rbegin()->first.data(),
+                                                   sortkey_values.rbegin()->first.length());
                     for (auto &sortkey_value : sortkey_values) {
                         S2LatLng latlng;
                         if (!_extractor->extract_from_value(sortkey_value.second, latlng)) {
@@ -764,19 +771,25 @@ void geo_client::start_scan(const std::string &hash_key,
                                                              std::move(origin_hash_key),
                                                              std::move(origin_sort_key),
                                                              std::move(sortkey_value.second)));
+
+                            if (count != -1 && result.size() >= count) {
+                                cb();
+                                return;
+                            }
                         }
                     }
 
-                    if (ret != PERR_INCOMPLETE) {
-                        cb();
-                    } else {
+                    if (ret == PERR_INCOMPLETE) {
                         start_scan(hash_key,
-                                   std::move(start_sort_key),
+                                   std::move(new_start_sort_key),
                                    std::move(stop_sort_key),
                                    cap_ptr,
                                    count,
                                    std::move(cb),
-                                   result);
+                                   result,
+                                   false);
+                    } else {
+                        cb();
                     }
                 },
                 1000,
@@ -830,11 +843,6 @@ void geo_client::do_scan(pegasus_client::pegasus_scanner_wrapper scanner_wrapper
                                                  std::move(origin_hash_key),
                                                  std::move(origin_sort_key),
                                                  std::move(value)));
-
-                if (count != -1 && result.size() >= count) {
-                    cb();
-                    return;
-                }
             }
 
             if (count != -1 && result.size() >= count) {
