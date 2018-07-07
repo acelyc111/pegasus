@@ -705,8 +705,8 @@ void geo_client::start_scan(const std::string &hash_key,
         &_tracker,
         [this,
          hash_key,
-         start = std::move(start_sort_key),
-         stop = std::move(stop_sort_key),
+         start_sort_key = std::move(start_sort_key),
+         stop_sort_key = std::move(stop_sort_key),
          cap_ptr,
          count,
          cb = std::move(callback),
@@ -717,14 +717,21 @@ void geo_client::start_scan(const std::string &hash_key,
 
             _geo_data_client->async_multi_get(
                 hash_key,
-                start,
-                stop,
+                start_sort_key,
+                stop_sort_key,
                 options,
-                [this, cap_ptr, count, cb = std::move(cb), &result](
-                    int ret,
-                    std::map<std::string, std::string> &&sortkey_values,
-                    pegasus_client::internal_info &&info) {
-                    if (ret != PERR_OK) {
+                [this,
+                 hash_key,
+                 start_sort_key = std::move(start_sort_key),
+                 stop_sort_key = std::move(stop_sort_key),
+                 options,
+                 cap_ptr,
+                 count,
+                 cb = std::move(cb),
+                 &result](int ret,
+                          std::map<std::string, std::string> &&sortkey_values,
+                          pegasus_client::internal_info &&info) mutable {
+                    if (ret != PERR_OK && ret != PERR_INCOMPLETE) {
                         derror_f("async_multi_get failed. error={}",
                                  _geo_data_client->get_error_string(ret));
                         cb();
@@ -760,7 +767,17 @@ void geo_client::start_scan(const std::string &hash_key,
                         }
                     }
 
-                    cb();
+                    if (ret != PERR_INCOMPLETE) {
+                        cb();
+                    } else {
+                        start_scan(hash_key,
+                                   std::move(start_sort_key),
+                                   std::move(stop_sort_key),
+                                   cap_ptr,
+                                   count,
+                                   std::move(cb),
+                                   result);
+                    }
                 },
                 1000,
                 1000000);
