@@ -480,8 +480,6 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
             S2CellId pre;
             // traverse all sub cell ids of `cid` on `_max_level` along the Hilbert curve, to find
             // the needed ones.
-            uint64_t skip_cid_count = 0;
-            bool stop_changed = false;
             for (S2CellId cur = cid.child_begin(_max_level); cur != cid.child_end(_max_level);
                  cur = cur.next()) {
                 if (cap_ptr->MayIntersect(S2Cell(cur))) {
@@ -513,11 +511,10 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
                 }
             }
 
+            dassert(!start_stop_sort_keys.first.empty(), "");
             // the last sub slice of current `cid` on `_max_level` in Hilbert curve covered by `cap`
-            if (!start_stop_sort_keys.first.empty()) {
-                if (start_stop_sort_keys.second.empty()) {
-                    start_stop_sort_keys.second = gen_stop_sort_key(pre, hash_key);
-                }
+            if (start_stop_sort_keys.second.empty()) {
+                start_stop_sort_keys.second = gen_stop_sort_key(pre, hash_key);
                 results->emplace_back(std::vector<SearchResult>());
                 scan_count->fetch_add(1);
                 start_scan(hash_key,
