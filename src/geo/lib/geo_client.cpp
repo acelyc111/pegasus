@@ -477,50 +477,38 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
             // calculating here.
             std::string hash_key = cid.parent(_min_level).ToString();
             std::pair<std::string, std::string> start_stop_sort_keys;
-            S2CellId pre; // `pre` is the last cell in Hilbert curve contained by the cap
+            S2CellId pre;
             // traverse all sub cell ids of `cid` on `_max_level` along the Hilbert curve, to find
             // the needed ones.
             uint64_t skip_cid_count = 0;
             bool stop_changed = false;
             for (S2CellId cur = cid.child_begin(_max_level); cur != cid.child_end(_max_level);
                  cur = cur.next()) {
-                if ("1/2233200220102020" == cur.ToString()) {
-                    int a = 0;
-                }
-                // only cells whose any vertex is contained by the cap is needed
                 if (cap_ptr->MayIntersect(S2Cell(cur))) {
-                    if (skip_cid_count != 0) {
-                        skip_cid_count = 0;
-                    }
+                    // only cells whose any vertex is contained by the cap is needed
+                    if (!pre.is_valid()) {
+                        // `cur` is the very first cell in Hilbert curve contained by the cap
+                        pre = cur;
+                        start_stop_sort_keys.first = gen_start_sort_key(pre, hash_key);
+                    } else {
+                        if (pre.next() != cur) {
+                            // `pre` is the last cell in Hilbert curve contained by the cap
+                            // `cur` is a new start cell in Hilbert curve contained by the cap
+                            start_stop_sort_keys.second = gen_stop_sort_key(pre, hash_key);
+                            results->emplace_back(std::vector<SearchResult>());
+                            scan_count->fetch_add(1);
+                            start_scan(hash_key,
+                                       std::move(start_stop_sort_keys.first),
+                                       std::move(start_stop_sort_keys.second),
+                                       cap_ptr,
+                                       single_scan_count,
+                                       single_scan_finish_callback,
+                                       results->back());
 
-                    // `cur` is a new start cell in Hilbert curve contained by the cap
-                    if (start_stop_sort_keys.first.empty()) {
-                        start_stop_sort_keys.first = gen_start_sort_key(cur, hash_key);
-                    }
-
-                    if (!stop_changed && !start_stop_sort_keys.second.empty()) {
-                        stop_changed = true;
-                    }
-
-                    pre = cur;
-                } else {
-                    if (!start_stop_sort_keys.first.empty() && stop_changed) {
-                        start_stop_sort_keys.second = gen_stop_sort_key(pre, hash_key);
-                        stop_changed = false;
-                    }
-                    skip_cid_count++;
-                    if (skip_cid_count >= 3 && !start_stop_sort_keys.second.empty()) {
-                        results->emplace_back(std::vector<SearchResult>());
-                        scan_count->fetch_add(1);
-                        start_scan(hash_key,
-                                   std::move(start_stop_sort_keys.first),
-                                   std::move(start_stop_sort_keys.second),
-                                   cap_ptr,
-                                   single_scan_count,
-                                   single_scan_finish_callback,
-                                   results->back());
-                        start_stop_sort_keys.first.clear();
-                        start_stop_sort_keys.second.clear();
+                            start_stop_sort_keys.first = gen_start_sort_key(cur, hash_key);
+                            start_stop_sort_keys.second.clear();
+                        }
+                        pre = cur;
                     }
                 }
             }
@@ -714,88 +702,24 @@ void geo_client::start_scan(const std::string &hash_key,
                             std::vector<SearchResult> &result,
                             bool start_inclusive)
 {
-    pegasus_client::multi_get_options options;
-    options.start_inclusive = start_inclusive;
+    pegasus_client::scan_options options;
+    options.start_inclusive = true;
     options.stop_inclusive = true;
+    options.batch_size = 1000;
 
-    _geo_data_client->async_multi_get(
+    _geo_data_client->async_get_scanner(
         hash_key,
         start_sort_key,
         stop_sort_key,
         options,
-        [
-          this,
-          hash_key,
-          stop_sort_key = std::move(stop_sort_key),
-          cap_ptr,
-          count,
-          cb = std::move(callback),
-          &result
-        ](int ret,
-          std::map<std::string, std::string> &&sortkey_values,
-          pegasus_client::internal_info &&info) mutable {
-            if (ret != PERR_OK && ret != PERR_INCOMPLETE) {
-                derror_f("async_multi_get failed. error={}",
-                         _geo_data_client->get_error_string(ret));
-                cb();
-                return;
-            }
-
-            if (sortkey_values.empty()) {
-                cb();
-                return;
-            }
-
-            std::string new_start_sort_key(sortkey_values.rbegin()->first.data(),
-                                           sortkey_values.rbegin()->first.length());
-            for (auto &sortkey_value : sortkey_values) {
-                S2LatLng latlng;
-                if (!_extractor->extract_from_value(sortkey_value.second, latlng)) {
-                    derror_f("extract_from_value failed. value={}", sortkey_value.second);
-                    cb();
-                    return;
-                }
-
-                double distance = S2Earth::GetDistanceMeters(S2LatLng(cap_ptr->center()), latlng);
-                if (distance <= S2Earth::ToMeters(cap_ptr->radius())) {
-                    std::string origin_hash_key, origin_sort_key;
-                    if (!restore_origin_keys(
-                            sortkey_value.first, origin_hash_key, origin_sort_key)) {
-                        derror_f("restore_origin_keys failed. geo_sort_key={}",
-                                 sortkey_value.first);
-                        cb();
-                        return;
-                    }
-
-                    result.emplace_back(SearchResult(latlng.lat().degrees(),
-                                                     latlng.lng().degrees(),
-                                                     distance,
-                                                     std::move(origin_hash_key),
-                                                     std::move(origin_sort_key),
-                                                     std::move(sortkey_value.second)));
-
-                    if (count != -1 && result.size() >= count) {
-                        cb();
-                        return;
-                    }
-                }
-            }
-
-            if (ret == PERR_INCOMPLETE) {
-                start_scan(hash_key,
-                           std::move(new_start_sort_key),
-                           std::move(stop_sort_key),
-                           cap_ptr,
-                           count,
-                           std::move(cb),
-                           result,
-                           false);
+        [ this, cap_ptr, count, cb = std::move(callback), &result ](
+            int error_code, pegasus_client::pegasus_scanner *hash_scanner) mutable {
+            if (error_code == PERR_OK) {
+                do_scan(hash_scanner->get_smart_wrapper(), cap_ptr, count, std::move(cb), result);
             } else {
                 cb();
             }
-        },
-        1000,
-        1000000);
+        });
 }
 
 void geo_client::do_scan(pegasus_client::pegasus_scanner_wrapper scanner_wrapper,

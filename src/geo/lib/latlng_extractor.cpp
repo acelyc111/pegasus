@@ -8,123 +8,6 @@
 namespace pegasus {
 namespace geo {
 
-#define white_space(c) ((c) == ' ' || (c) == '\t')
-#define valid_digit(c) ((c) >= '0' && (c) <= '9')
-
-template <typename T>
-bool naive(T &r, const char *p)
-{
-    // Skip leading white space, if any.
-    while (white_space(*p)) {
-        p += 1;
-    }
-
-    r = 0.0;
-    int c = 0; // counter to check how many numbers we got!
-
-    // Get the sign!
-    bool neg = false;
-    if (*p == '-') {
-        neg = true;
-        ++p;
-    } else if (*p == '+') {
-        neg = false;
-        ++p;
-    }
-
-    // Get the digits before decimal point
-    while (valid_digit(*p)) {
-        r = (r * 10.0) + (*p - '0');
-        ++p;
-        ++c;
-    }
-
-    // Get the digits after decimal point
-    if (*p == '.') {
-        T f = 0.0;
-        T scale = 1.0;
-        ++p;
-        while (*p >= '0' && *p <= '9') {
-            f = (f * 10.0) + (*p - '0');
-            ++p;
-            scale *= 10.0;
-            ++c;
-        }
-        r += f / scale;
-    }
-
-    // FIRST CHECK:
-    if (c == 0) {
-        return false;
-    } // we got no dezimal places! this cannot be any number!
-
-    // Get the digits after the "e"/"E" (exponenet)
-    if (*p == 'e' || *p == 'E') {
-        unsigned int e = 0;
-
-        bool negE = false;
-        ++p;
-        if (*p == '-') {
-            negE = true;
-            ++p;
-        } else if (*p == '+') {
-            negE = false;
-            ++p;
-        }
-        // Get exponent
-        c = 0;
-        while (valid_digit(*p)) {
-            e = (e * 10) + (*p - '0');
-            ++p;
-            ++c;
-        }
-        if (!neg && e > std::numeric_limits<T>::max_exponent10) {
-            e = std::numeric_limits<T>::max_exponent10;
-        } else if (e < std::numeric_limits<T>::min_exponent10) {
-            e = std::numeric_limits<T>::max_exponent10;
-        }
-        // SECOND CHECK:
-        if (c == 0) {
-            return false;
-        } // we got no  exponent! this was not intended!!
-
-        T scaleE = 1.0;
-        // Calculate scaling factor.
-
-        while (e >= 50) {
-            scaleE *= 1E50;
-            e -= 50;
-        }
-        // while (e >=  8) { scaleE *= 1E8;  e -=  8; }
-        while (e > 0) {
-            scaleE *= 10.0;
-            e -= 1;
-        }
-
-        if (negE) {
-            r /= scaleE;
-        } else {
-            r *= scaleE;
-        }
-    }
-
-    // POST CHECK:
-    // skip post whitespaces
-    while (white_space(*p)) {
-        ++p;
-    }
-    if (*p != '\0') {
-        return false;
-    } // if next character is not the terminating character
-
-    // Apply sign to number
-    if (neg) {
-        r = -r;
-    }
-
-    return true;
-}
-
 void extract_indexs(const std::string &text,
                     const std::vector<int> &indexs,
                     std::vector<std::string> &values,
@@ -171,7 +54,7 @@ bool latlng_extractor_for_lbs::extract_from_value(const std::string &value, S2La
     std::string lng = data[0];
     std::string lat = data[1];
     double lat_degrees, lng_degrees = 0.0;
-    if (!naive(lat_degrees, lat.c_str()) || !naive(lng_degrees, lng.c_str())) {
+    if (!dsn::buf2double(lat, lat_degrees) || !dsn::buf2double(lng, lng_degrees)) {
         return false;
     }
     latlng = S2LatLng::FromDegrees(lat_degrees, lng_degrees);
