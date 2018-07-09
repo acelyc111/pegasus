@@ -401,7 +401,7 @@ void geo_client::async_search_radial(const S2LatLng &latlng,
                                      geo_search_callback_t &&callback)
 {
     // generate a cap
-    std::shared_ptr<S2Cap> cap_ptr(new S2Cap);
+    std::shared_ptr<S2Cap> cap_ptr = std::make_shared<S2Cap>();
     gen_search_cap(latlng, radius_m, *cap_ptr);
 
     // generate cell ids
