@@ -13,6 +13,7 @@
 #include <dsn/utility/utils.h>
 #include <dsn/utility/filesystem.h>
 #include <dsn/dist/fmt_logging.h>
+#include <rocksdb/slice_transform.h>
 
 #include "base/pegasus_key_schema.h"
 #include "base/pegasus_value_schema.h"
@@ -196,6 +197,8 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
             }
         }
     }
+
+    _db_opts.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(10));
 
     // read rocksdb::BlockBasedTableOptions configurations
     rocksdb::BlockBasedTableOptions tbl_opts;
@@ -1137,7 +1140,12 @@ void pegasus_server_impl::on_get_scanner(const ::dsn::apps::get_scanner_request 
         return;
     }
 
-    std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(_rd_opts));
+    rocksdb::ReadOptions scan_opts(_rd_opts);
+    scan_opts.fill_cache = false;
+    scan_opts.prefix_same_as_start = true;
+    scan_opts.iterate_upper_bound = &stop;
+    scan_opts.pin_data = true;
+    std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(scan_opts));
     it->Seek(start);
     bool complete = false;
     bool first_exclusive = !start_inclusive;
