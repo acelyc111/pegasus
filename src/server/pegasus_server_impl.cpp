@@ -1141,10 +1141,11 @@ void pegasus_server_impl::on_get_scanner(const ::dsn::apps::get_scanner_request 
     }
 
     rocksdb::ReadOptions scan_opts(_rd_opts);
-    scan_opts.fill_cache = false;
+    if (!request.stop_inclusive) {
+        scan_opts.iterate_upper_bound = &stop;
+    }
+    //scan_opts.fill_cache = false;
     scan_opts.prefix_same_as_start = true;
-    scan_opts.iterate_upper_bound = &stop;
-    scan_opts.pin_data = true;
     std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(scan_opts));
     it->Seek(start);
     bool complete = false;
