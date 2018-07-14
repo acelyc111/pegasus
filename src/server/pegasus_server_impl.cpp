@@ -198,8 +198,6 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
         }
     }
 
-    _db_opts.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(10));
-
     // read rocksdb::BlockBasedTableOptions configurations
     rocksdb::BlockBasedTableOptions tbl_opts;
     // disable table block cache, default: false
@@ -1142,10 +1140,15 @@ void pegasus_server_impl::on_get_scanner(const ::dsn::apps::get_scanner_request 
 
     rocksdb::ReadOptions scan_opts(_rd_opts);
     if (!request.stop_inclusive) {
-        scan_opts.iterate_upper_bound = &stop;
+        if (_db_opts.prefix_extractor == nullptr || (_db_opts.prefix_extractor->InDomain(start) &&
+                                                     _db_opts.prefix_extractor->InDomain(stop))) {
+            scan_opts.iterate_upper_bound = &stop;
+        }
     }
-    //scan_opts.fill_cache = false;
-    scan_opts.prefix_same_as_start = true;
+    if (_db_opts.prefix_extractor != nullptr && _db_opts.prefix_extractor->InDomain(start) &&
+        _db_opts.prefix_extractor->InDomain(stop)) {
+        scan_opts.prefix_same_as_start = true;
+    }
     std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(scan_opts));
     it->Seek(start);
     bool complete = false;
@@ -1381,6 +1384,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
     dassert(!_is_open, "");
     ddebug("%s: start to open app %s", replica_name(), data_dir().c_str());
 
+    _db_opts.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(10));  // equal to hash key length
     rocksdb::Options opts = _db_opts;
     opts.create_if_missing = true;
     opts.error_if_exists = false;
@@ -1620,6 +1624,7 @@ public:
             _flag.store(false);
     }
     bool token_got() const { return _token_got; }
+
 private:
     std::atomic_bool &_flag;
     bool _token_got;
