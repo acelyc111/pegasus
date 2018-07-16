@@ -206,6 +206,13 @@ private:
     std::pair<std::string, bool>
     get_restore_dir_from_env(const std::map<std::string, std::string> &env_kvs);
 
+    // return positive number if app has a fixed prefix size configuration when create it,
+    // or return negative number
+    // the value configured must equal to the length of hashkeys in this table, and all the hashkeys
+    // should have the same length
+    // the value is immutable after table has been created
+    int32_t get_fixed_prefix_size_from_env(const std::map<std::string, std::string> &env_kvs);
+
     void update_usage_scenario(const std::map<std::string, std::string> &envs);
 
     // return finish time recorded in rocksdb

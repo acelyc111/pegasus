@@ -16,6 +16,8 @@ const std::string ROCKSDB_ENV_USAGE_SCENARIO_NORMAL("normal");
 const std::string ROCKSDB_ENV_USAGE_SCENARIO_PREFER_WRITE("prefer_write");
 const std::string ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD("bulk_load");
 
+const std::string ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY("rocksdb.fixed_prefix_size");
+
 /// A task of manual compaction can be triggered by update of app environment variables as follows:
 /// Periodic manual compaction: triggered every day at the given `trigger_time`.
 /// ```

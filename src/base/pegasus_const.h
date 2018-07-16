@@ -21,6 +21,8 @@ extern const std::string ROCKSDB_ENV_USAGE_SCENARIO_NORMAL;
 extern const std::string ROCKSDB_ENV_USAGE_SCENARIO_PREFER_WRITE;
 extern const std::string ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD;
 
+extern const std::string ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY;
+
 extern const std::string MANUAL_COMPACT_KEY_PREFIX;
 extern const std::string MANUAL_COMPACT_DISABLED_KEY;
 

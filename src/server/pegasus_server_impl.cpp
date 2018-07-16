@@ -14,6 +14,7 @@
 #include <dsn/utility/filesystem.h>
 #include <dsn/dist/fmt_logging.h>
 #include <rocksdb/slice_transform.h>
+#include <dsn/utility/string_conv.h>
 
 #include "base/pegasus_key_schema.h"
 #include "base/pegasus_value_schema.h"
@@ -1387,16 +1388,6 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
     dassert(!_is_open, "");
     ddebug("%s: start to open app %s", replica_name(), data_dir().c_str());
 
-    _db_opts.prefix_extractor.reset(
-        rocksdb::NewFixedPrefixTransform(10)); // equal to hash key length
-    _db_opts.memtable_prefix_bloom_size_ratio = 0.1;
-
-    rocksdb::Options opts = _db_opts;
-    opts.create_if_missing = true;
-    opts.error_if_exists = false;
-    opts.compaction_filter = &_key_ttl_compaction_filter;
-    opts.default_value_schema_version = PEGASUS_VALUE_SCHEMA_MAX_VERSION;
-
     // parse envs for parameters
     // envs is compounded in replication_app_base::open() function
     std::map<std::string, std::string> envs;
@@ -1480,6 +1471,19 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
             }
         }
     }
+
+    int32_t fixed_prefix_size = get_fixed_prefix_size_from_env(envs);
+    if (fixed_prefix_size > 0) {
+        ddebug_f("has fixed prefix(hash key) size: {}", fixed_prefix_size);
+        _db_opts.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(
+            size_t(fixed_prefix_size)));
+        _db_opts.memtable_prefix_bloom_size_ratio = 0.1;
+    }
+    rocksdb::Options opts = _db_opts;
+    opts.create_if_missing = true;
+    opts.error_if_exists = false;
+    opts.compaction_filter = &_key_ttl_compaction_filter;
+    opts.default_value_schema_version = PEGASUS_VALUE_SCHEMA_MAX_VERSION;
 
     ddebug("%s: start to open rocksDB's rdb(%s)", replica_name(), path.c_str());
 
@@ -2271,6 +2275,23 @@ pegasus_server_impl::get_restore_dir_from_env(const std::map<std::string, std::s
     std::string parent_dir = ::dsn::utils::filesystem::remove_file_name(data_dir());
     res.first = ::dsn::utils::filesystem::path_combine(parent_dir, os.str());
     return res;
+}
+
+int32_t pegasus_server_impl::get_fixed_prefix_size_from_env(
+    const std::map<std::string, std::string> &env_kvs)
+{
+    return 12;
+//    int32_t fixed_prefix_size = -1;
+//    auto it = env_kvs.find(ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY);
+//    if (it != env_kvs.end()) {
+//        if (dsn::buf2int32(it->second, fixed_prefix_size)) {
+//            ddebug_replica(
+//                "found {}={} in envs", ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY, fixed_prefix_size);
+//        } else {
+//            dwarn_replica("{} is error configured in envs", ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY);
+//        }
+//    }
+//    return fixed_prefix_size;
 }
 
 void pegasus_server_impl::update_app_envs(const std::map<std::string, std::string> &envs)
