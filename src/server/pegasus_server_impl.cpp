@@ -1139,14 +1139,17 @@ void pegasus_server_impl::on_get_scanner(const ::dsn::apps::get_scanner_request 
     }
 
     rocksdb::ReadOptions scan_opts(_rd_opts);
+    rocksdb::Slice iterate_upper_bound;
     if (!request.stop_inclusive) {
-        if (_db_opts.prefix_extractor == nullptr || (_db_opts.prefix_extractor->InDomain(start) &&
-                                                     _db_opts.prefix_extractor->InDomain(stop))) {
-            scan_opts.iterate_upper_bound = &stop;
-        }
+        iterate_upper_bound = rocksdb::Slice(stop);
+    } else {
+        iterate_upper_bound = rocksdb::Slice(std::string(stop.data(), stop.length() + "z"));
     }
-    if (_db_opts.prefix_extractor != nullptr && _db_opts.prefix_extractor->InDomain(start) &&
-        _db_opts.prefix_extractor->InDomain(stop)) {
+    scan_opts.iterate_upper_bound = &iterate_upper_bound;
+    if (_db_opts.prefix_extractor != nullptr) {
+        dassert(_db_opts.prefix_extractor->Transform(start).compare(
+                    _db_opts.prefix_extractor->Transform(stop)) == 0,
+                "");
         scan_opts.prefix_same_as_start = true;
     }
     std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(scan_opts));
@@ -1384,7 +1387,10 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
     dassert(!_is_open, "");
     ddebug("%s: start to open app %s", replica_name(), data_dir().c_str());
 
-    _db_opts.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(10));  // equal to hash key length
+    _db_opts.prefix_extractor.reset(
+        rocksdb::NewFixedPrefixTransform(10)); // equal to hash key length
+    _db_opts.memtable_prefix_bloom_size_ratio = 0.1;
+
     rocksdb::Options opts = _db_opts;
     opts.create_if_missing = true;
     opts.error_if_exists = false;
