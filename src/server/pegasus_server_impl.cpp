@@ -1140,14 +1140,15 @@ void pegasus_server_impl::on_get_scanner(const ::dsn::apps::get_scanner_request 
     }
 
     rocksdb::ReadOptions scan_opts(_rd_opts);
-    rocksdb::Slice iterate_upper_bound;
-    if (!request.stop_inclusive) {
-        iterate_upper_bound = rocksdb::Slice(stop);
-    } else {
-        iterate_upper_bound = rocksdb::Slice(std::string(stop.data(), stop.length() + "z"));
-    }
-    scan_opts.iterate_upper_bound = &iterate_upper_bound;
-    if (_db_opts.prefix_extractor != nullptr) {
+//    rocksdb::Slice iterate_upper_bound;
+//    if (!request.stop_inclusive) {
+//        iterate_upper_bound = rocksdb::Slice(stop);
+//    } else {
+//        iterate_upper_bound = rocksdb::Slice(std::string(stop.data(), stop.length()) + "z");
+//    }
+//    scan_opts.iterate_upper_bound = &iterate_upper_bound;
+    if (_db_opts.prefix_extractor != nullptr && _db_opts.prefix_extractor->InDomain(start) &&
+        _db_opts.prefix_extractor->InDomain(start)) {
         dassert(_db_opts.prefix_extractor->Transform(start).compare(
                     _db_opts.prefix_extractor->Transform(stop)) == 0,
                 "");
@@ -1475,8 +1476,8 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
     int32_t fixed_prefix_size = get_fixed_prefix_size_from_env(envs);
     if (fixed_prefix_size > 0) {
         ddebug_f("has fixed prefix(hash key) size: {}", fixed_prefix_size);
-        _db_opts.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(
-            size_t(fixed_prefix_size)));
+        _db_opts.prefix_extractor.reset(
+            rocksdb::NewFixedPrefixTransform(size_t(fixed_prefix_size)));
         _db_opts.memtable_prefix_bloom_size_ratio = 0.1;
     }
     rocksdb::Options opts = _db_opts;
@@ -2280,18 +2281,17 @@ pegasus_server_impl::get_restore_dir_from_env(const std::map<std::string, std::s
 int32_t pegasus_server_impl::get_fixed_prefix_size_from_env(
     const std::map<std::string, std::string> &env_kvs)
 {
-    return 12;
-//    int32_t fixed_prefix_size = -1;
-//    auto it = env_kvs.find(ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY);
-//    if (it != env_kvs.end()) {
-//        if (dsn::buf2int32(it->second, fixed_prefix_size)) {
-//            ddebug_replica(
-//                "found {}={} in envs", ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY, fixed_prefix_size);
-//        } else {
-//            dwarn_replica("{} is error configured in envs", ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY);
-//        }
-//    }
-//    return fixed_prefix_size;
+    int32_t fixed_prefix_size = -1;
+    auto it = env_kvs.find(ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY);
+    if (it != env_kvs.end()) {
+        if (dsn::buf2int32(it->second, fixed_prefix_size)) {
+            ddebug_replica(
+                "found {}={} in envs", ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY, fixed_prefix_size);
+        } else {
+            dwarn_replica("{} is error configured in envs", ROCKSDB_ENV_FIXED_PREFIX_SIZE_KEY);
+        }
+    }
+    return fixed_prefix_size;
 }
 
 void pegasus_server_impl::update_app_envs(const std::map<std::string, std::string> &envs)

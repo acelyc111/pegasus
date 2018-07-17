@@ -459,7 +459,7 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
             scan_count->fetch_add(1);
             start_scan(cid.ToString(),
                        "",
-                       "",
+                       "z",
                        cap_ptr,
                        single_scan_count,
                        timeout_ms,
@@ -813,9 +813,19 @@ void geo_client::async_distance(const std::string &hash_key1,
     std::shared_ptr<int> ret = std::make_shared<int>(PERR_OK);
     std::shared_ptr<std::mutex> mutex = std::make_shared<std::mutex>();
     std::shared_ptr<std::vector<S2LatLng>> get_result = std::make_shared<std::vector<S2LatLng>>();
-    auto async_get_callback = [ =, cb = std::move(callback) ](
-        int ec_, std::string &&value_, pegasus_client::internal_info &&)
+    auto async_get_callback = [
+        this,
+        hash_key1,
+        sort_key1,
+        hash_key2,
+        sort_key2,
+        ret,
+        mutex,
+        get_result,
+        cb = std::move(callback)
+    ](int ec_, std::string &&value_, pegasus_client::internal_info &&)
     {
+        S2LatLng latlng;
         if (ec_ != PERR_OK) {
             derror_f("get data failed. hash_key1={}, sort_key1={}, hash_key2={}, sort_key2={}, "
                      "error={}",
@@ -825,10 +835,7 @@ void geo_client::async_distance(const std::string &hash_key1,
                      sort_key2,
                      get_error_string(ec_));
             *ret = ec_;
-        }
-
-        S2LatLng latlng;
-        if (!_extractor->extract_from_value(value_, latlng)) {
+        } else if (!_extractor->extract_from_value(value_, latlng)) {
             derror_f("extract_from_value failed. value={}", value_);
             *ret = PERR_GEO_DECODE_VALUE_ERROR;
         }
