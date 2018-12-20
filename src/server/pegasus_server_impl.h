@@ -8,6 +8,7 @@
 #include <rocksdb/db.h>
 #include <rocksdb/table.h>
 #include <rocksdb/listener.h>
+#include <rocksdb/options.h>
 #include <dsn/perf_counter/perf_counter_wrapper.h>
 #include <dsn/dist/replication/replication.codes.h>
 #include <rrdb/rrdb_types.h>
@@ -237,6 +238,21 @@ private:
     {
         return pegasus::check_if_record_expired(
             _value_schema_version, epoch_now, utils::to_string_view(raw_value));
+    }
+
+    rocksdb::CompressionType compression_type(const std::string& compression_str) {
+        if (compression_str == "none") {
+            return rocksdb::kNoCompression;
+        } else if (compression_str == "snappy") {
+            return rocksdb::kSnappyCompression;
+        } else if (compression_str == "zstd") {
+            return rocksdb::kZSTD;
+        } else if (compression_str == "lz4") {
+            return rocksdb::kLZ4Compression;
+        } else {
+            dassert("unsupported compression type: %s", compression_str.c_str());
+            return rocksdb::kNoCompression;
+        }
     }
 
 private:

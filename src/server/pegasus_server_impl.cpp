@@ -181,27 +181,34 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
         "pegasus.server",
         "rocksdb_compression_type",
         "snappy",
-        "rocksdb options.compression, default snappy. Supported: none, snappy, zstd, lz4.");
-    if (compression_str == "none") {
-        _db_opts.compression = rocksdb::kNoCompression;
-    } else if (compression_str == "snappy") {
-        _db_opts.compression = rocksdb::kSnappyCompression;
-    } else if (compression_str == "zstd") {
-        _db_opts.compression = rocksdb::kZSTD;
-    } else if (compression_str == "lz4") {
-        _db_opts.compression = rocksdb::kLZ4Compression;
-    } else {
-        dassert("unsupported compression type: %s", compression_str.c_str());
-    }
-    if (_db_opts.compression != rocksdb::kNoCompression) {
-        // only compress levels >= 2
-        // refer to ColumnFamilyOptions::OptimizeLevelStyleCompaction()
+        "rocksdb options.compression, default snappy. Supported: '[none|snappy|zstd|lz4]' for all "
+        "level 2 and follows, and 'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' "
+        "for each level 0,1,..., the last compression type will be used for levels not specified "
+        "in the list.");
+    size_t i = compression_str.find(":");
+    if (i != std::string::npos) {
+        std::vector<std::string> compression_types;
+        dsn::utils::split_args(compression_str.substr(i + 1).c_str(), compression_types, ',');
         _db_opts.compression_per_level.resize(_db_opts.num_levels);
+        rocksdb::CompressionType last_type = rocksdb::kNoCompression;
         for (int i = 0; i < _db_opts.num_levels; ++i) {
-            if (i < 2) {
-                _db_opts.compression_per_level[i] = rocksdb::kNoCompression;
-            } else {
-                _db_opts.compression_per_level[i] = _db_opts.compression;
+            if (i < compression_types.size()) {
+                last_type = compression_type(compression_types[i]);
+            }
+            _db_opts.compression_per_level[i] = last_type;
+        }
+    } else {
+        _db_opts.compression = compression_type(compression_str);
+        if (_db_opts.compression != rocksdb::kNoCompression) {
+            // only compress levels >= 2
+            // refer to ColumnFamilyOptions::OptimizeLevelStyleCompaction()
+            _db_opts.compression_per_level.resize(_db_opts.num_levels);
+            for (int i = 0; i < _db_opts.num_levels; ++i) {
+                if (i < 2) {
+                    _db_opts.compression_per_level[i] = rocksdb::kNoCompression;
+                } else {
+                    _db_opts.compression_per_level[i] = _db_opts.compression;
+                }
             }
         }
     }
@@ -1582,7 +1589,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
             // The timer task will always running even though there is no replicas
             _update_server_rdb_stat = ::dsn::tasking::enqueue_timer(
                 LPC_REPLICATION_LONG_COMMON,
-                nullptr,              // TODO: the tracker is nullptr, we will fix it later
+                nullptr, // TODO: the tracker is nullptr, we will fix it later
                 [this]() { update_server_rocksdb_statistics(); },
                 _update_rdb_stat_interval);
         });
