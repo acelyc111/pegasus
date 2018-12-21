@@ -122,7 +122,7 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
 
     // rocksdb default: 7
     _db_opts.num_levels = (int)dsn_config_get_value_int64(
-        "pegasus.server", "rocksdb_num_levels", 6, "rocksdb options.num_levels, default 6");
+        "pegasus.server", "rocksdb_num_levels", 7, "rocksdb options.num_levels, default 7");
 
     // rocksdb default: 2MB
     _db_opts.target_file_size_base =
@@ -185,33 +185,7 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
         "level 2 and follows, and 'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' "
         "for each level 0,1,..., the last compression type will be used for levels not specified "
         "in the list.");
-    size_t i = compression_str.find(":");
-    if (i != std::string::npos) {
-        std::vector<std::string> compression_types;
-        dsn::utils::split_args(compression_str.substr(i + 1).c_str(), compression_types, ',');
-        _db_opts.compression_per_level.resize(_db_opts.num_levels);
-        rocksdb::CompressionType last_type = rocksdb::kNoCompression;
-        for (int i = 0; i < _db_opts.num_levels; ++i) {
-            if (i < compression_types.size()) {
-                last_type = compression_type(compression_types[i]);
-            }
-            _db_opts.compression_per_level[i] = last_type;
-        }
-    } else {
-        _db_opts.compression = compression_type(compression_str);
-        if (_db_opts.compression != rocksdb::kNoCompression) {
-            // only compress levels >= 2
-            // refer to ColumnFamilyOptions::OptimizeLevelStyleCompaction()
-            _db_opts.compression_per_level.resize(_db_opts.num_levels);
-            for (int i = 0; i < _db_opts.num_levels; ++i) {
-                if (i < 2) {
-                    _db_opts.compression_per_level[i] = rocksdb::kNoCompression;
-                } else {
-                    _db_opts.compression_per_level[i] = _db_opts.compression;
-                }
-            }
-        }
-    }
+    parse_compression_types(compression_str, _db_opts.compression_per_level);
 
     // disable table block cache, default: false
     if (dsn_config_get_value_bool("pegasus.server",
@@ -1424,22 +1398,19 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
 ::dsn::error_code pegasus_server_impl::start(int argc, char **argv)
 {
-    dassert(!_is_open, "");
-    ddebug("%s: start to open app %s", replica_name(), data_dir().c_str());
-
-    rocksdb::Options opts = _db_opts;
-    opts.create_if_missing = true;
-    opts.error_if_exists = false;
-    opts.default_value_schema_version = PEGASUS_VALUE_SCHEMA_MAX_VERSION;
+    dassert_replica(!_is_open, "replica is already opened.");
+    ddebug_replica("start to open app {}", data_dir());
 
     // parse envs for parameters
     // envs is compounded in replication_app_base::open() function
     std::map<std::string, std::string> envs;
     if (argc > 0) {
-        if (((argc - 1) % 2 != 0) || argv == nullptr) {
-            derror("%s: parse envs failed, because invalid argc = %d or argv = nullptr",
-                   replica_name(),
-                   argc);
+        if ((argc - 1) % 2 != 0) {
+            derror_replica("parse envs failed, invalid argc = {}", argc);
+            return ::dsn::ERR_INVALID_PARAMETERS;
+        }
+        if (argv == nullptr) {
+            derror_replica("parse envs failed, invalid argv = nullptr");
             return ::dsn::ERR_INVALID_PARAMETERS;
         }
         int idx = 1;
@@ -1449,6 +1420,12 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
             envs.emplace(key, value);
         }
     }
+    update_app_envs(envs);
+
+    rocksdb::Options opts = _db_opts;
+    opts.create_if_missing = true;
+    opts.error_if_exists = false;
+    opts.default_value_schema_version = PEGASUS_VALUE_SCHEMA_MAX_VERSION;
 
     //
     // here, we must distinguish three cases, such as:
@@ -1540,8 +1517,6 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
         // set default usage scenario
         set_usage_scenario(ROCKSDB_ENV_USAGE_SCENARIO_NORMAL);
-
-        update_app_envs(envs);
 
         parse_checkpoints();
 
@@ -2323,6 +2298,7 @@ void pegasus_server_impl::update_app_envs(const std::map<std::string, std::strin
 {
     update_usage_scenario(envs);
     update_default_ttl(envs);
+    update_compression(envs);
     _manual_compact_svc.start_manual_compact_if_needed(envs);
 }
 
@@ -2367,6 +2343,24 @@ void pegasus_server_impl::update_default_ttl(const std::map<std::string, std::st
         }
         _server_write->set_default_ttl(static_cast<uint32_t>(ttl));
         _key_ttl_compaction_filter_factory->SetDefaultTTL(static_cast<uint32_t>(ttl));
+    }
+}
+
+void pegasus_server_impl::update_compression(const std::map<std::string, std::string> &envs)
+{
+    auto find = envs.find(ROCKSDB_COMPRESSION_TYPES);
+    if (find != envs.end()) {
+        std::vector<rocksdb::CompressionType> compression_per_level;
+        if (!parse_compression_types(find->second, compression_per_level)) {
+            derror_replica("{}={} is invalid.", find->first, find->second);
+            return;
+        }
+        for (unsigned int i = 0; i < compression_per_level.size(); i++) {
+            ddebug_replica("_db_opts.compression_per_level[{}]: {}",
+                          i,
+                          compression_type_to_string(compression_per_level[i]));
+        }
+        _db_opts.compression_per_level = compression_per_level;
     }
 }
 
@@ -2457,6 +2451,11 @@ bool pegasus_server_impl::set_usage_scenario(const std::string &usage_scenario)
 bool pegasus_server_impl::set_options(
     const std::unordered_map<std::string, std::string> &new_options)
 {
+    if (!_is_open) {
+        ddebug_replica("set_options failed, db is not open");
+        return false;
+    }
+
     std::ostringstream oss;
     int i = 0;
     for (auto &kv : new_options) {

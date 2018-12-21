@@ -37,4 +37,6 @@ extern const std::string MANUAL_COMPACT_BOTTOMMOST_LEVEL_COMPACTION_FORCE;
 extern const std::string MANUAL_COMPACT_BOTTOMMOST_LEVEL_COMPACTION_SKIP;
 
 extern const std::string TABLE_LEVEL_DEFAULT_TTL;
+
+extern const std::string ROCKSDB_COMPRESSION_TYPES;
 } // namespace pegasus

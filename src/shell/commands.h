@@ -253,7 +253,7 @@ inline bool create_app(command_executor *e, shell_context *sc, arguments args)
             }
             break;
         case 'e':
-            if (!::dsn::utils::parse_kv_map(optarg, envs, ',', '=')) {
+            if (!::dsn::utils::parse_kv_map(optarg, envs, ';', '=')) {
                 fprintf(stderr, "invalid envs: %s\n", optarg);
                 return false;
             }

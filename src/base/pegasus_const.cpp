@@ -58,4 +58,6 @@ const std::string MANUAL_COMPACT_BOTTOMMOST_LEVEL_COMPACTION_SKIP("skip");
 ///   * an exist item, 'default_ttl' will be applied on this item when it was compacted.
 /// <= 0 means no effect
 const std::string TABLE_LEVEL_DEFAULT_TTL("default_ttl");
+
+const std::string ROCKSDB_COMPRESSION_TYPES("compression_types");
 } // namespace pegasus

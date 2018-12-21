@@ -215,6 +215,34 @@ private:
 
     void update_default_ttl(const std::map<std::string, std::string> &envs);
 
+    void update_compression(const std::map<std::string, std::string> &envs);
+
+    std::string compression_type_to_string(rocksdb::CompressionType type)
+    {
+        switch (type) {
+        case rocksdb::kNoCompression:
+            return "NoCompression";
+        case rocksdb::kSnappyCompression:
+            return "Snappy";
+        case rocksdb::kZlibCompression:
+            return "Zlib";
+        case rocksdb::kBZip2Compression:
+            return "BZip2";
+        case rocksdb::kLZ4Compression:
+            return "LZ4";
+        case rocksdb::kLZ4HCCompression:
+            return "LZ4HC";
+        case rocksdb::kXpressCompression:
+            return "Xpress";
+        case rocksdb::kZSTD:
+        case rocksdb::kZSTDNotFinalCompression:
+            return "ZSTD";
+        default:
+            derror_replica("Unsopprted compression: {}.", type);
+            return "";
+        }
+    }
+
     // return finish time recorded in rocksdb
     uint64_t do_manual_compact(const rocksdb::CompactRangeOptions &options);
 
@@ -240,19 +268,60 @@ private:
             _value_schema_version, epoch_now, utils::to_string_view(raw_value));
     }
 
-    rocksdb::CompressionType compression_type(const std::string& compression_str) {
-        if (compression_str == "none") {
-            return rocksdb::kNoCompression;
-        } else if (compression_str == "snappy") {
-            return rocksdb::kSnappyCompression;
-        } else if (compression_str == "zstd") {
-            return rocksdb::kZSTD;
-        } else if (compression_str == "lz4") {
-            return rocksdb::kLZ4Compression;
+    bool parse_compression_types(const std::string &config,
+                                 std::vector<rocksdb::CompressionType> &compression_per_level)
+    {
+        static const std::string compression_header = "per_level:";
+        std::vector<rocksdb::CompressionType> tmp(_db_opts.num_levels, rocksdb::kNoCompression);
+        size_t i = config.find(compression_header);
+        if (i != std::string::npos) {
+            std::vector<std::string> compression_types;
+            dsn::utils::split_args(
+                config.substr(compression_header.length()).c_str(), compression_types, ',');
+            rocksdb::CompressionType last_type = rocksdb::kNoCompression;
+            for (int i = 0; i < _db_opts.num_levels; ++i) {
+                if (i < compression_types.size()) {
+                    if (!compression_type(compression_types[i], last_type)) {
+                        return false;
+                    }
+                }
+                tmp[i] = last_type;
+            }
         } else {
-            dassert("unsupported compression type: %s", compression_str.c_str());
-            return rocksdb::kNoCompression;
+            rocksdb::CompressionType compression;
+            if (!compression_type(config, compression)) {
+                return false;
+            }
+            if (compression != rocksdb::kNoCompression) {
+                // only compress levels >= 2
+                // refer to ColumnFamilyOptions::OptimizeLevelStyleCompaction()
+                for (int i = 0; i < _db_opts.num_levels; ++i) {
+                    if (i >= 2) {
+                        tmp[i] = compression;
+                    }
+                }
+            }
         }
+
+        compression_per_level = tmp;
+        return true;
+    }
+
+    bool compression_type(const std::string &compression_str, rocksdb::CompressionType &type)
+    {
+        if (compression_str == "none") {
+            type = rocksdb::kNoCompression;
+        } else if (compression_str == "snappy") {
+            type = rocksdb::kSnappyCompression;
+        } else if (compression_str == "zstd") {
+            type = rocksdb::kZSTD;
+        } else if (compression_str == "lz4") {
+            type = rocksdb::kLZ4Compression;
+        } else {
+            derror_replica("unsupported compression type: {}", compression_str);
+            return false;
+        }
+        return true;
     }
 
 private:
