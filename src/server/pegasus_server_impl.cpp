@@ -2373,6 +2373,9 @@ bool pegasus_server_impl::parse_compression_types(
     std::vector<rocksdb::CompressionType> tmp(_db_opts.num_levels, rocksdb::kNoCompression);
     size_t i = config.find(compression_header);
     if (i != std::string::npos) {
+        // New compression config style.
+        // 'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' for each level 0,1,...
+        // The last compression type will be used for levels not specified in the list.
         std::vector<std::string> compression_types;
         dsn::utils::split_args(
             config.substr(compression_header.length()).c_str(), compression_types, ',');
@@ -2386,6 +2389,8 @@ bool pegasus_server_impl::parse_compression_types(
             tmp[i] = last_type;
         }
     } else {
+        // Old compression config style.
+        // '[none|snappy|zstd|lz4]' for all level 2 and higher levels
         rocksdb::CompressionType compression;
         if (!compression_str2type(config, compression)) {
             return false;

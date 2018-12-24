@@ -59,6 +59,18 @@ public:
     {
         return _server->compression_type2str(type);
     }
+
+    void update_app_envs(const std::map<std::string, std::string> &envs) {
+        _server->update_app_envs(envs);
+    }
+
+    void
+    check_db_compression_types(const std::vector<rocksdb::CompressionType> &compression_per_level,
+                               const std::string &msg = "")
+    {
+        rocksdb::Options opts = _server->_db->GetOptions();
+        ASSERT_EQ(opts.compression_per_level, compression_per_level) << msg;
+    }
 };
 
 TEST_F(pegasus_storage_options_test, compression_type_convert_ok)
@@ -117,7 +129,37 @@ TEST_F(pegasus_storage_options_test, compression_types_convert_fail)
     compression_types_convert_fail("per_levelsnappy");
 }
 
-TEST_F(pegasus_storage_options_test, check_rocksdb_compression_types) {}
+TEST_F(pegasus_storage_options_test, check_rocksdb_compression_types_default)
+{
+    start();
+    check_db_compression_types({none, none, snappy, snappy, snappy, snappy, snappy}, "start with default");
+}
+
+TEST_F(pegasus_storage_options_test, check_rocksdb_compression_types_start_with_old_style)
+{
+    start({{"compression_types", "lz4"}});
+    check_db_compression_types({none, none, lz4, lz4, lz4, lz4, lz4}, "start with old style");
+}
+
+TEST_F(pegasus_storage_options_test, check_rocksdb_compression_types_start_with_new_style)
+{
+    start({{"compression_types", "per_level:none,snappy,zstd,lz4"}});
+    check_db_compression_types({none, snappy, zstd, lz4, lz4, lz4, lz4}, "start with new style");
+}
+
+TEST_F(pegasus_storage_options_test, check_rocksdb_compression_types_update)
+{
+    start();
+    check_db_compression_types({none, none, snappy, snappy, snappy, snappy, snappy}, "start with default");
+
+    update_app_envs({{"compression_types", "lz4"}});
+    // Exist db is immutable for compression types.
+    check_db_compression_types({none, none, snappy, snappy, snappy, snappy, snappy}, "update with old style");
+
+    update_app_envs({{"compression_types", "per_level:none,snappy,zstd,lz4"}});
+    // Exist db is immutable for compression types.
+    check_db_compression_types({none, none, snappy, snappy, snappy, snappy, snappy}, "update with new style");
+}
 
 } // namespace server
 } // namespace pegasus
