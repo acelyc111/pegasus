@@ -59,5 +59,9 @@ const std::string MANUAL_COMPACT_BOTTOMMOST_LEVEL_COMPACTION_SKIP("skip");
 /// <= 0 means no effect
 const std::string TABLE_LEVEL_DEFAULT_TTL("default_ttl");
 
+/// Available config:
+///  * '[none|snappy|zstd|lz4]' for all level 2 and higher levels
+///  * 'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' for each level 0,1,..., the
+///  last compression type will be used for levels not specified in the list.
 const std::string ROCKSDB_COMPRESSION_TYPES("compression_types");
 } // namespace pegasus

@@ -182,11 +182,10 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
         "pegasus.server",
         "rocksdb_compression_type",
         "snappy",
-        "rocksdb options.compression, default snappy. Supported: '[none|snappy|zstd|lz4]' for all "
-        "level 2 and higher levels, and "
-        "'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' "
-        "for each level 0,1,..., the last compression type will be used for levels not specified "
-        "in the list.");
+        "rocksdb options.compression, default 'snappy'. Available config: '[none|snappy|zstd|lz4]' "
+        "for all level 2 and higher levels, and "
+        "'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' for each level 0,1,..., the "
+        "last compression type will be used for levels not specified in the list.");
     dassert(parse_compression_types(compression_str, _db_opts.compression_per_level),
             "parse rocksdb_compression_type failed.");
 

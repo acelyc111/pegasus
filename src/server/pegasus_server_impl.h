@@ -219,7 +219,7 @@ private:
 
     void update_compression(const std::map<std::string, std::string> &envs);
 
-    // return true if parse compression types 'config' success.
+    // return true if parse compression types 'config' success, otherwise return false.
     // 'compression_per_level' will not be changed if parse failed.
     bool parse_compression_types(const std::string &config,
                                  std::vector<rocksdb::CompressionType> &compression_per_level);
