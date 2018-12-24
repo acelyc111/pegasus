@@ -1423,6 +1423,10 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
         }
     }
 
+    for (auto &env : envs) {
+        ddebug_replica("env {} = {}", env.first, env.second);
+    }
+
     // Update all envs before opening db, ensure all envs are effective for the newly opened db.
     update_app_envs(envs);
 
@@ -2367,7 +2371,9 @@ void pegasus_server_impl::update_compression(const std::map<std::string, std::st
                                compression_type2str(compression_per_level[i]));
             }
             _db_opts.compression_per_level = compression_per_level;
-            dwarn_replica("These changes will be enable since the next restart!");
+            if (_is_open) {
+                dwarn_replica("These changes will be enabled since the next restart!");
+            }
         }
     }
 }
