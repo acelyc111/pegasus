@@ -183,10 +183,12 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
         "rocksdb_compression_type",
         "snappy",
         "rocksdb options.compression, default snappy. Supported: '[none|snappy|zstd|lz4]' for all "
-        "level 2 and follows, and 'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' "
+        "level 2 and higher levels, and "
+        "'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' "
         "for each level 0,1,..., the last compression type will be used for levels not specified "
         "in the list.");
-    parse_compression_types(compression_str, _db_opts.compression_per_level);
+    dassert(parse_compression_types(compression_str, _db_opts.compression_per_level),
+            "parse rocksdb_compression_type failed.");
 
     // disable table block cache, default: false
     if (dsn_config_get_value_bool("pegasus.server",
@@ -1421,6 +1423,8 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
             envs.emplace(key, value);
         }
     }
+
+    // Update all envs before opening db, ensure all envs are effective for the newly opened db.
     update_app_envs(envs);
 
     rocksdb::Options opts = _db_opts;
@@ -2356,6 +2360,7 @@ void pegasus_server_impl::update_compression(const std::map<std::string, std::st
             derror_replica("{}={} is invalid.", find->first, find->second);
             return;
         }
+
         if (_db_opts.compression_per_level != compression_per_level) {
             for (unsigned int i = 0; i < compression_per_level.size(); i++) {
                 ddebug_replica("_db_opts.compression_per_level[{}]: {}",
@@ -2363,6 +2368,7 @@ void pegasus_server_impl::update_compression(const std::map<std::string, std::st
                                compression_type2str(compression_per_level[i]));
             }
             _db_opts.compression_per_level = compression_per_level;
+            dwarn_replica("These changes will be enable since the next restart!");
         }
     }
 }
@@ -2422,7 +2428,7 @@ bool pegasus_server_impl::compression_str2type(const std::string &compression_st
     } else if (compression_str == "zstd") {
         type = rocksdb::kZSTD;
     } else {
-        derror_replica("unsupported compression type: {}.", compression_str);
+        derror_replica("Unsopprted compression type: {}.", compression_str);
         return false;
     }
     return true;
@@ -2440,7 +2446,7 @@ std::string pegasus_server_impl::compression_type2str(rocksdb::CompressionType t
     case rocksdb::kZSTD:
         return "zstd";
     default:
-        derror_replica("Unsopprted compression: {}.", type);
+        derror_replica("Unsopprted compression type: {}.", type);
         return "";
     }
 }
@@ -2533,7 +2539,7 @@ bool pegasus_server_impl::set_options(
     const std::unordered_map<std::string, std::string> &new_options)
 {
     if (!_is_open) {
-        ddebug_replica("set_options failed, db is not open");
+        dwarn_replica("set_options failed, db is not open");
         return false;
     }
 
