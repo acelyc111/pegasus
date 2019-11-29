@@ -1781,3 +1781,26 @@ TEST(basic, full_scan_with_filter)
     ASSERT_EQ(PERR_OK, ret);
     ASSERT_EQ(8, deleted_count);
 }
+
+TEST(basic, full_scan_result_in_order)
+{
+    std::vector<std::string> hashkeys({"aaaaa", "bbbb", "ccc", "dd", "e"});
+    for (const auto& hashkey : hashkeys) {
+      int ret = client->set(hashkey, "sk", "v");
+      ASSERT_EQ(PERR_OK, ret);
+    }
+
+    pegasus_client::scan_options options;
+    std::vector<pegasus_client::pegasus_scanner *> scanners;
+    int ret = client->get_unordered_scanners(1, options, scanners);
+    ASSERT_EQ(PERR_OK, ret);
+    ASSERT_EQ(1, scanners.size());
+    pegasus_client::pegasus_scanner *scanner = scanners[0];
+    std::vector<std::string> result_hashkeys;
+    std::string hash_key, sort_key, value;
+    while (!(ret = (scanner->next(hash_key, sort_key, value)))) {
+        result_hashkeys.push_back(hash_key);
+    }
+    delete scanner;
+    ASSERT_EQ(hashkeys, result_hashkeys);
+}
