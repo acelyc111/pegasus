@@ -293,8 +293,26 @@ private:
         return false;
     }
 
+    int64_t get_last_flushed_decree() const;
+    uint32_t get_data_version() const;
+    int64_t get_last_manual_compact_finish_time() const;
+    int64_t get_value_from_meta_cf(const std::string& key) const;
+
+    void release_db() {
+        delete _db;
+        _db = nullptr;
+        delete _data_cf;
+        _data_cf = nullptr;
+        delete _meta_cf;
+        _meta_cf = nullptr;
+    }
+
 private:
     static const std::string COMPRESSION_HEADER;
+    static const std::string DATA_COLUMN_FAMILY_NAME;
+    static const std::string META_COLUMN_FAMILY_NAME;
+    static const std::string DATA_VERSION;
+    static const std::string LAST_FLUSHED_DECREE;
 
     dsn::gpid _gpid;
     std::string _primary_address;
@@ -315,6 +333,8 @@ private:
     std::string _usage_scenario;
 
     rocksdb::DB *_db;
+    rocksdb::ColumnFamilyHandle *_data_cf;
+    rocksdb::ColumnFamilyHandle *_meta_cf;
     static std::shared_ptr<rocksdb::Cache> _block_cache;
     volatile bool _is_open;
     uint32_t _pegasus_data_version;

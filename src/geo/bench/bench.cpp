@@ -17,6 +17,8 @@
 
 static const int data_count = 10000;
 
+auto g_statistics = rocksdb::CreateDBStatistics();
+
 int main(int argc, char **argv)
 {
     if (argc < 7) {

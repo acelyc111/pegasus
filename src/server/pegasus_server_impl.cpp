@@ -48,10 +48,16 @@ std::shared_ptr<rocksdb::Cache> pegasus_server_impl::_block_cache;
 ::dsn::task_ptr pegasus_server_impl::_update_server_rdb_stat;
 ::dsn::perf_counter_wrapper pegasus_server_impl::_pfc_rdb_block_cache_mem_usage;
 const std::string pegasus_server_impl::COMPRESSION_HEADER = "per_level:";
+const std::string pegasus_server_impl::DATA_COLUMN_FAMILY_NAME = "default";
+const std::string pegasus_server_impl::META_COLUMN_FAMILY_NAME = "pegasus_meta_cf";
+const std::string pegasus_server_impl::DATA_VERSION = "pegasus_data_version";
+const std::string pegasus_server_impl::LAST_FLUSHED_DECREE = "pegasus_last_flushed_decree";
 
 pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     : dsn::apps::rrdb_service(r),
       _db(nullptr),
+      _data_cf(nullptr),
+      _meta_cf(nullptr),
       _is_open(false),
       _pegasus_data_version(0),
       _last_durable_decree(0),
@@ -554,7 +560,7 @@ void pegasus_server_impl::on_get(const ::dsn::blob &key,
 
     rocksdb::Slice skey(key.data(), key.length());
     std::string value;
-    rocksdb::Status status = _db->Get(_rd_opts, skey, &value);
+    rocksdb::Status status = _db->Get(_rd_opts, _data_cf, skey, &value);
 
     if (status.ok()) {
         if (check_if_record_expired(utils::epoch_now(), value)) {
@@ -726,7 +732,7 @@ void pegasus_server_impl::on_multi_get(const ::dsn::apps::multi_get_request &req
         std::unique_ptr<rocksdb::Iterator> it;
         bool complete = false;
         if (!request.reverse) {
-            it.reset(_db->NewIterator(_rd_opts));
+            it.reset(_db->NewIterator(_rd_opts, _data_cf));
             it->Seek(start);
             bool first_exclusive = !start_inclusive;
             while (count < max_kv_count && size < max_kv_size && it->Valid()) {
@@ -788,7 +794,7 @@ void pegasus_server_impl::on_multi_get(const ::dsn::apps::multi_get_request &req
                 rd_opts.total_order_seek = true;
                 rd_opts.prefix_same_as_start = false;
             }
-            it.reset(_db->NewIterator(rd_opts));
+            it.reset(_db->NewIterator(rd_opts, _data_cf));
             it->SeekForPrev(stop);
             bool first_exclusive = !stop_inclusive;
             std::vector<::dsn::apps::key_value> reverse_kvs;
@@ -889,7 +895,8 @@ void pegasus_server_impl::on_multi_get(const ::dsn::apps::multi_get_request &req
             keys_holder.emplace_back(std::move(raw_key));
         }
 
-        std::vector<rocksdb::Status> statuses = _db->MultiGet(_rd_opts, keys, &values);
+        std::vector<rocksdb::Status> statuses = _db->MultiGet(
+            _rd_opts, std::vector<rocksdb::ColumnFamilyHandle*>(keys.size(), _data_cf), keys, &values);
         for (int i = 0; i < keys.size(); i++) {
             rocksdb::Status &status = statuses[i];
             std::string &value = values[i];
@@ -1022,7 +1029,7 @@ void pegasus_server_impl::on_sortkey_count(const ::dsn::blob &hash_key,
     rocksdb::Slice stop(stop_key.data(), stop_key.length());
     rocksdb::ReadOptions options = _rd_opts;
     options.iterate_upper_bound = &stop;
-    std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(options));
+    std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(options, _data_cf));
     it->Seek(start);
     resp.count = 0;
     uint32_t epoch_now = ::pegasus::utils::epoch_now();
@@ -1080,7 +1087,7 @@ void pegasus_server_impl::on_ttl(const ::dsn::blob &key,
 
     rocksdb::Slice skey(key.data(), key.length());
     std::string value;
-    rocksdb::Status status = _db->Get(_rd_opts, skey, &value);
+    rocksdb::Status status = _db->Get(_rd_opts, _data_cf, skey, &value);
 
     uint32_t expire_ts = 0;
     uint32_t now_ts = ::pegasus::utils::epoch_now();
@@ -1225,7 +1232,7 @@ void pegasus_server_impl::on_get_scanner(const ::dsn::apps::get_scanner_request 
         return;
     }
 
-    std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(rd_opts));
+    std::unique_ptr<rocksdb::Iterator> it(_db->NewIterator(rd_opts, _data_cf));
     it->Seek(start);
     bool complete = false;
     bool first_exclusive = !start_inclusive;
@@ -1559,16 +1566,70 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
     ddebug("%s: start to open rocksDB's rdb(%s)", replica_name(), path.c_str());
 
-    auto status = rocksdb::DB::Open(opts, path, &_db);
+    std::vector<std::string> cf_list;
+    auto status = rocksdb::DB::ListColumnFamilies(rocksdb::DBOptions(), path, &cf_list);
+    if (!status.ok()) {
+        derror_replica("rocksdb ListColumnFamilies failed, error = {}", status.ToString());
+        return ::dsn::ERR_LOCAL_APP_FAILURE;
+    }
+
+    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
+    for (auto cf_name : cf_list) {
+        column_families.emplace_back(cf_name, opts);
+    }
+    dassert_replica(cf_list.size() == 1 || cf_list.size() == 2,
+                    "cf_list's size should be 1 or 2, but got {}",
+                    cf_list.size());
+
+    // TODO(yingchun): DBOptions or Options
+    std::vector<rocksdb::ColumnFamilyHandle*> handles_opened;
+    status = rocksdb::DB::Open(opts, path, column_families, &handles_opened, &_db);
     if (status.ok()) {
-        _last_committed_decree = _db->GetLastFlushedDecree();
-        _pegasus_data_version = _db->GetPegasusDataVersion();
+        dassert_replica(cf_list.size() == handles_opened.size(),
+                        "{} vs {}",
+                        cf_list.size(),
+                        handles_opened.size());
+        if (cf_list.size() == 1) {
+            dassert_replica(cf_list[0] == DATA_COLUMN_FAMILY_NAME,
+                            "The single column family must be '{}', but got '{}'",
+                            DATA_COLUMN_FAMILY_NAME,
+                            cf_list[0]);
+            _data_cf = handles_opened[0];
+            // TODO(yingchun): ColumnFamilyOptions or Options
+            status = _db->CreateColumnFamily(opts, META_COLUMN_FAMILY_NAME, &_meta_cf);
+            if (!status.ok()) {
+                derror_replica("rocksdb CreateColumnFamily failed, error = {}", status.ToString());
+                return ::dsn::ERR_LOCAL_APP_FAILURE;
+            }
+        } else {
+            dassert_replica(handles_opened.size() == 2,
+                            "At most 2 column families exist in pegasus rocksdb, but got {}",
+                            handles_opened.size());
+            if (cf_list[0] == DATA_COLUMN_FAMILY_NAME) {
+                dassert_replica(cf_list[1] == META_COLUMN_FAMILY_NAME,
+                                "The second column family must be '{}', but got '{}'",
+                                META_COLUMN_FAMILY_NAME,
+                                cf_list[1]);
+                _data_cf = handles_opened[0];
+                _meta_cf = handles_opened[1];
+            } else {
+                dassert_replica(
+                    cf_list[0] == META_COLUMN_FAMILY_NAME && cf_list[1] == DATA_COLUMN_FAMILY_NAME,
+                    "The two column families must be '{}' and '{}', but got '{}' and '{}'",
+                    META_COLUMN_FAMILY_NAME,
+                    DATA_COLUMN_FAMILY_NAME,
+                    cf_list[0],
+                    cf_list[1]);
+                _data_cf = handles_opened[1];
+                _meta_cf = handles_opened[0];
+            }
+        }
+
+        _last_committed_decree = get_last_flushed_decree();
+        _pegasus_data_version = get_data_version();
         if (_pegasus_data_version > PEGASUS_DATA_VERSION_MAX) {
-            derror("%s: open app failed, unsupported data version %" PRIu32,
-                   replica_name(),
-                   _pegasus_data_version);
-            delete _db;
-            _db = nullptr;
+            derror_replica("open app failed, unsupported data version {}", _pegasus_data_version);
+            release_db();
             return ::dsn::ERR_LOCAL_APP_FAILURE;
         }
 
@@ -1577,13 +1638,13 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
         _key_ttl_compaction_filter_factory->EnableFilter();
 
         // update LastManualCompactFinishTime
-        _manual_compact_svc.init_last_finish_time_ms(_db->GetLastManualCompactFinishTime());
+        _manual_compact_svc.init_last_finish_time_ms(get_last_manual_compact_finish_time());
 
         parse_checkpoints();
 
         // checkpoint if necessary to make last_durable_decree() fresh.
         // only need async checkpoint because we sure that memtable is empty now.
-        int64_t last_flushed = _db->GetLastFlushedDecree();
+        int64_t last_flushed = get_last_flushed_decree();
         if (last_flushed != last_durable_decree()) {
             ddebug("%s: start to do async checkpoint, last_durable_decree = %" PRId64
                    ", last_flushed_decree = %" PRId64,
@@ -1593,8 +1654,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
             auto err = async_checkpoint(false);
             if (err != ::dsn::ERR_OK) {
                 derror("%s: create checkpoint failed, error = %s", replica_name(), err.to_string());
-                delete _db;
-                _db = nullptr;
+                release_db();
                 return err;
             }
             dassert(last_flushed == last_durable_decree(),
@@ -1659,7 +1719,7 @@ void pegasus_server_impl::cancel_background_work(bool wait)
     }
 
     if (!clear_state) {
-        auto status = _db->Flush(rocksdb::FlushOptions());
+        auto status = _db->Flush(rocksdb::FlushOptions(), _data_cf);
         if (!status.ok()) {
             derror("%s: flush memtable on close failed: %s",
                    replica_name(),
@@ -1677,8 +1737,7 @@ void pegasus_server_impl::cancel_background_work(bool wait)
     _context_cache.clear();
 
     _is_open = false;
-    delete _db;
-    _db = nullptr;
+    release_db();
 
     std::deque<int64_t> reserved_checkpoints;
     {
@@ -1801,7 +1860,7 @@ private:
     {
         ::dsn::utils::auto_lock<::dsn::utils::ex_lock_nr> l(_checkpoints_lock);
         dcheck_gt_replica(last_commit, last_durable_decree());
-        int64_t last_flushed = static_cast<int64_t>(_db->GetLastFlushedDecree());
+        int64_t last_flushed = static_cast<int64_t>(get_last_flushed_decree());
         dcheck_eq_replica(last_commit, last_flushed);
         if (!_checkpoints.empty()) {
             dcheck_gt_replica(last_commit, _checkpoints.back());
@@ -1827,7 +1886,7 @@ private:
         return ::dsn::ERR_WRONG_TIMING;
 
     int64_t last_durable = last_durable_decree();
-    int64_t last_flushed = static_cast<int64_t>(_db->GetLastFlushedDecree());
+    int64_t last_flushed = static_cast<int64_t>(get_last_flushed_decree());
     int64_t last_commit = last_committed_decree();
 
     dassert(last_durable <= last_flushed, "%" PRId64 " VS %" PRId64, last_durable, last_flushed);
@@ -1846,7 +1905,7 @@ private:
             // trigger flushing memtable, but not wait
             rocksdb::FlushOptions options;
             options.wait = false;
-            auto status = _db->Flush(options);
+            auto status = _db->Flush(options, _data_cf);
             if (status.ok()) {
                 ddebug("%s: trigger flushing memtable succeed", replica_name());
                 return ::dsn::ERR_TRY_AGAIN;
@@ -2267,7 +2326,7 @@ void pegasus_server_impl::update_replica_rocksdb_statistics()
     _pfc_rdb_sst_count->set(val);
     dinfo_replica("_pfc_rdb_sst_count: {}", val);
 
-    if (_db->GetProperty(rocksdb::DB::Properties::kTotalSstFilesSize, &str_val) &&
+    if (_db->GetProperty(_data_cf, rocksdb::DB::Properties::kTotalSstFilesSize, &str_val) &&
         dsn::buf2uint64(str_val, val)) {
         static uint64_t bytes_per_mb = 1U << 20U;
         _pfc_rdb_sst_size->set(val / bytes_per_mb);
@@ -2283,13 +2342,13 @@ void pegasus_server_impl::update_replica_rocksdb_statistics()
     _pfc_rdb_block_cache_total_count->set(block_cache_total);
     dinfo_replica("_pfc_rdb_block_cache_total_count: {}", block_cache_total);
 
-    if (_db->GetProperty(rocksdb::DB::Properties::kEstimateTableReadersMem, &str_val) &&
+    if (_db->GetProperty(_data_cf, rocksdb::DB::Properties::kEstimateTableReadersMem, &str_val) &&
         dsn::buf2uint64(str_val, val)) {
         _pfc_rdb_index_and_filter_blocks_mem_usage->set(val);
         dinfo_replica("_pfc_rdb_index_and_filter_blocks_mem_usage: {} bytes", val);
     }
 
-    if (_db->GetProperty(rocksdb::DB::Properties::kCurSizeAllMemTables, &str_val) &&
+    if (_db->GetProperty(_data_cf, rocksdb::DB::Properties::kCurSizeAllMemTables, &str_val) &&
         dsn::buf2uint64(str_val, val)) {
         _pfc_rdb_memtable_mem_usage->set(val);
         dinfo_replica("_pfc_rdb_memtable_mem_usage: {} bytes", val);
@@ -2297,7 +2356,7 @@ void pegasus_server_impl::update_replica_rocksdb_statistics()
 
     // for the same n kv pairs, kEstimateNumKeys will be counted n times, you need compaction to
     // remove duplicate
-    if (_db->GetProperty(rocksdb::DB::Properties::kEstimateNumKeys, &str_val) &&
+    if (_db->GetProperty(_data_cf, rocksdb::DB::Properties::kEstimateNumKeys, &str_val) &&
         dsn::buf2uint64(str_val, val)) {
         _pfc_rdb_estimate_num_keys->set(val);
         dinfo_replica("_pfc_rdb_estimate_num_keys: {}", val);
@@ -2658,7 +2717,7 @@ bool pegasus_server_impl::set_options(
         oss << kv.first << "=" << kv.second;
         i++;
     }
-    rocksdb::Status status = _db->SetOptions(new_options);
+    rocksdb::Status status = _db->SetOptions(_data_cf, new_options);
     if (status == rocksdb::Status::OK()) {
         ddebug("%s: rocksdb set options returns %s: {%s}",
                replica_name(),
@@ -2679,7 +2738,7 @@ uint64_t pegasus_server_impl::do_manual_compact(const rocksdb::CompactRangeOptio
     // wait flush before compact to make all data compacted.
     ddebug_replica("start Flush");
     uint64_t start_time = dsn_now_ms();
-    rocksdb::Status status = _db->Flush(rocksdb::FlushOptions());
+    rocksdb::Status status = _db->Flush(rocksdb::FlushOptions(), _data_cf);
     ddebug_replica("finish Flush, status = {}, time_used = {}ms",
                    status.ToString(),
                    dsn_now_ms() - start_time);
@@ -2691,7 +2750,7 @@ uint64_t pegasus_server_impl::do_manual_compact(const rocksdb::CompactRangeOptio
                        ? "force"
                        : "skip");
     start_time = dsn_now_ms();
-    status = _db->CompactRange(options, nullptr, nullptr);
+    status = _db->CompactRange(options, _data_cf, nullptr, nullptr);
     ddebug_replica("finish CompactRange, status = {}, time_used = {}ms",
                    status.ToString(),
                    dsn_now_ms() - start_time);
@@ -2716,7 +2775,7 @@ uint64_t pegasus_server_impl::do_manual_compact(const rocksdb::CompactRangeOptio
     // update rocksdb statistics immediately
     update_replica_rocksdb_statistics();
 
-    return _db->GetLastManualCompactFinishTime();
+    return get_last_manual_compact_finish_time();
 }
 
 bool pegasus_server_impl::release_storage_after_manual_compact()
@@ -2726,7 +2785,7 @@ bool pegasus_server_impl::release_storage_after_manual_compact()
     // wait flush before async checkpoint to make all data compacted
     ddebug_replica("start Flush");
     uint64_t start_time = dsn_now_ms();
-    rocksdb::Status status = _db->Flush(rocksdb::FlushOptions());
+    rocksdb::Status status = _db->Flush(rocksdb::FlushOptions(), _data_cf);
     ddebug_replica("finish Flush, status = {}, time_used = {}ms",
                    status.ToString(),
                    dsn_now_ms() - start_time);
@@ -2760,6 +2819,48 @@ bool pegasus_server_impl::release_storage_after_manual_compact()
 std::string pegasus_server_impl::query_compact_state() const
 {
     return _manual_compact_svc.query_compact_state();
+}
+
+int64_t pegasus_server_impl::get_last_flushed_decree() const
+{
+    int64_t last_committed_decree = _db->GetLastFlushedDecree();
+    if (last_committed_decree == std::numeric_limits<int64_t>::max()) {
+        last_committed_decree = get_value_from_meta_cf(LAST_FLUSHED_DECREE);
+    }
+    return last_committed_decree;
+}
+
+uint32_t pegasus_server_impl::get_data_version() const
+{
+    uint32_t pegasus_data_version = _db->GetPegasusDataVersion();
+    if (pegasus_data_version == std::numeric_limits<uint32_t>::max()) {
+        pegasus_data_version = get_value_from_meta_cf(DATA_VERSION);
+    }
+    return pegasus_data_version;
+}
+
+int64_t pegasus_server_impl::get_last_manual_compact_finish_time() const
+{
+    int64_t last_manual_compact_finish_time = _db->GetLastManualCompactFinishTime();
+    if (last_manual_compact_finish_time == std::numeric_limits<int64_t>::max()) {
+        last_manual_compact_finish_time = get_value_from_meta_cf(DATA_VERSION);
+    }
+    return last_manual_compact_finish_time;
+}
+
+int64_t pegasus_server_impl::get_value_from_meta_cf(const std::string& key) const {
+    std::string value;
+    int64_t ivalue = 0;
+    auto status = _db->Get(_rd_opts, _meta_cf, key, &value);
+    if (status.ok()) {
+        bool ok = dsn::buf2int64(value, ivalue);
+        dassert_replica(ok, "rocksdb Get {} from cf {} got error value {}", key, META_COLUMN_FAMILY_NAME, value);
+    } else if (status.IsNotFound()) {
+        dassert_replica(false, "you should upgrade from a dependency version, please read the release note");
+    } else {
+        dassert_replica(status.ok() || status.IsNotFound(), "rocksdb Get {} from cf {} failed, error = {}", key, META_COLUMN_FAMILY_NAME, status.ToString());
+    }
+    return ivalue;
 }
 
 } // namespace server
