@@ -895,8 +895,11 @@ void pegasus_server_impl::on_multi_get(const ::dsn::apps::multi_get_request &req
             keys_holder.emplace_back(std::move(raw_key));
         }
 
-        std::vector<rocksdb::Status> statuses = _db->MultiGet(
-            _rd_opts, std::vector<rocksdb::ColumnFamilyHandle*>(keys.size(), _data_cf), keys, &values);
+        std::vector<rocksdb::Status> statuses =
+            _db->MultiGet(_rd_opts,
+                          std::vector<rocksdb::ColumnFamilyHandle *>(keys.size(), _data_cf),
+                          keys,
+                          &values);
         for (int i = 0; i < keys.size(); i++) {
             rocksdb::Status &status = statuses[i];
             std::string &value = values[i];
@@ -1582,7 +1585,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
                     cf_list.size());
 
     // TODO(yingchun): DBOptions or Options
-    std::vector<rocksdb::ColumnFamilyHandle*> handles_opened;
+    std::vector<rocksdb::ColumnFamilyHandle *> handles_opened;
     status = rocksdb::DB::Open(opts, path, column_families, &handles_opened, &_db);
     if (status.ok()) {
         dassert_replica(cf_list.size() == handles_opened.size(),
@@ -2830,10 +2833,10 @@ int64_t pegasus_server_impl::get_last_flushed_decree() const
     return last_committed_decree;
 }
 
-uint32_t pegasus_server_impl::get_data_version() const
+int64_t pegasus_server_impl::get_data_version() const
 {
-    uint32_t pegasus_data_version = _db->GetPegasusDataVersion();
-    if (pegasus_data_version == std::numeric_limits<uint32_t>::max()) {
+    int64_t pegasus_data_version = _db->GetPegasusDataVersion();
+    if (pegasus_data_version == std::numeric_limits<int64_t>::max()) {
         pegasus_data_version = get_value_from_meta_cf(DATA_VERSION);
     }
     return pegasus_data_version;
@@ -2848,17 +2851,27 @@ int64_t pegasus_server_impl::get_last_manual_compact_finish_time() const
     return last_manual_compact_finish_time;
 }
 
-int64_t pegasus_server_impl::get_value_from_meta_cf(const std::string& key) const {
+int64_t pegasus_server_impl::get_value_from_meta_cf(const std::string &key) const
+{
     std::string value;
     int64_t ivalue = 0;
     auto status = _db->Get(_rd_opts, _meta_cf, key, &value);
     if (status.ok()) {
-        bool ok = dsn::buf2int64(value, ivalue);
-        dassert_replica(ok, "rocksdb Get {} from cf {} got error value {}", key, META_COLUMN_FAMILY_NAME, value);
+        bool ok = dsn::buf2uint64(value, ivalue);
+        dassert_replica(ok,
+                        "rocksdb Get {} from cf {} got error value {}",
+                        key,
+                        META_COLUMN_FAMILY_NAME,
+                        value);
     } else if (status.IsNotFound()) {
-        dassert_replica(false, "you should upgrade from a dependency version, please read the release note");
+        dassert_replica(
+            false, "you should upgrade from a dependency version, please read the release note");
     } else {
-        dassert_replica(status.ok() || status.IsNotFound(), "rocksdb Get {} from cf {} failed, error = {}", key, META_COLUMN_FAMILY_NAME, status.ToString());
+        dassert_replica(status.ok() || status.IsNotFound(),
+                        "rocksdb Get {} from cf {} failed, error = {}",
+                        key,
+                        META_COLUMN_FAMILY_NAME,
+                        status.ToString());
     }
     return ivalue;
 }

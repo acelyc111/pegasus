@@ -19,7 +19,7 @@ class pegasus_manual_compact_service : public dsn::replication::replica_base
 public:
     explicit pegasus_manual_compact_service(pegasus_server_impl *app);
 
-    void init_last_finish_time_ms(uint64_t last_finish_time_ms);
+    void init_last_finish_time_ms(int64_t last_finish_time_ms);
 
     void start_manual_compact_if_needed(const std::map<std::string, std::string> &envs);
 

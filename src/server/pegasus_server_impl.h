@@ -337,7 +337,7 @@ private:
     rocksdb::ColumnFamilyHandle *_meta_cf;
     static std::shared_ptr<rocksdb::Cache> _block_cache;
     volatile bool _is_open;
-    uint32_t _pegasus_data_version;
+    int64_t _pegasus_data_version;
     std::atomic<int64_t> _last_durable_decree;
 
     std::unique_ptr<capacity_unit_calculator> _cu_calculator;
