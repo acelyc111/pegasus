@@ -29,6 +29,8 @@ public:
           _primary_address(server->_primary_address),
           _pegasus_data_version(server->_pegasus_data_version),
           _db(server->_db),
+          _data_cf(server->_data_cf),
+          _meta_cf(server->_meta_cf),
           _rd_opts(server->_data_cf_rd_opts),
           _default_ttl(0),
           _pfc_recent_expire_count(server->_pfc_recent_expire_count)
@@ -562,8 +564,14 @@ private:
 
         FAIL_POINT_INJECT_F("db_write", [](dsn::string_view) -> int { return FAIL_DB_WRITE; });
 
-        _wt_opts.given_decree = static_cast<uint64_t>(decree);
-        auto status = _db->Write(_wt_opts, &_batch);
+        rocksdb::Status status =
+            _batch.Put(_meta_cf, pegasus_server_impl::LAST_FLUSHED_DECREE, std::to_string(decree));
+        if (!status.ok()) {
+            derror_rocksdb("Write", status.ToString(), "decree: {}", decree);
+            return status.code();
+        }
+
+        status = _db->Write(_wt_opts, &_batch);
         if (!status.ok()) {
             derror_rocksdb("Write", status.ToString(), "decree: {}", decree);
         }
@@ -721,6 +729,8 @@ private:
 
     rocksdb::WriteBatch _batch;
     rocksdb::DB *_db;
+    rocksdb::ColumnFamilyHandle *_data_cf;
+    rocksdb::ColumnFamilyHandle *_meta_cf;
     rocksdb::WriteOptions _wt_opts;
     rocksdb::ReadOptions &_rd_opts;
     volatile uint32_t _default_ttl;

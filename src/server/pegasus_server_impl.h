@@ -293,8 +293,30 @@ private:
         return false;
     }
 
+    uint64_t get_last_flushed_decree(bool read_cf_only = true) const;
+    uint32_t get_data_version(bool read_cf_only = true) const;
+    uint64_t get_last_manual_compact_finish_time(bool read_cf_only = true) const;
+    ::dsn::error_code get_value_from_meta_cf(rocksdb::DB *db,
+                                             rocksdb::ColumnFamilyHandle *cfh,
+                                             const std::string &key,
+                                             uint64_t *value) const;
+    ::dsn::error_code
+    set_value_to_meta_cf(rocksdb::DB *db, const std::string &key, uint64_t value) const;
+
+    void release_db();
+
+    ::dsn::error_code create_checkpoint_and_get_decree(const char *checkpoint_dir,
+                                                       int64_t *checkpoint_decree);
+
+    ::dsn::error_code flush_all_family_columns(bool wait);
+
 private:
     static const std::string COMPRESSION_HEADER;
+    static const std::string DATA_COLUMN_FAMILY_NAME;
+    static const std::string META_COLUMN_FAMILY_NAME;
+    static const std::string DATA_VERSION;
+    static const std::string LAST_FLUSHED_DECREE;
+    static const std::string LAST_MANUAL_COMPACT_FINISH_TIME;
 
     dsn::gpid _gpid;
     std::string _primary_address;
@@ -310,10 +332,14 @@ private:
     std::shared_ptr<rocksdb::Statistics> _statistics;
     rocksdb::DBOptions _db_opts;
     rocksdb::ColumnFamilyOptions _data_cf_opts;
+    rocksdb::ColumnFamilyOptions _meta_cf_opts;
     rocksdb::ReadOptions _data_cf_rd_opts;
+    rocksdb::ReadOptions _meta_cf_rd_opts;
     std::string _usage_scenario;
 
     rocksdb::DB *_db;
+    rocksdb::ColumnFamilyHandle *_data_cf;
+    rocksdb::ColumnFamilyHandle *_meta_cf;
     static std::shared_ptr<rocksdb::Cache> _s_block_cache;
     volatile bool _is_open;
     uint32_t _pegasus_data_version;
