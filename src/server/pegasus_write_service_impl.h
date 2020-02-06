@@ -31,12 +31,11 @@ public:
           _db(server->_db),
           _data_cf(server->_data_cf),
           _meta_cf(server->_meta_cf),
+          _wt_opts(server->_wt_opts),
           _rd_opts(server->_data_cf_rd_opts),
           _default_ttl(0),
           _pfc_recent_expire_count(server->_pfc_recent_expire_count)
     {
-        // disable write ahead logging as replication handles logging instead now
-        _wt_opts.disableWAL = true;
     }
 
     int empty_put(int64_t decree)
@@ -731,7 +730,7 @@ private:
     rocksdb::DB *_db;
     rocksdb::ColumnFamilyHandle *_data_cf;
     rocksdb::ColumnFamilyHandle *_meta_cf;
-    rocksdb::WriteOptions _wt_opts;
+    rocksdb::WriteOptions &_wt_opts;
     rocksdb::ReadOptions &_rd_opts;
     volatile uint32_t _default_ttl;
     ::dsn::perf_counter_wrapper &_pfc_recent_expire_count;

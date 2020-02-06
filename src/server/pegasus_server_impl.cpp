@@ -101,6 +101,8 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     _db_opts.create_if_missing = true;
     _db_opts.create_missing_column_families = true;
     _db_opts.error_if_exists = false;
+    _db_opts.atomic_flush = true;
+
     _db_opts.use_direct_reads = dsn_config_get_value_bool(
         "pegasus.server", "rocksdb_use_direct_reads", false, "rocksdb options.use_direct_reads");
 
@@ -277,6 +279,9 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     // init rocksdb::ColumnFamilyOptions for meta column family
     _meta_cf_opts.OptimizeForSmallDb();
     _meta_cf_opts.OptimizeForPointLookup(10);
+
+    // disable write ahead logging as replication handles logging instead now
+    _wt_opts.disableWAL = true;
 
     _meta_cf_rd_opts.read_tier = rocksdb::kPersistedTier;
 
@@ -2871,7 +2876,7 @@ uint64_t pegasus_server_impl::get_last_manual_compact_finish_time(bool read_cf_o
                                                             const std::string &key,
                                                             uint64_t value) const
 {
-    auto status = db->Put(rocksdb::WriteOptions(), _meta_cf, key, std::to_string(value));
+    auto status = db->Put(_wt_opts, _meta_cf, key, std::to_string(value));
     if (!status.ok()) {
         derror_replica("Put {}={} to column family {} failed, status {}",
                        key,
@@ -2888,14 +2893,9 @@ uint64_t pegasus_server_impl::get_last_manual_compact_finish_time(bool read_cf_o
 {
     rocksdb::FlushOptions options;
     options.wait = wait;
-    rocksdb::Status status1 = _db->Flush(options, _meta_cf);
-    rocksdb::Status status2 = _db->Flush(options, _data_cf);
-    if (!status1.ok() || !status2.ok()) {
-        derror_replica("flush cf {} and {} failed, error = {} and {}",
-                       META_COLUMN_FAMILY_NAME,
-                       DATA_COLUMN_FAMILY_NAME,
-                       status1.ToString(),
-                       status2.ToString());
+    rocksdb::Status status = _db->Flush(options, {_meta_cf, _data_cf});
+    if (!status.ok()) {
+        derror_replica("flush failed, error = {}", status.ToString());
         return ::dsn::ERR_LOCAL_APP_FAILURE;
     }
     return ::dsn::ERR_OK;

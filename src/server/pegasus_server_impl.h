@@ -333,6 +333,7 @@ private:
     rocksdb::DBOptions _db_opts;
     rocksdb::ColumnFamilyOptions _data_cf_opts;
     rocksdb::ColumnFamilyOptions _meta_cf_opts;
+    rocksdb::WriteOptions _wt_opts;
     rocksdb::ReadOptions _data_cf_rd_opts;
     rocksdb::ReadOptions _meta_cf_rd_opts;
     std::string _usage_scenario;
