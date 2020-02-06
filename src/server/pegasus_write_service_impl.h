@@ -571,6 +571,7 @@ private:
             return status.code();
         }
 
+        _wt_opts.given_decree = static_cast<uint64_t>(decree);
         status = _db->Write(_wt_opts, &_batch);
         if (!status.ok()) {
             derror_rocksdb("Write", status.ToString(), "decree: {}", decree);
