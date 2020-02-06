@@ -273,7 +273,7 @@ function run_build()
         mkdir -p $ROCKSDB_BUILD_DIR
         cd $ROCKSDB_BUILD_DIR
         echo "$CMAKE_OPTIONS" >CMAKE_OPTIONS
-        cmake .. -DCMAKE_INSTALL_PREFIX=$ROCKSDB_BUILD_OUTPUT $CMAKE_OPTIONS
+        cmake .. -DCMAKE_INSTALL_PREFIX=$ROCKSDB_BUILD_OUTPUT $CMAKE_OPTIONS -DWITH_GFLAGS=0 -DWITH_SNAPPY=0 -DWITH_LZ4=0 -DWITH_ZLIB=0 -DWITH_ZSTD=0
         if [ $? -ne 0 ]; then
             echo "ERROR: cmake failed"
             exit 1
