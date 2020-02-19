@@ -2580,60 +2580,49 @@ bool pegasus_server_impl::set_usage_scenario(const std::string &usage_scenario)
     if (usage_scenario == _usage_scenario)
         return false;
     std::string old_usage_scenario = _usage_scenario;
-    std::unordered_map<std::string, std::string> new_options;
+    rocksdb::ColumnFamilyOptions new_cf_opts; // Only a part of fields will be used
     if (usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_NORMAL ||
         usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_PREFER_WRITE) {
         if (_usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD) {
             // old usage scenario is bulk load, reset first
-            new_options["level0_file_num_compaction_trigger"] =
-                std::to_string(_data_cf_opts.level0_file_num_compaction_trigger);
-            new_options["level0_slowdown_writes_trigger"] =
-                std::to_string(_data_cf_opts.level0_slowdown_writes_trigger);
-            new_options["level0_stop_writes_trigger"] =
-                std::to_string(_data_cf_opts.level0_stop_writes_trigger);
-            new_options["soft_pending_compaction_bytes_limit"] =
-                std::to_string(_data_cf_opts.soft_pending_compaction_bytes_limit);
-            new_options["hard_pending_compaction_bytes_limit"] =
-                std::to_string(_data_cf_opts.hard_pending_compaction_bytes_limit);
-            new_options["disable_auto_compactions"] = "false";
-            new_options["max_compaction_bytes"] =
-                std::to_string(_data_cf_opts.max_compaction_bytes);
-            new_options["write_buffer_size"] = std::to_string(_data_cf_opts.write_buffer_size);
-            new_options["max_write_buffer_number"] =
-                std::to_string(_data_cf_opts.max_write_buffer_number);
+            new_cf_opts.level0_file_num_compaction_trigger =
+                _data_cf_opts.level0_file_num_compaction_trigger;
+            new_cf_opts.level0_slowdown_writes_trigger =
+                _data_cf_opts.level0_slowdown_writes_trigger;
+            new_cf_opts.level0_stop_writes_trigger = _data_cf_opts.level0_stop_writes_trigger;
+            new_cf_opts.soft_pending_compaction_bytes_limit =
+                _data_cf_opts.soft_pending_compaction_bytes_limit;
+            new_cf_opts.hard_pending_compaction_bytes_limit =
+                _data_cf_opts.hard_pending_compaction_bytes_limit;
+            new_cf_opts.disable_auto_compactions = false;
+            new_cf_opts.max_compaction_bytes = _data_cf_opts.max_compaction_bytes;
+            new_cf_opts.write_buffer_size = _data_cf_opts.write_buffer_size;
+            new_cf_opts.max_write_buffer_number = _data_cf_opts.max_write_buffer_number;
         }
 
         if (usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_NORMAL) {
-            new_options["write_buffer_size"] =
-                std::to_string(get_random_nearby(_data_cf_opts.write_buffer_size));
-            new_options["level0_file_num_compaction_trigger"] =
-                std::to_string(_data_cf_opts.level0_file_num_compaction_trigger);
+            new_cf_opts.write_buffer_size = get_random_nearby(_data_cf_opts.write_buffer_size);
+            new_cf_opts.level0_file_num_compaction_trigger =
+                _data_cf_opts.level0_file_num_compaction_trigger;
         } else { // ROCKSDB_ENV_USAGE_SCENARIO_PREFER_WRITE
             uint64_t buffer_size = dsn::rand::next_u64(_data_cf_opts.write_buffer_size,
                                                        _data_cf_opts.write_buffer_size * 2);
-            new_options["write_buffer_size"] = std::to_string(buffer_size);
+            new_cf_opts.write_buffer_size = buffer_size;
             uint64_t max_size = get_random_nearby(_data_cf_opts.max_bytes_for_level_base);
-            new_options["level0_file_num_compaction_trigger"] =
-                std::to_string(std::max(4UL, max_size / buffer_size));
+            new_cf_opts.level0_file_num_compaction_trigger = std::max(4UL, max_size / buffer_size);
         }
     } else if (usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD) {
         // refer to Options::PrepareForBulkLoad()
-        new_options["level0_file_num_compaction_trigger"] = "1000000000";
-        new_options["level0_slowdown_writes_trigger"] = "1000000000";
-        new_options["level0_stop_writes_trigger"] = "1000000000";
-        new_options["soft_pending_compaction_bytes_limit"] = "0";
-        new_options["hard_pending_compaction_bytes_limit"] = "0";
-        new_options["disable_auto_compactions"] = "true";
-        new_options["max_compaction_bytes"] = std::to_string(static_cast<uint64_t>(1) << 60);
-        new_options["write_buffer_size"] =
-            std::to_string(get_random_nearby(_data_cf_opts.write_buffer_size * 4));
-        new_options["max_write_buffer_number"] =
-            std::to_string(std::max(_data_cf_opts.max_write_buffer_number, 6));
+        rocksdb::Options opts;
+        opts.PrepareForBulkLoad();
+        new_cf_opts = rocksdb::ColumnFamilyOptions(opts);
+        new_cf_opts.write_buffer_size = get_random_nearby(_data_cf_opts.write_buffer_size * 4);
+        new_cf_opts.max_write_buffer_number = std::max(_data_cf_opts.max_write_buffer_number, 6);
     } else {
         derror("%s: invalid usage scenario: %s", replica_name(), usage_scenario.c_str());
         return false;
     }
-    if (set_options(new_options)) {
+    if (set_options(new_cf_opts)) {
         _usage_scenario = usage_scenario;
         ddebug_replica(
             "set usage scenario from \"{}\" to \"{}\" succeed", old_usage_scenario, usage_scenario);
@@ -2645,13 +2634,92 @@ bool pegasus_server_impl::set_usage_scenario(const std::string &usage_scenario)
     }
 }
 
-bool pegasus_server_impl::set_options(
-    const std::unordered_map<std::string, std::string> &new_options)
+bool pegasus_server_impl::has_option_changed(const rocksdb::ColumnFamilyOptions &new_cf_opts) const
+{
+    rocksdb::Options old_opts = _db->GetOptions();
+        if (usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_NORMAL ||
+        usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_PREFER_WRITE) {
+        if (_usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD) {
+            // old usage scenario is bulk load, reset first
+            new_cf_opts.level0_file_num_compaction_trigger =
+                _data_cf_opts.level0_file_num_compaction_trigger;
+            new_cf_opts.level0_slowdown_writes_trigger =
+                _data_cf_opts.level0_slowdown_writes_trigger;
+            new_cf_opts.level0_stop_writes_trigger = _data_cf_opts.level0_stop_writes_trigger;
+            new_cf_opts.soft_pending_compaction_bytes_limit =
+                _data_cf_opts.soft_pending_compaction_bytes_limit;
+            new_cf_opts.hard_pending_compaction_bytes_limit =
+                _data_cf_opts.hard_pending_compaction_bytes_limit;
+            new_cf_opts.disable_auto_compactions = false;
+            new_cf_opts.max_compaction_bytes = _data_cf_opts.max_compaction_bytes;
+            new_cf_opts.write_buffer_size = _data_cf_opts.write_buffer_size;
+            new_cf_opts.max_write_buffer_number = _data_cf_opts.max_write_buffer_number;
+        }
+
+        if (usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_NORMAL) {
+            new_cf_opts.write_buffer_size = get_random_nearby(_data_cf_opts.write_buffer_size);
+            new_cf_opts.level0_file_num_compaction_trigger =
+                _data_cf_opts.level0_file_num_compaction_trigger;
+        } else { // ROCKSDB_ENV_USAGE_SCENARIO_PREFER_WRITE
+            uint64_t buffer_size = dsn::rand::next_u64(_data_cf_opts.write_buffer_size,
+                                                       _data_cf_opts.write_buffer_size * 2);
+            new_cf_opts.write_buffer_size = buffer_size;
+            uint64_t max_size = get_random_nearby(_data_cf_opts.max_bytes_for_level_base);
+            new_cf_opts.level0_file_num_compaction_trigger = std::max(4UL, max_size / buffer_size);
+        }
+    } else if (usage_scenario == ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD) {
+        // refer to Options::PrepareForBulkLoad()
+        rocksdb::Options opts;
+        opts.PrepareForBulkLoad();
+        new_cf_opts = rocksdb::ColumnFamilyOptions(opts);
+        new_cf_opts.write_buffer_size = get_random_nearby(_data_cf_opts.write_buffer_size * 4);
+        new_cf_opts.max_write_buffer_number = std::max(_data_cf_opts.max_write_buffer_number, 6);
+    } else {
+        derror("%s: invalid usage scenario: %s", replica_name(), usage_scenario.c_str());
+        return false;
+    }
+
+    return old_opts.level0_file_num_compaction_trigger !=
+               new_cf_opts.level0_file_num_compaction_trigger ||
+           old_opts.level0_slowdown_writes_trigger != new_cf_opts.level0_slowdown_writes_trigger ||
+           old_opts.level0_stop_writes_trigger != new_cf_opts.level0_stop_writes_trigger ||
+           old_opts.soft_pending_compaction_bytes_limit !=
+               new_cf_opts.soft_pending_compaction_bytes_limit ||
+           old_opts.hard_pending_compaction_bytes_limit !=
+               new_cf_opts.hard_pending_compaction_bytes_limit ||
+           old_opts.disable_auto_compactions != new_cf_opts.disable_auto_compactions ||
+           old_opts.max_compaction_bytes != new_cf_opts.max_compaction_bytes ||
+           old_opts.write_buffer_size != new_cf_opts.write_buffer_size ||
+           old_opts.max_write_buffer_number != new_cf_opts.max_write_buffer_number;
+}
+
+bool pegasus_server_impl::set_options(const rocksdb::ColumnFamilyOptions &new_cf_opts)
 {
     if (!_is_open) {
         dwarn_replica("set_options failed, db is not open");
         return false;
     }
+
+    if (!has_option_changed(new_cf_opts)) {
+        dwarn_replica("options not change, ignore it");
+        return true;
+    }
+
+    std::unordered_map<std::string, std::string> new_options;
+    new_options["level0_file_num_compaction_trigger"] =
+        std::to_string(new_cf_opts.level0_file_num_compaction_trigger);
+    new_options["level0_slowdown_writes_trigger"] =
+        std::to_string(new_cf_opts.level0_slowdown_writes_trigger);
+    new_options["level0_stop_writes_trigger"] =
+        std::to_string(new_cf_opts.level0_stop_writes_trigger);
+    new_options["soft_pending_compaction_bytes_limit"] =
+        std::to_string(new_cf_opts.soft_pending_compaction_bytes_limit);
+    new_options["hard_pending_compaction_bytes_limit"] =
+        std::to_string(new_cf_opts.hard_pending_compaction_bytes_limit);
+    new_options["disable_auto_compactions"] = std::to_string(new_cf_opts.disable_auto_compactions);
+    new_options["max_compaction_bytes"] = std::to_string(new_cf_opts.max_compaction_bytes);
+    new_options["write_buffer_size"] = std::to_string(new_cf_opts.write_buffer_size);
+    new_options["max_write_buffer_number"] = std::to_string(new_cf_opts.max_write_buffer_number);
 
     std::ostringstream oss;
     int i = 0;
