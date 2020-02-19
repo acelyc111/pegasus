@@ -1665,8 +1665,10 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
 void pegasus_server_impl::cancel_background_work(bool wait)
 {
-    dassert(_db != nullptr, "");
-    rocksdb::CancelAllBackgroundWork(_db, wait);
+    if (_is_open) {
+        dassert(_db != nullptr, "");
+        rocksdb::CancelAllBackgroundWork(_db, wait);
+    }
 }
 
 ::dsn::error_code pegasus_server_impl::stop(bool clear_state)
