@@ -1607,7 +1607,6 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
     ddebug("%s: start to open rocksDB's rdb(%s)", replica_name(), path.c_str());
 
-
     bool need_create_meta_cf = true;
     // Check meta CF only when db exist.
     if (db_exist && check_meta_cf(path, &need_create_meta_cf) != ::dsn::ERR_OK) {
@@ -1637,7 +1636,8 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
     _last_committed_decree = get_last_flushed_decree(MetaStoreType::kManifestOnly);
     _pegasus_data_version = get_data_version(MetaStoreType::kManifestOnly);
-    uint64_t last_manual_compact_finish_time = get_last_manual_compact_finish_time(MetaStoreType::kManifestOnly);
+    uint64_t last_manual_compact_finish_time =
+        get_last_manual_compact_finish_time(MetaStoreType::kManifestOnly);
     if (_pegasus_data_version > PEGASUS_DATA_VERSION_MAX) {
         derror_replica("open app failed, unsupported data version {}", _pegasus_data_version);
         release_db();
@@ -1646,9 +1646,14 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
     if (need_create_meta_cf) {
         // Write meta data to meta CF according to manifest.
-        dcheck_eq_replica(::dsn::ERR_OK, set_value_to_meta_cf(_db, DATA_VERSION, _pegasus_data_version));
-        dcheck_eq_replica(::dsn::ERR_OK, set_value_to_meta_cf(_db, LAST_FLUSHED_DECREE, _last_committed_decree));
-        dcheck_eq_replica(::dsn::ERR_OK, set_value_to_meta_cf(_db, LAST_MANUAL_COMPACT_FINISH_TIME, last_manual_compact_finish_time));
+        dcheck_eq_replica(::dsn::ERR_OK,
+                          set_value_to_meta_cf(_db, DATA_VERSION, _pegasus_data_version));
+        dcheck_eq_replica(::dsn::ERR_OK,
+                          set_value_to_meta_cf(_db, LAST_FLUSHED_DECREE, _last_committed_decree));
+        dcheck_eq_replica(::dsn::ERR_OK,
+                          set_value_to_meta_cf(_db,
+                                               LAST_MANUAL_COMPACT_FINISH_TIME,
+                                               last_manual_compact_finish_time));
     }
 
     // only enable filter after correct value_schema_version set
@@ -1664,9 +1669,10 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
     // only need async checkpoint because we sure that memtable is empty now.
     int64_t last_flushed = static_cast<int64_t>(_last_committed_decree);
     if (last_flushed != last_durable_decree()) {
-        ddebug_replica("start to do async checkpoint, last_durable_decree = {}, last_flushed_decree = {}",
-               last_durable_decree(),
-               last_flushed);
+        ddebug_replica(
+            "start to do async checkpoint, last_durable_decree = {}, last_flushed_decree = {}",
+            last_durable_decree(),
+            last_flushed);
         auto err = async_checkpoint(false);
         if (err != ::dsn::ERR_OK) {
             ddebug_replica("create checkpoint failed, error = {}", err.to_string());
@@ -1677,8 +1683,8 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
     }
 
     ddebug_replica("open app succeed, pegasus_data_version = {}, last_durable_decree = {}",
-           _pegasus_data_version,
-           last_durable_decree());
+                   _pegasus_data_version,
+                   last_durable_decree());
 
     _is_open = true;
 
@@ -1858,7 +1864,8 @@ private:
     {
         ::dsn::utils::auto_lock<::dsn::utils::ex_lock_nr> l(_checkpoints_lock);
         dcheck_gt_replica(last_commit, last_durable_decree());
-        int64_t last_flushed = static_cast<int64_t>(get_last_flushed_decree(MetaStoreType::kManifestOnly));
+        int64_t last_flushed =
+            static_cast<int64_t>(get_last_flushed_decree(MetaStoreType::kManifestOnly));
         dcheck_eq_replica(last_commit, last_flushed);
         if (!_checkpoints.empty()) {
             dcheck_gt_replica(last_commit, _checkpoints.back());
@@ -1883,7 +1890,8 @@ private:
         return ::dsn::ERR_WRONG_TIMING;
 
     int64_t last_durable = last_durable_decree();
-    int64_t last_flushed = static_cast<int64_t>(get_last_flushed_decree(MetaStoreType::kManifestOnly));
+    int64_t last_flushed =
+        static_cast<int64_t>(get_last_flushed_decree(MetaStoreType::kManifestOnly));
     int64_t last_commit = last_committed_decree();
 
     dcheck_le_replica(last_durable, last_flushed);
@@ -2777,7 +2785,9 @@ void pegasus_server_impl::set_partition_version(int32_t partition_version)
     // TODO(heyuchen): set filter _partition_version in further pr
 }
 
-::dsn::error_code pegasus_server_impl::check_meta_cf(const std::string& path, bool* need_create_meta_cf) {
+::dsn::error_code pegasus_server_impl::check_meta_cf(const std::string &path,
+                                                     bool *need_create_meta_cf)
+{
     *need_create_meta_cf = true;
     std::vector<std::string> column_families;
     auto s = rocksdb::DB::ListColumnFamilies(rocksdb::DBOptions(), path, &column_families);
@@ -2786,7 +2796,7 @@ void pegasus_server_impl::set_partition_version(int32_t partition_version)
         return ::dsn::ERR_LOCAL_APP_FAILURE;
     }
 
-    for (const auto& column_family : column_families) {
+    for (const auto &column_family : column_families) {
         if (column_family == META_COLUMN_FAMILY_NAME) {
             *need_create_meta_cf = false;
             break;
@@ -2802,7 +2812,8 @@ uint64_t pegasus_server_impl::get_last_flushed_decree(MetaStoreType type) const
         return _db->GetLastFlushedDecree();
     case MetaStoreType::kMetaCFOnly: {
         uint64_t last_flushed_decree = 0;
-        auto ec = get_value_from_meta_cf(_db, _meta_cf, true, LAST_FLUSHED_DECREE, &last_flushed_decree);
+        auto ec =
+            get_value_from_meta_cf(_db, _meta_cf, true, LAST_FLUSHED_DECREE, &last_flushed_decree);
         dcheck_eq_replica(::dsn::ERR_OK, ec);
         return last_flushed_decree;
     }
@@ -2834,8 +2845,11 @@ uint64_t pegasus_server_impl::get_last_manual_compact_finish_time(MetaStoreType 
         return _db->GetLastManualCompactFinishTime();
     case MetaStoreType::kMetaCFOnly: {
         uint64_t last_manual_compact_finish_time = 0;
-        auto ec = get_value_from_meta_cf(
-            _db, _meta_cf, false, LAST_MANUAL_COMPACT_FINISH_TIME, &last_manual_compact_finish_time);
+        auto ec = get_value_from_meta_cf(_db,
+                                         _meta_cf,
+                                         false,
+                                         LAST_MANUAL_COMPACT_FINISH_TIME,
+                                         &last_manual_compact_finish_time);
         dcheck_eq_replica(::dsn::ERR_OK, ec);
         return last_manual_compact_finish_time;
     }

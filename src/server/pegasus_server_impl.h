@@ -147,7 +147,10 @@ public:
 
     virtual int64_t last_durable_decree() const override { return _last_durable_decree.load(); }
 
-    virtual int64_t last_flushed_decree() const override { return get_last_flushed_decree(MetaStoreType::kManifestOnly); }
+    virtual int64_t last_flushed_decree() const override
+    {
+        return get_last_flushed_decree(MetaStoreType::kManifestOnly);
+    }
 
     virtual void update_app_envs(const std::map<std::string, std::string> &envs) override;
 
@@ -297,9 +300,10 @@ private:
         return false;
     }
 
-    ::dsn::error_code check_meta_cf(const std::string& path, bool* need_create_meta_cf);
+    ::dsn::error_code check_meta_cf(const std::string &path, bool *need_create_meta_cf);
 
-    enum class MetaStoreType {
+    enum class MetaStoreType
+    {
         kManifestOnly = 0,
         kMetaCFOnly,
         kBothManifestAndMetaCF,
