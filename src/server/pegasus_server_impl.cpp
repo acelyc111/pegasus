@@ -219,6 +219,8 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     dassert(parse_compression_types(compression_str, _data_cf_opts.compression_per_level),
             "parse rocksdb_compression_type failed.");
 
+    _meta_cf_opts = _data_cf_opts;
+
     rocksdb::BlockBasedTableOptions tbl_opts;
     if (dsn_config_get_value_bool("pegasus.server",
                                   "rocksdb_disable_table_block_cache",
@@ -275,13 +277,10 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     }
 
     _data_cf_opts.table_factory.reset(NewBlockBasedTableFactory(tbl_opts));
+    _meta_cf_opts.table_factory.reset(NewBlockBasedTableFactory(tbl_opts));
 
     _key_ttl_compaction_filter_factory = std::make_shared<KeyWithTTLCompactionFilterFactory>();
     _data_cf_opts.compaction_filter_factory = _key_ttl_compaction_filter_factory;
-
-    // init rocksdb::ColumnFamilyOptions for meta column family
-    _meta_cf_opts.OptimizeForSmallDb();
-    _meta_cf_opts.OptimizeForPointLookup(10);
 
     // disable write ahead logging as replication handles logging instead now
     _wt_opts.disableWAL = true;
