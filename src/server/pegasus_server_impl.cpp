@@ -220,6 +220,9 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
             "parse rocksdb_compression_type failed.");
 
     _meta_cf_opts = _data_cf_opts;
+    _meta_cf_opts.level0_file_num_compaction_trigger = 10;
+    dassert(parse_compression_types("none", _data_cf_opts.compression_per_level),
+            "parse rocksdb_compression_type failed.");
 
     rocksdb::BlockBasedTableOptions tbl_opts;
     if (dsn_config_get_value_bool("pegasus.server",
@@ -437,8 +440,7 @@ pegasus_server_impl::~pegasus_server_impl()
 {
     if (_is_open) {
         dassert(_db != nullptr, "");
-        delete _db;
-        _db = nullptr;
+        release_db();
     }
 }
 
