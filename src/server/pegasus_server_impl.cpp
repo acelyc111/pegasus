@@ -221,7 +221,7 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
 
     _meta_cf_opts = _data_cf_opts;
     _meta_cf_opts.level0_file_num_compaction_trigger = 10;
-    dassert(parse_compression_types("none", _data_cf_opts.compression_per_level),
+    dassert(parse_compression_types("none", _meta_cf_opts.compression_per_level),
             "parse rocksdb_compression_type failed.");
 
     rocksdb::BlockBasedTableOptions tbl_opts;
