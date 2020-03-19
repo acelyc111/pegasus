@@ -616,14 +616,14 @@ private:
         rocksdb::Status status =
             _batch.Put(_meta_cf, pegasus_server_impl::LAST_FLUSHED_DECREE, std::to_string(decree));
         if (dsn_unlikely(!status.ok())) {
-            derror_rocksdb("Write", status.ToString(), "decree: {}", decree);
+            derror_rocksdb("Write", status.ToString(), "put decree of meta cf into batch error, decree: {}", decree);
             return status.code();
         }
 
         _wt_opts.given_decree = static_cast<uint64_t>(decree);
         status = _db->Write(_wt_opts, &_batch);
         if (dsn_unlikely(!status.ok())) {
-            derror_rocksdb("Write", status.ToString(), "decree: {}", decree);
+            derror_rocksdb("Write", status.ToString(), "write rocksdb error, decree: {}", decree);
         }
         return status.code();
     }

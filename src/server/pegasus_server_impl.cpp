@@ -1676,7 +1676,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
             last_flushed);
         auto err = async_checkpoint(false);
         if (err != ::dsn::ERR_OK) {
-            ddebug_replica("create checkpoint failed, error = {}", err.to_string());
+            derror_replica("create checkpoint failed, error = {}", err.to_string());
             release_db();
             return err;
         }
@@ -1845,8 +1845,8 @@ private:
         }
     }
 
-    // CreateCheckpoint() will always flush memtable firstly cause log_size_for_flush = 0
-    status = chkpt->CreateCheckpoint(checkpoint_dir, 0);
+    // log_size_for_flush = 0 means always flush memtable before recording the live files
+    status = chkpt->CreateCheckpoint(checkpoint_dir, 0 /* log_size_for_flush */);
     if (!status.ok()) {
         // sometimes checkpoint may fail, and try again will succeed
         derror_replica("CreateCheckpoint failed, error = {}, try again", status.ToString());
@@ -1952,7 +1952,7 @@ private:
     auto checkpoint_dir =
         ::dsn::utils::filesystem::path_combine(data_dir(), chkpt_get_dir_name(checkpoint_decree));
     if (::dsn::utils::filesystem::directory_exists(checkpoint_dir)) {
-        derror_replica("checkpoint directory {} already exist, remove it first", checkpoint_dir);
+        ddebug_replica("checkpoint directory {} already exist, remove it first", checkpoint_dir);
         if (!::dsn::utils::filesystem::remove_path(checkpoint_dir)) {
             derror_replica("remove old checkpoint directory {} failed", checkpoint_dir);
             if (!::dsn::utils::filesystem::remove_path(tmp_dir)) {
