@@ -23,6 +23,7 @@
 namespace pegasus {
 namespace server {
 
+class meta_store;
 class capacity_unit_calculator;
 class pegasus_server_write;
 
@@ -147,10 +148,7 @@ public:
 
     virtual int64_t last_durable_decree() const override { return _last_durable_decree.load(); }
 
-    virtual int64_t last_flushed_decree() const override
-    {
-        return get_last_flushed_decree(MetaStoreType::kManifestOnly);
-    }
+    virtual int64_t last_flushed_decree() const override;
 
     virtual void update_app_envs(const std::map<std::string, std::string> &envs) override;
 
@@ -302,23 +300,6 @@ private:
 
     ::dsn::error_code check_meta_cf(const std::string &path, bool *need_create_meta_cf);
 
-    enum class MetaStoreType
-    {
-        kManifestOnly = 0,
-        kMetaCFOnly,
-        kBothManifestAndMetaCF,
-    };
-    uint64_t get_last_flushed_decree(MetaStoreType type) const;
-    uint32_t get_data_version(MetaStoreType type) const;
-    uint64_t get_last_manual_compact_finish_time(MetaStoreType type) const;
-    ::dsn::error_code get_value_from_meta_cf(rocksdb::DB *db,
-                                             rocksdb::ColumnFamilyHandle *cfh,
-                                             bool read_flushed_data,
-                                             const std::string &key,
-                                             uint64_t *value) const;
-    ::dsn::error_code
-    set_value_to_meta_cf(rocksdb::DB *db, const std::string &key, uint64_t value) const;
-
     void release_db();
 
     ::dsn::error_code flush_all_family_columns(bool wait);
@@ -328,10 +309,6 @@ private:
     // Column family names.
     static const std::string DATA_COLUMN_FAMILY_NAME;
     static const std::string META_COLUMN_FAMILY_NAME;
-    // Keys of meta data wrote into meta column family.
-    static const std::string DATA_VERSION;
-    static const std::string LAST_FLUSHED_DECREE;
-    static const std::string LAST_MANUAL_COMPACT_FINISH_TIME;
 
     dsn::gpid _gpid;
     std::string _primary_address;
@@ -348,7 +325,6 @@ private:
     rocksdb::DBOptions _db_opts;
     rocksdb::ColumnFamilyOptions _data_cf_opts;
     rocksdb::ColumnFamilyOptions _meta_cf_opts;
-    rocksdb::WriteOptions _wt_opts;
     rocksdb::ReadOptions _data_cf_rd_opts;
     std::string _usage_scenario;
 
@@ -360,6 +336,7 @@ private:
     uint32_t _pegasus_data_version;
     std::atomic<int64_t> _last_durable_decree;
 
+    std::unique_ptr<meta_store> _meta_store;
     std::unique_ptr<capacity_unit_calculator> _cu_calculator;
     std::unique_ptr<pegasus_server_write> _server_write;
 
