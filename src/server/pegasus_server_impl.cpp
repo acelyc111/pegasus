@@ -1360,6 +1360,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
     if (db_exist) {
         _last_committed_decree = _meta_store->get_last_flushed_decree();
         _pegasus_data_version = _meta_store->get_data_version();
+        _usage_scenario = _meta_store->get_usage_scenario();
         uint64_t last_manual_compact_finish_time =
             _meta_store->get_last_manual_compact_finish_time();
         if (_pegasus_data_version > PEGASUS_DATA_VERSION_MAX) {
@@ -1373,6 +1374,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
     } else {
         // Write initial meta data to meta CF and flush when create new DB.
         _meta_store->set_data_version(PEGASUS_DATA_VERSION_MAX);
+        _meta_store->set_usage_scenario(ROCKSDB_ENV_USAGE_SCENARIO_NORMAL);
         _meta_store->set_last_flushed_decree(0);
         _meta_store->set_last_manual_compact_finish_time(0);
         flush_all_family_columns(true);
@@ -2222,6 +2224,10 @@ void pegasus_server_impl::update_usage_scenario(const std::map<std::string, std:
     auto find = envs.find(ROCKSDB_ENV_USAGE_SCENARIO_KEY);
     std::string new_usage_scenario =
         (find != envs.end() ? find->second : ROCKSDB_ENV_USAGE_SCENARIO_NORMAL);
+    if (VALID_USAGE_SCENARIOS.find(new_usage_scenario) == VALID_USAGE_SCENARIOS.end()) {
+        derror_replica("not a valid usage scenario \"{}\", skip to update",
+                       new_usage_scenario);
+    }
     if (new_usage_scenario != _usage_scenario) {
         std::string old_usage_scenario = _usage_scenario;
         if (set_usage_scenario(new_usage_scenario)) {
