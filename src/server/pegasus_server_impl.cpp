@@ -1334,6 +1334,16 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
             return ::dsn::ERR_LOCAL_APP_FAILURE;
         }
         dassert_replica(!missing_meta_cf, "You must upgrade Pegasus server from 2.0");
+
+        // Load options from exist OPTIONS-* file.
+        DBOptions loaded_db_opt;
+        std::vector<ColumnFamilyDescriptor> loaded_cf_descs;
+        auto status = rocksdb::LoadLatestOptions(path, Env::Default(), &loaded_db_opt,
+                                                 &loaded_cf_descs, true /* ignore_unknown_options */);
+        if (!status.ok()) {
+            derror_replica("rocksdb::DB::Open failed, error = {}", status.ToString());
+            return ::dsn::ERR_LOCAL_APP_FAILURE;
+        }
     } else {
         // When create new DB, we have to create a new column family to store meta data (meta column
         // family).
@@ -1409,8 +1419,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
     _is_open = true;
 
-    // set default usage scenario after db opened.
-    set_usage_scenario(ROCKSDB_ENV_USAGE_SCENARIO_NORMAL);
+    set_usage_scenario(_usage_scenario);
 
     dinfo_replica("start the update rocksdb statistics timer task");
     _update_replica_rdb_stat =

@@ -29,6 +29,7 @@ DSN_DEFINE_bool("pegasus.server",
 
 pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     : pegasus_read_service(r),
+      _usage_scenario(ROCKSDB_ENV_USAGE_SCENARIO_NORMAL),
       _db(nullptr),
       _data_cf(nullptr),
       _meta_cf(nullptr),
