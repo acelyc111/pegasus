@@ -115,7 +115,7 @@ bool set_value(command_executor *e, shell_context *sc, arguments args)
     fprintf(stderr, "\n");
     fprintf(stderr, "app_id          : %d\n", info.app_id);
     fprintf(stderr, "partition_index : %d\n", info.partition_index);
-    fprintf(stderr, "decree          : %ld\n", info.decree);
+    fprintf(stderr, "decree          : %lld\n", info.decree);
     fprintf(stderr, "server          : %s\n", info.server.c_str());
     return true;
 }
@@ -149,7 +149,7 @@ bool multi_set_value(command_executor *e, shell_context *sc, arguments args)
     fprintf(stderr, "\n");
     fprintf(stderr, "app_id          : %d\n", info.app_id);
     fprintf(stderr, "partition_index : %d\n", info.partition_index);
-    fprintf(stderr, "decree          : %ld\n", info.decree);
+    fprintf(stderr, "decree          : %lld\n", info.decree);
     fprintf(stderr, "server          : %s\n", info.server.c_str());
     return true;
 }
@@ -403,7 +403,7 @@ bool delete_value(command_executor *e, shell_context *sc, arguments args)
     fprintf(stderr, "\n");
     fprintf(stderr, "app_id          : %d\n", info.app_id);
     fprintf(stderr, "partition_index : %d\n", info.partition_index);
-    fprintf(stderr, "decree          : %ld\n", info.decree);
+    fprintf(stderr, "decree          : %lld\n", info.decree);
     fprintf(stderr, "server          : %s\n", info.server.c_str());
     return true;
 }
@@ -433,7 +433,7 @@ bool multi_del_value(command_executor *e, shell_context *sc, arguments args)
     fprintf(stderr, "\n");
     fprintf(stderr, "app_id          : %d\n", info.app_id);
     fprintf(stderr, "partition_index : %d\n", info.partition_index);
-    fprintf(stderr, "decree          : %ld\n", info.decree);
+    fprintf(stderr, "decree          : %lld\n", info.decree);
     fprintf(stderr, "server          : %s\n", info.server.c_str());
     return true;
 }
@@ -664,7 +664,7 @@ bool incr(command_executor *e, shell_context *sc, arguments args)
     fprintf(stderr, "\n");
     fprintf(stderr, "app_id          : %d\n", info.app_id);
     fprintf(stderr, "partition_index : %d\n", info.partition_index);
-    fprintf(stderr, "decree          : %ld\n", info.decree);
+    fprintf(stderr, "decree          : %lld\n", info.decree);
     fprintf(stderr, "server          : %s\n", info.server.c_str());
     return true;
 }
@@ -819,7 +819,7 @@ bool check_and_set(command_executor *e, shell_context *sc, arguments args)
     fprintf(stderr, "\n");
     fprintf(stderr, "app_id          : %d\n", info.app_id);
     fprintf(stderr, "partition_index : %d\n", info.partition_index);
-    fprintf(stderr, "decree          : %ld\n", info.decree);
+    fprintf(stderr, "decree          : %lld\n", info.decree);
     fprintf(stderr, "server          : %s\n", info.server.c_str());
     return true;
 }
@@ -983,7 +983,7 @@ bool check_and_mutate(command_executor *e, shell_context *sc, arguments args)
     fprintf(stderr, "\n");
     fprintf(stderr, "app_id          : %d\n", info.app_id);
     fprintf(stderr, "partition_index : %d\n", info.partition_index);
-    fprintf(stderr, "decree          : %ld\n", info.decree);
+    fprintf(stderr, "decree          : %lld\n", info.decree);
     fprintf(stderr, "server          : %s\n", info.server.c_str());
 
     return true;

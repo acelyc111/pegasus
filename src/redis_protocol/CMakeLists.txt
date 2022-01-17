@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-add_subdirectory(proxy)
+#add_subdirectory(proxy)
 add_subdirectory(proxy_lib)
-add_subdirectory(proxy_ut)
+#add_subdirectory(proxy_ut)
 

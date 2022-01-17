@@ -16,5 +16,5 @@
 # under the License.
 
 add_subdirectory(lib)
-add_subdirectory(test)
-add_subdirectory(bench)
+#add_subdirectory(test)
+#add_subdirectory(bench)
