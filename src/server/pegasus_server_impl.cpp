@@ -411,6 +411,9 @@ void pegasus_server_impl::on_multi_get(multi_get_rpc rpc)
             stop_inclusive = request.stop_inclusive;
         }
 
+
+
+
         rocksdb::Slice start(range_start_key.data(), range_start_key.length());
         rocksdb::Slice stop(range_stop_key.data(), range_stop_key.length());
 
