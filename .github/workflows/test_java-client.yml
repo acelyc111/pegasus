@@ -35,9 +35,27 @@ defaults:
     shell: bash
 
 jobs:
+  google-java-format:
+    name: java-format
+    runs-on: ubuntu-latest
+    steps:
+      - if: github.event_name != 'pull_request'
+        uses: actions/checkout@v2
+      - if: github.event_name == 'pull_request'
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: axel-op/googlejavaformat-action@v3.6.0
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          version: 1.7
+          skipCommit: false
+          args: "--replace"
   test:
     name: test
     runs-on: ubuntu-latest
+    needs: google-java-format
     strategy:
       matrix:
         java: [ '8', '11']
