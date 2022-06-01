@@ -45,7 +45,7 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           version: 1.7
           skipCommit: false
-          args: "--set-exit-if-changed"
+          args: "--replace"
   test:
     name: test
     runs-on: ubuntu-latest
