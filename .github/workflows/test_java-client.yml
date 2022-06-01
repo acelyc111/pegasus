@@ -34,13 +34,12 @@ defaults:
   run:
     shell: bash
 
-permissions:
-  pull-requests: write
-
 jobs:
   google-java-format:
     name: java-format
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - if: github.event_name != 'pull_request'
         uses: actions/checkout@v2
