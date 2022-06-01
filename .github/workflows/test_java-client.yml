@@ -41,11 +41,14 @@ jobs:
     steps:
       - if: github.event_name != 'pull_request'
         uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
       - if: github.event_name == 'pull_request'
         uses: actions/checkout@v2
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GH_TOKEN }}
       - uses: axel-op/googlejavaformat-action@v3.6.0
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
