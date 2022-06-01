@@ -44,7 +44,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: 1.7
-          args: "--set-exit-if-changed --dry-run"
+          skipCommit: false
+          args: "--set-exit-if-changed"
   test:
     name: test
     runs-on: ubuntu-latest
