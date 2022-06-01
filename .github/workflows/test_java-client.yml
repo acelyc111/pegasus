@@ -35,7 +35,6 @@ defaults:
     shell: bash
 
 permissions:
-  contents: read
   pull-requests: write
 
 jobs:
