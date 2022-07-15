@@ -95,49 +95,13 @@ if ("$ENV{THIRDPARTY_DIR}" STREQUAL "")
 else()
   set(THIRDPARTY_DIR $ENV{THIRDPARTY_DIR})
 endif()
-set(THIRDPARTY_TOOLCHAIN_DIR ${THIRDPARTY_DIR}/clang-toolchain)
-set(THIRDPARTY_INSTALL_DIR ${THIRDPARTY_DIR}/installed)
-set(THIRDPARTY_INSTALL_COMMON_DIR ${THIRDPARTY_INSTALL_DIR}/common)
-set(THIRDPARTY_INSTALL_UNINSTRUMENTED_DIR ${THIRDPARTY_INSTALL_DIR}/uninstrumented)
-set(THIRDPARTY_INSTALL_TSAN_DIR ${THIRDPARTY_INSTALL_DIR}/tsan)
 
-# Set the Java directory so our C++ tests are able to access its contents.
-# This can be useful to, e.g. spawn a Java subprocess.
-set(JAVA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/java)
-
-# Adds the EXTRA_GRADLE_FLAGS environment variable to a cmake list and calls `separate_arguments`.
-# This solves the problem of escaped spaces in the EXTRA_GRADLE_FLAGS environment variable.
-list(APPEND GRADLE_FLAGS $ENV{EXTRA_GRADLE_FLAGS})
-separate_arguments(GRADLE_FLAGS)
-# We always want Gradle to use the plain console and quiet flag when called from cmake.
-list(APPEND GRADLE_FLAGS --quiet --console=plain)
-list(REMOVE_DUPLICATES GRADLE_FLAGS)
-
-# Initialize Gradle to ensure the wrapper is downloaded.
-# This is important so that multiple calls to Gradle don't try and
-# download the gradle-wrapper.jar at the same time.
-set(GRADLE_WRAPPER_JAR ${JAVA_DIR}/gradle/wrapper/gradle-wrapper.jar)
-add_custom_command(OUTPUT ${GRADLE_WRAPPER_JAR}
-  COMMAND ./gradlew --version ${GRADLE_FLAGS}
-  COMMAND ./gradlew initializeTasks ${GRADLE_FLAGS}
-  WORKING_DIRECTORY "${JAVA_DIR}")
-add_custom_target(init_gradle DEPENDS ${GRADLE_WRAPPER_JAR})
-
-# A target to build the kudu-proto Java module which is used
-# by the kudu-subprocess and kudu-hive modules to avoid building
-# multiple times and potential race conditions in Gradle code
-# generation.
-set(PROTO_JAR ${JAVA_DIR}/kudu-proto/build/libs/kudu-proto-${PEGASUS_VERSION_NUMBER}.jar)
-add_custom_command(OUTPUT ${PROTO_JAR}
-        COMMAND ./gradlew :kudu-proto:jar ${GRADLE_FLAGS}
-        WORKING_DIRECTORY "${JAVA_DIR}"
-        DEPENDS init_gradle)
-add_custom_target(proto_jar DEPENDS ${PROTO_JAR})
+set(THIRDPARTY_INSTALL_DIR ${THIRDPARTY_DIR}/output)
 
 # Allow "make install" to not depend on all targets.
 #
 # Must be declared in the top-level CMakeLists.txt.
-set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+#set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)  #??
 
 # Codegen-dependent executables need to be linked with -rdynamic; otherwise LLVM
 # can't find dependent Kudu symbols at runtime.
@@ -145,25 +109,12 @@ set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 # Setting the ENABLE_EXPORTS target property for each codegen-dependent
 # executable is more precise, but that's a rather long target list, so we'll
 # just do it once here for all Kudu executables.
-set(CMAKE_ENABLE_EXPORTS true)
+#set(CMAKE_ENABLE_EXPORTS true)
 
 # Always generate the compilation database file (compile_commands.json) for use
 # with various development tools, such as IWYU and Vim's YouCompleteMe plugin.
 # See http://clang.llvm.org/docs/JSONCompilationDatabase.html
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-
-# Make sure thirdparty stuff is up-to-date.
-if ("$ENV{NO_REBUILD_THIRDPARTY}" STREQUAL "")
-  if (${KUDU_USE_TSAN})
-    set(TP_ARGS "tsan")
-  endif()
-  execute_process(
-    COMMAND ${THIRDPARTY_DIR}/build-if-necessary.sh ${TP_ARGS}
-    RESULT_VARIABLE THIRDPARTY_SCRIPT_RESULT)
-  if (NOT (${THIRDPARTY_SCRIPT_RESULT} EQUAL 0))
-    message(FATAL_ERROR "Thirdparty was built unsuccessfully, terminating.")
-  endif()
-endif()
+#set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 ############################################################
 # Compiler flags
@@ -221,17 +172,6 @@ set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -DBOOST_UUID_RANDOM_PROVIDER_FORCE_POS
 
 # We want access to the PRI* print format macros.
 add_definitions(-D__STDC_FORMAT_MACROS)
-
-# We want short macros from util/status.h.
-add_definitions(-DKUDU_HEADERS_USE_SHORT_STATUS_MACROS=1)
-
-# Slice includes many gutil dependencies that third-party users of the Kudu
-# client library don't have. Our build has them, though.
-add_definitions(-DKUDU_HEADERS_USE_RICH_SLICE=1)
-
-# We don't want to use any stubs; that's exclusively for builds using our
-# exported client headers).
-add_definitions(-DKUDU_HEADERS_NO_STUBS=1)
 
 # compiler flags for different build types (run 'cmake -DCMAKE_BUILD_TYPE=<type> .')
 # For all builds:
@@ -331,11 +271,11 @@ if ("${COMPILER_FAMILY}" STREQUAL "clang")
   # This test is imperfect because 'cmake' and 'make' can be run independently
   # (with different terminal options), and we're testing during the former.
   #
-  # We also provide a manual override as -DKUDU_FORCE_COLOR_DIAGNOSTICS=1 or
+  # We also provide a manual override as -DPEGASUS_FORCE_COLOR_DIAGNOSTICS=1 or
   # by setting an environment variable of the same name.
   execute_process(COMMAND test -t 2 RESULT_VARIABLE KUDU_IS_TTY)
-  if ((NOT "${KUDU_FORCE_COLOR_DIAGNOSTICS}" STREQUAL "") OR
-      (NOT "$ENV{KUDU_FORCE_COLOR_DIAGNOSTICS}" STREQUAL "") OR
+  if ((NOT "${PEGASUS_FORCE_COLOR_DIAGNOSTICS}" STREQUAL "") OR
+      (NOT "$ENV{PEGASUS_FORCE_COLOR_DIAGNOSTICS}" STREQUAL "") OR
       ((${KUDU_IS_TTY} EQUAL 0) AND (NOT ("$ENV{TERM}" STREQUAL "dumb"))))
     message("Running in a controlling terminal")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
@@ -346,37 +286,36 @@ elseif("${COMPILER_FAMILY}" STREQUAL "gcc")
   # Disallow GCC < 7.0, since it doesn't support the C++17 standard
   # well enough for us. https://en.cppreference.com/w/cpp/compiler_support
   if ("${COMPILER_VERSION}" VERSION_LESS "7.0")
-    message(FATAL_ERROR "GCC <7.0 not supported. Consider using "
-        "thirdparty/clang-toolchain/ to build on older hosts.")
+    message(FATAL_ERROR "GCC <7.0 not supported.")
   endif()
 endif()
 
 # Sanity check linking option.
-if (NOT KUDU_LINK)
-  set(KUDU_LINK "a")
-elseif(NOT ("auto" MATCHES "^${KUDU_LINK}" OR
-            "dynamic" MATCHES "^${KUDU_LINK}" OR
-            "static" MATCHES "^${KUDU_LINK}"))
-  message(FATAL_ERROR "Unknown value for KUDU_LINK, must be auto|dynamic|static")
+if (NOT PEGASUS_LINK)
+  set(PEGASUS_LINK "a")
+elseif(NOT ("auto" MATCHES "^${PEGASUS_LINK}" OR
+            "dynamic" MATCHES "^${PEGASUS_LINK}" OR
+            "static" MATCHES "^${PEGASUS_LINK}"))
+  message(FATAL_ERROR "Unknown value for PEGASUS_LINK, must be auto|dynamic|static")
 else()
   # Remove all but the first letter.
-  string(SUBSTRING "${KUDU_LINK}" 0 1 KUDU_LINK)
+  string(SUBSTRING "${PEGASUS_LINK}" 0 1 PEGASUS_LINK)
 endif()
 
-# If not set, any file that includes kudu_export.h (an autogenerated file) will
-# use visibility("hidden") with symbols annotated with KUDU_NO_EXPORT, even when
+# If not set, any file that includes pegasus_export.h (an autogenerated file) will
+# use visibility("hidden") with symbols annotated with PEGASUS_NO_EXPORT, even when
 # compiled with default visibility flags. It is overridden as needed by
 # ADD_EXPORTABLE_LIBRARY() when actually compiling exported library variants.
-add_definitions("-DKUDU_STATIC_DEFINE")
+add_definitions("-DPEGASUS_STATIC_DEFINE")
 
 # Clang does not support using ASAN and TSAN simultaneously.
-if ("${KUDU_USE_ASAN}" AND "${KUDU_USE_TSAN}")
+if ("${PEGASUS_USE_ASAN}" AND "${PEGASUS_USE_TSAN}")
   message(SEND_ERROR "Can only enable one of ASAN or TSAN at a time")
 endif()
 
 # Flag to enable clang address sanitizer (using it along with leak sanitizer).
 # This will only build if clang or a recent enough gcc is the chosen compiler.
-if (${KUDU_USE_ASAN})
+if (${PEGASUS_USE_ASAN})
   if(NOT (("${COMPILER_FAMILY}" STREQUAL "clang") OR
           ("${COMPILER_FAMILY}" STREQUAL "gcc" AND "${COMPILER_VERSION}" VERSION_GREATER "4.8")))
     message(SEND_ERROR "Cannot use ASAN without clang or gcc >= 4.8")
@@ -386,16 +325,16 @@ if (${KUDU_USE_ASAN})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEAK_SANITIZER")
 endif()
 
-if (${KUDU_USE_XRAY})
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fxray-instrument")
-endif()
+#if (${KUDU_USE_XRAY})
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fxray-instrument")
+#endif()
 
 # For any C code, use the same flags.
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 # Enable the Clang undefined behavior (UB) sanitizer.
-if (${KUDU_USE_UBSAN})
+if (${PEGASUS_USE_UBSAN})
   if(NOT (("${COMPILER_FAMILY}" STREQUAL "clang") OR
           ("${COMPILER_FAMILY}" STREQUAL "gcc" AND "${COMPILER_VERSION}" VERSION_GREATER "4.9")))
     message(SEND_ERROR "Cannot use UBSAN without clang or gcc >= 4.9")
@@ -405,14 +344,14 @@ if (${KUDU_USE_UBSAN})
   # Disable 'alignment' because unaligned access is really OK on Nehalem and we do it all over the place.
   # TODO(todd): enable implicit-integer-sign-change checking after fixing issues.
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=alignment,implicit-integer-sign-change,implicit-unsigned-integer-truncation,implicit-signed-integer-truncation")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/build-support/ubsan-blacklist.txt")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/build-support/ubsan-blacklist.txt")
   # Stop execution after UB or overflow is detected.
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize-recover=undefined,integer")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNDEFINED_SANITIZER")
 endif ()
 
 # Flag to enable thread sanitizer (clang or gcc 4.8)
-if (${KUDU_USE_TSAN})
+if (${PEGASUS_USE_TSAN})
   if(NOT (("${COMPILER_FAMILY}" STREQUAL "clang") OR
           ("${COMPILER_FAMILY}" STREQUAL "gcc" AND "${COMPILER_VERSION}" VERSION_GREATER "4.8")))
     message(SEND_ERROR "Cannot use TSAN without clang or gcc >= 4.8")
@@ -431,22 +370,22 @@ if (${KUDU_USE_TSAN})
   add_definitions("-D_GLIBCXX_EXTERN_TEMPLATE=0")
 
   # Compile and link against the thirdparty TSAN instrumented libstdcxx.
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,${THIRDPARTY_INSTALL_TSAN_DIR}/lib")
+#  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,${THIRDPARTY_INSTALL_TSAN_DIR}/lib")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${THIRDPARTY_INSTALL_TSAN_DIR}/lib")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${THIRDPARTY_INSTALL_TSAN_DIR}/include/c++/v1")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${THIRDPARTY_INSTALL_TSAN_DIR}/lib")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${THIRDPARTY_INSTALL_TSAN_DIR}/include/c++/v1")
 
   # Strictly speaking, TSAN doesn't require dynamic linking. But it does
   # require all code to be position independent, and the easiest way to
   # guarantee that is via dynamic linking (not all 3rd party archives are
   # compiled with -fPIC e.g. boost).
   if(NOT "${ARCH_NAME}" MATCHES "aarch64")
-    if("${KUDU_LINK}" STREQUAL "a")
+    if("${PEGASUS_LINK}" STREQUAL "a")
       message("Using dynamic linking for TSAN")
-      set(KUDU_LINK "d")
-    elseif("${KUDU_LINK}" STREQUAL "s")
+      set(PEGASUS_LINK "d")
+    elseif("${PEGASUS_LINK}" STREQUAL "s")
       message(SEND_ERROR "Cannot use TSAN with static linking")
     endif()
   else()
@@ -454,55 +393,39 @@ if (${KUDU_USE_TSAN})
     # TSAN with dynamic linking cause all of test cases failed on aarch64,
     # we don't apply ENABLE_DIST_TEST on aarch64, so apply static linking direcly
     message("Using static linking for TSAN on aarch64")
-    set(KUDU_LINK "s")
+    set(PEGASUS_LINK "s")
   endif()
 endif()
 
 # If we still don't know what kind of linking to perform, choose based on
 # build type (developers like fast builds).
-if ("${KUDU_LINK}" STREQUAL "a")
+if ("${PEGASUS_LINK}" STREQUAL "a")
   if ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG" OR
       "${CMAKE_BUILD_TYPE}" STREQUAL "FASTDEBUG")
     message("Using dynamic linking for ${CMAKE_BUILD_TYPE} builds")
-    set(KUDU_LINK "d")
+    set(PEGASUS_LINK "d")
   else()
     message("Using static linking for ${CMAKE_BUILD_TYPE} builds")
-    set(KUDU_LINK "s")
+    set(PEGASUS_LINK "s")
   endif()
 endif()
 
-include("KuduLinker")
-APPEND_LINKER_FLAGS()
+#include("PegasusLinker")
+#APPEND_LINKER_FLAGS()
 
-if ("${KUDU_USE_ASAN}" OR "${KUDU_USE_TSAN}" OR "${KUDU_USE_UBSAN}")
+if ("${PEGASUS_USE_ASAN}" OR "${PEGASUS_USE_TSAN}" OR "${PEGASUS_USE_UBSAN}")
   # GCC 4.8 and 4.9 (latest as of this writing) don't allow you to specify a
   # sanitizer blacklist.
   if("${COMPILER_FAMILY}" STREQUAL "clang")
-    add_definitions("-fsanitize-blacklist=${BUILD_SUPPORT_DIR}/sanitize-blacklist.txt")
+    message(WARNING "add sanitize-blacklist.txt")
+#    add_definitions("-fsanitize-blacklist=${BUILD_SUPPORT_DIR}/sanitize-blacklist.txt")
   else()
     message(WARNING "GCC does not support specifying a sanitizer blacklist. Known sanitizer check failures will not be suppressed.")
   endif()
 endif()
 
-if (KUDU_USE_LTO)
-  if(NOT "${CMAKE_EXE_LINKER_FLAGS}" MATCHES "-fuse-ld=lld" OR
-     NOT "${COMPILER_FAMILY}" STREQUAL "clang")
-    message(FATAL_ERROR "must use clang and lld for LTO build")
-  endif()
-  if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "RELEASE")
-    # Doesn't make much sense to do LTO on a non-release build -- it's slow
-    # and the only reason you'd want to do it is high performance.
-    message(FATAL_ERROR "LTO only supported for release builds")
-  endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=thin")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--thinlto-cache-dir=${CMAKE_CURRENT_BINARY_DIR}/lto.cache")
-  set(CMAKE_AR "${THIRDPARTY_TOOLCHAIN_DIR}/bin/llvm-ar")
-  set(CMAKE_RANLIB "${THIRDPARTY_TOOLCHAIN_DIR}/bin/llvm-ranlib")
-endif()
-
-
 # Code coverage
-if ("${KUDU_GENERATE_COVERAGE}")
+if ("${PEGASUS_GENERATE_COVERAGE}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -DCOVERAGE_BUILD")
 
   if(NOT "${COMPILER_FAMILY}" STREQUAL "clang")
@@ -513,9 +436,9 @@ if ("${KUDU_GENERATE_COVERAGE}")
   endif()
 endif()
 
-# Having set KUDU_LINK due to build type and/or sanitizer, it's now safe to
+# Having set PEGASUS_LINK due to build type and/or sanitizer, it's now safe to
 # act on its value.
-if ("${KUDU_LINK}" STREQUAL "d")
+if ("${PEGASUS_LINK}" STREQUAL "d")
   set(BUILD_SHARED_LIBS ON)
 
   # Position independent code is only necessary when producing shared objects.
@@ -536,20 +459,20 @@ file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 include_directories(src)
-include_directories(SYSTEM ${THIRDPARTY_INSTALL_COMMON_DIR}/include)
+include_directories(SYSTEM ${THIRDPARTY_INSTALL_DIR}/include)
 
 ############################################################
 # Visibility
 ############################################################
 # For generate_export_header() and add_compiler_export_flags().
-include(GenerateExportHeader)
+include(GenerateExportHeader)  #??
 
 # Honor visibility properties for all target types. See
 # "cmake --help-policy CMP0063" for details.
 #
 # This policy was only added to cmake in version 3.3, so until the cmake in
 # thirdparty is updated, we must check if the policy exists before setting it.
-if(POLICY CMP0063)
+if(POLICY CMP0063)  #??
   cmake_policy(SET CMP0063 NEW)
 endif()
 
@@ -641,7 +564,7 @@ endif()
 
   # Exported variants are either static archives that will be linked to a shared
   # object, or shared objects. Either way, -fPIC is needed.
-  if("${KUDU_LINK}" STREQUAL "s")
+  if("${PEGASUS_LINK}" STREQUAL "s")
     set(EXPORTED_FLAGS "${EXPORTED_FLAGS} -fPIC")
   endif()
 
@@ -707,10 +630,10 @@ endfunction()
 # Add a new binary that is compiled just like a unit test but is not executed
 # by or registered with "ctest". Useful for writing tests that use the Google
 # Test infrastructure but cannot or should not be run pre-commit.
-function(ADD_KUDU_TEST_NO_CTEST REL_TEST_NAME)
+function(ADD_PEGASUS_TEST_NO_CTEST REL_TEST_NAME)
   get_filename_component(TEST_NAME ${REL_TEST_NAME} NAME_WE)
   add_executable(${TEST_NAME} "${REL_TEST_NAME}.cc")
-  target_link_libraries(${TEST_NAME} ${KUDU_TEST_LINK_LIBS})
+  target_link_libraries(${TEST_NAME} ${PEGASUS_TEST_LINK_LIBS})
 endfunction()
 
 # Add a new test case, with or without an executable that should be built.
@@ -771,7 +694,7 @@ endfunction()
 #       of the corresponding CMakeLists.txt file.
 #
 # Any other arguments will be passed to set_tests_properties().
-function(ADD_KUDU_TEST REL_TEST_NAME)
+function(ADD_PEGASUS_TEST REL_TEST_NAME)
   # Parse out properties for which we have special handling.
   set(options)
   set(one_value_args TIMEOUT NUM_SHARDS)
@@ -799,7 +722,7 @@ function(ADD_KUDU_TEST REL_TEST_NAME)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${REL_TEST_NAME}.cc)
     # This test has a corresponding .cc file, set it up as an executable.
     set(TEST_PATH "${EXECUTABLE_OUTPUT_PATH}/${TEST_NAME}")
-    ADD_KUDU_TEST_NO_CTEST(${REL_TEST_NAME})
+    ADD_PEGASUS_TEST_NO_CTEST(${REL_TEST_NAME})
   elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${REL_TEST_NAME})
     # No executable, just invoke the test (probably a script) directly.
     get_filename_component(TEST_NAME_WITH_EXT ${REL_TEST_NAME} NAME)
@@ -813,66 +736,10 @@ function(ADD_KUDU_TEST REL_TEST_NAME)
   else()
     message(FATAL_ERROR "Neither ${REL_TEST_NAME} nor ${REL_TEST_NAME}.cc were found in ${CMAKE_CURRENT_SOURCE_DIR}/")
   endif()
-
-  # Copy data files into the build directory.
-  set(DATA_FILES_DST_SUBDIR testdata)
-  set(DST_DIR ${EXECUTABLE_OUTPUT_PATH}/${DATA_FILES_DST_SUBDIR})
-  set(DATA_FILES_LIST)
-  foreach(DATA_FILE ${ARG_DATA_FILES})
-    get_filename_component(DATA_FILE_NAME ${DATA_FILE} NAME)
-    list(APPEND DATA_FILES_LIST ${DATA_FILES_DST_SUBDIR}/${DATA_FILE_NAME})
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${DATA_FILE}
-      # Copy with read and execute permissions, since tests should not modify
-      # the data files in place, but data files may be scripts used by tests.
-      DIRECTORY_PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE
-      FILE_PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE
-      DESTINATION ${DST_DIR})
-  endforeach()
-
-  math(EXPR MAX_SHARD "${ARG_NUM_SHARDS} - 1")
-  foreach(SHARD_NUM RANGE ${MAX_SHARD})
-    # Only name the targets with a '.<shard>' if the test is sharded.
-    if(${ARG_NUM_SHARDS} EQUAL 1)
-      set(TARGET ${TEST_NAME})
-    else()
-      set(TARGET ${TEST_NAME}.${SHARD_NUM})
-    endif()
-
-    add_test(${TARGET}
-      ${BUILD_SUPPORT_DIR}/run-test.sh ${TEST_PATH})
-    if(ARG_UNPARSED_ARGUMENTS)
-      set_tests_properties(${TARGET} PROPERTIES ${ARG_UNPARSED_ARGUMENTS})
-    endif()
-    # Set the ctest timeout to be a bit longer than the timeout we pass to
-    # our test wrapper. This gives the test wrapper some opportunity to do
-    # things like dump stacks, compress the log, etc.
-    math(EXPR EXTENDED_TIMEOUT "${ARG_TIMEOUT} + 30")
-
-    # Add the configured timeout to the environment for the test wrapper.
-    get_test_property(${TARGET} ENVIRONMENT CUR_TEST_ENV)
-    if(NOT CUR_TEST_ENV)
-      set(CUR_TEST_ENV "")
-    endif()
-    list(APPEND CUR_TEST_ENV "KUDU_TEST_TIMEOUT=${ARG_TIMEOUT}")
-    list(APPEND CUR_TEST_ENV "GTEST_TOTAL_SHARDS=${ARG_NUM_SHARDS}")
-    list(APPEND CUR_TEST_ENV "GTEST_SHARD_INDEX=${SHARD_NUM}")
-
-    # The only way we can pass information to dist-test is through the environment.
-    # So, use a comma-delimited environment variable to pass the list of data files
-    # that need to be uploaded.
-    if(DATA_FILES_LIST)
-      string(REPLACE ";" "," DATA_FILES_ENV "${DATA_FILES_LIST}")
-      list(APPEND CUR_TEST_ENV "KUDU_DATA_FILES=${DATA_FILES_ENV}")
-    endif()
-
-    set_tests_properties(${TARGET} PROPERTIES
-      TIMEOUT ${EXTENDED_TIMEOUT}
-      ENVIRONMENT "${CUR_TEST_ENV}")
-  endforeach(SHARD_NUM)
 endfunction()
 
 # A wrapper for add_dependencies() that is compatible with NO_TESTS.
-function(ADD_KUDU_TEST_DEPENDENCIES REL_TEST_NAME)
+function(ADD_PEGASUS_TEST_DEPENDENCIES REL_TEST_NAME)
   if(NO_TESTS)
     return()
   endif()
@@ -895,7 +762,7 @@ function(ADD_THIRDPARTY_LIB LIB_NAME)
     message(SEND_ERROR "Error: unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}")
   endif()
 
-  if(("${KUDU_LINK}" STREQUAL "s" AND ARG_STATIC_LIB) OR (NOT ARG_SHARED_LIB))
+  if(("${PEGASUS_LINK}" STREQUAL "s" AND ARG_STATIC_LIB) OR (NOT ARG_SHARED_LIB))
     if(NOT ARG_STATIC_LIB)
       message(FATAL_ERROR "No static or shared library provided for ${LIB_NAME}")
     endif()
@@ -942,309 +809,302 @@ function(ADD_THIRDPARTY_LIB LIB_NAME)
   endif()
 endfunction()
 
-if (${KUDU_USE_TSAN})
-  set(THIRDPARTY_INSTALL_CURRENT_DIR ${THIRDPARTY_INSTALL_DIR}/tsan)
-else()
-  set(THIRDPARTY_INSTALL_CURRENT_DIR ${THIRDPARTY_INSTALL_DIR}/uninstrumented)
-endif()
-
 # Look in thirdparty prefix paths before anywhere else for system dependencies.
 set(CMAKE_PREFIX_PATH
-    ${THIRDPARTY_INSTALL_COMMON_DIR}
-    ${THIRDPARTY_INSTALL_CURRENT_DIR}
+    ${THIRDPARTY_INSTALL_DIR}
     ${CMAKE_PREFIX_PATH})
 
-## Cyrus SASL
-find_package(CyrusSASL REQUIRED)
-include_directories(SYSTEM ${CYRUS_SASL_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(cyrus_sasl
-  SHARED_LIB "${CYRUS_SASL_SHARED_LIB}")
-
-## GSSAPI
-find_package(GSSAPI REQUIRED)
-include_directories(SYSTEM ${GSSAPI_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(gssapi_krb5
-  SHARED_LIB "${GSSAPI_SHARED_LIB}")
-
-## GLog (depends on libunwind)
-find_package(GLog REQUIRED)
-include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
-set(GLOG_DEPS)
-if (NOT APPLE)
-  set(GLOG_DEPS unwind)
-endif()
-ADD_THIRDPARTY_LIB(glog
-  STATIC_LIB "${GLOG_STATIC_LIB}"
-  SHARED_LIB "${GLOG_SHARED_LIB}"
-  DEPS "${GLOG_DEPS}")
-list(APPEND KUDU_BASE_LIBS glog)
-
-## libunwind
-##
-## Doesn't build on OSX.
-if (NOT APPLE)
-  find_package(LibUnwind REQUIRED)
-  include_directories(SYSTEM ${UNWIND_INCLUDE_DIR})
-  ADD_THIRDPARTY_LIB(unwind
-    STATIC_LIB "${UNWIND_STATIC_LIB}"
-    SHARED_LIB "${UNWIND_SHARED_LIB}")
-  list(APPEND KUDU_BASE_LIBS unwind)
-endif()
-
-## GFlags
-find_package(GFlags REQUIRED)
-include_directories(SYSTEM ${GFLAGS_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(gflags
-  STATIC_LIB "${GFLAGS_STATIC_LIB}"
-  SHARED_LIB "${GFLAGS_SHARED_LIB}")
-list(APPEND KUDU_BASE_LIBS gflags)
-
-## GMock
-find_package(GMock REQUIRED)
-include_directories(SYSTEM ${GMOCK_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(gmock
-  STATIC_LIB "${GMOCK_STATIC_LIBRARY}"
-  SHARED_LIB "${GMOCK_SHARED_LIBRARY}")
-
-## GTest
-find_package(GTest REQUIRED)
-include_directories(SYSTEM ${GTEST_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(gtest
-  STATIC_LIB "${GTEST_STATIC_LIBRARY}"
-  SHARED_LIB "${GTEST_SHARED_LIBRARY}")
-
-## Protobuf
-find_package(Protobuf REQUIRED)
-include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(protobuf
-  STATIC_LIB "${PROTOBUF_STATIC_LIBRARY}"
-  SHARED_LIB "${PROTOBUF_SHARED_LIBRARY}")
-ADD_THIRDPARTY_LIB(protoc
-  STATIC_LIB "${PROTOBUF_PROTOC_STATIC_LIBRARY}"
-  SHARED_LIB "${PROTOBUF_PROTOC_SHARED_LIBRARY}"
-  DEPS protobuf)
-find_package(KRPC REQUIRED)
-
-## Thrift
-find_package(Thrift REQUIRED)
-include_directories(SYSTEM ${THRIFT_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(thrift
-  STATIC_LIB "${THRIFT_STATIC_LIBRARY}"
-  SHARED_LIB "${THRIFT_SHARED_LIBRARY}")
-
-# The mini-HMS relies on JAVA_HOME being set in order to run the HMS, and
-# JDK 1.7 or later for compiling the Kudu metastore plugin.
-find_package(JavaHome REQUIRED)
-find_package(Java 1.7 REQUIRED)
-# Defines the add_jar() CMake command.
-include(UseJava)
-
-## Snappy
-find_package(Snappy REQUIRED)
-include_directories(SYSTEM ${SNAPPY_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(snappy
-  STATIC_LIB "${SNAPPY_STATIC_LIB}"
-  SHARED_LIB "${SNAPPY_SHARED_LIB}")
-
-## Libev
-find_package(LibEv REQUIRED)
-include_directories(SYSTEM ${LIBEV_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(libev
-  STATIC_LIB "${LIBEV_STATIC_LIB}"
-  SHARED_LIB "${LIBEV_SHARED_LIB}")
-
-## LZ4
-find_package(Lz4 REQUIRED)
-include_directories(SYSTEM ${LZ4_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(lz4 STATIC_LIB "${LZ4_STATIC_LIB}")
-
-## Bitshuffle
-find_package(Bitshuffle REQUIRED)
-include_directories(SYSTEM ${BITSHUFFLE_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(bitshuffle STATIC_LIB "${BITSHUFFLE_STATIC_LIB}")
-
-## ZLib
-find_package(Zlib REQUIRED)
-include_directories(SYSTEM ${ZLIB_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(zlib
-  STATIC_LIB "${ZLIB_STATIC_LIB}"
-  SHARED_LIB "${ZLIB_SHARED_LIB}")
-
-## Squeasel
-find_package(Squeasel REQUIRED)
-include_directories(SYSTEM ${SQUEASEL_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(squeasel
-  STATIC_LIB "${SQUEASEL_STATIC_LIB}")
-
-## Mustache
-find_package(Mustache REQUIRED)
-include_directories(SYSTEM ${MUSTACHE_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(mustache
-  STATIC_LIB "${MUSTACHE_STATIC_LIB}")
-
-## Oatpp
-find_package(Oatpp REQUIRED)
-include_directories(SYSTEM ${OATPP_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(oatpp
-  STATIC_LIB "${OATPP_STATIC_LIB}")
-
-## Oatpp-swagger
-find_package(OatppSwagger REQUIRED)
-include_directories(SYSTEM ${OATPP_SWAGGER_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(oatpp-swagger
-  STATIC_LIB "${OATPP_SWAGGER_STATIC_LIB}")
-
-## jwt-cpp
-find_package(JwtCpp REQUIRED)
-include_directories(${JWT_CPP_INCLUDE_DIR})
-
-## OpenSSL
-##
-## Version 1.0.0 or higher is required because we are using the following
-## features introduced started OpenSSL 1.0.0:
-##   * The new breed of functions to work with the X509_EXTENSION stack
-##   * automatic usage of &errno as a safe per-thread identifier
-##
-## If having multiple OpenSSL libraries installed on the system,
-## use the OPENSSL_ROOT_DIR cmake flag to specify where to look for the proper
-## version of the OpenSSL framework/library, e.g.
-##
-##   cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl ...
-##
-find_package(OpenSSL 1.0.0 REQUIRED)
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(openssl_ssl
-  SHARED_LIB "${OPENSSL_SSL_LIBRARY}")
-ADD_THIRDPARTY_LIB(openssl_crypto
-  SHARED_LIB "${OPENSSL_CRYPTO_LIBRARY}")
-
-## Kerberos
-find_package(Kerberos REQUIRED)
-include_directories(${KERBEROS_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(krb5
-  SHARED_LIB "${KERBEROS_LIBRARY}")
-
-if (NO_CHRONY)
-  add_definitions("-DNO_CHRONY")
-endif()
-
-## Google PerfTools
-##
-## Disabled with TSAN/ASAN.
-if (NOT "${KUDU_USE_ASAN}" AND
-    NOT "${KUDU_USE_TSAN}")
-  find_package(GPerf REQUIRED)
-  ADD_THIRDPARTY_LIB(tcmalloc
-    STATIC_LIB "${TCMALLOC_STATIC_LIB}"
-    SHARED_LIB "${TCMALLOC_SHARED_LIB}")
-  ADD_THIRDPARTY_LIB(profiler
-    STATIC_LIB "${PROFILER_STATIC_LIB}"
-    SHARED_LIB "${PROFILER_SHARED_LIB}")
-  list(APPEND KUDU_BASE_LIBS tcmalloc profiler)
+### Cyrus SASL
+#find_package(CyrusSASL REQUIRED)
+#include_directories(SYSTEM ${CYRUS_SASL_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(cyrus_sasl
+#  SHARED_LIB "${CYRUS_SASL_SHARED_LIB}")
+#
+### GSSAPI
+#find_package(GSSAPI REQUIRED)
+#include_directories(SYSTEM ${GSSAPI_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(gssapi_krb5
+#  SHARED_LIB "${GSSAPI_SHARED_LIB}")
+#
+### GLog (depends on libunwind)
+#find_package(GLog REQUIRED)
+#include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
+#set(GLOG_DEPS)
+#if (NOT APPLE)
+#  set(GLOG_DEPS unwind)
+#endif()
+#ADD_THIRDPARTY_LIB(glog
+#  STATIC_LIB "${GLOG_STATIC_LIB}"
+#  SHARED_LIB "${GLOG_SHARED_LIB}"
+#  DEPS "${GLOG_DEPS}")
+#list(APPEND KUDU_BASE_LIBS glog)
+#
+### libunwind
+###
+### Doesn't build on OSX.
+#if (NOT APPLE)
+#  find_package(LibUnwind REQUIRED)
+#  include_directories(SYSTEM ${UNWIND_INCLUDE_DIR})
+#  ADD_THIRDPARTY_LIB(unwind
+#    STATIC_LIB "${UNWIND_STATIC_LIB}"
+#    SHARED_LIB "${UNWIND_SHARED_LIB}")
+#  list(APPEND KUDU_BASE_LIBS unwind)
+#endif()
+#
+### GFlags
+#find_package(GFlags REQUIRED)
+#include_directories(SYSTEM ${GFLAGS_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(gflags
+#  STATIC_LIB "${GFLAGS_STATIC_LIB}"
+#  SHARED_LIB "${GFLAGS_SHARED_LIB}")
+#list(APPEND KUDU_BASE_LIBS gflags)
+#
+### GMock
+#find_package(GMock REQUIRED)
+#include_directories(SYSTEM ${GMOCK_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(gmock
+#  STATIC_LIB "${GMOCK_STATIC_LIBRARY}"
+#  SHARED_LIB "${GMOCK_SHARED_LIBRARY}")
+#
+### GTest
+#find_package(GTest REQUIRED)
+#include_directories(SYSTEM ${GTEST_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(gtest
+#  STATIC_LIB "${GTEST_STATIC_LIBRARY}"
+#  SHARED_LIB "${GTEST_SHARED_LIBRARY}")
+#
+### Protobuf
+#find_package(Protobuf REQUIRED)
+#include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(protobuf
+#  STATIC_LIB "${PROTOBUF_STATIC_LIBRARY}"
+#  SHARED_LIB "${PROTOBUF_SHARED_LIBRARY}")
+#ADD_THIRDPARTY_LIB(protoc
+#  STATIC_LIB "${PROTOBUF_PROTOC_STATIC_LIBRARY}"
+#  SHARED_LIB "${PROTOBUF_PROTOC_SHARED_LIBRARY}"
+#  DEPS protobuf)
+#find_package(KRPC REQUIRED)
+#
+### Thrift
+#find_package(Thrift REQUIRED)
+#include_directories(SYSTEM ${THRIFT_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(thrift
+#  STATIC_LIB "${THRIFT_STATIC_LIBRARY}"
+#  SHARED_LIB "${THRIFT_SHARED_LIBRARY}")
+#
+## The mini-HMS relies on JAVA_HOME being set in order to run the HMS, and
+## JDK 1.7 or later for compiling the Kudu metastore plugin.
+#find_package(JavaHome REQUIRED)
+#find_package(Java 1.7 REQUIRED)
+## Defines the add_jar() CMake command.
+#include(UseJava)
+#
+### Snappy
+#find_package(Snappy REQUIRED)
+#include_directories(SYSTEM ${SNAPPY_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(snappy
+#  STATIC_LIB "${SNAPPY_STATIC_LIB}"
+#  SHARED_LIB "${SNAPPY_SHARED_LIB}")
+#
+### Libev
+#find_package(LibEv REQUIRED)
+#include_directories(SYSTEM ${LIBEV_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(libev
+#  STATIC_LIB "${LIBEV_STATIC_LIB}"
+#  SHARED_LIB "${LIBEV_SHARED_LIB}")
+#
+### LZ4
+#find_package(Lz4 REQUIRED)
+#include_directories(SYSTEM ${LZ4_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(lz4 STATIC_LIB "${LZ4_STATIC_LIB}")
+#
+### Bitshuffle
+#find_package(Bitshuffle REQUIRED)
+#include_directories(SYSTEM ${BITSHUFFLE_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(bitshuffle STATIC_LIB "${BITSHUFFLE_STATIC_LIB}")
+#
+### ZLib
+#find_package(Zlib REQUIRED)
+#include_directories(SYSTEM ${ZLIB_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(zlib
+#  STATIC_LIB "${ZLIB_STATIC_LIB}"
+#  SHARED_LIB "${ZLIB_SHARED_LIB}")
+#
+### Squeasel
+#find_package(Squeasel REQUIRED)
+#include_directories(SYSTEM ${SQUEASEL_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(squeasel
+#  STATIC_LIB "${SQUEASEL_STATIC_LIB}")
+#
+### Mustache
+#find_package(Mustache REQUIRED)
+#include_directories(SYSTEM ${MUSTACHE_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(mustache
+#  STATIC_LIB "${MUSTACHE_STATIC_LIB}")
+#
+### Oatpp
+#find_package(Oatpp REQUIRED)
+#include_directories(SYSTEM ${OATPP_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(oatpp
+#  STATIC_LIB "${OATPP_STATIC_LIB}")
+#
+### Oatpp-swagger
+#find_package(OatppSwagger REQUIRED)
+#include_directories(SYSTEM ${OATPP_SWAGGER_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(oatpp-swagger
+#  STATIC_LIB "${OATPP_SWAGGER_STATIC_LIB}")
+#
+### jwt-cpp
+#find_package(JwtCpp REQUIRED)
+#include_directories(${JWT_CPP_INCLUDE_DIR})
+#
+### OpenSSL
+###
+### Version 1.0.0 or higher is required because we are using the following
+### features introduced started OpenSSL 1.0.0:
+###   * The new breed of functions to work with the X509_EXTENSION stack
+###   * automatic usage of &errno as a safe per-thread identifier
+###
+### If having multiple OpenSSL libraries installed on the system,
+### use the OPENSSL_ROOT_DIR cmake flag to specify where to look for the proper
+### version of the OpenSSL framework/library, e.g.
+###
+###   cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl ...
+###
+#find_package(OpenSSL 1.0.0 REQUIRED)
+#include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(openssl_ssl
+#  SHARED_LIB "${OPENSSL_SSL_LIBRARY}")
+#ADD_THIRDPARTY_LIB(openssl_crypto
+#  SHARED_LIB "${OPENSSL_CRYPTO_LIBRARY}")
+#
+### Kerberos
+#find_package(Kerberos REQUIRED)
+#include_directories(${KERBEROS_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(krb5
+#  SHARED_LIB "${KERBEROS_LIBRARY}")
+#
+#if (NO_CHRONY)
+#  add_definitions("-DNO_CHRONY")
+#endif()
+#
+### Google PerfTools
+###
+### Disabled with TSAN/ASAN.
+if (NOT "${PEGASUS_USE_ASAN}" AND
+    NOT "${PEGASUS_USE_TSAN}")
+#  find_package(GPerf REQUIRED)
+#  ADD_THIRDPARTY_LIB(tcmalloc
+#    STATIC_LIB "${TCMALLOC_STATIC_LIB}"
+#    SHARED_LIB "${TCMALLOC_SHARED_LIB}")
+#  ADD_THIRDPARTY_LIB(profiler
+#    STATIC_LIB "${PROFILER_STATIC_LIB}"
+#    SHARED_LIB "${PROFILER_SHARED_LIB}")
+  list(APPEND PEGASUS_BASE_LIBS tcmalloc profiler)
   add_definitions("-DTCMALLOC_ENABLED")
-  set(KUDU_TCMALLOC_AVAILABLE 1)
+  set(PEGASUS_TCMALLOC_AVAILABLE 1)
 endif()
-
-## curl
-find_package(CURL REQUIRED)
-include_directories(SYSTEM ${CURL_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(curl
-  STATIC_LIB "${CURL_STATIC_LIB}"
-  SHARED_LIB "${CURL_SHARED_LIB}"
-  DEPS zlib)
-
-## crcutil
-find_package(Crcutil REQUIRED)
-include_directories(SYSTEM ${CRCUTIL_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(crcutil
-  STATIC_LIB "${CRCUTIL_STATIC_LIB}"
-  SHARED_LIB "${CRCUTIL_SHARED_LIB}")
-
-## breakpad
-if (NOT APPLE)
-  find_package(BreakpadClient REQUIRED)
-  include_directories(SYSTEM ${BREAKPAD_CLIENT_INCLUDE_DIR})
-  ADD_THIRDPARTY_LIB(breakpad_client
-    STATIC_LIB "${BREAKPAD_CLIENT_STATIC_LIB}"
-    SHARED_LIB "${BREAKPAD_CLIENT_SHARED_LIB}")
-endif()
-
-## llvm
-# Note that llvm has a unique cmake setup. See kudu/codegen/CMakeLists.txt
-# for details.
-find_package(LLVM REQUIRED CONFIG)
-if(${LLVM_PACKAGE_VERSION} VERSION_LESS 3.4)
-  message(FATAL_ERROR "LLVM version (${LLVM_PACKAGE_VERSION}) must be at least 3.4")
-endif()
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
-## librt
-if (NOT APPLE)
-  find_library(RT_LIB_PATH rt)
-  if(NOT RT_LIB_PATH)
-    message(FATAL_ERROR "Could not find librt on the system path")
-  endif()
-  ADD_THIRDPARTY_LIB(rt
-    SHARED_LIB "${RT_LIB_PATH}")
-
-  find_library(DL_LIB_PATH dl)
-  if(NOT DL_LIB_PATH)
-    message(FATAL_ERROR "Could not find libdl on the system path")
-  endif()
-  ADD_THIRDPARTY_LIB(dl
-    SHARED_LIB "${DL_LIB_PATH}")
-endif()
-
-## Kerberos binaries (kinit, kadmin, etc).
-if (NOT NO_TESTS)
-  ## We rely on the Kerberos binaries for testing security.
-  find_package(KerberosPrograms)
-endif()
-
-# The tests as well as any binaries which are run as subprocesses by tests (eg tserver,
-# master, and the 'kudu' CLI tool) need to link these in. We have to set them
-# here so they are accessible by all targets.
-if (NOT APPLE)
-  set(SANITIZER_OPTIONS_OVERRIDE -Wl,-u_sanitizer_options_link_helper sanitizer_options)
-  set(KRB5_REALM_OVERRIDE -Wl,--undefined=krb5_realm_override_loaded krb5_realm_override)
-else()
-  set(SANITIZER_OPTIONS_OVERRIDE -Wl,-U,_sanitizer_options_link_helper sanitizer_options)
-  set(KRB5_REALM_OVERRIDE -Wl,-U,krb5_realm_override_loaded krb5_realm_override)
-endif()
-
-## yaml
-find_package(Yaml REQUIRED)
-include_directories(SYSTEM ${YAML_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(yaml
-  STATIC_LIB "${YAML_STATIC_LIB}"
-  SHARED_LIB "${YAML_SHARED_LIB}")
-
-## gumbo-parser
-find_package(GumboParser REQUIRED)
-include_directories(SYSTEM ${GUMBO_PARSER_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(gumbo-parser
-  STATIC_LIB "${GUMBO_PARSER_STATIC_LIB}"
-  SHARED_LIB "${GUMBO_PARSER_SHARED_LIB}")
-
-## gumbo-query
-find_package(GumboQuery REQUIRED)
-include_directories(SYSTEM ${GUMBO_QUERY_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(gumbo-query
-  STATIC_LIB "${GUMBO_QUERY_STATIC_LIB}"
-  SHARED_LIB "${GUMBO_QUERY_SHARED_LIB}"
-  DEPS gumbo-parser)
-
-## Boost
-
-# We use a custom cmake module and not cmake's FindBoost.
-# see: cmake_modules/FindKuduBoost.cmake
-find_package(KuduBoost REQUIRED)
-include_directories(SYSTEM ${BOOST_INCLUDE_DIR})
-
-ADD_THIRDPARTY_LIB(boost_date_time
-    STATIC_LIB "${BOOST_DATE_TIME_STATIC_LIB}"
-    SHARED_LIB "${BOOST_DATE_TIME_SHARED_LIB}")
+#
+### curl
+#find_package(CURL REQUIRED)
+#include_directories(SYSTEM ${CURL_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(curl
+#  STATIC_LIB "${CURL_STATIC_LIB}"
+#  SHARED_LIB "${CURL_SHARED_LIB}"
+#  DEPS zlib)
+#
+### crcutil
+#find_package(Crcutil REQUIRED)
+#include_directories(SYSTEM ${CRCUTIL_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(crcutil
+#  STATIC_LIB "${CRCUTIL_STATIC_LIB}"
+#  SHARED_LIB "${CRCUTIL_SHARED_LIB}")
+#
+### breakpad
+#if (NOT APPLE)
+#  find_package(BreakpadClient REQUIRED)
+#  include_directories(SYSTEM ${BREAKPAD_CLIENT_INCLUDE_DIR})
+#  ADD_THIRDPARTY_LIB(breakpad_client
+#    STATIC_LIB "${BREAKPAD_CLIENT_STATIC_LIB}"
+#    SHARED_LIB "${BREAKPAD_CLIENT_SHARED_LIB}")
+#endif()
+#
+### llvm
+## Note that llvm has a unique cmake setup. See kudu/codegen/CMakeLists.txt
+## for details.
+#find_package(LLVM REQUIRED CONFIG)
+#if(${LLVM_PACKAGE_VERSION} VERSION_LESS 3.4)
+#  message(FATAL_ERROR "LLVM version (${LLVM_PACKAGE_VERSION}) must be at least 3.4")
+#endif()
+#message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+#message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+#
+### librt
+#if (NOT APPLE)
+#  find_library(RT_LIB_PATH rt)
+#  if(NOT RT_LIB_PATH)
+#    message(FATAL_ERROR "Could not find librt on the system path")
+#  endif()
+#  ADD_THIRDPARTY_LIB(rt
+#    SHARED_LIB "${RT_LIB_PATH}")
+#
+#  find_library(DL_LIB_PATH dl)
+#  if(NOT DL_LIB_PATH)
+#    message(FATAL_ERROR "Could not find libdl on the system path")
+#  endif()
+#  ADD_THIRDPARTY_LIB(dl
+#    SHARED_LIB "${DL_LIB_PATH}")
+#endif()
+#
+### Kerberos binaries (kinit, kadmin, etc).
+#if (NOT NO_TESTS)
+#  ## We rely on the Kerberos binaries for testing security.
+#  find_package(KerberosPrograms)
+#endif()
+#
+## The tests as well as any binaries which are run as subprocesses by tests (eg tserver,
+## master, and the 'kudu' CLI tool) need to link these in. We have to set them
+## here so they are accessible by all targets.
+#if (NOT APPLE)
+#  set(SANITIZER_OPTIONS_OVERRIDE -Wl,-u_sanitizer_options_link_helper sanitizer_options)
+#  set(KRB5_REALM_OVERRIDE -Wl,--undefined=krb5_realm_override_loaded krb5_realm_override)
+#else()
+#  set(SANITIZER_OPTIONS_OVERRIDE -Wl,-U,_sanitizer_options_link_helper sanitizer_options)
+#  set(KRB5_REALM_OVERRIDE -Wl,-U,krb5_realm_override_loaded krb5_realm_override)
+#endif()
+#
+### yaml
+#find_package(Yaml REQUIRED)
+#include_directories(SYSTEM ${YAML_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(yaml
+#  STATIC_LIB "${YAML_STATIC_LIB}"
+#  SHARED_LIB "${YAML_SHARED_LIB}")
+#
+### gumbo-parser
+#find_package(GumboParser REQUIRED)
+#include_directories(SYSTEM ${GUMBO_PARSER_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(gumbo-parser
+#  STATIC_LIB "${GUMBO_PARSER_STATIC_LIB}"
+#  SHARED_LIB "${GUMBO_PARSER_SHARED_LIB}")
+#
+### gumbo-query
+#find_package(GumboQuery REQUIRED)
+#include_directories(SYSTEM ${GUMBO_QUERY_INCLUDE_DIR})
+#ADD_THIRDPARTY_LIB(gumbo-query
+#  STATIC_LIB "${GUMBO_QUERY_STATIC_LIB}"
+#  SHARED_LIB "${GUMBO_QUERY_SHARED_LIB}"
+#  DEPS gumbo-parser)
+#
+### Boost
+#
+## We use a custom cmake module and not cmake's FindBoost.
+## see: cmake_modules/FindKuduBoost.cmake
+#find_package(KuduBoost REQUIRED)
+#include_directories(SYSTEM ${BOOST_INCLUDE_DIR})
+#
+#ADD_THIRDPARTY_LIB(boost_date_time
+#    STATIC_LIB "${BOOST_DATE_TIME_STATIC_LIB}"
+#    SHARED_LIB "${BOOST_DATE_TIME_SHARED_LIB}")
 
 ############################################################
 # Enable sized deallocation where supported.
@@ -1269,7 +1129,7 @@ if (APPLE)
     set(COMPILER_SUPPORTS_SIZED_DEALLOCATION TRUE)
   endif()
 else()
-  if (KUDU_TCMALLOC_AVAILABLE AND
+  if (PEGASUS_TCMALLOC_AVAILABLE AND
       (("${COMPILER_FAMILY}" STREQUAL "clang") OR
        ("${COMPILER_FAMILY}" STREQUAL "gcc" AND
         "${COMPILER_VERSION}" VERSION_GREATER "5.0")))
@@ -1288,23 +1148,23 @@ endif()
 # Linker setup
 ############################################################
 
-set(KUDU_MIN_TEST_LIBS ${KUDU_BASE_LIBS} kudu_test_main kudu_test_util)
+#set(PEGASUS_MIN_TEST_LIBS ${PEGASUS_BASE_LIBS} kudu_test_main kudu_test_util)
 # Prepend SANITIZER_OPTIONS_OVERRIDE if this is a sanitizer build.
 # SANITIZER_OPTIONS_OVERRIDE needs to be linked first so that it is statically
 # linked to the test binaries directly. Otherwise the weakly linked default
 # implementations coul be be used when running tests.
-if ("${KUDU_USE_ASAN}" OR "${KUDU_USE_TSAN}" OR "${KUDU_USE_UBSAN}")
-  list(INSERT KUDU_MIN_TEST_LIBS 0 ${SANITIZER_OPTIONS_OVERRIDE})
-endif()
-set(KUDU_TEST_LINK_LIBS ${KUDU_MIN_TEST_LIBS})
+#if ("${PEGASUS_USE_ASAN}" OR "${PEGASUS_USE_TSAN}" OR "${PEGASUS_USE_UBSAN}")
+#  list(INSERT PEGASUS_MIN_TEST_LIBS 0 ${SANITIZER_OPTIONS_OVERRIDE})
+#endif()
+set(PEGASUS_TEST_LINK_LIBS ${PEGASUS_MIN_TEST_LIBS})
 
-# This macro initializes KUDU_MIN_TEST_LIBS to KUDU_MIN_TEST_LIBS and
+# This macro initializes PEGASUS_MIN_TEST_LIBS to PEGASUS_MIN_TEST_LIBS and
 # appends the passed list of libraries to the end. This ensures that
-# KUDU_MIN_TEST_LIBS is linked first.
-macro(SET_KUDU_TEST_LINK_LIBS)
-  set(KUDU_TEST_LINK_LIBS ${KUDU_MIN_TEST_LIBS})
-  list(APPEND KUDU_TEST_LINK_LIBS ${ARGN})
-endmacro()
+# PEGASUS_MIN_TEST_LIBS is linked first.
+#macro(SET_PEGASUS_TEST_LINK_LIBS)
+#  set(PEGASUS_TEST_LINK_LIBS ${PEGASUS_MIN_TEST_LIBS})
+#  list(APPEND PEGASUS_TEST_LINK_LIBS ${ARGN})
+#endmacro()
 
 # Use "thin archives" for our static libraries. We only use static libraries
 # internal to our own build, so thin ones are just as good and much smaller.
@@ -1352,63 +1212,63 @@ endif (UNIX)
 ############################################################
 # "make lint" target
 ############################################################
-if (UNIX)
-  # Full lint
-  add_custom_target(lint ${BUILD_SUPPORT_DIR}/lint.sh)
-  # Incremental lint - only checks files changed since the last
-  # merged upstream commit
-  add_custom_target(ilint ${BUILD_SUPPORT_DIR}/lint.sh -c)
-endif (UNIX)
+#if (UNIX)
+#  # Full lint
+#  add_custom_target(lint ${BUILD_SUPPORT_DIR}/lint.sh)
+#  # Incremental lint - only checks files changed since the last
+#  # merged upstream commit
+#  add_custom_target(ilint ${BUILD_SUPPORT_DIR}/lint.sh -c)
+#endif (UNIX)
 
 ############################################################
 # "make pb-gen": generate all protobuf source/header files
 ############################################################
-if (UNIX)
-  add_custom_target(pb-gen)
-endif (UNIX)
+#if (UNIX)
+#  add_custom_target(pb-gen)
+#endif (UNIX)
 
 ############################################################
 # "make krpc-gen": generate all KRPC source/header files
 ############################################################
-if (UNIX)
-  add_custom_target(krpc-gen)
-endif (UNIX)
+#if (UNIX)
+#  add_custom_target(krpc-gen)
+#endif (UNIX)
 
 ############################################################
 # "generated-headers" target
 ############################################################
-if (UNIX)
-  add_custom_target(generated-headers
-    DEPENDS pb-gen krpc-gen hms_thrift gen_version_info)
-endif (UNIX)
+#if (UNIX)
+#  add_custom_target(generated-headers
+#    DEPENDS pb-gen krpc-gen hms_thrift gen_version_info)
+#endif (UNIX)
 
 ############################################################
 # "make iwyu" and "make iwyu-fix" target
 ############################################################
-if (UNIX)
-  add_custom_target(iwyu ${BUILD_SUPPORT_DIR}/iwyu.py --from-git
-    DEPENDS generated-headers)
-  add_custom_target(iwyu-fix ${BUILD_SUPPORT_DIR}/iwyu.py --fix --from-git
-    DEPENDS generated-headers)
-endif (UNIX)
+#if (UNIX)
+#  add_custom_target(iwyu ${BUILD_SUPPORT_DIR}/iwyu.py --from-git
+#    DEPENDS generated-headers)
+#  add_custom_target(iwyu-fix ${BUILD_SUPPORT_DIR}/iwyu.py --fix --from-git
+#    DEPENDS generated-headers)
+#endif (UNIX)
 
 ############################################################
 # "make tidy" target
 ############################################################
-if (UNIX)
-  add_custom_target(tidy ${BUILD_SUPPORT_DIR}/tidy.sh)
-  add_dependencies(tidy generated-headers)
-endif (UNIX)
+#if (UNIX)
+#  add_custom_target(tidy ${BUILD_SUPPORT_DIR}/tidy.sh)
+#  add_dependencies(tidy generated-headers)
+#endif (UNIX)
 
 ############################################################
 # "make docs" target
 ############################################################
-if (UNIX)
-  add_custom_target(docs
-    # The docs output HTML will end up in a docs/ subdir.
-    ${CMAKE_CURRENT_SOURCE_DIR}/docs/support/scripts/make_docs.sh
-      --build_root ${CMAKE_CURRENT_BINARY_DIR})
-endif (UNIX)
+#if (UNIX)
+#  add_custom_target(docs
+#    # The docs output HTML will end up in a docs/ subdir.
+#    ${CMAKE_CURRENT_SOURCE_DIR}/docs/support/scripts/make_docs.sh
+#      --build_root ${CMAKE_CURRENT_BINARY_DIR})
+#endif (UNIX)
 
 ############################################################
 # "make doxygen" target
@@ -1417,43 +1277,43 @@ endif (UNIX)
 # treat warnings as errors to spot various issues in the
 # C++ client API documentation.
 ############################################################
-if (UNIX)
-  find_package(Doxygen 1.8.19)
-  if (NOT (DOXYGEN_FOUND AND DOXYGEN_DOT_FOUND))
-    message(WARNING "Doxygen with Dot support (graphviz) not found: 'doxygen' target is not available")
-  else ()
-    if (DOXYGEN_WARN_AS_ERROR)
-      set(DOXY_CLIENT_API_WARN_AS_ERROR YES)
-    else()
-      set(DOXY_CLIENT_API_WARN_AS_ERROR NO)
-    endif()
-    set(DOXY_SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen)
-    set(DOXY_CLIENT_DESTDIR ${DOXY_SUBDIR}/tmp.client)
-    set(DOXY_CLIENT_API_CFG ${DOXY_SUBDIR}/client_api.doxy)
-    set(DOXY_CLIENT_API_FOOTER ${DOXY_SUBDIR}/client_api.footer)
-    set(DOXY_CLIENT_API_OUTDIR ${DOXY_SUBDIR}/client_api)
-    list(APPEND DOXY_CLIENT_API_EXCLUDE
-      "share/doc/kuduClient/examples/example.cc")
-    # NOTE: DOXY_CLIENT_API_EXCLUDE, DOXY_CLIENT_API_OUTDIR, and
-    #       DOXY_CLIENT_API_FOOTER are used in client_api.doxy.in template file
-    configure_file(docs/support/doxygen/client_api.doxy.in ${DOXY_CLIENT_API_CFG} @ONLY)
-    configure_file(docs/support/doxygen/client_api.footer.in ${DOXY_CLIENT_API_FOOTER} @ONLY)
-    add_custom_target(doxy_install_client_alt_destdir
-      COMMAND ${CMAKE_COMMAND} -E remove_directory ${DOXY_CLIENT_DESTDIR}
-      COMMAND DESTDIR=${DOXY_CLIENT_DESTDIR} ${CMAKE_MAKE_PROGRAM} install
-      COMMENT "Installing Kudu client files into temporary destroot"
-    )
-    add_custom_target(doxygen
-      COMMAND ${DOXYGEN_EXECUTABLE} ${DOXY_CLIENT_API_CFG}
-      WORKING_DIRECTORY ${DOXY_CLIENT_DESTDIR}/${CMAKE_INSTALL_PREFIX}
-      COMMENT "Generating Kudu C++ client API documentation"
-    )
-    add_dependencies(doxy_install_client_alt_destdir kudu_client_exported)
-    add_dependencies(doxygen doxy_install_client_alt_destdir)
-    # If doxygen is present, generate doxygen documentation along with 'docs'.
-    add_dependencies(docs doxygen)
-  endif ()
-endif (UNIX)
+#if (UNIX)
+#  find_package(Doxygen 1.8.19)
+#  if (NOT (DOXYGEN_FOUND AND DOXYGEN_DOT_FOUND))
+#    message(WARNING "Doxygen with Dot support (graphviz) not found: 'doxygen' target is not available")
+#  else ()
+#    if (DOXYGEN_WARN_AS_ERROR)
+#      set(DOXY_CLIENT_API_WARN_AS_ERROR YES)
+#    else()
+#      set(DOXY_CLIENT_API_WARN_AS_ERROR NO)
+#    endif()
+#    set(DOXY_SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen)
+#    set(DOXY_CLIENT_DESTDIR ${DOXY_SUBDIR}/tmp.client)
+#    set(DOXY_CLIENT_API_CFG ${DOXY_SUBDIR}/client_api.doxy)
+#    set(DOXY_CLIENT_API_FOOTER ${DOXY_SUBDIR}/client_api.footer)
+#    set(DOXY_CLIENT_API_OUTDIR ${DOXY_SUBDIR}/client_api)
+#    list(APPEND DOXY_CLIENT_API_EXCLUDE
+#      "share/doc/kuduClient/examples/example.cc")
+#    # NOTE: DOXY_CLIENT_API_EXCLUDE, DOXY_CLIENT_API_OUTDIR, and
+#    #       DOXY_CLIENT_API_FOOTER are used in client_api.doxy.in template file
+#    configure_file(docs/support/doxygen/client_api.doxy.in ${DOXY_CLIENT_API_CFG} @ONLY)
+#    configure_file(docs/support/doxygen/client_api.footer.in ${DOXY_CLIENT_API_FOOTER} @ONLY)
+#    add_custom_target(doxy_install_client_alt_destdir
+#      COMMAND ${CMAKE_COMMAND} -E remove_directory ${DOXY_CLIENT_DESTDIR}
+#      COMMAND DESTDIR=${DOXY_CLIENT_DESTDIR} ${CMAKE_MAKE_PROGRAM} install
+#      COMMENT "Installing Kudu client files into temporary destroot"
+#    )
+#    add_custom_target(doxygen
+#      COMMAND ${DOXYGEN_EXECUTABLE} ${DOXY_CLIENT_API_CFG}
+#      WORKING_DIRECTORY ${DOXY_CLIENT_DESTDIR}/${CMAKE_INSTALL_PREFIX}
+#      COMMENT "Generating Kudu C++ client API documentation"
+#    )
+#    add_dependencies(doxy_install_client_alt_destdir kudu_client_exported)
+#    add_dependencies(doxygen doxy_install_client_alt_destdir)
+#    # If doxygen is present, generate doxygen documentation along with 'docs'.
+#    add_dependencies(docs doxygen)
+#  endif ()
+#endif (UNIX)
 
 ############################################################
 # "make site" target
@@ -1461,46 +1321,18 @@ endif (UNIX)
 # NOTE: It's supposed find_package(Doxygen) has already
 # been run at this point.
 ############################################################
-if (UNIX)
-  if (NOT DOXYGEN_FOUND)
-    add_custom_target(site
-      ${CMAKE_CURRENT_SOURCE_DIR}/docs/support/scripts/make_site.sh --no-doxygen)
-  else ()
-    add_custom_target(site
-      ${CMAKE_CURRENT_SOURCE_DIR}/docs/support/scripts/make_site.sh)
-  endif ()
-endif (UNIX)
+#if (UNIX)
+#  if (NOT DOXYGEN_FOUND)
+#    add_custom_target(site
+#      ${CMAKE_CURRENT_SOURCE_DIR}/docs/support/scripts/make_site.sh --no-doxygen)
+#  else ()
+#    add_custom_target(site
+#      ${CMAKE_CURRENT_SOURCE_DIR}/docs/support/scripts/make_site.sh)
+#  endif ()
+#endif (UNIX)
 
 ############################################################
 # Subdirectories
 ############################################################
 
-add_subdirectory(src/kudu/benchmarks)
-add_subdirectory(src/kudu/cfile)
-add_subdirectory(src/kudu/client)
-add_subdirectory(src/kudu/clock)
-add_subdirectory(src/kudu/codegen)
-add_subdirectory(src/kudu/common)
-add_subdirectory(src/kudu/consensus)
-add_subdirectory(src/kudu/experiments)
-add_subdirectory(src/kudu/fs)
-# Google util libraries borrowed from supersonic, tcmalloc, Chromium, etc.
-add_subdirectory(src/kudu/gutil)
-add_subdirectory(src/kudu/hms)
-add_subdirectory(src/kudu/integration-tests)
-add_subdirectory(src/kudu/kserver)
-add_subdirectory(src/kudu/master)
-add_subdirectory(src/kudu/mini-cluster)
-add_subdirectory(src/kudu/postgres)
-add_subdirectory(src/kudu/ranger)
-add_subdirectory(src/kudu/rebalance)
-add_subdirectory(src/kudu/rpc)
-add_subdirectory(src/kudu/security)
-add_subdirectory(src/kudu/server)
-add_subdirectory(src/kudu/subprocess)
-add_subdirectory(src/kudu/tablet)
-add_subdirectory(src/kudu/thrift)
-add_subdirectory(src/kudu/tools)
-add_subdirectory(src/kudu/transactions)
-add_subdirectory(src/kudu/tserver)
-add_subdirectory(src/kudu/util)
+add_subdirectory(src/rdsn)
