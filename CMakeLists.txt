@@ -424,6 +424,10 @@ if ("${PEGASUS_USE_ASAN}" OR "${PEGASUS_USE_TSAN}" OR "${PEGASUS_USE_UBSAN}")
   endif()
 endif()
 
+#if(SANITIZER)
+#  add_definitions(-DSANITIZER=1)
+#endif()
+
 # Code coverage
 if ("${PEGASUS_GENERATE_COVERAGE}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -DCOVERAGE_BUILD")
@@ -435,6 +439,31 @@ if ("${PEGASUS_GENERATE_COVERAGE}")
     message(SEND_ERROR "Must use clang for coverage build")
   endif()
 endif()
+
+#if(ENABLE_GCOV)
+#  find_program(GCOV_PATH gcov)
+#  find_program(GCOVR_PATH gcovr)
+#
+#  if(NOT GCOV_PATH)
+#    message(FATAL_ERROR "gcov not found! Aborting...")
+#  endif() # NOT GCOV_PATH
+#
+#  if(NOT GCOVR_PATH)
+#    message(FATAL_ERROR "gcovr not found! Aborting...")
+#  endif() # NOT GCOVR_PATH
+#
+#  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+#    message(WARNING "Code coverage results with an optimised (non-Debug) build may be misleading")
+#  endif() # NOT CMAKE_BUILD_TYPE STREQUAL "Debug"
+#
+#  set(COVERAGE_COMPILER_FLAGS "-g -O0 --coverage -fprofile-arcs -ftest-coverage" CACHE INTERNAL "")
+#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COVERAGE_COMPILER_FLAGS}")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COVERAGE_COMPILER_FLAGS}")
+#  message(STATUS "Appending code coverage compiler flags: ${COVERAGE_COMPILER_FLAGS}")
+#
+#  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov")
+#  add_definitions(-DENABLE_GCOV=1)
+#endif()
 
 # Having set PEGASUS_LINK due to build type and/or sanitizer, it's now safe to
 # act on its value.
@@ -1336,3 +1365,6 @@ endif (UNIX)
 ############################################################
 
 add_subdirectory(src/rdsn)
+
+
+#add_definitions(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_USE_OWN_TR1_TUPLE=0)
