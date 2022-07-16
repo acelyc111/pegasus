@@ -114,7 +114,7 @@ set(THIRDPARTY_INSTALL_DIR ${THIRDPARTY_DIR}/output)
 # Always generate the compilation database file (compile_commands.json) for use
 # with various development tools, such as IWYU and Vim's YouCompleteMe plugin.
 # See http://clang.llvm.org/docs/JSONCompilationDatabase.html
-#set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 ############################################################
 # Compiler flags
@@ -145,6 +145,21 @@ else()
 endif()
 #  -Wall: Enable all warnings.
 set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wall")
+# todo, add comments
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Werror")
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-strict-aliasing")
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wuninitialized")
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-unused-result")
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-unused-variable")
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-deprecated-declarations")
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-inconsistent-missing-override")
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-attributes")
+# -Wno-deprecated-register
+#   kbr5.h uses the legacy 'register' keyword.
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-deprecated-register")
+# -Wno-implicit-float-conversion
+#   Poco/Dynamic/VarHolder.h uses 'unsigned long' to 'float' conversion
+set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-implicit-float-conversion")
 #  -Wno-sign-compare: suppress warnings for comparison between signed and unsigned
 #     integers
 set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-sign-compare")
@@ -194,7 +209,7 @@ add_definitions(-D__STDC_FORMAT_MACROS)
 #     -fprofile-use: Compiler will use the profile outputs for optimizations
 set(CXX_FLAGS_DEBUG "-ggdb")
 set(CXX_FLAGS_FASTDEBUG "-ggdb -O1 -fno-omit-frame-pointer")
-set(CXX_FLAGS_RELEASE "-O3 -g -DNDEBUG -fno-omit-frame-pointer")
+set(CXX_FLAGS_RELEASE "-O2 -g -DNDEBUG -fno-omit-frame-pointer")
 
 set(CXX_FLAGS_PROFILE_GEN "${CXX_FLAGS_RELEASE} -fprofile-generate")
 set(CXX_FLAGS_PROFILE_BUILD "${CXX_FLAGS_RELEASE} -fprofile-use")
@@ -290,6 +305,28 @@ elseif("${COMPILER_FAMILY}" STREQUAL "gcc")
   endif()
 endif()
 
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+  if ("${COMPILER_FAMILY}" STREQUAL "clang")
+    add_compile_options(-Qunused-arguments)
+  endif()
+  message(STATUS "use ccache to speed up compilation")
+endif(CCACHE_FOUND)
+
+set(CMAKE_EXE_LINKER_FLAGS
+        "${CMAKE_EXE_LINKER_FLAGS} -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free"
+        CACHE
+        STRING
+        ""
+        FORCE)
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free"
+        CACHE
+        STRING
+        ""
+        FORCE)
+
 # Sanity check linking option.
 if (NOT PEGASUS_LINK)
   set(PEGASUS_LINK "a")
@@ -331,7 +368,7 @@ endif()
 
 # For any C code, use the same flags.
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 
 # Enable the Clang undefined behavior (UB) sanitizer.
 if (${PEGASUS_USE_UBSAN})
@@ -464,6 +501,42 @@ endif()
 #  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov")
 #  add_definitions(-DENABLE_GCOV=1)
 #endif()
+
+#if(ENABLE_GPERF AND USE_JEMALLOC)
+#  message(FATAL_ERROR "cannot enable both gperftools and jemalloc simultaneously")
+#endif()
+#
+#if(USE_JEMALLOC)
+#  set(JEMALLOC_LIB_TYPE "SHARED")
+#endif()
+
+# ================================================================== #
+
+# Helper function to add preprocesor definition of FILE_BASENAME
+# to pass the filename without directory path for debugging use.
+#
+# Note that in header files this is not consistent with
+# __FILE__ and __LINE__ since FILE_BASENAME will be the
+# compilation unit source file name (.c/.cpp).
+#
+# Example:
+#
+#   define_file_basename_for_sources(my_target)
+#
+# Will add -DFILE_BASENAME="filename" for each source file depended on
+# by my_target, where filename is the name of the file.
+#
+function(define_file_basename_for_sources targetname)
+  get_target_property(source_files "${targetname}" SOURCES)
+  foreach(sourcefile ${source_files})
+    # Add the FILE_BASENAME=filename compile definition to the list.
+    get_filename_component(basename "${sourcefile}" NAME)
+    # Set the updated compile definitions on the source file.
+    set_property(
+            SOURCE "${sourcefile}" APPEND
+            PROPERTY COMPILE_DEFINITIONS "__FILENAME__=\"${basename}\"")
+  endforeach()
+endfunction()
 
 # Having set PEGASUS_LINK due to build type and/or sanitizer, it's now safe to
 # act on its value.
@@ -843,6 +916,57 @@ set(CMAKE_PREFIX_PATH
     ${THIRDPARTY_INSTALL_DIR}
     ${CMAKE_PREFIX_PATH})
 
+file(GLOB ROCKSDB_DEPENDS_MODULE_PATH ${THIRDPARTY_DIR}/build/Source/rocksdb/cmake/modules)
+if(NOT ROCKSDB_DEPENDS_MODULE_PATH)
+  message(WARNING "Cannot find RocksDB depends cmake modules path, might not find snappy, zstd, lz4")
+endif()
+list(APPEND CMAKE_MODULE_PATH "${ROCKSDB_DEPENDS_MODULE_PATH}")
+
+find_package(Threads REQUIRED)
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ON)
+  message(STATUS "FIND_LIBRARY_USE_LIB64_PATHS = ON")
+endif()
+
+
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_STATIC_RUNTIME OFF)
+set(BOOST_ROOT ${DSN_THIRDPARTY_ROOT})
+set(Boost_NO_SYSTEM_PATHS ON)
+set(Boost_NO_BOOST_CMAKE ON)
+
+find_package(Boost COMPONENTS system filesystem regex REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
+if(NOT APPLE)
+  find_package(RT REQUIRED)
+endif()
+
+find_package(DL REQUIRED)
+
+# for md5 calculation
+find_package(OpenSSL REQUIRED)
+if(APPLE)
+  include_directories(SYSTEM ${OPENSSL_ROOT_DIR}/include)
+  link_directories("${OPENSSL_ROOT_DIR}/lib")
+endif()
+
+if(USE_JEMALLOC)
+  find_package(Jemalloc REQUIRED)
+endif()
+
+find_package(RocksDB REQUIRED)
+
+# libhdfs
+find_package(JNI REQUIRED)
+message (STATUS "JAVA_JVM_LIBRARY=${JAVA_JVM_LIBRARY}")
+link_libraries(${JAVA_JVM_LIBRARY})
+
+find_package(fmt REQUIRED)
+set(DEFAULT_THIRDPARTY_LIBS ${THRIFT_LIB} fmt::fmt CACHE STRING "default thirdparty libs" FORCE)
+
 ### Cyrus SASL
 #find_package(CyrusSASL REQUIRED)
 #include_directories(SYSTEM ${CYRUS_SASL_INCLUDE_DIR})
@@ -913,14 +1037,18 @@ set(CMAKE_PREFIX_PATH
 #  SHARED_LIB "${PROTOBUF_PROTOC_SHARED_LIBRARY}"
 #  DEPS protobuf)
 #find_package(KRPC REQUIRED)
-#
-### Thrift
-#find_package(Thrift REQUIRED)
-#include_directories(SYSTEM ${THRIFT_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(thrift
-#  STATIC_LIB "${THRIFT_STATIC_LIBRARY}"
-#  SHARED_LIB "${THRIFT_SHARED_LIBRARY}")
-#
+
+## Thrift
+find_package(Thrift REQUIRED)
+include_directories(SYSTEM ${THRIFT_INCLUDE_DIR})
+ADD_THIRDPARTY_LIB(thrift
+  STATIC_LIB "${THRIFT_STATIC_LIBRARY}"
+  SHARED_LIB "${THRIFT_SHARED_LIBRARY}")
+#find_library(THRIFT_LIB NAMES libthrift.a PATHS ${DSN_THIRDPARTY_ROOT}/lib NO_DEFAULT_PATH)
+#if(NOT THRIFT_LIB)
+#  message(FATAL_ERROR "thrift library not found in ${DSN_THIRDPARTY_ROOT}/lib")
+#endif()
+
 ## The mini-HMS relies on JAVA_HOME being set in order to run the HMS, and
 ## JDK 1.7 or later for compiling the Kudu metastore plugin.
 #find_package(JavaHome REQUIRED)
@@ -928,25 +1056,32 @@ set(CMAKE_PREFIX_PATH
 ## Defines the add_jar() CMake command.
 #include(UseJava)
 #
-### Snappy
-#find_package(Snappy REQUIRED)
-#include_directories(SYSTEM ${SNAPPY_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(snappy
-#  STATIC_LIB "${SNAPPY_STATIC_LIB}"
-#  SHARED_LIB "${SNAPPY_SHARED_LIB}")
-#
+## Snappy
+find_package(Snappy REQUIRED)
+include_directories(SYSTEM ${SNAPPY_INCLUDE_DIR})
+ADD_THIRDPARTY_LIB(snappy
+  STATIC_LIB "${SNAPPY_STATIC_LIB}"
+  SHARED_LIB "${SNAPPY_SHARED_LIB}")
+
+## zstd
+find_package(zstd REQUIRED)
+include_directories(SYSTEM ${ZSTD_INCLUDE_DIR})
+ADD_THIRDPARTY_LIB(zstd
+        STATIC_LIB "${ZSTD_STATIC_LIB}"
+        SHARED_LIB "${ZSTD_SHARED_LIB}")
+
 ### Libev
 #find_package(LibEv REQUIRED)
 #include_directories(SYSTEM ${LIBEV_INCLUDE_DIR})
 #ADD_THIRDPARTY_LIB(libev
 #  STATIC_LIB "${LIBEV_STATIC_LIB}"
 #  SHARED_LIB "${LIBEV_SHARED_LIB}")
-#
-### LZ4
-#find_package(Lz4 REQUIRED)
-#include_directories(SYSTEM ${LZ4_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(lz4 STATIC_LIB "${LZ4_STATIC_LIB}")
-#
+
+## LZ4
+find_package(Lz4 REQUIRED)
+include_directories(SYSTEM ${LZ4_INCLUDE_DIR})
+ADD_THIRDPARTY_LIB(lz4 STATIC_LIB "${LZ4_STATIC_LIB}")
+
 ### Bitshuffle
 #find_package(Bitshuffle REQUIRED)
 #include_directories(SYSTEM ${BITSHUFFLE_INCLUDE_DIR})
