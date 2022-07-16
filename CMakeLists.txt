@@ -979,39 +979,6 @@ set(DEFAULT_THIRDPARTY_LIBS ${THRIFT_LIB} fmt::fmt CACHE STRING "default thirdpa
 #ADD_THIRDPARTY_LIB(gssapi_krb5
 #  SHARED_LIB "${GSSAPI_SHARED_LIB}")
 #
-### GLog (depends on libunwind)
-#find_package(GLog REQUIRED)
-#include_directories(SYSTEM ${GLOG_INCLUDE_DIR})
-#set(GLOG_DEPS)
-#if (NOT APPLE)
-#  set(GLOG_DEPS unwind)
-#endif()
-#ADD_THIRDPARTY_LIB(glog
-#  STATIC_LIB "${GLOG_STATIC_LIB}"
-#  SHARED_LIB "${GLOG_SHARED_LIB}"
-#  DEPS "${GLOG_DEPS}")
-#list(APPEND KUDU_BASE_LIBS glog)
-#
-### libunwind
-###
-### Doesn't build on OSX.
-#if (NOT APPLE)
-#  find_package(LibUnwind REQUIRED)
-#  include_directories(SYSTEM ${UNWIND_INCLUDE_DIR})
-#  ADD_THIRDPARTY_LIB(unwind
-#    STATIC_LIB "${UNWIND_STATIC_LIB}"
-#    SHARED_LIB "${UNWIND_SHARED_LIB}")
-#  list(APPEND KUDU_BASE_LIBS unwind)
-#endif()
-#
-### GFlags
-#find_package(GFlags REQUIRED)
-#include_directories(SYSTEM ${GFLAGS_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(gflags
-#  STATIC_LIB "${GFLAGS_STATIC_LIB}"
-#  SHARED_LIB "${GFLAGS_SHARED_LIB}")
-#list(APPEND KUDU_BASE_LIBS gflags)
-#
 ### GMock
 #find_package(GMock REQUIRED)
 #include_directories(SYSTEM ${GMOCK_INCLUDE_DIR})
@@ -1026,17 +993,6 @@ set(DEFAULT_THIRDPARTY_LIBS ${THRIFT_LIB} fmt::fmt CACHE STRING "default thirdpa
 #  STATIC_LIB "${GTEST_STATIC_LIBRARY}"
 #  SHARED_LIB "${GTEST_SHARED_LIBRARY}")
 #
-### Protobuf
-#find_package(Protobuf REQUIRED)
-#include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(protobuf
-#  STATIC_LIB "${PROTOBUF_STATIC_LIBRARY}"
-#  SHARED_LIB "${PROTOBUF_SHARED_LIBRARY}")
-#ADD_THIRDPARTY_LIB(protoc
-#  STATIC_LIB "${PROTOBUF_PROTOC_STATIC_LIBRARY}"
-#  SHARED_LIB "${PROTOBUF_PROTOC_SHARED_LIBRARY}"
-#  DEPS protobuf)
-#find_package(KRPC REQUIRED)
 
 ## Thrift
 find_package(Thrift REQUIRED)
@@ -1053,66 +1009,13 @@ ADD_THIRDPARTY_LIB(thrift
 #include(UseJava)
 #
 ## Snappy
-find_package(Snappy REQUIRED)
+find_package(snappy REQUIRED)
 
 ## zstd
 find_package(zstd REQUIRED)
-include_directories(SYSTEM ${ZSTD_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(zstd
-        STATIC_LIB "${ZSTD_STATIC_LIB}"
-        SHARED_LIB "${ZSTD_SHARED_LIB}")
-
-### Libev
-#find_package(LibEv REQUIRED)
-#include_directories(SYSTEM ${LIBEV_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(libev
-#  STATIC_LIB "${LIBEV_STATIC_LIB}"
-#  SHARED_LIB "${LIBEV_SHARED_LIB}")
 
 ## LZ4
-find_package(Lz4 REQUIRED)
-include_directories(SYSTEM ${LZ4_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(lz4 STATIC_LIB "${LZ4_STATIC_LIB}")
-
-### Bitshuffle
-#find_package(Bitshuffle REQUIRED)
-#include_directories(SYSTEM ${BITSHUFFLE_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(bitshuffle STATIC_LIB "${BITSHUFFLE_STATIC_LIB}")
-#
-### ZLib
-#find_package(Zlib REQUIRED)
-#include_directories(SYSTEM ${ZLIB_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(zlib
-#  STATIC_LIB "${ZLIB_STATIC_LIB}"
-#  SHARED_LIB "${ZLIB_SHARED_LIB}")
-#
-### Squeasel
-#find_package(Squeasel REQUIRED)
-#include_directories(SYSTEM ${SQUEASEL_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(squeasel
-#  STATIC_LIB "${SQUEASEL_STATIC_LIB}")
-#
-### Mustache
-#find_package(Mustache REQUIRED)
-#include_directories(SYSTEM ${MUSTACHE_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(mustache
-#  STATIC_LIB "${MUSTACHE_STATIC_LIB}")
-#
-### Oatpp
-#find_package(Oatpp REQUIRED)
-#include_directories(SYSTEM ${OATPP_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(oatpp
-#  STATIC_LIB "${OATPP_STATIC_LIB}")
-#
-### Oatpp-swagger
-#find_package(OatppSwagger REQUIRED)
-#include_directories(SYSTEM ${OATPP_SWAGGER_INCLUDE_DIR})
-#ADD_THIRDPARTY_LIB(oatpp-swagger
-#  STATIC_LIB "${OATPP_SWAGGER_STATIC_LIB}")
-#
-### jwt-cpp
-#find_package(JwtCpp REQUIRED)
-#include_directories(${JWT_CPP_INCLUDE_DIR})
+find_package(lz4 REQUIRED)
 #
 ### OpenSSL
 ###
