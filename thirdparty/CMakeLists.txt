@@ -18,7 +18,7 @@
 ##############################################################################
 
 project(pegasus_thirdparties)
-cmake_minimum_required(VERSION 3.11.0)
+cmake_minimum_required(VERSION 3.11.2)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # require at least gcc 5.4.0

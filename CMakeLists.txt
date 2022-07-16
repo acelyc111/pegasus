@@ -1044,10 +1044,6 @@ include_directories(SYSTEM ${THRIFT_INCLUDE_DIR})
 ADD_THIRDPARTY_LIB(thrift
   STATIC_LIB "${THRIFT_STATIC_LIBRARY}"
   SHARED_LIB "${THRIFT_SHARED_LIBRARY}")
-#find_library(THRIFT_LIB NAMES libthrift.a PATHS ${DSN_THIRDPARTY_ROOT}/lib NO_DEFAULT_PATH)
-#if(NOT THRIFT_LIB)
-#  message(FATAL_ERROR "thrift library not found in ${DSN_THIRDPARTY_ROOT}/lib")
-#endif()
 
 ## The mini-HMS relies on JAVA_HOME being set in order to run the HMS, and
 ## JDK 1.7 or later for compiling the Kudu metastore plugin.
@@ -1058,10 +1054,6 @@ ADD_THIRDPARTY_LIB(thrift
 #
 ## Snappy
 find_package(Snappy REQUIRED)
-include_directories(SYSTEM ${SNAPPY_INCLUDE_DIR})
-ADD_THIRDPARTY_LIB(snappy
-  STATIC_LIB "${SNAPPY_STATIC_LIB}"
-  SHARED_LIB "${SNAPPY_SHARED_LIB}")
 
 ## zstd
 find_package(zstd REQUIRED)
