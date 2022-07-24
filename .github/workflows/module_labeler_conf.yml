@@ -45,4 +45,5 @@ build:
   - any: ['cmake_modules/**/*', '**/CMakeLists.txt', 'run.sh']
 cpp:
   # TODO(yingchun): add more fine-grained labels
-  - any: ['src/**/*.h', 'src/**/*.cpp']
+  - 'src/**/*.h'
+  - 'src/**/*.cpp'
