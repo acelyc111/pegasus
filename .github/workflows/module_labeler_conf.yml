@@ -40,9 +40,12 @@ thrift:
 docs:
   - '**/*.md'
 scripts:
-  - any: ['scripts/**/*', '**/*.sh']
+  - 'scripts/**/*'
+  - '**/*.sh'
 build:
-  - any: ['cmake_modules/**/*', '**/CMakeLists.txt', 'run.sh']
+  - 'cmake_modules/**/*'
+  - '**/CMakeLists.txt'
+  - 'run.sh'
 cpp:
   # TODO(yingchun): add more fine-grained labels
   - 'src/**/*.h'
