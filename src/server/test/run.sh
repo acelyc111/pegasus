@@ -26,4 +26,3 @@ exit_if_fail() {
 ./pegasus_unit_test
 
 exit_if_fail $? "run unit test failed"
-

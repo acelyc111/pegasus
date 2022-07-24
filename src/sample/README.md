@@ -29,4 +29,3 @@ For example:
 ./run.sh onebox temp
 
 To change cluster, please modify the last line of `config.ini'.
-

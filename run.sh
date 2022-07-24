@@ -325,6 +325,8 @@ function run_build()
         echo "[$(date)] Build succeed"
     fi
 
+
+
     cd $ROOT
     chmod +x scripts/*.sh
 

@@ -21,4 +21,5 @@
 
 namespace pegasus {
 std::string get_brief_stat();
+
 }
