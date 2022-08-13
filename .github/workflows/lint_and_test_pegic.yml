@@ -16,7 +16,7 @@
 # under the License.
 ---
 # workflow name
-name: Golang Lint and Unit Test - pegic
+name: Golang CI - pegic
 
 # on events
 on:

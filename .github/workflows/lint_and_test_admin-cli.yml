@@ -16,7 +16,7 @@
 # under the License.
 ---
 # workflow name
-name: Golang Lint and Unit Test - admin-cli
+name: Golang CI - admin-cli
 
 # on events
 on:

@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 ---
-name: BuildCompilationEnvDocker - build and publish multi compilation OS env
+name: Build base develop docker
 
 on:
   push:
