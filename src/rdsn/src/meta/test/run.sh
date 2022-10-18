@@ -30,11 +30,15 @@ fi
 
 ./clear.sh
 output_xml="${REPORT_DIR}/dsn.meta.test.1.xml"
-GTEST_OUTPUT="xml:${output_xml}" ./dsn.meta.test
+GTEST_OUTPUT="xml:${output_xml}" ./dsn.meta.test --gtest_filter=meta_bulk_load_http_test.start_compaction_test
 if [ $? -ne 0 ]; then
     echo "run dsn.meta.test failed"
     echo "---- ls ----"
     ls -l
+    echo "---- ls data ----"
+    ls -l data
+    echo "---- ls data/log ----"
+    ls -l data/log
     if find . -name log.1.txt; then
         echo "---- tail -n 100 log.1.txt ----"
         tail -n 100 `find . -name log.1.txt`

@@ -121,39 +121,39 @@ jobs:
       fail-fast: false
       matrix:
         test_module:
-          - backup_restore_test
-          - base_api_test
-          - base_test
-          - bulk_load_test
-          - detect_hotspot_test
-          - dsn_aio_test
-          - dsn_block_service_test
-          - dsn.failure_detector.tests
-          - dsn_http_test
-          - dsn_meta_state_tests
+#          - backup_restore_test
+#          - base_api_test
+#          - base_test
+#          - bulk_load_test
+#          - detect_hotspot_test
+#          - dsn_aio_test
+#          - dsn_block_service_test
+#          - dsn.failure_detector.tests
+#          - dsn_http_test
+#          - dsn_meta_state_tests
           - dsn.meta.test
-          - dsn_nfs_test
-          - dsn_perf_counter_test
-          - dsn_replica_backup_test
-          - dsn_replica_bulk_load_test
-          - dsn_replica_dup_test
-          - dsn_replica_split_test
-          - dsn.replica.test
-          - dsn_replication_common_test
-          - dsn.replication.simple_kv
-          - dsn.rep_tests.simple_kv
-          - dsn_runtime_tests
-          - dsn_utils_tests
-          - dsn.zookeeper.tests
-          # TODO(yingchun): Disable it because we find it's too flaky, we will re-enable it after
-          # it has been optimized.
-#          - partition_split_test
-          - pegasus_geo_test
-          - pegasus_rproxy_test
-          - pegasus_unit_test
-          - recovery_test
-          - restore_test
-          - throttle_test
+#          - dsn_nfs_test
+#          - dsn_perf_counter_test
+#          - dsn_replica_backup_test
+#          - dsn_replica_bulk_load_test
+#          - dsn_replica_dup_test
+#          - dsn_replica_split_test
+#          - dsn.replica.test
+#          - dsn_replication_common_test
+#          - dsn.replication.simple_kv
+#          - dsn.rep_tests.simple_kv
+#          - dsn_runtime_tests
+#          - dsn_utils_tests
+#          - dsn.zookeeper.tests
+#          # TODO(yingchun): Disable it because we find it's too flaky, we will re-enable it after
+#          # it has been optimized.
+##          - partition_split_test
+#          - pegasus_geo_test
+#          - pegasus_rproxy_test
+#          - pegasus_unit_test
+#          - recovery_test
+#          - restore_test
+#          - throttle_test
     needs: build_Release
     runs-on: ubuntu-latest
     container:
@@ -175,124 +175,125 @@ jobs:
         run: |
           export LD_LIBRARY_PATH=`pwd`/thirdparty/output/lib:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server
           ulimit -s unlimited
+          ulimit -c unlimited
           . ./scripts/config_hdfs.sh
           ./run.sh test -m ${{ matrix.test_module }}
 
-  build_ASAN:
-    name: Build ASAN
-    needs: cpp_clang_format_linter
-    runs-on: ubuntu-latest
-    container:
-      image: apache/pegasus:thirdparties-bin-test-ubuntu1804-${{ github.base_ref }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            /github/home/.ccache
-          key: asan_ccache
-      - uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            thirdparty:
-              - '.github/workflows/thirdparty-regular-push.yml'
-              - 'docker/thirdparties-src/**'
-              - 'docker/thirdparties-bin/**'
-              - 'thirdparty/**'
-      - name: Unpack prebuilt third-parties
-        if: steps.changes.outputs.thirdparty == 'false'
-        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
-      - name: Rebuild third-parties
-        if: steps.changes.outputs.thirdparty == 'true'
-        working-directory: thirdparty
-        run: |
-          mkdir build
-          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -B build/
-          cmake --build build/ -j $(nproc)
-          ../scripts/download_hadoop.sh hadoop-bin
-      - name: Compilation
-        run: |
-          ccache -p
-          ccache -z
-          ./run.sh build --test --sanitizer address --skip_thirdparty --disable_gperf -j $(nproc)
-          ccache -s
-      - name: Tar files
-        run: |
-          mv thirdparty/hadoop-bin ./
-          rm -rf thirdparty
-          tar -zcvhf release_address_builder.tar DSN_ROOT/ src/builder/bin src/builder/src/server/test/config.ini hadoop-bin --exclude='*CMakeFiles*'
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: release_address_artifact_${{ github.sha }}
-          path: release_address_builder.tar
+#  build_ASAN:
+#    name: Build ASAN
+#    needs: cpp_clang_format_linter
+#    runs-on: ubuntu-latest
+#    container:
+#      image: apache/pegasus:thirdparties-bin-test-ubuntu1804-${{ github.base_ref }}
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Setup cache
+#        uses: actions/cache@v3
+#        with:
+#          path: |
+#            /github/home/.ccache
+#          key: asan_ccache
+#      - uses: dorny/paths-filter@v2
+#        id: changes
+#        with:
+#          filters: |
+#            thirdparty:
+#              - '.github/workflows/thirdparty-regular-push.yml'
+#              - 'docker/thirdparties-src/**'
+#              - 'docker/thirdparties-bin/**'
+#              - 'thirdparty/**'
+#      - name: Unpack prebuilt third-parties
+#        if: steps.changes.outputs.thirdparty == 'false'
+#        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
+#      - name: Rebuild third-parties
+#        if: steps.changes.outputs.thirdparty == 'true'
+#        working-directory: thirdparty
+#        run: |
+#          mkdir build
+#          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -B build/
+#          cmake --build build/ -j $(nproc)
+#          ../scripts/download_hadoop.sh hadoop-bin
+#      - name: Compilation
+#        run: |
+#          ccache -p
+#          ccache -z
+#          ./run.sh build --test --sanitizer address --skip_thirdparty --disable_gperf -j $(nproc)
+#          ccache -s
+#      - name: Tar files
+#        run: |
+#          mv thirdparty/hadoop-bin ./
+#          rm -rf thirdparty
+#          tar -zcvhf release_address_builder.tar DSN_ROOT/ src/builder/bin src/builder/src/server/test/config.ini hadoop-bin --exclude='*CMakeFiles*'
+#      - name: Upload Artifact
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: release_address_artifact_${{ github.sha }}
+#          path: release_address_builder.tar
 
-  test_ASAN:
-    name: Test ASAN
-    strategy:
-      fail-fast: false
-      matrix:
-        test_module:
-          - backup_restore_test
-          - base_api_test
-          - base_test
-          - bulk_load_test
-          - detect_hotspot_test
-          - dsn_aio_test
-          - dsn_block_service_test
-          - dsn.failure_detector.tests
-          - dsn_http_test
-          - dsn_meta_state_tests
-          - dsn.meta.test
-          - dsn_nfs_test
-          - dsn_perf_counter_test
-          - dsn_replica_backup_test
-          - dsn_replica_bulk_load_test
-          - dsn_replica_dup_test
-          - dsn_replica_split_test
-          - dsn.replica.test
-          - dsn_replication_common_test
-          - dsn.replication.simple_kv
-          - dsn.rep_tests.simple_kv
-          - dsn_runtime_tests
-          - dsn_utils_tests
-          - dsn.zookeeper.tests
-          # TODO(yingchun): Disable it because we find it's too flaky, we will re-enable it after
-          # it has been optimized.
-#          - partition_split_test
-          - pegasus_geo_test
-          - pegasus_rproxy_test
-          - pegasus_unit_test
-          - recovery_test
-          - restore_test
-          # TODO(yingchun): Disable it because we find it's too flaky, we will re-enable it after
-          # it has been optimized.
-#          - throttle_test
-    needs: build_ASAN
-    runs-on: ubuntu-latest
-    container:
-      image: apache/pegasus:thirdparties-bin-test-ubuntu1804-${{ github.base_ref }}
-      options: --cap-add=SYS_PTRACE
-    steps:
-      - uses: actions/checkout@v2
-      - name: Unpack prebuilt third-parties
-        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
-      - name: Download Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: release_address_artifact_${{ github.sha }}
-          path: .
-      - name: Tar files
-        run: |
-          tar -zxvf release_address_builder.tar
-      - name: Unit Testing
-        run: |
-          export LD_LIBRARY_PATH=`pwd`/thirdparty/output/lib:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server
-          ulimit -s unlimited
-          . ./scripts/config_hdfs.sh
-          ./run.sh test -m ${{ matrix.test_module }}
+#  test_ASAN:
+#    name: Test ASAN
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        test_module:
+#          - backup_restore_test
+#          - base_api_test
+#          - base_test
+#          - bulk_load_test
+#          - detect_hotspot_test
+#          - dsn_aio_test
+#          - dsn_block_service_test
+#          - dsn.failure_detector.tests
+#          - dsn_http_test
+#          - dsn_meta_state_tests
+#          - dsn.meta.test
+#          - dsn_nfs_test
+#          - dsn_perf_counter_test
+#          - dsn_replica_backup_test
+#          - dsn_replica_bulk_load_test
+#          - dsn_replica_dup_test
+#          - dsn_replica_split_test
+#          - dsn.replica.test
+#          - dsn_replication_common_test
+#          - dsn.replication.simple_kv
+#          - dsn.rep_tests.simple_kv
+#          - dsn_runtime_tests
+#          - dsn_utils_tests
+#          - dsn.zookeeper.tests
+#          # TODO(yingchun): Disable it because we find it's too flaky, we will re-enable it after
+#          # it has been optimized.
+##          - partition_split_test
+#          - pegasus_geo_test
+#          - pegasus_rproxy_test
+#          - pegasus_unit_test
+#          - recovery_test
+#          - restore_test
+#          # TODO(yingchun): Disable it because we find it's too flaky, we will re-enable it after
+#          # it has been optimized.
+##          - throttle_test
+#    needs: build_ASAN
+#    runs-on: ubuntu-latest
+#    container:
+#      image: apache/pegasus:thirdparties-bin-test-ubuntu1804-${{ github.base_ref }}
+#      options: --cap-add=SYS_PTRACE
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Unpack prebuilt third-parties
+#        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
+#      - name: Download Artifact
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: release_address_artifact_${{ github.sha }}
+#          path: .
+#      - name: Tar files
+#        run: |
+#          tar -zxvf release_address_builder.tar
+#      - name: Unit Testing
+#        run: |
+#          export LD_LIBRARY_PATH=`pwd`/thirdparty/output/lib:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server
+#          ulimit -s unlimited
+#          . ./scripts/config_hdfs.sh
+#          ./run.sh test -m ${{ matrix.test_module }}
 
 # TODO(yingchun): Build and test UBSAN version would cost a very long time, we will run these tests
 #                 when we are going to release a stable version. So we disable them in regular CI
@@ -409,127 +410,127 @@ jobs:
 #          . ./scripts/config_hdfs.sh
 #          ./run.sh test -m ${{ matrix.test_module }}
 
-  build_with_jemalloc:
-    name: Build with jemalloc
-    needs: cpp_clang_format_linter
-    runs-on: ubuntu-latest
-    container:
-      image: apache/pegasus:thirdparties-bin-test-jemallc-ubuntu1804-${{ github.base_ref }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            /github/home/.ccache
-          key: jemalloc_ccache
-      - uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            thirdparty:
-              - '.github/workflows/thirdparty-regular-push.yml'
-              - 'docker/thirdparties-src/**'
-              - 'docker/thirdparties-bin/**'
-              - 'thirdparty/**'
-      - name: Unpack prebuilt third-parties
-        if: steps.changes.outputs.thirdparty == 'false'
-        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
-      - name: Rebuild third-parties
-        if: steps.changes.outputs.thirdparty == 'true'
-        working-directory: thirdparty
-        run: |
-          mkdir build
-          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -DUSE_JEMALLOC=ON -B build/
-          cmake --build build/ -j $(nproc)
-          ../scripts/download_hadoop.sh hadoop-bin
-      - name: Compilation
-        run: |
-          ccache -p
-          ccache -z
-          ./run.sh build --test --skip_thirdparty -j $(nproc) -t release --use_jemalloc
-          ccache -s
-      - name: Pack Server
-        run: ./run.sh pack_server -j
-      - name: Pack Tools
-        run: ./run.sh pack_tools -j
-      - name: Tar files
-        run: |
-          mv thirdparty/hadoop-bin ./
-          rm -rf thirdparty
-          tar -zcvhf release_jemalloc_builder.tar DSN_ROOT/ src/builder/bin src/builder/src/server/test/config.ini hadoop-bin --exclude='*CMakeFiles*'
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: release_jemalloc_artifact_${{ github.sha }}
-          path: release_jemalloc_builder.tar
-
-  test_with_jemalloc:
-    name: Test with jemallc
-    strategy:
-      fail-fast: false
-      matrix:
-        test_module:
-          - dsn_utils_tests
-    needs: build_with_jemalloc
-    runs-on: ubuntu-latest
-    container:
-      image: apache/pegasus:thirdparties-bin-test-jemallc-ubuntu1804-${{ github.base_ref }}
-      options: --cap-add=SYS_PTRACE
-    steps:
-      - uses: actions/checkout@v2
-      - name: Unpack prebuilt third-parties
-        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
-      - name: Download Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: release_jemalloc_artifact_${{ github.sha }}
-          path: .
-      - name: Tar files
-        run: |
-          tar -zxvf release_jemalloc_builder.tar
-      - name: Unit Testing
-        run: |
-          export LD_LIBRARY_PATH=`pwd`/thirdparty/output/lib:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server
-          ulimit -s unlimited
-          . ./scripts/config_hdfs.sh
-          ./run.sh test -m ${{ matrix.test_module }}
-
-  build_pegasus_on_macos:
-    name: macOS
-    needs: cpp_clang_format_linter
-    runs-on: macos-12
-    env:
-      OPENSSL_ROOT_DIR: /usr/local/opt/openssl
-    steps:
-      - name: Install Softwares
-        run: |
-          # Preinstalled softwares: https://github.com/actions/virtual-environments/blob/main/images/macos/macos-12-Readme.md
-          brew install ccache
-          brew install snappy
-          brew install lz4
-          brew install zstd
-          brew install openssl@1.1
-      - uses: actions/checkout@v2
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            /Users/runner/Library/Caches/ccache
-          key: macos_build_ccache
-          restore-keys: |
-            macos_build_ccache
-            macos-12-thirdparty-bins
-      - name: Build thirdparty
-        working-directory: thirdparty
-        run: |
-          export JAVA_HOME="${JAVA_HOME_8_X64}"
-          mkdir -p build
-          cmake -DCMAKE_BUILD_TYPE=Release -B build/ -DMACOS_OPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
-          cmake --build build/ -j $(sysctl -n hw.physicalcpu)
-      - name: Compilation
-        run: |
-          ccache -p
-          ccache -z
-          ./run.sh build --test --skip_thirdparty -j $(sysctl -n hw.physicalcpu)
-          ccache -s
+#  build_with_jemalloc:
+#    name: Build with jemalloc
+#    needs: cpp_clang_format_linter
+#    runs-on: ubuntu-latest
+#    container:
+#      image: apache/pegasus:thirdparties-bin-test-jemallc-ubuntu1804-${{ github.base_ref }}
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Setup cache
+#        uses: actions/cache@v3
+#        with:
+#          path: |
+#            /github/home/.ccache
+#          key: jemalloc_ccache
+#      - uses: dorny/paths-filter@v2
+#        id: changes
+#        with:
+#          filters: |
+#            thirdparty:
+#              - '.github/workflows/thirdparty-regular-push.yml'
+#              - 'docker/thirdparties-src/**'
+#              - 'docker/thirdparties-bin/**'
+#              - 'thirdparty/**'
+#      - name: Unpack prebuilt third-parties
+#        if: steps.changes.outputs.thirdparty == 'false'
+#        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
+#      - name: Rebuild third-parties
+#        if: steps.changes.outputs.thirdparty == 'true'
+#        working-directory: thirdparty
+#        run: |
+#          mkdir build
+#          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -DUSE_JEMALLOC=ON -B build/
+#          cmake --build build/ -j $(nproc)
+#          ../scripts/download_hadoop.sh hadoop-bin
+#      - name: Compilation
+#        run: |
+#          ccache -p
+#          ccache -z
+#          ./run.sh build --test --skip_thirdparty -j $(nproc) -t release --use_jemalloc
+#          ccache -s
+#      - name: Pack Server
+#        run: ./run.sh pack_server -j
+#      - name: Pack Tools
+#        run: ./run.sh pack_tools -j
+#      - name: Tar files
+#        run: |
+#          mv thirdparty/hadoop-bin ./
+#          rm -rf thirdparty
+#          tar -zcvhf release_jemalloc_builder.tar DSN_ROOT/ src/builder/bin src/builder/src/server/test/config.ini hadoop-bin --exclude='*CMakeFiles*'
+#      - name: Upload Artifact
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: release_jemalloc_artifact_${{ github.sha }}
+#          path: release_jemalloc_builder.tar
+#
+#  test_with_jemalloc:
+#    name: Test with jemallc
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        test_module:
+#          - dsn_utils_tests
+#    needs: build_with_jemalloc
+#    runs-on: ubuntu-latest
+#    container:
+#      image: apache/pegasus:thirdparties-bin-test-jemallc-ubuntu1804-${{ github.base_ref }}
+#      options: --cap-add=SYS_PTRACE
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Unpack prebuilt third-parties
+#        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
+#      - name: Download Artifact
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: release_jemalloc_artifact_${{ github.sha }}
+#          path: .
+#      - name: Tar files
+#        run: |
+#          tar -zxvf release_jemalloc_builder.tar
+#      - name: Unit Testing
+#        run: |
+#          export LD_LIBRARY_PATH=`pwd`/thirdparty/output/lib:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server
+#          ulimit -s unlimited
+#          . ./scripts/config_hdfs.sh
+#          ./run.sh test -m ${{ matrix.test_module }}
+#
+#  build_pegasus_on_macos:
+#    name: macOS
+#    needs: cpp_clang_format_linter
+#    runs-on: macos-12
+#    env:
+#      OPENSSL_ROOT_DIR: /usr/local/opt/openssl
+#    steps:
+#      - name: Install Softwares
+#        run: |
+#          # Preinstalled softwares: https://github.com/actions/virtual-environments/blob/main/images/macos/macos-12-Readme.md
+#          brew install ccache
+#          brew install snappy
+#          brew install lz4
+#          brew install zstd
+#          brew install openssl@1.1
+#      - uses: actions/checkout@v2
+#      - name: Setup cache
+#        uses: actions/cache@v3
+#        with:
+#          path: |
+#            /Users/runner/Library/Caches/ccache
+#          key: macos_build_ccache
+#          restore-keys: |
+#            macos_build_ccache
+#            macos-12-thirdparty-bins
+#      - name: Build thirdparty
+#        working-directory: thirdparty
+#        run: |
+#          export JAVA_HOME="${JAVA_HOME_8_X64}"
+#          mkdir -p build
+#          cmake -DCMAKE_BUILD_TYPE=Release -B build/ -DMACOS_OPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+#          cmake --build build/ -j $(sysctl -n hw.physicalcpu)
+#      - name: Compilation
+#        run: |
+#          ccache -p
+#          ccache -z
+#          ./run.sh build --test --skip_thirdparty -j $(sysctl -n hw.physicalcpu)
+#          ccache -s
