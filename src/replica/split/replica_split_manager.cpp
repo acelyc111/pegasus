@@ -300,7 +300,7 @@ void replica_split_manager::child_copy_prepare_list(
     _replica->_prepare_list.reset(new prepare_list(this, *plist));
     for (decree d = last_committed_decree + 1; d <= _replica->_prepare_list->max_decree(); ++d) {
         mutation_ptr mu = _replica->_prepare_list->get_mutation_by_decree(d);
-        dassert_replica(mu != nullptr, "can not find mutation, dercee={}", d);
+        CHECK_PREFIX(mu != nullptr, "can not find mutation, dercee={}", d);
         mu->data.header.pid = get_gpid();
         _replica->_private_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, tracker(), nullptr);
         // set mutation has been logged in private log
@@ -499,7 +499,7 @@ void replica_split_manager::child_catch_up_states() // on child partition
                                _replica->_prepare_list->min_decree());
             for (decree d = local_decree + 1; d <= goal_decree; ++d) {
                 auto mu = _replica->_prepare_list->get_mutation_by_decree(d);
-                dassert(mu != nullptr, "");
+                CHECK(mu != nullptr, "");
                 error_code ec = _replica->_app->apply_mutation(mu);
                 if (ec != ERR_OK) {
                     child_handle_split_error("child_catchup failed because apply mutation failed");
@@ -638,10 +638,10 @@ void replica_split_manager::parent_handle_child_catch_up(
         mutation_ptr mu = _replica->new_mutation(invalid_decree);
         mu->add_client_request(RPC_REPLICATION_WRITE_EMPTY, nullptr);
         _replica->init_prepare(mu, false);
-        dassert_replica(sync_point == mu->data.header.decree,
-                        "sync_point should be equal to mutation's decree, {} vs {}",
-                        sync_point,
-                        mu->data.header.decree);
+        CHECK_PREFIX(sync_point == mu->data.header.decree,
+                     "sync_point should be equal to mutation's decree, {} vs {}",
+                     sync_point,
+                     mu->data.header.decree);
     };
 
     // check if sync_point has been committed
@@ -794,7 +794,7 @@ void replica_split_manager::update_local_partition_count(
     const auto err = _replica->store_app_info(info);
     if (err != ERR_OK) {
         info.partition_count = old_partition_count;
-        dassert_replica(false, "failed to save app_info, error = {}", err);
+        CHECK_PREFIX(false, "failed to save app_info, error = {}", err);
         return;
     }
 
@@ -1222,7 +1222,7 @@ void replica_split_manager::trigger_secondary_parent_split(
 // ThreadPool: THREAD_POOL_REPLICATION
 void replica_split_manager::copy_mutation(mutation_ptr &mu) // on parent partition
 {
-    dassert_replica(_child_gpid.get_app_id() > 0, "child_gpid({}) is invalid", _child_gpid);
+    CHECK_PREFIX(_child_gpid.get_app_id() > 0, "child_gpid({}) is invalid", _child_gpid);
 
     if (mu->is_sync_to_child()) {
         mu->wait_child();
@@ -1300,7 +1300,7 @@ void replica_split_manager::on_copy_mutation(mutation_ptr &mu) // on child parti
 // ThreadPool: THREAD_POOL_REPLICATION
 void replica_split_manager::ack_parent(error_code ec, mutation_ptr &mu) // on child partition
 {
-    dassert_replica(mu->is_sync_to_child(), "mutation({}) should be copied synchronously");
+    CHECK_PREFIX(mu->is_sync_to_child(), "mutation({}) should be copied synchronously");
     _stub->split_replica_exec(LPC_PARTITION_SPLIT,
                               _replica->_split_states.parent_gpid,
                               std::bind(&replica_split_manager::on_copy_mutation_reply,
@@ -1362,7 +1362,7 @@ void replica_split_manager::on_copy_mutation_reply(error_code ec,
         case partition_status::PS_ERROR:
             break;
         default:
-            dassert_replica(false, "wrong status({})", enum_to_string(status()));
+            CHECK_PREFIX(false, "wrong status({})", enum_to_string(status()));
             break;
         }
     }
@@ -1372,14 +1372,14 @@ void replica_split_manager::on_copy_mutation_reply(error_code ec,
 void replica_split_manager::parent_stop_split(
     split_status::type meta_split_status) // on parent partition
 {
-    dassert_replica(status() == partition_status::PS_PRIMARY ||
-                        status() == partition_status::PS_SECONDARY,
-                    "wrong partition_status({})",
-                    enum_to_string(status()));
-    dassert_replica(_split_status == split_status::SPLITTING ||
-                        _split_status == split_status::NOT_SPLIT,
-                    "wrong split_status({})",
-                    enum_to_string(_split_status));
+    CHECK_PREFIX(status() == partition_status::PS_PRIMARY ||
+                     status() == partition_status::PS_SECONDARY,
+                 "wrong partition_status({})",
+                 enum_to_string(status()));
+    CHECK_PREFIX(_split_status == split_status::SPLITTING ||
+                     _split_status == split_status::NOT_SPLIT,
+                 "wrong split_status({})",
+                 enum_to_string(_split_status));
 
     auto old_status = _split_status;
     if (_split_status == split_status::SPLITTING) {

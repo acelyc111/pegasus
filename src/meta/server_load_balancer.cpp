@@ -97,13 +97,13 @@ void newly_partitions::newly_add_partition(int32_t app_id)
 void newly_partitions::newly_remove_primary(int32_t app_id, bool only_primary)
 {
     auto iter = primaries.find(app_id);
-    dassert(iter != primaries.end(), "invalid app_id, app_id = %d", app_id);
-    dassert(iter->second > 0, "invalid primary count, cnt = %d", iter->second);
+    CHECK(iter != primaries.end(), "invalid app_id, app_id = %d", app_id);
+    CHECK(iter->second > 0, "invalid primary count, cnt = %d", iter->second);
     if (0 == (--iter->second)) {
         primaries.erase(iter);
     }
 
-    dassert(total_primaries > 0, "invalid total primaires = %d", total_primaries);
+    CHECK(total_primaries > 0, "invalid total primaires = %d", total_primaries);
     --total_primaries;
 
     if (!only_primary) {
@@ -114,13 +114,13 @@ void newly_partitions::newly_remove_primary(int32_t app_id, bool only_primary)
 void newly_partitions::newly_remove_partition(int32_t app_id)
 {
     auto iter = partitions.find(app_id);
-    dassert(iter != partitions.end(), "invalid app_id, app_id = %d", app_id);
-    dassert(iter->second > 0, "invalid partition count, cnt = %d", iter->second);
+    CHECK(iter != partitions.end(), "invalid app_id, app_id = %d", app_id);
+    CHECK(iter->second > 0, "invalid partition count, cnt = %d", iter->second);
     if ((--iter->second) == 0) {
         partitions.erase(iter);
     }
 
-    dassert(total_partitions > 0, "invalid total partitions = ", total_partitions);
+    CHECK(total_partitions > 0, "invalid total partitions = ", total_partitions);
     --total_partitions;
 }
 
@@ -190,10 +190,10 @@ void server_load_balancer::apply_balancer(meta_view view, const migration_list &
             register_proposals(view, *pairs.second, resp);
             if (resp.err != dsn::ERR_OK) {
                 const dsn::gpid &pid = pairs.first;
-                dassert(false,
-                        "apply balancer for gpid(%d.%d) failed",
-                        pid.get_app_id(),
-                        pid.get_partition_index());
+                CHECK(false,
+                      "apply balancer for gpid(%d.%d) failed",
+                      pid.get_app_id(),
+                      pid.get_partition_index());
             }
         }
     }

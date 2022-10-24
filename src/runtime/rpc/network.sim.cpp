@@ -113,7 +113,7 @@ void sim_client_session::send(uint64_t sig)
                                                                    recv_msg->header->from_address
                                                                ? 0
                                                                : rnet->net_delay_milliseconds());
-                dassert(ret, "");
+                CHECK(ret, "");
             }
         }
     }
@@ -143,7 +143,7 @@ void sim_server_session::send(uint64_t sig)
                 recv_msg->to_address == recv_msg->header->from_address
                     ? 0
                     : (static_cast<sim_network_provider *>(&_net))->net_delay_milliseconds());
-            dassert(ret, "");
+            CHECK(ret, "");
         }
     }
 
@@ -172,9 +172,9 @@ sim_network_provider::sim_network_provider(rpc_engine *rpc, network *inner_provi
 
 error_code sim_network_provider::start(rpc_channel channel, int port, bool client_only)
 {
-    dassert(channel == RPC_CHANNEL_TCP || channel == RPC_CHANNEL_UDP,
-            "invalid given channel %s",
-            channel.to_string());
+    CHECK(channel == RPC_CHANNEL_TCP || channel == RPC_CHANNEL_UDP,
+          "invalid given channel %s",
+          channel.to_string());
 
     _address = ::dsn::rpc_address("localhost", port);
     auto hostname = boost::asio::ip::host_name();

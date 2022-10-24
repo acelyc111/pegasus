@@ -78,8 +78,8 @@ replica::replica(replica_stub *stub,
       _is_duplication_follower(is_duplication_follower),
       _backup_mgr(new replica_backup_manager(this))
 {
-    dassert(_app_info.app_type != "", "");
-    dassert(stub != nullptr, "");
+    CHECK(_app_info.app_type != "", "");
+    CHECK(stub != nullptr, "");
     _stub = stub;
     _dir = dir;
     _options = &stub->options();
@@ -256,7 +256,7 @@ void replica::on_client_read(dsn::message_ex *request, bool ignore_throttling)
     }
 
     uint64_t start_time_ns = dsn_now_ns();
-    dassert(_app != nullptr, "");
+    CHECK(_app != nullptr, "");
     _app->on_request(request);
 
     // If the corresponding perf counter exist, count the duration of this operation.
@@ -279,14 +279,14 @@ void replica::response_client_write(dsn::message_ex *request, error_code error)
 void replica::check_state_completeness()
 {
     /* prepare commit durable */
-    dassert(max_prepared_decree() >= last_committed_decree(),
-            "%" PRId64 " VS %" PRId64 "",
-            max_prepared_decree(),
-            last_committed_decree());
-    dassert(last_committed_decree() >= last_durable_decree(),
-            "%" PRId64 " VS %" PRId64 "",
-            last_committed_decree(),
-            last_durable_decree());
+    CHECK(max_prepared_decree() >= last_committed_decree(),
+          "%" PRId64 " VS %" PRId64 "",
+          max_prepared_decree(),
+          last_committed_decree());
+    CHECK(last_committed_decree() >= last_durable_decree(),
+          "%" PRId64 " VS %" PRId64 "",
+          last_committed_decree(),
+          last_durable_decree());
 }
 
 void replica::execute_mutation(mutation_ptr &mu)
@@ -314,20 +314,20 @@ void replica::execute_mutation(mutation_ptr &mu)
     case partition_status::PS_PRIMARY: {
         ADD_POINT(mu->_tracer);
         check_state_completeness();
-        dassert(_app->last_committed_decree() + 1 == d,
-                "app commit: %" PRId64 ", mutation decree: %" PRId64 "",
-                _app->last_committed_decree(),
-                d);
+        CHECK(_app->last_committed_decree() + 1 == d,
+              "app commit: %" PRId64 ", mutation decree: %" PRId64 "",
+              _app->last_committed_decree(),
+              d);
         err = _app->apply_mutation(mu);
     } break;
 
     case partition_status::PS_SECONDARY:
         if (!_secondary_states.checkpoint_is_running) {
             check_state_completeness();
-            dassert(_app->last_committed_decree() + 1 == d,
-                    "%" PRId64 " VS %" PRId64 "",
-                    _app->last_committed_decree() + 1,
-                    d);
+            CHECK(_app->last_committed_decree() + 1 == d,
+                  "%" PRId64 " VS %" PRId64 "",
+                  _app->last_committed_decree() + 1,
+                  d);
             err = _app->apply_mutation(mu);
         } else {
             LOG_DEBUG("%s: mutation %s commit to %s skipped, app.last_committed_decree = %" PRId64,
@@ -338,17 +338,17 @@ void replica::execute_mutation(mutation_ptr &mu)
 
             // make sure private log saves the state
             // catch-up will be done later after checkpoint task is fininished
-            dassert(_private_log != nullptr, "");
+            CHECK(_private_log != nullptr, "");
         }
         break;
     case partition_status::PS_POTENTIAL_SECONDARY:
         if (_potential_secondary_states.learning_status == learner_status::LearningSucceeded ||
             _potential_secondary_states.learning_status ==
                 learner_status::LearningWithPrepareTransient) {
-            dassert(_app->last_committed_decree() + 1 == d,
-                    "%" PRId64 " VS %" PRId64 "",
-                    _app->last_committed_decree() + 1,
-                    d);
+            CHECK(_app->last_committed_decree() + 1 == d,
+                  "%" PRId64 " VS %" PRId64 "",
+                  _app->last_committed_decree() + 1,
+                  d);
             err = _app->apply_mutation(mu);
         } else {
             LOG_DEBUG("%s: mutation %s commit to %s skipped, app.last_committed_decree = %" PRId64,
@@ -360,7 +360,7 @@ void replica::execute_mutation(mutation_ptr &mu)
             // prepare also happens with learner_status::LearningWithPrepare, in this case
             // make sure private log saves the state,
             // catch-up will be done later after the checkpoint task is finished
-            dassert(_private_log != nullptr, "");
+            CHECK(_private_log != nullptr, "");
         }
         break;
     case partition_status::PS_PARTITION_SPLIT:
@@ -372,7 +372,7 @@ void replica::execute_mutation(mutation_ptr &mu)
     case partition_status::PS_ERROR:
         break;
     default:
-        dassert(false, "invalid partition_status, status = %s", enum_to_string(status()));
+        CHECK(false, "invalid partition_status, status = %s", enum_to_string(status()));
     }
 
     LOG_DEBUG(
@@ -438,14 +438,14 @@ bool replica::verbose_commit_log() const { return _stub->_verbose_commit_log; }
 
 void replica::close()
 {
-    dassert_replica(status() == partition_status::PS_ERROR ||
-                        status() == partition_status::PS_INACTIVE ||
-                        _disk_migrator->status() == disk_migration_status::IDLE ||
-                        _disk_migrator->status() >= disk_migration_status::MOVED,
-                    "invalid state(partition_status={}, migration_status={}) when calling "
-                    "replica close",
-                    enum_to_string(status()),
-                    enum_to_string(_disk_migrator->status()));
+    CHECK_PREFIX(status() == partition_status::PS_ERROR ||
+                     status() == partition_status::PS_INACTIVE ||
+                     _disk_migrator->status() == disk_migration_status::IDLE ||
+                     _disk_migrator->status() >= disk_migration_status::MOVED,
+                 "invalid state(partition_status={}, migration_status={}) when calling "
+                 "replica close",
+                 enum_to_string(status()),
+                 enum_to_string(_disk_migrator->status()));
 
     uint64_t start_time = dsn_now_ms();
 
@@ -457,25 +457,25 @@ void replica::close()
     _tracker.cancel_outstanding_tasks();
 
     cleanup_preparing_mutations(true);
-    dassert(_primary_states.is_cleaned(), "primary context is not cleared");
+    CHECK(_primary_states.is_cleaned(), "primary context is not cleared");
 
     if (partition_status::PS_INACTIVE == status()) {
-        dassert(_secondary_states.is_cleaned(), "secondary context is not cleared");
-        dassert(_potential_secondary_states.is_cleaned(),
-                "potential secondary context is not cleared");
-        dassert(_split_states.is_cleaned(), "partition split context is not cleared");
+        CHECK(_secondary_states.is_cleaned(), "secondary context is not cleared");
+        CHECK(_potential_secondary_states.is_cleaned(),
+              "potential secondary context is not cleared");
+        CHECK(_split_states.is_cleaned(), "partition split context is not cleared");
     }
 
     // for partition_status::PS_ERROR, context cleanup is done here as they may block
     else {
         bool r = _secondary_states.cleanup(true);
-        dassert(r, "secondary context is not cleared");
+        CHECK(r, "secondary context is not cleared");
 
         r = _potential_secondary_states.cleanup(true);
-        dassert(r, "potential secondary context is not cleared");
+        CHECK(r, "potential secondary context is not cleared");
 
         r = _split_states.cleanup(true);
-        dassert_replica(r, "partition split context is not cleared");
+        CHECK_PREFIX(r, "partition split context is not cleared");
     }
 
     if (_private_log != nullptr) {
@@ -515,13 +515,13 @@ void replica::close()
 
 std::string replica::query_manual_compact_state() const
 {
-    dassert_replica(_app != nullptr, "");
+    CHECK_PREFIX(_app != nullptr, "");
     return _app->query_compact_state();
 }
 
 manual_compaction_status::type replica::get_manual_compact_status() const
 {
-    dassert_replica(_app != nullptr, "");
+    CHECK_PREFIX(_app != nullptr, "");
     return _app->query_compact_status();
 }
 
@@ -558,7 +558,7 @@ void replica::on_detect_hotkey(const detect_hotkey_request &req, detect_hotkey_r
 
 uint32_t replica::query_data_version() const
 {
-    dassert_replica(_app != nullptr, "");
+    CHECK_PREFIX(_app != nullptr, "");
     return _app->query_data_version();
 }
 

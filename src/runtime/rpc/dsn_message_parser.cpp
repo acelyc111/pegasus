@@ -112,7 +112,7 @@ void dsn_message_parser::prepare_on_send(message_ex *msg)
     for (int i = 0; i <= i_max; i++) {
         len += (size_t)buffers[i].length();
     }
-    dassert(len == (size_t)header->body_length + sizeof(message_header), "data length is wrong");
+    CHECK(len == (size_t)header->body_length + sizeof(message_header), "data length is wrong");
 #endif
 
     if (task_spec::get(msg->local_rpc_code)->rpc_message_crc_required) {
@@ -140,7 +140,7 @@ void dsn_message_parser::prepare_on_send(message_ex *msg)
                 len += sz;
             }
 
-            dassert(len == (size_t)header->body_length, "data length is wrong");
+            CHECK(len == (size_t)header->body_length, "data length is wrong");
             header->body_crc32 = crc32;
         }
 
@@ -200,7 +200,7 @@ int dsn_message_parser::get_buffers_on_send(message_ex *msg, /*out*/ send_buf *b
             len += sz;
         }
 
-        dassert(len == (size_t)header->body_length, "data length is wrong");
+        CHECK(len == (size_t)header->body_length, "data length is wrong");
 
         bool r = (header->body_crc32 == crc32);
         if (!r) {

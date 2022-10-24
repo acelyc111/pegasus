@@ -169,7 +169,7 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
         100000000,
         "get/multi-get operation duration exceed this threshold will be logged");
     _slow_query_threshold_ns = _slow_query_threshold_ns_in_config;
-    dassert(_slow_query_threshold_ns > 0, "slow query threshold must be greater than 0");
+    CHECK(_slow_query_threshold_ns > 0, "slow query threshold must be greater than 0");
     _abnormal_get_size_threshold = dsn_config_get_value_uint64(
         "pegasus.server",
         "rocksdb_abnormal_get_size_threshold",
@@ -335,15 +335,15 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
         "for all level 2 and higher levels, and "
         "'per_level:[none|snappy|zstd|lz4],[none|snappy|zstd|lz4],...' for each level 0,1,..., the "
         "last compression type will be used for levels not specified in the list.");
-    dassert(parse_compression_types(compression_str, _data_cf_opts.compression_per_level),
-            "parse rocksdb_compression_type failed.");
+    CHECK(parse_compression_types(compression_str, _data_cf_opts.compression_per_level),
+          "parse rocksdb_compression_type failed.");
 
     _meta_cf_opts = _data_cf_opts;
     // Set level0_file_num_compaction_trigger of meta CF as 10 to reduce frequent compaction.
     _meta_cf_opts.level0_file_num_compaction_trigger = 10;
     // Data in meta CF is very little, disable compression to save CPU load.
-    dassert(parse_compression_types("none", _meta_cf_opts.compression_per_level),
-            "parse rocksdb_compression_type failed.");
+    CHECK(parse_compression_types("none", _meta_cf_opts.compression_per_level),
+          "parse rocksdb_compression_type failed.");
 
     rocksdb::BlockBasedTableOptions tbl_opts;
     tbl_opts.read_amp_bytes_per_bit = FLAGS_read_amp_bytes_per_bit;
@@ -451,9 +451,9 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
                                     "binary_search",
                                     "The index type that will be used for this table.");
     auto index_type_item = INDEX_TYPE_STRING_MAP.find(index_type);
-    dassert(index_type_item != INDEX_TYPE_STRING_MAP.end(),
-            "[pegasus.server]rocksdb_index_type should be one among binary_search, "
-            "hash_search, two_level_index_search or binary_search_with_first_key.");
+    CHECK(index_type_item != INDEX_TYPE_STRING_MAP.end(),
+          "[pegasus.server]rocksdb_index_type should be one among binary_search, "
+          "hash_search, two_level_index_search or binary_search_with_first_key.");
     tbl_opts.index_type = index_type_item->second;
     LOG_INFO_PREFIX("rocksdb_index_type = {}", index_type.c_str());
 
@@ -560,8 +560,8 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
                                             "2 is the old version, 5 is the new "
                                             "version supported since rocksdb "
                                             "v6.6.4");
-        dassert(format_version == 2 || format_version == 5,
-                "[pegasus.server]rocksdb_format_version should be either '2' or '5'.");
+        CHECK(format_version == 2 || format_version == 5,
+              "[pegasus.server]rocksdb_format_version should be either '2' or '5'.");
         tbl_opts.format_version = format_version;
         tbl_opts.filter_policy.reset(rocksdb::NewBloomFilterPolicy(bits_per_key, false));
 
@@ -570,8 +570,8 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
                                         "rocksdb_filter_type",
                                         "prefix",
                                         "Bloom filter type, should be either 'common' or 'prefix'");
-        dassert(filter_type == "common" || filter_type == "prefix",
-                "[pegasus.server]rocksdb_filter_type should be either 'common' or 'prefix'.");
+        CHECK(filter_type == "common" || filter_type == "prefix",
+              "[pegasus.server]rocksdb_filter_type should be either 'common' or 'prefix'.");
         if (filter_type == "prefix") {
             _data_cf_opts.prefix_extractor.reset(new HashkeyTransform());
             _data_cf_opts.memtable_prefix_bloom_size_ratio = 0.1;

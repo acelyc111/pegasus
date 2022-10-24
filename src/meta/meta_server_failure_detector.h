@@ -86,9 +86,9 @@ public:
     // client side
     virtual void on_master_disconnected(const std::vector<rpc_address> &)
     {
-        dassert(false, "unsupported method");
+        CHECK(false, "unsupported method");
     }
-    virtual void on_master_connected(rpc_address) { dassert(false, "unsupported method"); }
+    virtual void on_master_connected(rpc_address) { CHECK(false, "unsupported method"); }
 
     // server side
     // it is in the protection of failure_detector::_lock

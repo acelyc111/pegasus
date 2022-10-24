@@ -60,7 +60,7 @@ void replica::init_group_check()
     if (partition_status::PS_PRIMARY != status() || _options->group_check_disabled)
         return;
 
-    dassert(nullptr == _primary_states.group_check_task, "");
+    CHECK(nullptr == _primary_states.group_check_task, "");
     _primary_states.group_check_task =
         tasking::enqueue_timer(LPC_GROUP_CHECK,
                                &_tracker,
@@ -73,7 +73,7 @@ void replica::broadcast_group_check()
 {
     FAIL_POINT_INJECT_F("replica_broadcast_group_check", [](dsn::string_view) {});
 
-    dassert(nullptr != _primary_states.group_check_task, "");
+    CHECK(nullptr != _primary_states.group_check_task, "");
 
     LOG_INFO("%s: start to broadcast group check", name());
 
@@ -115,8 +115,7 @@ void replica::broadcast_group_check()
 
         if (request->config.status == partition_status::PS_POTENTIAL_SECONDARY) {
             auto it = _primary_states.learners.find(addr);
-            dassert(
-                it != _primary_states.learners.end(), "learner %s is missing", addr.to_string());
+            CHECK(it != _primary_states.learners.end(), "learner %s is missing", addr.to_string());
             request->config.learner_signature = it->second.signature;
         }
 
@@ -195,7 +194,7 @@ void replica::on_group_check(const group_check_request &request,
     case partition_status::PS_ERROR:
         break;
     default:
-        dassert(false, "invalid partition_status, status = %s", enum_to_string(status()));
+        CHECK(false, "invalid partition_status, status = %s", enum_to_string(status()));
     }
 
     response.pid = get_gpid();
@@ -223,7 +222,7 @@ void replica::on_group_check_reply(error_code err,
     }
 
     auto r = _primary_states.group_check_pending_replies.erase(req->node);
-    dassert(r == 1, "invalid node address, address = %s", req->node.to_string());
+    CHECK(r == 1, "invalid node address, address = %s", req->node.to_string());
 
     if (err != ERR_OK || resp->err != ERR_OK) {
         if (ERR_OK == err) {

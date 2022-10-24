@@ -97,7 +97,7 @@ public:
     {
         static __thread char msg_buffer[128];
 
-        dassert(_is_write, "call append when open file with read mode");
+        CHECK(_is_write, "call append when open file with read mode");
 
         block_header hdr = {data_length, 0};
         hdr.crc32 = dsn::utils::crc32_calc(data, data_length, _crc);
@@ -122,7 +122,7 @@ public:
     int read_next_buffer(/*out*/ dsn::blob &output)
     {
         static __thread char msg_buffer[128];
-        dassert(!_is_write, "call read next buffer when open file with write mode");
+        CHECK(!_is_write, "call read next buffer when open file with write mode");
 
         block_header hdr;
         size_t len = fread(&hdr, sizeof(hdr), 1, _file_handle);

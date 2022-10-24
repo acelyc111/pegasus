@@ -73,7 +73,7 @@ std::string get_brief_stat()
     std::vector<bool> match_result;
     dsn::perf_counters::instance().query_snapshot(stat_counters, iter, &match_result);
 
-    dassert(stat_counters.size() == match_result.size(), "");
+    CHECK(stat_counters.size() == match_result.size(), "");
     for (int i = 0; i < match_result.size(); ++i) {
         if (!match_result[i]) {
             if (!first_item)

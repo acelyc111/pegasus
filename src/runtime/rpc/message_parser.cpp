@@ -113,10 +113,10 @@ std::string header_type::debug_string() const
     auto it = s_fmt_map.find(sig);
     if (it != s_fmt_map.end()) {
         if (it->second != type) {
-            dassert(false,
-                    "signature %08x is already registerd for header type %s",
-                    sig,
-                    type.to_string());
+            CHECK(false,
+                  "signature %08x is already registerd for header type %s",
+                  sig,
+                  type.to_string());
         }
     } else {
         s_fmt_map.emplace(sig, type);
@@ -161,12 +161,12 @@ char *message_reader::read_buffer_ptr(unsigned int read_next)
             _buffer_occupied = rb.length();
         }
 
-        dassert(read_next + _buffer_occupied <= _buffer.length(),
-                "%u(%u + %u) VS %u",
-                read_next + _buffer_occupied,
-                read_next,
-                _buffer_occupied,
-                _buffer.length());
+        CHECK(read_next + _buffer_occupied <= _buffer.length(),
+              "%u(%u + %u) VS %u",
+              read_next + _buffer_occupied,
+              read_next,
+              _buffer_occupied,
+              _buffer.length());
     }
 
     return (char *)(_buffer.data() + _buffer_occupied);

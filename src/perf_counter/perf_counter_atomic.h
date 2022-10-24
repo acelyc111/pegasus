@@ -90,7 +90,7 @@ public:
     }
     virtual double get_percentile(dsn_perf_counter_percentile_type_t type)
     {
-        dassert(false, "invalid execution flow");
+        CHECK(false, "invalid execution flow");
         return 0.0;
     }
 
@@ -165,7 +165,7 @@ public:
         uint64_t task_id = static_cast<int>(utils::get_current_tid());
         _val[task_id % DIVIDE_CONTAINER].fetch_add(val, std::memory_order_relaxed);
     }
-    virtual void set(int64_t val) { dassert(false, "invalid execution flow"); }
+    virtual void set(int64_t val) { CHECK(false, "invalid execution flow"); }
     virtual double get_value()
     {
         uint64_t now = utils::get_current_physical_time_ns();
@@ -185,7 +185,7 @@ public:
     virtual int64_t get_integer_value() { return (int64_t)get_value(); }
     virtual double get_percentile(dsn_perf_counter_percentile_type_t type)
     {
-        dassert(false, "invalid execution flow");
+        CHECK(false, "invalid execution flow");
         return 0.0;
     }
 
@@ -244,9 +244,9 @@ public:
         }
     }
 
-    virtual void increment() { dassert(false, "invalid execution flow"); }
-    virtual void decrement() { dassert(false, "invalid execution flow"); }
-    virtual void add(int64_t val) { dassert(false, "invalid execution flow"); }
+    virtual void increment() { CHECK(false, "invalid execution flow"); }
+    virtual void decrement() { CHECK(false, "invalid execution flow"); }
+    virtual void add(int64_t val) { CHECK(false, "invalid execution flow"); }
     virtual void set(int64_t val)
     {
         uint64_t idx = _tail.fetch_add(1, std::memory_order_relaxed);
@@ -255,7 +255,7 @@ public:
 
     virtual double get_value()
     {
-        dassert(false, "invalid execution flow");
+        CHECK(false, "invalid execution flow");
         return 0.0;
     }
     virtual int64_t get_integer_value() { return (int64_t)get_value(); }
@@ -263,7 +263,7 @@ public:
     virtual double get_percentile(dsn_perf_counter_percentile_type_t type)
     {
         if ((type < 0) || (type >= COUNTER_PERCENTILE_COUNT)) {
-            dassert(false, "send a wrong counter percentile type");
+            CHECK(false, "send a wrong counter percentile type");
             return 0.0;
         }
         return (double)_results[type];
@@ -272,7 +272,7 @@ public:
     virtual int get_latest_samples(int required_sample_count,
                                    /*out*/ samples_t &samples) const override
     {
-        dassert(required_sample_count <= MAX_QUEUE_LENGTH, "");
+        CHECK(required_sample_count <= MAX_QUEUE_LENGTH, "");
 
         uint64_t count = _tail.load();
         int return_count = count >= (uint64_t)required_sample_count ? required_sample_count : count;
@@ -363,7 +363,7 @@ private:
                 if (ctx->ask[i] == 1) {
                     _results[i] = ctx->tmp[left];
                 } else
-                    dassert(false, "select percentail wrong!!!");
+                    CHECK(false, "select percentail wrong!!!");
             return;
         }
 
@@ -438,7 +438,7 @@ private:
     void on_timer(std::shared_ptr<boost::asio::deadline_timer> timer,
                   const boost::system::error_code &ec)
     {
-        // as the callback is not in tls context, so the log system calls like LOG_INFO, dassert
+        // as the callback is not in tls context, so the log system calls like LOG_INFO, CHECK
         // will cause a lock
         if (!ec) {
             calc(boost::make_shared<compute_context>());
@@ -450,7 +450,7 @@ private:
                                         timer,
                                         std::placeholders::_1));
         } else if (boost::system::errc::operation_canceled != ec) {
-            dassert(false, "on_timer error!!!");
+            CHECK(false, "on_timer error!!!");
         }
     }
 

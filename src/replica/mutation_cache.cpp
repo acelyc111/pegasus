@@ -78,10 +78,10 @@ error_code mutation_cache::put(mutation_ptr &mu)
     int idx = ((decree - _end_decree) + _end_idx + _max_count) % _max_count;
     mutation_ptr &old = _array[idx];
     if (old != nullptr) {
-        dassert(old->data.header.ballot <= mu->data.header.ballot,
-                "%" PRId64 " VS %" PRId64 "",
-                old->data.header.ballot,
-                mu->data.header.ballot);
+        CHECK(old->data.header.ballot <= mu->data.header.ballot,
+              "%" PRId64 " VS %" PRId64 "",
+              old->data.header.ballot,
+              mu->data.header.ballot);
     }
 
     _array[idx] = mu;
@@ -113,7 +113,7 @@ mutation_ptr mutation_cache::pop_min()
 
         if (_interval == 0) {
             // TODO: FIXE ME LATER
-            // dassert (_total_size_bytes == 0, "");
+            // CHECK (_total_size_bytes == 0, "");
 
             _end_decree = _start_decree;
             _end_idx = _start_idx;

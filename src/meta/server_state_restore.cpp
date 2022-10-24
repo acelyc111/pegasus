@@ -74,7 +74,7 @@ void server_state::sync_app_from_backup_media(
         callback_tsk->enqueue_with(err, dsn::blob());
         return;
     }
-    dassert(file_handle != nullptr, "create file from backup media ecounter error");
+    CHECK(file_handle != nullptr, "create file from backup media ecounter error");
     file_handle->read(
         read_request{0, -1}, TASK_CODE_EXEC_INLINED, [callback_tsk](const read_response &resp) {
             callback_tsk->enqueue_with(resp.err, resp.buffer);
@@ -96,11 +96,11 @@ std::pair<dsn::error_code, std::shared_ptr<app_state>> server_state::restore_app
     }
     int32_t old_app_id = info.app_id;
     std::string old_app_name = info.app_name;
-    dassert(old_app_id == req.app_id, "invalid app_id, %d VS %d", old_app_id, req.app_id);
-    dassert(old_app_name == req.app_name,
-            "invalid app_name, %s VS %s",
-            old_app_name.c_str(),
-            req.app_name.c_str());
+    CHECK(old_app_id == req.app_id, "invalid app_id, %d VS %d", old_app_id, req.app_id);
+    CHECK(old_app_name == req.app_name,
+          "invalid app_name, %s VS %s",
+          old_app_name.c_str(),
+          req.app_name.c_str());
     std::shared_ptr<app_state> app = nullptr;
 
     if (!req.new_app_name.empty()) {
@@ -159,7 +159,7 @@ void server_state::restore_app(dsn::message_ex *msg)
                 if (pair.first != ERR_OK) {
                     ec = pair.first;
                 } else {
-                    dassert(pair.second != nullptr, "app info shouldn't be empty");
+                    CHECK(pair.second != nullptr, "app info shouldn't be empty");
                     // the same with create_app
                     do_app_create(pair.second);
                     return;

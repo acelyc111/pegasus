@@ -124,9 +124,9 @@ DSN_API bool dsn_rpc_unregiser_handler(dsn::task_code code)
 
 DSN_API void dsn_rpc_call(dsn::rpc_address server, dsn::rpc_response_task *rpc_call)
 {
-    dassert(rpc_call->spec().type == TASK_TYPE_RPC_RESPONSE,
-            "invalid task_type, type = %s",
-            enum_to_string(rpc_call->spec().type));
+    CHECK(rpc_call->spec().type == TASK_TYPE_RPC_RESPONSE,
+          "invalid task_type, type = %s",
+          enum_to_string(rpc_call->spec().type));
 
     auto msg = rpc_call->get_request();
     msg->server_address = server;
@@ -200,7 +200,7 @@ NORETURN DSN_API void dsn_exit(int code)
 DSN_API bool dsn_mimic_app(const char *app_role, int index)
 {
     auto worker = ::dsn::task::get_current_worker2();
-    dassert(worker == nullptr, "cannot call dsn_mimic_app in rDSN threads");
+    CHECK(worker == nullptr, "cannot call dsn_mimic_app in rDSN threads");
 
     auto cnode = ::dsn::task::get_current_node2();
     if (cnode != nullptr) {
@@ -397,17 +397,17 @@ bool run(const char *config_file,
 
     // setup data dir
     auto &data_dir = spec.data_dir;
-    dassert(!dsn::utils::filesystem::file_exists(data_dir),
-            "%s should not be a file.",
-            data_dir.c_str());
+    CHECK(!dsn::utils::filesystem::file_exists(data_dir),
+          "%s should not be a file.",
+          data_dir.c_str());
     if (!dsn::utils::filesystem::directory_exists(data_dir.c_str())) {
         if (!dsn::utils::filesystem::create_directory(data_dir)) {
-            dassert(false, "Fail to create %s.", data_dir.c_str());
+            CHECK(false, "Fail to create %s.", data_dir.c_str());
         }
     }
     std::string cdir;
     if (!dsn::utils::filesystem::get_absolute_path(data_dir.c_str(), cdir)) {
-        dassert(false, "Fail to get absolute path from %s.", data_dir.c_str());
+        CHECK(false, "Fail to get absolute path from %s.", data_dir.c_str());
     }
     spec.data_dir = cdir;
 
@@ -453,7 +453,7 @@ bool run(const char *config_file,
     for (auto it = spec.toollets.begin(); it != spec.toollets.end(); ++it) {
         auto tlet =
             dsn::tools::internal_use_only::get_toollet(it->c_str(), ::dsn::PROVIDER_TYPE_MAIN);
-        dassert(tlet, "toolet not found");
+        CHECK(tlet, "toolet not found");
         tlet->install(spec);
     }
 

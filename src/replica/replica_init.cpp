@@ -197,7 +197,7 @@ error_code replica::initialize_on_load()
             char rename_dir[1024];
             sprintf(rename_dir, "%s.%" PRIu64 ".err", dir, dsn_now_us());
             bool ret = dsn::utils::filesystem::rename_path(dir, rename_dir);
-            dassert(ret, "load_replica: failed to move directory '%s' to '%s'", dir, rename_dir);
+            CHECK(ret, "load_replica: failed to move directory '%s' to '%s'", dir, rename_dir);
             LOG_WARNING("load_replica: {replica_dir_op} succeed to move directory '%s' to '%s'",
                         dir,
                         rename_dir);
@@ -218,12 +218,12 @@ decree replica::get_replay_start_decree()
 
 error_code replica::init_app_and_prepare_list(bool create_new)
 {
-    dassert(nullptr == _app, "");
+    CHECK(nullptr == _app, "");
     error_code err;
     std::string log_dir = utils::filesystem::path_combine(dir(), "plog");
 
     _app.reset(replication_app_base::new_storage_instance(_app_info.app_type, this));
-    dassert(nullptr == _private_log, "private log must not be initialized yet");
+    CHECK(nullptr == _private_log, "private log must not be initialized yet");
 
     if (create_new) {
         err = _app->open_new_internal(this, _stub->_log->on_partition_reset(get_gpid(), 0), 0);
@@ -240,10 +240,10 @@ error_code replica::init_app_and_prepare_list(bool create_new)
     } else {
         err = _app->open_internal(this);
         if (err == ERR_OK) {
-            dassert(_app->last_committed_decree() == _app->last_durable_decree(),
-                    "invalid app state, %" PRId64 " VS %" PRId64 "",
-                    _app->last_committed_decree(),
-                    _app->last_durable_decree());
+            CHECK(_app->last_committed_decree() == _app->last_durable_decree(),
+                  "invalid app state, %" PRId64 " VS %" PRId64 "",
+                  _app->last_committed_decree(),
+                  _app->last_durable_decree());
             _config.ballot = _app->init_info().init_ballot;
             _prepare_list->reset(_app->last_committed_decree());
 
@@ -334,10 +334,10 @@ error_code replica::init_app_and_prepare_list(bool create_new)
         if (nullptr == _private_log) {
             LOG_INFO("%s: clear private log, dir = %s", name(), log_dir.c_str());
             if (!dsn::utils::filesystem::remove_path(log_dir)) {
-                dassert(false, "Fail to delete directory %s.", log_dir.c_str());
+                CHECK(false, "Fail to delete directory %s.", log_dir.c_str());
             }
             if (!::dsn::utils::filesystem::create_directory(log_dir)) {
-                dassert(false, "Fail to create directory %s.", log_dir.c_str());
+                CHECK(false, "Fail to create directory %s.", log_dir.c_str());
             }
 
             _private_log = new mutation_log_private(
@@ -382,7 +382,7 @@ bool replica::replay_mutation(mutation_ptr &mu, bool is_private)
     if (mu->data.header.ballot > get_ballot()) {
         _config.ballot = mu->data.header.ballot;
         bool ret = update_local_configuration(_config, true);
-        dassert(ret, "");
+        CHECK(ret, "");
     }
 
     if (is_private && offset < _app->init_info().init_offset_in_private_log) {

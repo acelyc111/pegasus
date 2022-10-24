@@ -49,12 +49,12 @@ available_detector::available_detector()
     _cluster_name = dsn::get_current_cluster_name();
     _app_name = dsn_config_get_value_string(
         "pegasus.collector", "available_detect_app", "", "available detector app name");
-    dassert(_app_name.size() > 0, "");
+    CHECK(_app_name.size() > 0, "");
     _alert_script_dir = dsn_config_get_value_string("pegasus.collector",
                                                     "available_detect_alert_script_dir",
                                                     ".",
                                                     "available detect alert script dir");
-    dassert(_alert_script_dir.size() > 0, "");
+    CHECK(_alert_script_dir.size() > 0, "");
     _alert_email_address = dsn_config_get_value_string(
         "pegasus.collector",
         "available_detect_alert_email_address",
@@ -62,7 +62,7 @@ available_detector::available_detector()
         "available detect alert email address, empty means not send email");
     _meta_list.clear();
     dsn::replication::replica_helper::load_meta_servers(_meta_list);
-    dassert(_meta_list.size() > 0, "");
+    CHECK(_meta_list.size() > 0, "");
     _detect_interval_seconds =
         (uint32_t)dsn_config_get_value_uint64("pegasus.collector",
                                               "available_detect_interval_seconds",
@@ -79,13 +79,13 @@ available_detector::available_detector()
                                               "available detect timeout");
     // initialize the _client.
     if (!pegasus_client_factory::initialize(nullptr)) {
-        dassert(false, "Initialize the pegasus client failed");
+        CHECK(false, "Initialize the pegasus client failed");
     }
     _client = pegasus_client_factory::get_client(_cluster_name.c_str(), _app_name.c_str());
-    dassert(_client != nullptr, "Initialize the _client failed");
+    CHECK(_client != nullptr, "Initialize the _client failed");
     _result_writer = dsn::make_unique<result_writer>(_client);
     _ddl_client.reset(new replication_ddl_client(_meta_list));
-    dassert(_ddl_client != nullptr, "Initialize the _ddl_client failed");
+    CHECK(_ddl_client != nullptr, "Initialize the _ddl_client failed");
     if (!_alert_email_address.empty()) {
         _send_alert_email_cmd = "cd " + _alert_script_dir + "; bash sendmail.sh alert " +
                                 _alert_email_address + " " + _cluster_name + " " + _app_name + " ";

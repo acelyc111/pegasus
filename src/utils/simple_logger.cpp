@@ -120,7 +120,7 @@ simple_logger::simple_logger(const char *log_dir) : logging_provider(log_dir)
     // check existing log files
     std::vector<std::string> sub_list;
     if (!dsn::utils::filesystem::get_subfiles(_log_dir, sub_list, false)) {
-        dassert(false, "Fail to get subfiles in %s.", _log_dir.c_str());
+        CHECK(false, "Fail to get subfiles in %s.", _log_dir.c_str());
     }
     for (auto &fpath : sub_list) {
         auto &&name = dsn::utils::filesystem::get_file_name(fpath);

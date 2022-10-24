@@ -99,16 +99,16 @@ protected:
 
     static bool register_async_rpc_handler(dsn::task_code rpc_code, const char *name, rpc_handler h)
     {
-        dassert(s_handlers.emplace(rpc_code.to_string(), h).second,
-                "handler %s has already been registered",
-                rpc_code.to_string());
-        dassert(s_handlers.emplace(name, h).second, "handler %s has already been registered", name);
+        CHECK(s_handlers.emplace(rpc_code.to_string(), h).second,
+              "handler %s has already been registered",
+              rpc_code.to_string());
+        CHECK(s_handlers.emplace(name, h).second, "handler %s has already been registered", name);
 
         s_vhandlers.resize(rpc_code + 1);
-        dassert(s_vhandlers[rpc_code] == nullptr,
-                "handler %s(%d) has already been registered",
-                rpc_code.to_string(),
-                rpc_code.code());
+        CHECK(s_vhandlers[rpc_code] == nullptr,
+              "handler %s(%d) has already been registered",
+              rpc_code.to_string(),
+              rpc_code.code());
         s_vhandlers[rpc_code] = h;
         return true;
     }

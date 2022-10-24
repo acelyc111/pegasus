@@ -93,7 +93,7 @@ namespace replication {
     while (!reader->is_eof()) {
         auto old_size = reader->get_remaining_size();
         mutation_ptr mu = mutation::read_from(*reader, nullptr);
-        dassert(nullptr != mu, "");
+        CHECK(nullptr != mu, "");
         mu->set_logged();
 
         if (mu->data.header.log_offset != end_offset) {
@@ -131,8 +131,7 @@ namespace replication {
             }
         }
 
-        dassert(
-            logs.find(log->index()) == logs.end(), "invalid log_index, index = %d", log->index());
+        CHECK(logs.find(log->index()) == logs.end(), "invalid log_index, index = %d", log->index());
         logs[log->index()] = log;
     }
 
@@ -191,10 +190,10 @@ namespace replication {
 
     if (err == ERR_OK || err == ERR_HANDLE_EOF) {
         // the log may still be written when used for learning
-        dassert(g_end_offset <= end_offset,
-                "make sure the global end offset is correct: %" PRId64 " vs %" PRId64,
-                g_end_offset,
-                end_offset);
+        CHECK(g_end_offset <= end_offset,
+              "make sure the global end offset is correct: %" PRId64 " vs %" PRId64,
+              g_end_offset,
+              end_offset);
         err = ERR_OK;
     } else if (err == ERR_INCOMPLETE_DATA) {
         // ignore the last incomplate block

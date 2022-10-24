@@ -93,7 +93,7 @@ public:
         } else {
             _current_buffer->drain(writer);
             // we can now assign result since writer must have allocated a buffer.
-            dassert(writer.total_size() != 0, "writer.total_size = %d", writer.total_size());
+            CHECK(writer.total_size() != 0, "writer.total_size = %d", writer.total_size());
             if (size > writer.total_size()) {
                 TRY(_next_buffer->wait_ongoing_task());
                 _next_buffer->consume(writer,
@@ -178,7 +178,7 @@ private:
                 _task->wait();
                 _have_ongoing_task = false;
                 _end += _task->get_transferred_size();
-                dassert(_end <= block_size_bytes, "invalid io_size.");
+                CHECK(_end <= block_size_bytes, "invalid io_size.");
                 return _task->error();
             } else {
                 return ERR_OK;

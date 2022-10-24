@@ -67,8 +67,7 @@ private:
 rpc_client_matcher::~rpc_client_matcher()
 {
     for (int i = 0; i < MATCHER_BUCKET_NR; i++) {
-        dassert(_requests[i].size() == 0,
-                "all rpc entries must be removed before the matcher ends");
+        CHECK(_requests[i].size() == 0, "all rpc entries must be removed before the matcher ends");
     }
 }
 
@@ -87,16 +86,15 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
             _requests[bucket_index].erase(it);
         } else {
             if (reply) {
-                dassert(reply->get_count() == 0,
-                        "reply should not be referenced by anybody so far");
+                CHECK(reply->get_count() == 0, "reply should not be referenced by anybody so far");
                 delete reply;
             }
             return false;
         }
     }
 
-    dbg_dassert(call != nullptr, "rpc response task cannot be empty");
-    dbg_dassert(timeout_task != nullptr, "rpc timeout task cannot be empty");
+    DCHECK(call != nullptr, "rpc response task cannot be empty");
+    DCHECK(timeout_task != nullptr, "rpc timeout task cannot be empty");
 
     if (timeout_task != task::get_current_task()) {
         timeout_task->cancel(false); // no need to wait
@@ -127,10 +125,10 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
         ::dsn::unmarshall((dsn::message_ex *)reply, addr);
 
         // handle the case of forwarding to itself where addr == req->to_address.
-        dbg_dassert(addr != req->to_address,
-                    "impossible forwarding to myself as this only happens when i'm pure client so "
-                    "i don't get a named to_address %s",
-                    addr.to_string());
+        DCHECK(addr != req->to_address,
+               "impossible forwarding to myself as this only happens when i'm pure client so "
+               "i don't get a named to_address %s",
+               addr.to_string());
 
         // server address side effect
         switch (req->server_address.type()) {
@@ -146,7 +144,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
             }
             break;
         default:
-            dassert(false, "not implemented");
+            CHECK(false, "not implemented");
             break;
         }
 
@@ -154,7 +152,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
         // TODO(qinzuoyan): reset timeout to new value
         _engine->call_ip(addr, req, call, true);
 
-        dassert(reply->get_count() == 0, "reply should not be referenced by anybody so far");
+        CHECK(reply->get_count() == 0, "reply should not be referenced by anybody so far");
         delete reply;
     } else {
         // server address side effect
@@ -174,7 +172,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
                 }
                 break;
             default:
-                dassert(false, "not implemented");
+                CHECK(false, "not implemented");
                 break;
             }
         }
@@ -223,7 +221,7 @@ void rpc_client_matcher::on_rpc_timeout(uint64_t key)
         }
     }
 
-    dbg_dassert(call != nullptr, "rpc response task is missing for rpc request %" PRIu64, key);
+    DCHECK(call != nullptr, "rpc response task is missing for rpc request %" PRIu64, key);
 
     // if timeout
     if (!resend) {
@@ -296,14 +294,14 @@ void rpc_client_matcher::on_call(message_ex *request, const rpc_response_task_pt
         timeout_ms = sp->rpc_request_resend_timeout_milliseconds;
     }
 
-    dbg_dassert(call != nullptr, "rpc response task cannot be empty");
+    DCHECK(call != nullptr, "rpc response task cannot be empty");
     task *timeout_task(new rpc_timeout_task(this, hdr.id, call->node()));
 
     {
         utils::auto_lock<::dsn::utils::ex_lock_nr_spin> l(_requests_lock[bucket_index]);
         auto pr =
             _requests[bucket_index].emplace(hdr.id, match_entry{call, timeout_task, timeout_ts_ms});
-        dassert(pr.second, "the message is already on the fly!!!");
+        CHECK(pr.second, "the message is already on the fly!!!");
     }
 
     timeout_task->set_delay(timeout_ms);
@@ -327,8 +325,8 @@ rpc_server_dispatcher::~rpc_server_dispatcher()
     }
     _vhandlers.clear();
     _handlers.clear();
-    dassert(_handlers.size() == 0,
-            "please make sure all rpc handlers are unregistered at this point");
+    CHECK(_handlers.size() == 0,
+          "please make sure all rpc handlers are unregistered at this point");
 }
 
 bool rpc_server_dispatcher::register_rpc_handler(dsn::task_code code,
@@ -350,7 +348,7 @@ bool rpc_server_dispatcher::register_rpc_handler(dsn::task_code code,
         }
         return true;
     } else {
-        dassert(false, "rpc registration confliction for '%s' '%s'", code.to_string(), extra_name);
+        CHECK(false, "rpc registration confliction for '%s' '%s'", code.to_string(), extra_name);
         return false;
     }
 }
@@ -406,7 +404,7 @@ rpc_request_task *rpc_server_dispatcher::on_request(message_ex *msg, service_nod
 //----------------------------------------------------------------------------------------------
 rpc_engine::rpc_engine(service_node *node) : _node(node), _rpc_matcher(this)
 {
-    dassert(_node != nullptr, "");
+    CHECK(_node != nullptr, "");
     _is_running = false;
     _is_serving = false;
 }
@@ -428,7 +426,7 @@ network *rpc_engine::create_network(const network_server_config &netcs,
         return net;
     } else {
         // mem leak, don't care as it halts the program
-        dassert(false, "create network failed, error_code: %s", ret.to_string());
+        CHECK(false, "create network failed, error_code: %s", ret.to_string());
         return nullptr;
     }
 }
@@ -543,7 +541,7 @@ void rpc_engine::on_recv_request(network *net, message_ex *msg, int delay_ms)
             msg->header->from_address.to_string(),
             msg->header->trace_id);
 
-        dassert(msg->get_count() == 0, "request should not be referenced by anybody so far");
+        CHECK(msg->get_count() == 0, "request should not be referenced by anybody so far");
         delete msg;
         return;
     }
@@ -591,7 +589,7 @@ void rpc_engine::on_recv_request(network *net, message_ex *msg, int delay_ms)
                         msg->header->from_address.to_string(),
                         msg->header->trace_id);
 
-            dassert(msg->get_count() == 0, "request should not be referenced by anybody so far");
+            CHECK(msg->get_count() == 0, "request should not be referenced by anybody so far");
             msg->add_ref();
             dsn_rpc_reply(msg->create_response(), ::dsn::ERR_HANDLER_NOT_FOUND);
             msg->release_ref();
@@ -602,7 +600,7 @@ void rpc_engine::on_recv_request(network *net, message_ex *msg, int delay_ms)
                     msg->header->from_address.to_string(),
                     msg->header->trace_id);
 
-        dassert(msg->get_count() == 0, "request should not be referenced by anybody so far");
+        CHECK(msg->get_count() == 0, "request should not be referenced by anybody so far");
         msg->add_ref();
         dsn_rpc_reply(msg->create_response(), ::dsn::ERR_HANDLER_NOT_FOUND);
         msg->release_ref();
@@ -623,7 +621,7 @@ void rpc_engine::call_group(rpc_address addr,
                             message_ex *request,
                             const rpc_response_task_ptr &call)
 {
-    dbg_dassert(addr.type() == HOST_TYPE_GROUP, "only group is now supported");
+    DCHECK(addr.type() == HOST_TYPE_GROUP, "only group is now supported");
 
     auto sp = task_spec::get(request->local_rpc_code);
     switch (sp->grpc_mode) {
@@ -635,10 +633,10 @@ void rpc_engine::call_group(rpc_address addr,
         call_ip(request->server_address.group_address()->random_member(), request, call);
         break;
     case GRPC_TO_ALL:
-        dassert(false, "to be implemented");
+        CHECK(false, "to be implemented");
         break;
     default:
-        dassert(false, "invalid group rpc mode %d", (int)(sp->grpc_mode));
+        CHECK(false, "invalid group rpc mode %d", (int)(sp->grpc_mode));
     }
 }
 
@@ -648,10 +646,10 @@ void rpc_engine::call_ip(rpc_address addr,
                          bool reset_request_id,
                          bool set_forwarded)
 {
-    dbg_dassert(addr.type() == HOST_TYPE_IPV4, "only IPV4 is now supported");
-    dbg_dassert(addr.port() > MAX_CLIENT_PORT, "only server address can be called");
-    dassert(!request->header->from_address.is_invalid(),
-            "from address must be set before call call_ip");
+    DCHECK(addr.type() == HOST_TYPE_IPV4, "only IPV4 is now supported");
+    DCHECK(addr.port() > MAX_CLIENT_PORT, "only server address can be called");
+    CHECK(!request->header->from_address.is_invalid(),
+          "from address must be set before call call_ip");
 
     while (!request->dl.is_alone()) {
         LOG_WARNING("msg request %s (trace_id = %016" PRIx64
@@ -670,11 +668,11 @@ void rpc_engine::call_ip(rpc_address addr,
     auto &hdr = *request->header;
 
     network *net = _client_nets[request->hdr_format][sp->rpc_call_channel].get();
-    dassert(nullptr != net,
-            "network not present for rpc channel '%s' with format '%s' used by rpc %s",
-            sp->rpc_call_channel.to_string(),
-            sp->rpc_call_header_format.to_string(),
-            hdr.rpc_name);
+    CHECK(nullptr != net,
+          "network not present for rpc channel '%s' with format '%s' used by rpc %s",
+          sp->rpc_call_channel.to_string(),
+          sp->rpc_call_header_format.to_string(),
+          hdr.rpc_name);
 
     LOG_DEBUG("rpc_name = %s, remote_addr = %s, header_format = %s, channel = %s, seq_id = %" PRIu64
               ", trace_id = %016" PRIx64,
@@ -770,18 +768,17 @@ void rpc_engine::reply(message_ex *response, error_code err)
         // request is forwarded, we cannot use the original rpc session,
         // so use client session to send response.
         else {
-            dbg_dassert(response->to_address.port() > MAX_CLIENT_PORT,
-                        "target address must have named port in this case");
+            DCHECK(response->to_address.port() > MAX_CLIENT_PORT,
+                   "target address must have named port in this case");
 
             // use the header format recorded in the message
             auto rpc_channel = sp ? sp->rpc_call_channel : RPC_CHANNEL_TCP;
             network *net = _client_nets[response->hdr_format][rpc_channel].get();
-            dassert(
-                nullptr != net,
-                "client network not present for rpc channel '%s' with format '%s' used by rpc %s",
-                RPC_CHANNEL_TCP.to_string(),
-                response->hdr_format.to_string(),
-                response->header->rpc_name);
+            CHECK(nullptr != net,
+                  "client network not present for rpc channel '%s' with format '%s' used by rpc %s",
+                  RPC_CHANNEL_TCP.to_string(),
+                  response->hdr_format.to_string(),
+                  response->header->rpc_name);
 
             if (no_fail) {
                 net->send_message(response);
@@ -793,17 +790,17 @@ void rpc_engine::reply(message_ex *response, error_code err)
 
     // not connection oriented network, we always use the named network to send msgs
     else {
-        dbg_dassert(response->to_address.port() > MAX_CLIENT_PORT,
-                    "target address must have named port in this case");
+        DCHECK(response->to_address.port() > MAX_CLIENT_PORT,
+               "target address must have named port in this case");
 
         auto rpc_channel = sp ? sp->rpc_call_channel : RPC_CHANNEL_TCP;
         network *net = _server_nets[response->header->from_address.port()][rpc_channel].get();
 
-        dassert(nullptr != net,
-                "server network not present for rpc channel '%s' on port %u used by rpc %s",
-                RPC_CHANNEL_UDP.to_string(),
-                response->header->from_address.port(),
-                response->header->rpc_name);
+        CHECK(nullptr != net,
+              "server network not present for rpc channel '%s' on port %u used by rpc %s",
+              RPC_CHANNEL_UDP.to_string(),
+              response->header->from_address.port(),
+              response->header->rpc_name);
 
         if (no_fail) {
             net->send_message(response);
@@ -822,15 +819,15 @@ void rpc_engine::reply(message_ex *response, error_code err)
 
 void rpc_engine::forward(message_ex *request, rpc_address address)
 {
-    dassert(request->header->context.u.is_request, "only rpc request can be forwarded");
-    dassert(request->header->context.u.is_forward_supported,
-            "rpc msg %s (trace_id = %016" PRIx64 ") does not support being forwared",
-            task_spec::get(request->local_rpc_code)->name.c_str(),
-            request->header->trace_id);
-    dassert(address != primary_address(),
-            "cannot forward msg %s (trace_id = %016" PRIx64 ") to the local node",
-            task_spec::get(request->local_rpc_code)->name.c_str(),
-            request->header->trace_id);
+    CHECK(request->header->context.u.is_request, "only rpc request can be forwarded");
+    CHECK(request->header->context.u.is_forward_supported,
+          "rpc msg %s (trace_id = %016" PRIx64 ") does not support being forwared",
+          task_spec::get(request->local_rpc_code)->name.c_str(),
+          request->header->trace_id);
+    CHECK(address != primary_address(),
+          "cannot forward msg %s (trace_id = %016" PRIx64 ") to the local node",
+          task_spec::get(request->local_rpc_code)->name.c_str(),
+          request->header->trace_id);
 
     // msg is from pure client (no server port assigned)
     // in this case, we have no way to directly post a message

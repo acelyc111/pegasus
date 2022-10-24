@@ -113,10 +113,10 @@ void mutation_log_shared::flush_internal(int max_count)
 
 void mutation_log_shared::write_pending_mutations(bool release_lock_required)
 {
-    dassert(release_lock_required, "lock must be hold at this point");
-    dassert(!_is_writing.load(std::memory_order_relaxed), "");
-    dassert(_pending_write != nullptr, "");
-    dassert(_pending_write->size() > 0, "pending write size = %d", (int)_pending_write->size());
+    CHECK(release_lock_required, "lock must be hold at this point");
+    CHECK(!_is_writing.load(std::memory_order_relaxed), "");
+    CHECK(_pending_write != nullptr, "");
+    CHECK(_pending_write->size() > 0, "pending write size = %d", (int)_pending_write->size());
     auto pr = mark_new_offset(_pending_write->size(), false);
     dcheck_eq(pr.second, _pending_write->start_offset());
 
@@ -143,7 +143,7 @@ void mutation_log_shared::commit_pending_mutations(log_file_ptr &lf,
         LPC_WRITE_REPLICATION_LOG_SHARED,
         &_tracker,
         [this, lf, pending](error_code err, size_t sz) mutable {
-            dassert(_is_writing.load(std::memory_order_relaxed), "");
+            CHECK(_is_writing.load(std::memory_order_relaxed), "");
 
             if (utils::FLAGS_enable_latency_tracer) {
                 for (auto &mu : pending->mutations()) {
@@ -153,7 +153,7 @@ void mutation_log_shared::commit_pending_mutations(log_file_ptr &lf,
 
             for (auto &block : pending->all_blocks()) {
                 auto hdr = (log_block_header *)block.front().data();
-                dassert(hdr->magic == 0xdeadbeef, "header magic is changed: 0x%x", hdr->magic);
+                CHECK(hdr->magic == 0xdeadbeef, "header magic is changed: 0x%x", hdr->magic);
             }
 
             if (err == ERR_OK) {
@@ -367,10 +367,10 @@ void mutation_log_private::init_states()
 
 void mutation_log_private::write_pending_mutations(bool release_lock_required)
 {
-    dassert(release_lock_required, "lock must be hold at this point");
-    dassert(!_is_writing.load(std::memory_order_relaxed), "");
-    dassert(_pending_write != nullptr, "");
-    dassert(_pending_write->size() > 0, "pending write size = %d", (int)_pending_write->size());
+    CHECK(release_lock_required, "lock must be hold at this point");
+    CHECK(!_is_writing.load(std::memory_order_relaxed), "");
+    CHECK(_pending_write != nullptr, "");
+    CHECK(_pending_write->size() > 0, "pending write size = %d", (int)_pending_write->size());
     auto pr = mark_new_offset(_pending_write->size(), false);
     dcheck_eq_replica(pr.second, _pending_write->start_offset());
 
@@ -406,11 +406,11 @@ void mutation_log_private::commit_pending_mutations(log_file_ptr &lf,
         LPC_WRITE_REPLICATION_LOG_PRIVATE,
         &_tracker,
         [this, lf, pending, max_commit](error_code err, size_t sz) mutable {
-            dassert(_is_writing.load(std::memory_order_relaxed), "");
+            CHECK(_is_writing.load(std::memory_order_relaxed), "");
 
             for (auto &block : pending->all_blocks()) {
                 auto hdr = (log_block_header *)block.front().data();
-                dassert(hdr->magic == 0xdeadbeef, "header magic is changed: 0x%x", hdr->magic);
+                CHECK(hdr->magic == 0xdeadbeef, "header magic is changed: 0x%x", hdr->magic);
             }
 
             if (dsn_unlikely(utils::FLAGS_enable_latency_tracer)) {
@@ -472,12 +472,12 @@ mutation_log::mutation_log(const std::string &dir, int32_t max_log_file_mb, gpid
     _private_gpid = gpid;
 
     if (r) {
-        dassert(_private_gpid == r->get_gpid(),
-                "(%d.%d) VS (%d.%d)",
-                _private_gpid.get_app_id(),
-                _private_gpid.get_partition_index(),
-                r->get_gpid().get_app_id(),
-                r->get_gpid().get_partition_index());
+        CHECK(_private_gpid == r->get_gpid(),
+              "(%d.%d) VS (%d.%d)",
+              _private_gpid.get_app_id(),
+              _private_gpid.get_partition_index(),
+              r->get_gpid().get_app_id(),
+              r->get_gpid().get_partition_index());
     }
     mutation_log::init_states();
 }
@@ -512,8 +512,8 @@ error_code mutation_log::open(replay_callback read_callback,
                               io_failure_callback write_error_callback,
                               const std::map<gpid, decree> &replay_condition)
 {
-    dassert(!_is_opened, "cannot open a opened mutation_log");
-    dassert(nullptr == _current_log_file, "the current log file must be null at this point");
+    CHECK(!_is_opened, "cannot open a opened mutation_log");
+    CHECK(nullptr == _current_log_file, "the current log file must be null at this point");
 
     // create dir if necessary
     if (!dsn::utils::filesystem::path_exists(_dir)) {
@@ -534,7 +534,7 @@ error_code mutation_log::open(replay_callback read_callback,
     }
 
     if (nullptr == read_callback) {
-        dassert(file_list.size() == 0, "log must be empty if callback is not present");
+        CHECK(file_list.size() == 0, "log must be empty if callback is not present");
     }
 
     std::sort(file_list.begin(), file_list.end());
@@ -571,9 +571,9 @@ error_code mutation_log::open(replay_callback read_callback,
                      log->end_offset() - log->start_offset());
         }
 
-        dassert(_log_files.find(log->index()) == _log_files.end(),
-                "invalid log_index, index = %d",
-                log->index());
+        CHECK(_log_files.find(log->index()) == _log_files.end(),
+              "invalid log_index, index = %d",
+              log->index());
         _log_files[log->index()] = log;
     }
 
@@ -585,10 +585,10 @@ error_code mutation_log::open(replay_callback read_callback,
     if (!replay_condition.empty()) {
         if (_is_private) {
             auto find = replay_condition.find(_private_gpid);
-            dassert(find != replay_condition.end(),
-                    "invalid gpid(%d.%d)",
-                    _private_gpid.get_app_id(),
-                    _private_gpid.get_partition_index());
+            CHECK(find != replay_condition.end(),
+                  "invalid gpid(%d.%d)",
+                  _private_gpid.get_app_id(),
+                  _private_gpid.get_partition_index());
             for (auto it = _log_files.begin(); it != _log_files.end(); ++it) {
                 if (it->second->previous_log_max_decree(_private_gpid) <= find->second) {
                     // previous logs can be ignored
@@ -641,13 +641,13 @@ error_code mutation_log::open(replay_callback read_callback,
             if (mark_it != _log_files.rend()) {
                 // set replay_begin to the next position of mark_it.
                 replay_begin = _log_files.find(mark_it->first);
-                dassert(replay_begin != _log_files.end(),
-                        "invalid log_index, index = %d",
-                        mark_it->first);
+                CHECK(replay_begin != _log_files.end(),
+                      "invalid log_index, index = %d",
+                      mark_it->first);
                 replay_begin++;
-                dassert(replay_begin != _log_files.end(),
-                        "invalid log_index, index = %d",
-                        mark_it->first);
+                CHECK(replay_begin != _log_files.end(),
+                      "invalid log_index, index = %d",
+                      mark_it->first);
             }
         }
 
@@ -737,23 +737,23 @@ error_code mutation_log::create_new_log_file()
         LOG_ERROR("cannot create log file with index %d", _last_file_index + 1);
         return ERR_FILE_OPERATION_FAILED;
     }
-    dassert(logf->end_offset() == logf->start_offset(),
-            "%" PRId64 " VS %" PRId64 "",
-            logf->end_offset(),
-            logf->start_offset());
-    dassert(_global_end_offset == logf->end_offset(),
-            "%" PRId64 " VS %" PRId64 "",
-            _global_end_offset,
-            logf->start_offset());
+    CHECK(logf->end_offset() == logf->start_offset(),
+          "%" PRId64 " VS %" PRId64 "",
+          logf->end_offset(),
+          logf->start_offset());
+    CHECK(_global_end_offset == logf->end_offset(),
+          "%" PRId64 " VS %" PRId64 "",
+          _global_end_offset,
+          logf->start_offset());
     LOG_INFO("create new log file %s succeed, time_used = %" PRIu64 " ns",
              logf->path().c_str(),
              dsn_now_ns() - start);
 
     // update states
     _last_file_index++;
-    dassert(_log_files.find(_last_file_index) == _log_files.end(),
-            "invalid log_offset, offset = %d",
-            _last_file_index);
+    CHECK(_log_files.find(_last_file_index) == _log_files.end(),
+          "invalid log_offset, offset = %d",
+          _last_file_index);
     _log_files[_last_file_index] = logf;
 
     // switch the current log file
@@ -791,20 +791,20 @@ error_code mutation_log::create_new_log_file()
                                    if (_io_error_callback) {
                                        _io_error_callback(err);
                                    } else {
-                                       dassert(false, "unhandled error");
+                                       CHECK(false, "unhandled error");
                                    }
                                }
                            },
                            0);
 
-    dassert(_global_end_offset ==
-                _current_log_file->start_offset() + sizeof(log_block_header) + header_len,
-            "%" PRId64 " VS %" PRId64 "(%" PRId64 " + %d + %d)",
-            _global_end_offset,
-            _current_log_file->start_offset() + sizeof(log_block_header) + header_len,
-            _current_log_file->start_offset(),
-            (int)sizeof(log_block_header),
-            (int)header_len);
+    CHECK(_global_end_offset ==
+              _current_log_file->start_offset() + sizeof(log_block_header) + header_len,
+          "%" PRId64 " VS %" PRId64 "(%" PRId64 " + %d + %d)",
+          _global_end_offset,
+          _current_log_file->start_offset() + sizeof(log_block_header) + header_len,
+          _current_log_file->start_offset(),
+          (int)sizeof(log_block_header),
+          (int)header_len);
     return ERR_OK;
 }
 
@@ -842,15 +842,15 @@ std::pair<log_file_ptr, int64_t> mutation_log::mark_new_offset(size_t size,
 
         if (create_file) {
             auto ec = create_new_log_file();
-            dassert_f(ec == ERR_OK,
-                      "{} create new log file failed: {}",
-                      _is_private ? _private_gpid.to_string() : "",
-                      ec);
+            CHECK_F(ec == ERR_OK,
+                    "{} create new log file failed: {}",
+                    _is_private ? _private_gpid.to_string() : "",
+                    ec);
             _switch_file_hint = false;
             _switch_file_demand = false;
         }
     } else {
-        dassert(_current_log_file != nullptr, "");
+        CHECK(_current_log_file != nullptr, "");
     }
 
     int64_t write_start_offset = _global_end_offset;
@@ -863,7 +863,7 @@ decree mutation_log::max_decree(gpid gpid) const
 {
     zauto_lock l(_lock);
     if (_is_private) {
-        dassert(gpid == _private_gpid, "replica gpid does not match");
+        CHECK(gpid == _private_gpid, "replica gpid does not match");
         return _private_log_info.max_decree;
     } else {
         auto it = _shared_log_info_map.find(gpid);
@@ -877,7 +877,7 @@ decree mutation_log::max_decree(gpid gpid) const
 decree mutation_log::max_commit_on_disk() const
 {
     zauto_lock l(_lock);
-    dassert(_is_private, "this method is only valid for private logs");
+    CHECK(_is_private, "this method is only valid for private logs");
     return _private_max_commit_on_disk;
 }
 
@@ -889,7 +889,7 @@ decree mutation_log::max_gced_decree(gpid gpid) const
 
 decree mutation_log::max_gced_decree_no_lock(gpid gpid) const
 {
-    dassert(_is_private, "");
+    CHECK(_is_private, "");
 
     decree result = invalid_decree;
     for (auto &log : _log_files) {
@@ -909,17 +909,17 @@ void mutation_log::check_valid_start_offset(gpid gpid, int64_t valid_start_offse
 {
     zauto_lock l(_lock);
     if (_is_private) {
-        dassert(valid_start_offset == _private_log_info.valid_start_offset,
-                "valid start offset mismatch: %" PRId64 " vs %" PRId64,
-                valid_start_offset,
-                _private_log_info.valid_start_offset);
+        CHECK(valid_start_offset == _private_log_info.valid_start_offset,
+              "valid start offset mismatch: %" PRId64 " vs %" PRId64,
+              valid_start_offset,
+              _private_log_info.valid_start_offset);
     } else {
         auto it = _shared_log_info_map.find(gpid);
         if (it != _shared_log_info_map.end()) {
-            dassert(valid_start_offset == it->second.valid_start_offset,
-                    "valid start offset mismatch: %" PRId64 " vs %" PRId64,
-                    valid_start_offset,
-                    it->second.valid_start_offset);
+            CHECK(valid_start_offset == it->second.valid_start_offset,
+                  "valid start offset mismatch: %" PRId64 " vs %" PRId64,
+                  valid_start_offset,
+                  it->second.valid_start_offset);
         }
     }
 }
@@ -966,8 +966,8 @@ error_code mutation_log::reset_from(const std::string &dir,
         if (err != ERR_OK) {
             if (!utils::filesystem::rename_path(temp_dir, _dir)) {
                 // rollback failed means old log files are not be recovered, it may be lost if only
-                // LOG_ERROR,  dassert for manual resolve it
-                dassert_f("rollback {} to {} failed", temp_dir, _dir);
+                // LOG_ERROR,  CHECK for manual resolve it
+                CHECK_F("rollback {} to {} failed", temp_dir, _dir);
             }
         } else {
             if (!dsn::utils::filesystem::remove_path(temp_dir)) {
@@ -998,7 +998,7 @@ void mutation_log::set_valid_start_offset_on_open(gpid gpid, int64_t valid_start
 {
     zauto_lock l(_lock);
     if (_is_private) {
-        dassert(gpid == _private_gpid, "replica gpid does not match");
+        CHECK(gpid == _private_gpid, "replica gpid does not match");
         _private_log_info.valid_start_offset = valid_start_offset;
     } else {
         _shared_log_info_map[gpid] = replica_log_info(0, valid_start_offset);
@@ -1009,7 +1009,7 @@ int64_t mutation_log::on_partition_reset(gpid gpid, decree max_decree)
 {
     zauto_lock l(_lock);
     if (_is_private) {
-        dassert(_private_gpid == gpid, "replica gpid does not match");
+        CHECK(_private_gpid == gpid, "replica gpid does not match");
         replica_log_info old_info = _private_log_info;
         _private_log_info.max_decree = max_decree;
         _private_log_info.valid_start_offset = _global_end_offset;
@@ -1041,7 +1041,7 @@ int64_t mutation_log::on_partition_reset(gpid gpid, decree max_decree)
 
 void mutation_log::on_partition_removed(gpid gpid)
 {
-    dassert(!_is_private, "this method is only valid for shared logs");
+    CHECK(!_is_private, "this method is only valid for shared logs");
     zauto_lock l(_lock);
     _shared_log_info_map.erase(gpid);
 }
@@ -1061,7 +1061,7 @@ void mutation_log::update_max_decree_no_lock(gpid gpid, decree d)
                 it->second.max_decree = d;
             }
         } else {
-            dassert(false, "replica has not been registered in the log before");
+            CHECK(false, "replica has not been registered in the log before");
         }
     } else {
         dcheck_eq(gpid, _private_gpid);
@@ -1079,7 +1079,7 @@ void mutation_log::update_max_commit_on_disk(decree d)
 
 void mutation_log::update_max_commit_on_disk_no_lock(decree d)
 {
-    dassert(_is_private, "this method is only valid for private logs");
+    CHECK(_is_private, "this method is only valid for private logs");
     if (d > _private_max_commit_on_disk) {
         _private_max_commit_on_disk = d;
     }
@@ -1087,13 +1087,13 @@ void mutation_log::update_max_commit_on_disk_no_lock(decree d)
 
 bool mutation_log::get_learn_state(gpid gpid, decree start, /*out*/ learn_state &state) const
 {
-    dassert(_is_private, "this method is only valid for private logs");
-    dassert(_private_gpid == gpid,
-            "replica gpid does not match, (%d.%d) VS (%d.%d)",
-            _private_gpid.get_app_id(),
-            _private_gpid.get_partition_index(),
-            gpid.get_app_id(),
-            gpid.get_partition_index());
+    CHECK(_is_private, "this method is only valid for private logs");
+    CHECK(_private_gpid == gpid,
+          "replica gpid does not match, (%d.%d) VS (%d.%d)",
+          _private_gpid.get_app_id(),
+          _private_gpid.get_partition_index(),
+          gpid.get_app_id(),
+          gpid.get_partition_index());
 
     binary_writer temp_writer;
     if (get_learn_state_in_memory(start, temp_writer)) {
@@ -1197,7 +1197,7 @@ void mutation_log::get_parent_mutations_and_logs(gpid pid,
                                                  std::vector<std::string> &files,
                                                  uint64_t &total_file_size) const
 {
-    dassert(_is_private, "this method is only valid for private logs");
+    CHECK(_is_private, "this method is only valid for private logs");
     dcheck_eq(_private_gpid, pid);
 
     mutation_list.clear();
@@ -1293,7 +1293,7 @@ int mutation_log::garbage_collection(gpid gpid,
                                      int64_t reserve_max_size,
                                      int64_t reserve_max_time)
 {
-    dassert(_is_private, "this method is only valid for private log");
+    CHECK(_is_private, "this method is only valid for private log");
 
     std::map<int, log_file_ptr> files;
     decree max_decree = invalid_decree;
@@ -1312,9 +1312,9 @@ int mutation_log::garbage_collection(gpid gpid,
         return 0;
     } else {
         // the last one should be the current log file
-        dassert(current_file_index == -1 || files.rbegin()->first == current_file_index,
-                "invalid current_file_index, index = %d",
-                current_file_index);
+        CHECK(current_file_index == -1 || files.rbegin()->first == current_file_index,
+              "invalid current_file_index, index = %d",
+              current_file_index);
     }
 
     // find the largest file which can be deleted.
@@ -1323,7 +1323,7 @@ int mutation_log::garbage_collection(gpid gpid,
     int64_t already_reserved_size = 0;
     for (mark_it = files.rbegin(); mark_it != files.rend(); ++mark_it) {
         log_file_ptr log = mark_it->second;
-        dassert(mark_it->first == log->index(), "%d VS %d", mark_it->first, log->index());
+        CHECK(mark_it->first == log->index(), "%d VS %d", mark_it->first, log->index());
         // currently, "max_decree" is the max decree covered by this log.
 
         // reserve current file
@@ -1364,7 +1364,7 @@ int mutation_log::garbage_collection(gpid gpid,
         // update max decree for the next log file
         auto &max_decrees = log->previous_log_max_decrees();
         auto it3 = max_decrees.find(gpid);
-        dassert(it3 != max_decrees.end(), "impossible for private logs");
+        CHECK(it3 != max_decrees.end(), "impossible for private logs");
         max_decree = it3->second.max_decree;
         already_reserved_size += log->end_offset() - log->start_offset();
     }
@@ -1416,7 +1416,7 @@ int mutation_log::garbage_collection(const replica_log_info_map &gc_condition,
                                      int file_count_limit,
                                      std::set<gpid> &prevent_gc_replicas)
 {
-    dassert(!_is_private, "this method is only valid for shared log");
+    CHECK(!_is_private, "this method is only valid for shared log");
 
     std::map<int, log_file_ptr> files;
     replica_log_info_map max_decrees;
@@ -1443,9 +1443,9 @@ int mutation_log::garbage_collection(const replica_log_info_map &gc_condition,
         return (int)files.size();
     } else {
         // the last one should be the current log file
-        dassert(-1 == current_log_index || files.rbegin()->first == current_log_index,
-                "invalid current_log_index, index = %d",
-                current_log_index);
+        CHECK(-1 == current_log_index || files.rbegin()->first == current_log_index,
+              "invalid current_log_index, index = %d",
+              current_log_index);
     }
 
     int reserved_log_count = files.size();
@@ -1465,7 +1465,7 @@ int mutation_log::garbage_collection(const replica_log_info_map &gc_condition,
     int file_count = 0;
     for (mark_it = files.rbegin(); mark_it != files.rend(); ++mark_it) {
         log_file_ptr log = mark_it->second;
-        dassert(mark_it->first == log->index(), "%d VS %d", mark_it->first, log->index());
+        CHECK(mark_it->first == log->index(), "%d VS %d", mark_it->first, log->index());
         file_count++;
 
         bool delete_ok = true;
@@ -1496,9 +1496,8 @@ int mutation_log::garbage_collection(const replica_log_info_map &gc_condition,
                 if (it3 == max_decrees.end()) {
                     // valid_start_offset may be reset to 0 if initialize_on_load() returns
                     // ERR_INCOMPLETE_DATA
-                    dassert(
-                        valid_start_offset == 0 || valid_start_offset >= log->end_offset(),
-                        "valid start offset must be 0 or greater than the end of this log file");
+                    CHECK(valid_start_offset == 0 || valid_start_offset >= log->end_offset(),
+                          "valid start offset must be 0 or greater than the end of this log file");
 
                     LOG_DEBUG("gc @ %d.%d: max_decree for %s is missing vs %" PRId64
                               " as garbage max decree,"
@@ -1640,7 +1639,7 @@ int mutation_log::garbage_collection(const replica_log_info_map &gc_condition,
     for (auto it = files.begin(); it != files.end() && it->second->index() <= largest_log_to_delete;
          ++it) {
         log_file_ptr log = it->second;
-        dassert(it->first == log->index(), "%d VS %d", it->first, log->index());
+        CHECK(it->first == log->index(), "%d VS %d", it->first, log->index());
         to_delete_log_count++;
         to_delete_log_size += log->end_offset() - log->start_offset();
 

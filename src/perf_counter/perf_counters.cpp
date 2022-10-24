@@ -109,7 +109,7 @@ perf_counter_ptr perf_counters::get_app_counter(const char *section,
                                                 bool create_if_not_exist)
 {
     auto cnode = task::get_current_node2();
-    dassert(cnode != nullptr, "cannot get current service node!");
+    CHECK(cnode != nullptr, "cannot get current service node!");
     return get_global_counter(cnode->full_name(), section, name, flags, dsptr, create_if_not_exist);
 }
 
@@ -131,11 +131,11 @@ perf_counter_ptr perf_counters::get_global_counter(const char *app,
             _counters.emplace(full_name, counter_object{counter, 1});
             return counter;
         } else {
-            dassert(it->second.counter->type() == flags,
-                    "counters with the same name %s with differnt types, (%d) vs (%d)",
-                    full_name.c_str(),
-                    it->second.counter->type(),
-                    flags);
+            CHECK(it->second.counter->type() == flags,
+                  "counters with the same name %s with differnt types, (%d) vs (%d)",
+                  full_name.c_str(),
+                  it->second.counter->type(),
+                  flags);
             ++it->second.user_reference;
             return it->second.counter;
         }
@@ -196,7 +196,7 @@ perf_counter *perf_counters::new_counter(const char *app,
     else if (type == dsn_perf_counter_type_t::COUNTER_TYPE_NUMBER_PERCENTILES)
         return new perf_counter_number_percentile_atomic(app, section, name, type, dsptr);
     else {
-        dassert(false, "invalid type(%d)", type);
+        CHECK(false, "invalid type(%d)", type);
         return nullptr;
     }
 }

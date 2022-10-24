@@ -72,7 +72,7 @@ void replica::on_cold_backup(const backup_request &request, /*out*/ backup_respo
                 return;
             }
             auto r = _cold_backup_contexts.insert(std::make_pair(policy_name, new_context));
-            dassert(r.second, "");
+            CHECK(r.second, "");
             backup_context = r.first->second;
             backup_context->block_service = block_service;
             backup_context->backup_root = request.__isset.backup_path
@@ -325,11 +325,11 @@ static bool filter_checkpoint(const std::string &dir,
         if (ret == 1) {
             related_chkpt_dirs.emplace_back(std::move(dirname));
         } else if (ret == 2) {
-            dassert(valid_chkpt_dir.empty(),
-                    "%s: there are two valid backup checkpoint dir, %s VS %s",
-                    backup_context->name,
-                    valid_chkpt_dir.c_str(),
-                    dirname.c_str());
+            CHECK(valid_chkpt_dir.empty(),
+                  "%s: there are two valid backup checkpoint dir, %s VS %s",
+                  backup_context->name,
+                  valid_chkpt_dir.c_str(),
+                  dirname.c_str());
             valid_chkpt_dir = dirname;
         }
     }
@@ -427,11 +427,11 @@ void replica::generate_backup_checkpoint(cold_backup_context_ptr backup_context)
         // parse checkpoint dirname
         std::string policy_name;
         int64_t backup_id = 0, decree = 0, timestamp = 0;
-        dassert(backup_parse_dir_name(
-                    valid_backup_chkpt_dirname.c_str(), policy_name, backup_id, decree, timestamp),
-                "%s: valid chekpoint dirname %s",
-                backup_context->name,
-                valid_backup_chkpt_dirname.c_str());
+        CHECK(backup_parse_dir_name(
+                  valid_backup_chkpt_dirname.c_str(), policy_name, backup_id, decree, timestamp),
+              "%s: valid chekpoint dirname %s",
+              backup_context->name,
+              valid_backup_chkpt_dirname.c_str());
 
         if (statistic_file_infos_under_dir(valid_chkpt_full_path, file_infos, total_size)) {
             backup_context->checkpoint_decree = decree;
@@ -535,10 +535,10 @@ void replica::trigger_async_checkpoint_for_backup(cold_backup_context_ptr backup
             backup_context->checkpoint_decree = last_committed_decree();
         } else { // backup_context->durable_decree_when_checkpoint != durable_decree
             // checkpoint generated, but is behind checkpoint_decree, need trigger again
-            dassert(backup_context->durable_decree_when_checkpoint < durable_decree,
-                    "durable_decree_when_checkpoint(%" PRId64 ") < durable_decree(%" PRId64 ")",
-                    backup_context->durable_decree_when_checkpoint,
-                    durable_decree);
+            CHECK(backup_context->durable_decree_when_checkpoint < durable_decree,
+                  "durable_decree_when_checkpoint(%" PRId64 ") < durable_decree(%" PRId64 ")",
+                  backup_context->durable_decree_when_checkpoint,
+                  durable_decree);
             LOG_INFO("%s: need trigger async checkpoint again", backup_context->name);
         }
         backup_context->checkpoint_timestamp = dsn_now_ms();
@@ -651,10 +651,10 @@ void replica::local_create_backup_checkpoint(cold_backup_context_ptr backup_cont
             0,
             std::chrono::seconds(10));
     } else {
-        dassert(last_decree >= backup_context->checkpoint_decree,
-                "%" PRId64 " VS %" PRId64 "",
-                last_decree,
-                backup_context->checkpoint_decree);
+        CHECK(last_decree >= backup_context->checkpoint_decree,
+              "%" PRId64 " VS %" PRId64 "",
+              last_decree,
+              backup_context->checkpoint_decree);
         backup_context->checkpoint_decree = last_decree; // update to real decree
         std::string backup_checkpoint_dir_path = utils::filesystem::path_combine(
             _app->backup_dir(),

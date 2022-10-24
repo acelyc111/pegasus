@@ -57,7 +57,7 @@ static const char *states[] = {
 
 static inline const char *string_state(lock_state state)
 {
-    dassert(state < lock_state::state_count, "state = %d", (int)(state));
+    CHECK(state < lock_state::state_count, "state = %d", (int)(state));
     return states[state];
 }
 
@@ -73,7 +73,7 @@ static bool is_zookeeper_timeout(int zookeeper_error)
             if (code == allow_list[i])                                                             \
                 break;                                                                             \
         }                                                                                          \
-        dassert(i < allow_list_size, "invalid code(%s)", code_str);                                \
+        CHECK(i < allow_list_size, "invalid code(%s)", code_str);                                  \
     } while (0)
 
 #define __execute(cb, _this) tasking::enqueue(TASK_CODE_DLOCK, nullptr, cb, _this->hash())
@@ -211,7 +211,7 @@ void lock_struct::owner_change(lock_struct_ptr _this, int zoo_event)
     } else if (ZOO_NOTWATCHING_EVENT == zoo_event)
         _this->get_lock_owner(false);
     else
-        dassert(false, "unexpected event");
+        CHECK(false, "unexpected event");
 }
 /*static*/
 void lock_struct::after_remove_duplicated_locknode(lock_struct_ptr _this,
@@ -368,11 +368,11 @@ void lock_struct::after_self_check(lock_struct_ptr _this,
         _this->on_expire();
         return;
     }
-    dassert(*value == _this->_myself._node_value,
-            "lock(%s) get wrong value, local myself(%s), from zookeeper(%s)",
-            _this->_lock_id.c_str(),
-            _this->_myself._node_value.c_str(),
-            value->c_str());
+    CHECK(*value == _this->_myself._node_value,
+          "lock(%s) get wrong value, local myself(%s), from zookeeper(%s)",
+          _this->_lock_id.c_str(),
+          _this->_myself._node_value.c_str(),
+          value->c_str());
 }
 
 void lock_struct::get_lock_owner(bool watch_myself)
@@ -486,10 +486,10 @@ void lock_struct::after_get_lockdir_nodes(lock_struct_ptr _this,
         bool watch_myself = false;
         if (min_seq == myself_seq) {
             // i am the smallest one, so i get the lock :-)
-            dassert(min_pos == my_pos,
-                    "same sequence node number on zookeeper, dir(%s), number(%d)",
-                    _this->_lock_dir.c_str(),
-                    myself_seq);
+            CHECK(min_pos == my_pos,
+                  "same sequence node number on zookeeper, dir(%s), number(%d)",
+                  _this->_lock_dir.c_str(),
+                  myself_seq);
             _this->_state = lock_state::locked;
             _this->_owner._node_value = _this->_myself._node_value;
             _this->_dist_lock_service->refresh_lock_cache(
@@ -573,7 +573,7 @@ void lock_struct::after_create_locknode(lock_struct_ptr _this,
     char splitter[] = {'/', 0};
     _this->_myself._node_seq_name = utils::get_last_component(*path, splitter);
     _this->_myself._sequence_id = parse_seq_path(_this->_myself._node_seq_name);
-    dassert(_this->_myself._sequence_id != -1, "invalid seq path created");
+    CHECK(_this->_myself._sequence_id != -1, "invalid seq path created");
     LOG_INFO("create seq/ephe node in dir(%s) ok, my_sequence_id(%d)",
              _this->_lock_dir.c_str(),
              _this->_myself._sequence_id);

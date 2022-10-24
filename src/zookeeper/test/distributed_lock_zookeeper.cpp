@@ -77,7 +77,7 @@ public:
 
         _dlock_service = new distributed_lock_service_zookeeper();
         auto err = _dlock_service->initialize({"/dsn/tests/simple_adder_server"});
-        dassert(err == ERR_OK, "err = %s", err.to_string());
+        CHECK(err == ERR_OK, "err = %s", err.to_string());
 
         distributed_lock_service::lock_options opt = {true, true};
         while (!ss_finish) {
@@ -94,7 +94,7 @@ public:
                              version);
                 },
                 DLOCK_CALLBACK,
-                [](error_code, const std::string &, int) { dassert(false, "session expired"); },
+                [](error_code, const std::string &, int) { CHECK(false, "session expired"); },
                 opt);
             task_pair.first->wait();
             for (int i = 0; i < 1000; ++i) {

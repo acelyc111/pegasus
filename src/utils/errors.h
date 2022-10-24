@@ -194,13 +194,13 @@ public:
 
     const T &get_value() const
     {
-        dassert(_err.is_ok(), "%s", get_error().description().data());
+        CHECK(_err.is_ok(), "%s", get_error().description().data());
         return *_value;
     }
 
     T &get_value()
     {
-        dassert(_err.is_ok(), "%s", get_error().description().data());
+        CHECK(_err.is_ok(), "%s", get_error().description().data());
         return *_value;
     }
 

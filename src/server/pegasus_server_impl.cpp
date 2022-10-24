@@ -114,7 +114,7 @@ void pegasus_server_impl::parse_checkpoints()
 pegasus_server_impl::~pegasus_server_impl()
 {
     if (_is_open) {
-        dassert(_db != nullptr, "");
+        CHECK(_db != nullptr, "");
         release_db();
     }
 }
@@ -258,15 +258,15 @@ int pegasus_server_impl::on_batched_write_requests(int64_t decree,
                                                    dsn::message_ex **requests,
                                                    int count)
 {
-    dassert(_is_open, "");
-    dassert(requests != nullptr, "");
+    CHECK(_is_open, "");
+    CHECK(requests != nullptr, "");
 
     return _server_write->on_batched_write_requests(requests, count, decree, timestamp);
 }
 
 void pegasus_server_impl::on_get(get_rpc rpc)
 {
-    dassert(_is_open, "");
+    CHECK(_is_open, "");
     _pfc_get_qps->increment();
     uint64_t start_time = dsn_now_ns();
 
@@ -350,7 +350,7 @@ void pegasus_server_impl::on_get(get_rpc rpc)
 
 void pegasus_server_impl::on_multi_get(multi_get_rpc rpc)
 {
-    dassert(_is_open, "");
+    CHECK(_is_open, "");
     _pfc_multi_get_qps->increment();
     uint64_t start_time = dsn_now_ns();
 
@@ -780,7 +780,7 @@ void pegasus_server_impl::on_multi_get(multi_get_rpc rpc)
 
 void pegasus_server_impl::on_batch_get(batch_get_rpc rpc)
 {
-    dassert(_is_open, "");
+    CHECK(_is_open, "");
     _pfc_batch_get_qps->increment();
     int64_t start_time = dsn_now_ns();
 
@@ -897,7 +897,7 @@ void pegasus_server_impl::on_batch_get(batch_get_rpc rpc)
 
 void pegasus_server_impl::on_sortkey_count(sortkey_count_rpc rpc)
 {
-    dassert(_is_open, "");
+    CHECK(_is_open, "");
 
     _pfc_scan_qps->increment();
     uint64_t start_time = dsn_now_ns();
@@ -981,7 +981,7 @@ void pegasus_server_impl::on_sortkey_count(sortkey_count_rpc rpc)
 
 void pegasus_server_impl::on_ttl(ttl_rpc rpc)
 {
-    dassert(_is_open, "");
+    CHECK(_is_open, "");
 
     const auto &key = rpc.request();
     auto &resp = rpc.response();
@@ -1048,7 +1048,7 @@ void pegasus_server_impl::on_ttl(ttl_rpc rpc)
 
 void pegasus_server_impl::on_get_scanner(get_scanner_rpc rpc)
 {
-    dassert(_is_open, "");
+    CHECK(_is_open, "");
     _pfc_scan_qps->increment();
     uint64_t start_time = dsn_now_ns();
 
@@ -1121,9 +1121,9 @@ void pegasus_server_impl::on_get_scanner(get_scanner_rpc rpc)
             // hashkey, we should not seek this prefix by prefix bloom filter. However, it only
             // happen when do full scan (scanners got by get_unordered_scanners), in which case the
             // following flags has been updated.
-            dassert(!_data_cf_opts.prefix_extractor || rd_opts.total_order_seek, "Invalid option");
-            dassert(!_data_cf_opts.prefix_extractor || !rd_opts.prefix_same_as_start,
-                    "Invalid option");
+            CHECK(!_data_cf_opts.prefix_extractor || rd_opts.total_order_seek, "Invalid option");
+            CHECK(!_data_cf_opts.prefix_extractor || !rd_opts.prefix_same_as_start,
+                  "Invalid option");
         }
     }
 
@@ -1312,7 +1312,7 @@ void pegasus_server_impl::on_get_scanner(get_scanner_rpc rpc)
 
 void pegasus_server_impl::on_scan(scan_rpc rpc)
 {
-    dassert(_is_open, "");
+    CHECK(_is_open, "");
     _pfc_scan_qps->increment();
     uint64_t start_time = dsn_now_ns();
     const auto &request = rpc.request();
@@ -1471,7 +1471,7 @@ void pegasus_server_impl::on_clear_scanner(const int64_t &args) { _context_cache
 
 dsn::error_code pegasus_server_impl::start(int argc, char **argv)
 {
-    dassert_replica(!_is_open, "replica is already opened.");
+    CHECK_PREFIX(!_is_open, "replica is already opened.");
     LOG_INFO_PREFIX("start to open app {}", data_dir());
 
     // parse envs for parameters
@@ -1587,8 +1587,8 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
             LOG_ERROR_PREFIX("check column families failed");
             return dsn::ERR_LOCAL_APP_FAILURE;
         }
-        dassert_replica(!missing_meta_cf, "You must upgrade Pegasus server from 2.0");
-        dassert_replica(!missing_data_cf, "Missing data column family");
+        CHECK_PREFIX(!missing_meta_cf, "You must upgrade Pegasus server from 2.0");
+        CHECK_PREFIX(!missing_data_cf, "Missing data column family");
 
         // Load latest options from option file stored in the db directory.
         rocksdb::DBOptions loaded_db_opt;
@@ -1731,8 +1731,8 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
     static std::once_flag flag;
     std::call_once(flag, [&]() {
         // The timer task will always running even though there is no replicas
-        dassert_f(kServerStatUpdateTimeSec.count() != 0,
-                  "kServerStatUpdateTimeSec shouldn't be zero");
+        CHECK_F(kServerStatUpdateTimeSec.count() != 0,
+                "kServerStatUpdateTimeSec shouldn't be zero");
         _update_server_rdb_stat = dsn::tasking::enqueue_timer(
             LPC_REPLICATION_LONG_COMMON,
             nullptr, // TODO: the tracker is nullptr, we will fix it later
@@ -1761,7 +1761,7 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
 void pegasus_server_impl::cancel_background_work(bool wait)
 {
     if (_is_open) {
-        dassert(_db != nullptr, "");
+        CHECK(_db != nullptr, "");
         rocksdb::CancelAllBackgroundWork(_db, wait);
     }
 }
@@ -1769,8 +1769,8 @@ void pegasus_server_impl::cancel_background_work(bool wait)
 ::dsn::error_code pegasus_server_impl::stop(bool clear_state)
 {
     if (!_is_open) {
-        dassert(_db == nullptr, "");
-        dassert(!clear_state, "should not be here if do clear");
+        CHECK(_db == nullptr, "");
+        CHECK(!clear_state, "should not be here if do clear");
         return ::dsn::ERR_OK;
     }
 
@@ -2132,7 +2132,7 @@ private:
                                                       const dsn::blob &learn_request,
                                                       dsn::replication::learn_state &state)
 {
-    dassert(_is_open, "");
+    CHECK(_is_open, "");
 
     int64_t ci = last_durable_decree();
     if (ci == 0) {
@@ -2165,25 +2165,25 @@ pegasus_server_impl::storage_apply_checkpoint(chkpt_apply_mode mode,
     int64_t ci = state.to_decree_included;
 
     if (mode == chkpt_apply_mode::copy) {
-        dassert(ci > last_durable_decree(),
-                "state.to_decree_included(%" PRId64 ") <= last_durable_decree(%" PRId64 ")",
-                ci,
-                last_durable_decree());
+        CHECK(ci > last_durable_decree(),
+              "state.to_decree_included(%" PRId64 ") <= last_durable_decree(%" PRId64 ")",
+              ci,
+              last_durable_decree());
 
         auto learn_dir = ::dsn::utils::filesystem::remove_file_name(state.files[0]);
         auto chkpt_dir = ::dsn::utils::filesystem::path_combine(data_dir(), chkpt_get_dir_name(ci));
         if (::dsn::utils::filesystem::rename_path(learn_dir, chkpt_dir)) {
             ::dsn::utils::auto_lock<::dsn::utils::ex_lock_nr> l(_checkpoints_lock);
-            dassert(ci > last_durable_decree(),
-                    "%" PRId64 " VS %" PRId64 "",
-                    ci,
-                    last_durable_decree());
+            CHECK(ci > last_durable_decree(),
+                  "%" PRId64 " VS %" PRId64 "",
+                  ci,
+                  last_durable_decree());
             _checkpoints.push_back(ci);
             if (!_checkpoints.empty()) {
-                dassert(ci > _checkpoints.back(),
-                        "%" PRId64 " VS %" PRId64 "",
-                        ci,
-                        _checkpoints.back());
+                CHECK(ci > _checkpoints.back(),
+                      "%" PRId64 " VS %" PRId64 "",
+                      ci,
+                      _checkpoints.back());
             }
             set_last_durable_decree(ci);
             err = ::dsn::ERR_OK;
@@ -2242,8 +2242,8 @@ pegasus_server_impl::storage_apply_checkpoint(chkpt_apply_mode mode,
         return err;
     }
 
-    dassert(_is_open, "");
-    dassert(ci == last_durable_decree(), "%" PRId64 " VS %" PRId64 "", ci, last_durable_decree());
+    CHECK(_is_open, "");
+    CHECK(ci == last_durable_decree(), "%" PRId64 " VS %" PRId64 "", ci, last_durable_decree());
 
     LOG_INFO("%s: apply checkpoint succeed, last_durable_decree = %" PRId64,
              replica_name(),
@@ -2276,7 +2276,7 @@ bool pegasus_server_impl::validate_filter(::dsn::apps::filter_type::type filter_
         }
     }
     default:
-        dassert(false, "unsupported filter type: %d", filter_type);
+        CHECK(false, "unsupported filter type: %d", filter_type);
     }
     return false;
 }
@@ -3294,7 +3294,7 @@ void pegasus_server_impl::set_partition_version(int32_t partition_version)
 void pegasus_server_impl::release_db()
 {
     if (_db) {
-        dassert_replica(_data_cf != nullptr && _meta_cf != nullptr, "");
+        CHECK_PREFIX(_data_cf != nullptr && _meta_cf != nullptr, "");
         _db->DestroyColumnFamilyHandle(_data_cf);
         _data_cf = nullptr;
         _db->DestroyColumnFamilyHandle(_meta_cf);

@@ -78,7 +78,7 @@ void meta_state_service_simple::write_log(blob &&log_blob,
     uint64_t log_offset = _offset;
     _offset += log_blob.length();
     auto continuation_task = std::unique_ptr<operation>(new operation(false, [=](bool log_succeed) {
-        dassert(log_succeed, "we cannot handle logging failure now");
+        CHECK(log_succeed, "we cannot handle logging failure now");
         __err_cb_bind_and_enqueue(task, internal_operation(), 0);
     }));
     auto continuation_task_ptr = continuation_task.get();
@@ -92,8 +92,8 @@ void meta_state_service_simple::write_log(blob &&log_blob,
                 LPC_META_STATE_SERVICE_SIMPLE_INTERNAL,
                 &_tracker,
                 [=](error_code err, size_t bytes) {
-                    dassert(err == ERR_OK && bytes == log_blob.length(),
-                            "we cannot handle logging failure now");
+                    CHECK(err == ERR_OK && bytes == log_blob.length(),
+                          "we cannot handle logging failure now");
                     _log_lock.lock();
                     continuation_task_ptr->done = true;
                     while (!_task_queue.empty()) {
@@ -156,7 +156,7 @@ error_code meta_state_service_simple::delete_node_internal(const std::string &no
         auto &node_pair = delete_stack.top();
         if (node_pair.node->children.end() == node_pair.next_child_to_delete) {
             auto delnum = _quick_map.erase(node_pair.path);
-            dassert(delnum == 1, "inconsistent state between quick map and tree");
+            CHECK(delnum == 1, "inconsistent state between quick map and tree");
             delete node_pair.node;
             delete_stack.pop();
         } else {
@@ -175,11 +175,11 @@ error_code meta_state_service_simple::delete_node_internal(const std::string &no
     }
 
     auto parent_it = _quick_map.find(parent);
-    dassert(parent_it != _quick_map.end(), "unable to find parent node");
+    CHECK(parent_it != _quick_map.end(), "unable to find parent node");
     // XXX we cannot delete root, right?
 
     auto erase_num = parent_it->second->children.erase(name);
-    dassert(erase_num == 1, "inconsistent state between quick map and tree");
+    CHECK(erase_num == 1, "inconsistent state between quick map and tree");
     return ERR_OK;
 }
 
@@ -200,7 +200,7 @@ error_code meta_state_service_simple::apply_transaction(
     LOG_DEBUG("internal operation after logged");
     simple_transaction_entries *entries =
         dynamic_cast<simple_transaction_entries *>(t_entries.get());
-    dassert(entries != nullptr, "invalid input parameter");
+    CHECK(entries != nullptr, "invalid input parameter");
     error_code ec;
     for (int i = 0; i != entries->_offset; ++i) {
         operation_entry &e = entries->_ops[i];
@@ -215,9 +215,9 @@ error_code meta_state_service_simple::apply_transaction(
             ec = set_data_internal(e._node, e._value);
             break;
         default:
-            dassert(false, "unsupported operation");
+            CHECK(false, "unsupported operation");
         }
-        dassert(ec == ERR_OK, "unexpected error when applying, err=%s", ec.to_string());
+        CHECK(ec == ERR_OK, "unexpected error when applying, err=%s", ec.to_string());
     }
 
     return ERR_OK;
@@ -274,7 +274,7 @@ error_code meta_state_service_simple::initialize(const std::vector<std::string> 
                 default:
                     // The log is complete but its content is modified by cosmic ray. This is
                     // unacceptable
-                    dassert(false, "meta state server log corrupted");
+                    CHECK(false, "meta state server log corrupted");
                 }
             }
             fclose(fd);
@@ -370,7 +370,7 @@ task_ptr meta_state_service_simple::submit_transaction(
             }
         } break;
         default:
-            dassert(false, "not supported operation");
+            CHECK(false, "not supported operation");
             break;
         }
 
@@ -391,7 +391,7 @@ task_ptr meta_state_service_simple::submit_transaction(
             memcpy(dest, entry.data(), entry.length());
             dest += entry.length();
         });
-        dassert(dest - batch.get() == total_size, "memcpy error");
+        CHECK(dest - batch.get() == total_size, "memcpy error");
         task_ptr task(new error_code_future(cb_code, cb_transaction, 0));
         task->set_tracker(tracker);
         write_log(blob(batch, total_size),

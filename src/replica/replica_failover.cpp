@@ -67,18 +67,18 @@ void replica::handle_remote_failure(partition_status::type st,
               enum_to_string(st),
               node.to_string());
 
-    dassert(status() == partition_status::PS_PRIMARY,
-            "invalid partition_status, status = %s",
-            enum_to_string(status()));
-    dassert(
+    CHECK(status() == partition_status::PS_PRIMARY,
+          "invalid partition_status, status = %s",
+          enum_to_string(status()));
+    CHECK(
         node != _stub->_primary_address, "%s VS %s", node.to_string(), _stub->_primary_address_str);
 
     switch (st) {
     case partition_status::PS_SECONDARY:
-        dassert(_primary_states.check_exist(node, partition_status::PS_SECONDARY),
-                "invalid node address, address = %s, status = %s",
-                node.to_string(),
-                enum_to_string(st));
+        CHECK(_primary_states.check_exist(node, partition_status::PS_SECONDARY),
+              "invalid node address, address = %s, status = %s",
+              node.to_string(),
+              enum_to_string(st));
         {
             configuration_update_request request;
             request.node = node;
@@ -98,7 +98,7 @@ void replica::handle_remote_failure(partition_status::type st,
     case partition_status::PS_ERROR:
         break;
     default:
-        dassert(false, "invalid partition_status, status = %s", enum_to_string(st));
+        CHECK(false, "invalid partition_status, status = %s", enum_to_string(st));
         break;
     }
 }

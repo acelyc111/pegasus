@@ -199,7 +199,7 @@ void nfs_client_impl::end_get_file_size(::dsn::error_code err,
             req_offset += req_size;
             size -= req_size;
             if (size <= 0) {
-                dassert(size == 0, "last request must read exactly the remaing size of the file");
+                CHECK(size == 0, "last request must read exactly the remaing size of the file");
                 break;
             }
 
@@ -450,7 +450,7 @@ void nfs_client_impl::continue_write()
         dsn::utils::filesystem::path_combine(fc->user_req->file_size_req.dst_dir, fc->file_name);
     std::string path = dsn::utils::filesystem::remove_file_name(file_path.c_str());
     if (!dsn::utils::filesystem::create_directory(path)) {
-        dassert(false, "create directory %s failed", path.c_str());
+        CHECK(false, "create directory %s failed", path.c_str());
     }
 
     if (!fc->file_holder->file_handle) {

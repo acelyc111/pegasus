@@ -196,7 +196,7 @@ struct scan_data_context
     {
         // max_batch_count should > 1 because scan may be terminated
         // when split_request_count = 1
-        dassert(max_batch_count > 1, "");
+        CHECK(max_batch_count > 1, "");
     }
     void set_sort_key_filter(pegasus::pegasus_client::filter_type type, const std::string &pattern)
     {
@@ -258,7 +258,7 @@ inline bool validate_filter(pegasus::pegasus_client::filter_type filter_type,
         }
     }
     default:
-        dassert(false, "unsupported filter type: %d", filter_type);
+        CHECK(false, "unsupported filter type: %d", filter_type);
     }
     return false;
 }
@@ -571,7 +571,7 @@ inline void scan_data_next(scan_data_context *context)
                         }
                         break;
                     default:
-                        dassert(false, "op = %d", context->op);
+                        CHECK(false, "op = %d", context->op);
                         break;
                     }
                 } else {
@@ -1014,11 +1014,11 @@ get_app_partitions(shell_context *sc,
             LOG_ERROR("list app %s failed, error = %s", app.app_name.c_str(), err.to_string());
             return false;
         }
-        dassert(app_id == app.app_id, "%d VS %d", app_id, app.app_id);
-        dassert(partition_count == app.partition_count,
-                "%d VS %d",
-                partition_count,
-                app.partition_count);
+        CHECK(app_id == app.app_id, "%d VS %d", app_id, app.app_id);
+        CHECK(partition_count == app.partition_count,
+              "%d VS %d",
+              partition_count,
+              app.partition_count);
     }
     return true;
 }
@@ -1200,11 +1200,11 @@ get_app_stat(shell_context *sc, const std::string &app_name, std::vector<row_dat
             LOG_ERROR("list app %s failed, error = %s", app_name.c_str(), err.to_string());
             return false;
         }
-        dassert(app_id == app_info->app_id, "%d VS %d", app_id, app_info->app_id);
-        dassert(partition_count == app_info->partition_count,
-                "%d VS %d",
-                partition_count,
-                app_info->partition_count);
+        CHECK(app_id == app_info->app_id, "%d VS %d", app_id, app_info->app_id);
+        CHECK(partition_count == app_info->partition_count,
+              "%d VS %d",
+              partition_count,
+              app_info->partition_count);
 
         for (int i = 0; i < nodes.size(); ++i) {
             dsn::rpc_address node_addr = nodes[i].address;
@@ -1216,9 +1216,9 @@ get_app_stat(shell_context *sc, const std::string &app_name, std::vector<row_dat
                 std::string counter_name;
                 bool parse_ret = parse_app_pegasus_perf_counter_name(
                     m.name, app_id_x, partition_index_x, counter_name);
-                dassert(parse_ret, "name = %s", m.name.c_str());
-                dassert(app_id_x == app_id, "name = %s", m.name.c_str());
-                dassert(partition_index_x < partition_count, "name = %s", m.name.c_str());
+                CHECK(parse_ret, "name = %s", m.name.c_str());
+                CHECK(app_id_x == app_id, "name = %s", m.name.c_str());
+                CHECK(partition_index_x < partition_count, "name = %s", m.name.c_str());
                 if (partitions[partition_index_x].primary != node_addr)
                     continue;
                 update_app_pegasus_perf_counter(rows[partition_index_x], counter_name, m.value);
@@ -1279,7 +1279,7 @@ inline bool get_capacity_unit_stat(shell_context *sc,
             int32_t app_id, pidx;
             std::string counter_name;
             bool r = parse_app_pegasus_perf_counter_name(m.name, app_id, pidx, counter_name);
-            dassert(r, "name = %s", m.name.c_str());
+            CHECK(r, "name = %s", m.name.c_str());
             if (counter_name == "recent.read.cu") {
                 nodes_stat[i].cu_value_by_app[app_id].first += (int64_t)m.value;
             } else if (counter_name == "recent.write.cu") {
@@ -1346,7 +1346,7 @@ inline bool get_storage_size_stat(shell_context *sc, app_storage_size_stat &st_s
             std::string counter_name;
             bool parse_ret = parse_app_pegasus_perf_counter_name(
                 m.name, app_id_x, partition_index_x, counter_name);
-            dassert(parse_ret, "name = %s", m.name.c_str());
+            CHECK(parse_ret, "name = %s", m.name.c_str());
             if (counter_name != "disk.storage.sst(MB)")
                 continue;
             auto find = app_partitions.find(app_id_x);

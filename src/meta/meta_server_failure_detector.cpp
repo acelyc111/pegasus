@@ -58,7 +58,7 @@ meta_server_failure_detector::meta_server_failure_detector(meta_service *svc)
     _lock_svc = dsn::utils::factory_store<dist::distributed_lock_service>::create(
         _fd_opts->distributed_lock_service_type.c_str(), PROVIDER_TYPE_MAIN);
     error_code err = _lock_svc->initialize(_fd_opts->distributed_lock_service_args);
-    dassert(err == ERR_OK, "init distributed_lock_service failed, err = %s", err.to_string());
+    CHECK(err == ERR_OK, "init distributed_lock_service failed, err = %s", err.to_string());
 }
 
 meta_server_failure_detector::~meta_server_failure_detector()
@@ -91,14 +91,14 @@ bool meta_server_failure_detector::get_leader(rpc_address *leader)
         // get leader addr
         auto addr_part = str.substr(pos + 1, str.length() - pos - 1);
         if (!leader->from_string_ipv4(addr_part.data())) {
-            dassert_f(false, "parse {} to rpc_address failed", addr_part);
+            CHECK_F(false, "parse {} to rpc_address failed", addr_part);
         }
 
         // get the return value which implies whether the current node is primary or not
         bool is_leader = true;
         auto is_leader_part = str.substr(0, pos);
         if (!dsn::buf2bool(is_leader_part, is_leader)) {
-            dassert_f(false, "parse {} to bool failed", is_leader_part);
+            CHECK_F(false, "parse {} to bool failed", is_leader_part);
         }
         return is_leader;
     });
@@ -197,13 +197,13 @@ void meta_server_failure_detector::reset_stability_stat(const rpc_address &node)
 void meta_server_failure_detector::leader_initialize(const std::string &lock_service_owner)
 {
     dsn::rpc_address addr;
-    dassert(addr.from_string_ipv4(lock_service_owner.c_str()),
-            "parse %s to rpc_address failed",
-            lock_service_owner.c_str());
-    dassert(addr == dsn_primary_address(),
-            "acquire leader return success, but owner not match: %s vs %s",
-            addr.to_string(),
-            dsn_primary_address().to_string());
+    CHECK(addr.from_string_ipv4(lock_service_owner.c_str()),
+          "parse %s to rpc_address failed",
+          lock_service_owner.c_str());
+    CHECK(addr == dsn_primary_address(),
+          "acquire leader return success, but owner not match: %s vs %s",
+          addr.to_string(),
+          dsn_primary_address().to_string());
     _is_leader.store(true);
     _election_moment.store(dsn_now_ms());
 }

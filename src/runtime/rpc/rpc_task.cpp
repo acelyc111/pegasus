@@ -35,10 +35,9 @@ rpc_request_task::rpc_request_task(message_ex *request, rpc_request_handler &&h,
       _handler(std::move(h)),
       _enqueue_ts_ns(0)
 {
-    dbg_dassert(
-        TASK_TYPE_RPC_REQUEST == spec().type,
-        "%s is not a RPC_REQUEST task, please use DEFINE_TASK_CODE_RPC to define the task code",
-        spec().name.c_str());
+    DCHECK(TASK_TYPE_RPC_REQUEST == spec().type,
+           "%s is not a RPC_REQUEST task, please use DEFINE_TASK_CODE_RPC to define the task code",
+           spec().name.c_str());
     _request->add_ref(); // released in dctor
 }
 
@@ -76,10 +75,10 @@ rpc_response_task::rpc_response_task(message_ex *request,
 
     set_error_code(ERR_IO_PENDING);
 
-    dbg_dassert(TASK_TYPE_RPC_RESPONSE == spec().type,
-                "%s is not of RPC_RESPONSE type, please use DEFINE_TASK_CODE_RPC to define the "
-                "request task code",
-                spec().name.c_str());
+    DCHECK(TASK_TYPE_RPC_RESPONSE == spec().type,
+           "%s is not of RPC_RESPONSE type, please use DEFINE_TASK_CODE_RPC to define the "
+           "request task code",
+           spec().name.c_str());
 
     _request = request;
     _response = nullptr;

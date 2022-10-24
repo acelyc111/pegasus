@@ -296,7 +296,7 @@ message_ex *thrift_message_parser::get_message_on_receive(message_reader *reader
     case 1:
         return parse_request_body_v1(reader, read_next);
     default:
-        dassert_f(false, "invalid header version: {}", _header_version);
+        CHECK_F(false, "invalid header version: {}", _header_version);
     }
 
     return nullptr;
@@ -318,9 +318,9 @@ void thrift_message_parser::prepare_on_send(message_ex *msg)
     auto &header = msg->header;
     auto &buffers = msg->buffers;
 
-    dassert(!header->context.u.is_request, "only support send response");
-    dassert(header->server.error_name[0], "error name should be set");
-    dassert(!buffers.empty(), "buffers can not be empty");
+    CHECK(!header->context.u.is_request, "only support send response");
+    CHECK(header->server.error_name[0], "error name should be set");
+    CHECK(!buffers.empty(), "buffers can not be empty");
 
     // write thrift response header and thrift message begin
     binary_writer header_writer;
@@ -354,11 +354,11 @@ void thrift_message_parser::prepare_on_send(message_ex *msg)
     int dsn_buf_count = 0;
     while (dsn_size > 0 && dsn_buf_count < buffers.size()) {
         blob &buf = buffers[dsn_buf_count];
-        dassert(dsn_size >= buf.length(), "%u VS %u", dsn_size, buf.length());
+        CHECK(dsn_size >= buf.length(), "%u VS %u", dsn_size, buf.length());
         dsn_size -= buf.length();
         ++dsn_buf_count;
     }
-    dassert(dsn_size == 0, "dsn_size = %u", dsn_size);
+    CHECK(dsn_size == 0, "dsn_size = %u", dsn_size);
 
     // put header_bb and end_bb at the end
     buffers.resize(dsn_buf_count);
@@ -379,7 +379,7 @@ int thrift_message_parser::get_buffers_on_send(message_ex *msg, /*out*/ send_buf
     int dsn_buf_count = 0;
     while (dsn_size > 0 && dsn_buf_count < msg_buffers.size()) {
         blob &buf = msg_buffers[dsn_buf_count];
-        dassert(dsn_size >= buf.length(), "%u VS %u", dsn_size, buf.length());
+        CHECK(dsn_size >= buf.length(), "%u VS %u", dsn_size, buf.length());
         dsn_size -= buf.length();
         ++dsn_buf_count;
 
@@ -392,8 +392,8 @@ int thrift_message_parser::get_buffers_on_send(message_ex *msg, /*out*/ send_buf
         offset = 0;
         ++i;
     }
-    dassert(dsn_size == 0, "dsn_size = %u", dsn_size);
-    dassert(dsn_buf_count + 2 == msg_buffers.size(), "must have 2 more blob at the end");
+    CHECK(dsn_size == 0, "dsn_size = %u", dsn_size);
+    CHECK(dsn_buf_count + 2 == msg_buffers.size(), "must have 2 more blob at the end");
 
     // set header
     blob &header_bb = msg_buffers[dsn_buf_count];

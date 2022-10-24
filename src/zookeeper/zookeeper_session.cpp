@@ -174,7 +174,7 @@ int zookeeper_session::attach(void *callback_owner, const state_callback &cb)
                                      this,
                                      0);
         }
-        dassert(_handle != nullptr, "zookeeper session init failed");
+        CHECK(_handle != nullptr, "zookeeper session init failed");
     }
 
     _watchers.push_back(watcher_object());
@@ -322,7 +322,7 @@ void zookeeper_session::global_watcher(
     if (type != ZOO_SESSION_EVENT && path != nullptr)
         LOG_INFO("watcher path: %s", path);
 
-    dassert(zoo_session->_handle == handle, "");
+    CHECK(zoo_session->_handle == handle, "");
     zoo_session->dispatch_event(type, state, type == ZOO_SESSION_EVENT ? "" : path);
 }
 

@@ -50,14 +50,14 @@ rpc_session::~rpc_session()
 
     {
         utils::auto_lock<utils::ex_lock_nr> l(_lock);
-        dassert(0 == _sending_msgs.size(), "sending queue is not cleared yet");
-        dassert(0 == _message_count, "sending queue is not cleared yet");
+        CHECK(0 == _sending_msgs.size(), "sending queue is not cleared yet");
+        CHECK(0 == _message_count, "sending queue is not cleared yet");
     }
 }
 
 bool rpc_session::set_connecting()
 {
-    dassert(is_client(), "must be client session");
+    CHECK(is_client(), "must be client session");
 
     utils::auto_lock<utils::ex_lock_nr> l(_lock);
     if (_connect_state == SS_DISCONNECTED) {
@@ -70,7 +70,7 @@ bool rpc_session::set_connecting()
 
 void rpc_session::set_connected()
 {
-    dassert(is_client(), "must be client session");
+    CHECK(is_client(), "must be client session");
 
     {
         utils::auto_lock<utils::ex_lock_nr> l(_lock);
@@ -171,12 +171,12 @@ inline bool rpc_session::unlink_message_for_send()
     auto n = _messages.next();
     int bcount = 0;
 
-    dbg_dassert(0 == _sending_buffers.size(),
-                "sending_buffers should be empty, but size = %d",
-                (int)_sending_buffers.size());
-    dbg_dassert(0 == _sending_msgs.size(),
-                "sending_msgs should be empty, but size = %d",
-                (int)_sending_msgs.size());
+    DCHECK(0 == _sending_buffers.size(),
+           "sending_buffers should be empty, but size = %d",
+           (int)_sending_buffers.size());
+    DCHECK(0 == _sending_msgs.size(),
+           "sending_msgs should be empty, but size = %d",
+           (int)_sending_msgs.size());
 
     while (n != &_messages) {
         auto lmsg = CONTAINING_RECORD(n, message_ex, dl);
@@ -187,7 +187,7 @@ inline bool rpc_session::unlink_message_for_send()
 
         _sending_buffers.resize(bcount + lcount);
         auto rcount = _parser->get_buffers_on_send(lmsg, &_sending_buffers[bcount]);
-        dassert(lcount >= rcount, "%d VS %d", lcount, rcount);
+        CHECK(lcount >= rcount, "%d VS %d", lcount, rcount);
         if (lcount != rcount)
             _sending_buffers.resize(bcount + rcount);
         bcount += rcount;
@@ -261,7 +261,7 @@ void rpc_session::send_message(message_ex *msg)
         return;
     }
 
-    dassert(_parser, "parser should not be null when send");
+    CHECK(_parser, "parser should not be null when send");
     _parser->prepare_on_send(msg);
 
     uint64_t sig;
@@ -308,13 +308,13 @@ void rpc_session::on_send_completed(uint64_t signature)
     {
         utils::auto_lock<utils::ex_lock_nr> l(_lock);
         if (signature != 0) {
-            dassert(_is_sending_next && signature == _message_sent + 1, "sent msg must be sending");
+            CHECK(_is_sending_next && signature == _message_sent + 1, "sent msg must be sending");
             _is_sending_next = false;
 
             // the _sending_msgs may have been cleared when reading of the rpc_session is failed.
             if (_sending_msgs.size() == 0) {
-                dassert(_connect_state == SS_DISCONNECTED,
-                        "assume sending queue is cleared due to session closed");
+                CHECK(_connect_state == SS_DISCONNECTED,
+                      "assume sending queue is cleared due to session closed");
                 return;
             }
 
@@ -423,12 +423,12 @@ bool rpc_session::on_recv_message(message_ex *msg, int delay_ms)
         if (is_client() && msg->header->from_address == _net.engine()->primary_address()) {
             LOG_ERROR("self connection detected, address = %s",
                       msg->header->from_address.to_string());
-            dassert(msg->get_count() == 0, "message should not be referenced by anybody so far");
+            CHECK(msg->get_count() == 0, "message should not be referenced by anybody so far");
             delete msg;
             return false;
         }
 
-        dbg_dassert(!is_client(), "only rpc server session can recv rpc requests");
+        DCHECK(!is_client(), "only rpc server session can recv rpc requests");
         _net.on_recv_request(msg, delay_ms);
     }
 
@@ -547,7 +547,7 @@ void network::on_recv_reply(uint64_t id, message_ex *msg, int delay_ms)
 message_parser *network::new_message_parser(network_header_format hdr_format)
 {
     message_parser *parser = message_parser_manager::instance().create_parser(hdr_format);
-    dassert(parser, "message parser '%s' not registerd or invalid!", hdr_format.to_string());
+    CHECK(parser, "message parser '%s' not registerd or invalid!", hdr_format.to_string());
     return parser;
 }
 
@@ -580,7 +580,7 @@ uint32_t network::get_local_ipv4()
     if (0 == ip) {
         char name[128];
         if (gethostname(name, sizeof(name)) != 0) {
-            dassert(false, "gethostname failed, err = %s", strerror(errno));
+            CHECK(false, "gethostname failed, err = %s", strerror(errno));
         }
         ip = rpc_address::ipv4_from_host(name);
     }
@@ -607,7 +607,7 @@ void connection_oriented_network::inject_drop_message(message_ex *msg, bool is_s
         // - but if is_send == true, there may be is_session != nullptr, when it is a
         //   normal (not forwarding) reply message from server to client, in which case
         //   the io_session has also been set.
-        dassert(is_send, "received message should always has io_session set");
+        CHECK(is_send, "received message should always has io_session set");
         utils::auto_read_lock l(_clients_lock);
         auto it = _clients.find(msg->to_address);
         if (it != _clients.end()) {

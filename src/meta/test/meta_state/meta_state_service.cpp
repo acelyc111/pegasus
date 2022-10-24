@@ -62,9 +62,9 @@ void provider_basic_test(const service_creator_func &service_creator,
         service->get_children("/1",
                               META_STATE_SERVICE_SIMPLE_TEST_CALLBACK,
                               [](error_code ec, const std::vector<std::string> &children) {
-                                  dassert(ec == ERR_OK && children.size() == 1 &&
-                                              *children.begin() == "1",
-                                          "unexpected child");
+                                  CHECK(ec == ERR_OK && children.size() == 1 &&
+                                            *children.begin() == "1",
+                                        "unexpected child");
                               });
         service->node_exist("/1/1", META_STATE_SERVICE_SIMPLE_TEST_CALLBACK, expect_ok)->wait();
         service->delete_node("/1", false, META_STATE_SERVICE_SIMPLE_TEST_CALLBACK, expect_err)
@@ -103,7 +103,7 @@ void provider_basic_test(const service_creator_func &service_creator,
                            dsn::binary_reader reader(value);
                            int read_value = 0;
                            reader.read(read_value);
-                           dassert(read_value == 0xdeadbeef, "get_value != create_value");
+                           CHECK(read_value == 0xdeadbeef, "get_value != create_value");
                        })
             ->wait();
         writer = dsn::binary_writer();
@@ -120,7 +120,7 @@ void provider_basic_test(const service_creator_func &service_creator,
                            dsn::binary_reader reader(value);
                            int read_value = 0;
                            reader.read(read_value);
-                           dassert(read_value == 0xbeefdead, "get_value != create_value");
+                           CHECK(read_value == 0xbeefdead, "get_value != create_value");
                        })
             ->wait();
     }

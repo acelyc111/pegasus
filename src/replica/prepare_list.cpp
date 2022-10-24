@@ -99,7 +99,7 @@ error_code prepare_list::prepare(mutation_ptr &mu,
             pop_min();
         }
         err = mutation_cache::put(mu);
-        dassert_replica(err == ERR_OK, "mutation_cache::put failed, err = {}", err);
+        CHECK_PREFIX(err == ERR_OK, "mutation_cache::put failed, err = {}", err);
         return err;
 
     //// delayed commit - only when capacity is an issue
@@ -109,14 +109,14 @@ error_code prepare_list::prepare(mutation_ptr &mu,
     //        err = mutation_cache::put(mu);
     //        if (err == ERR_CAPACITY_EXCEEDED)
     //        {
-    //            dassert(mu->data.header.last_committed_decree >= min_decree(), "");
+    //            CHECK(mu->data.header.last_committed_decree >= min_decree(), "");
     //            commit (min_decree(), true);
     //            pop_min();
     //        }
     //        else
     //            break;
     //    }
-    //    dassert (err == ERR_OK, "");
+    //    CHECK (err == ERR_OK, "");
     //    return err;
 
     case partition_status::PS_INACTIVE: // only possible during init
@@ -131,11 +131,11 @@ error_code prepare_list::prepare(mutation_ptr &mu,
             pop_min();
         }
         err = mutation_cache::put(mu);
-        dassert_replica(err == ERR_OK, "mutation_cache::put failed, err = {}", err);
+        CHECK_PREFIX(err == ERR_OK, "mutation_cache::put failed, err = {}", err);
         return err;
 
     default:
-        dassert(false, "invalid partition_status, status = %s", enum_to_string(status));
+        CHECK(false, "invalid partition_status, status = %s", enum_to_string(status));
         return dsn::ERR_OK;
     }
 }
@@ -154,7 +154,7 @@ void prepare_list::commit(decree d, commit_type ct)
         for (decree d0 = last_committed_decree() + 1; d0 <= d; d0++) {
             mutation_ptr mu = get_mutation_by_decree(d0);
 
-            dassert_replica(
+            CHECK_PREFIX(
                 mu != nullptr && mu->is_logged(), "mutation {} is missing in prepare list", d0);
             dcheck_ge_replica(mu->data.header.ballot, last_bt);
 
@@ -196,7 +196,7 @@ void prepare_list::commit(decree d, commit_type ct)
         return;
     }
     default:
-        dassert(false, "invalid commit type %d", (int)ct);
+        CHECK(false, "invalid commit type %d", (int)ct);
     }
 
     return;

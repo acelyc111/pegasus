@@ -67,7 +67,7 @@ bool load_from_private_log::switch_to_next_log_file()
 
 void load_from_private_log::run()
 {
-    dassert_replica(_start_decree != invalid_decree, "{}", _start_decree);
+    CHECK_PREFIX(_start_decree != invalid_decree, "{}", _start_decree);
     _duplicator->verify_start_decree(_start_decree);
 
     // last_decree() == invalid_decree is the init status of mutation_buffer when create
@@ -163,7 +163,7 @@ void load_from_private_log::replay_log_block()
         mutation_log::replay_block(_current,
                                    [this](int log_bytes_length, mutation_ptr &mu) -> bool {
                                        auto es = _mutation_batch.add(std::move(mu));
-                                       dassert_replica(es.is_ok(), es.description());
+                                       CHECK_PREFIX(es.is_ok(), es.description());
                                        _counter_dup_log_read_bytes_rate->add(log_bytes_length);
                                        _counter_dup_log_read_mutations_rate->increment();
                                        return true;
@@ -204,7 +204,7 @@ void load_from_private_log::replay_log_block()
                     return;
                 }
             } else if (dsn_unlikely(will_fail_fast())) {
-                dassert_replica(
+                CHECK_PREFIX(
                     false,
                     "unable to load file {}, fail fast. please check if the file is corrupted",
                     _current->path());

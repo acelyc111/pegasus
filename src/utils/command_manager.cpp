@@ -45,10 +45,10 @@ dsn_handle_t command_manager::register_command(const std::vector<std::string> &c
         if (!cmd.empty()) {
             is_valid_cmd = true;
             auto it = _handlers.find(cmd);
-            dassert(it == _handlers.end(), "command '%s' already regisered", cmd.c_str());
+            CHECK(it == _handlers.end(), "command '%s' already regisered", cmd.c_str());
         }
     }
-    dassert(is_valid_cmd, "should not register empty command");
+    CHECK(is_valid_cmd, "should not register empty command");
 
     command_instance *c = new command_instance();
     c->commands = commands;
@@ -67,7 +67,7 @@ dsn_handle_t command_manager::register_command(const std::vector<std::string> &c
 void command_manager::deregister_command(dsn_handle_t handle)
 {
     auto c = reinterpret_cast<command_instance *>(handle);
-    dassert(c != nullptr, "cannot deregister a null handle");
+    CHECK(c != nullptr, "cannot deregister a null handle");
     utils::auto_write_lock l(_lock);
     for (const std::string &cmd : c->commands) {
         _handlers.erase(cmd);

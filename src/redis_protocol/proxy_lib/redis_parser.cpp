@@ -103,12 +103,11 @@ void redis_parser::prepare_current_buffer()
     void *msg_buffer;
     if (_current_buffer == nullptr) {
         dsn::message_ex *first_msg = _recv_buffers.front();
-        dassert(
-            first_msg->read_next(&msg_buffer, &_current_buffer_length),
-            "read dsn::message_ex* failed, msg from_address = %s, to_address = %s, rpc_name = %s",
-            first_msg->header->from_address.to_string(),
-            first_msg->to_address.to_string(),
-            first_msg->header->rpc_name);
+        CHECK(first_msg->read_next(&msg_buffer, &_current_buffer_length),
+              "read dsn::message_ex* failed, msg from_address = %s, to_address = %s, rpc_name = %s",
+              first_msg->header->from_address.to_string(),
+              first_msg->to_address.to_string(),
+              first_msg->header->rpc_name);
         _current_buffer = static_cast<char *>(msg_buffer);
         _current_cursor = 0;
     } else if (_current_cursor >= _current_buffer_length) {
@@ -369,7 +368,7 @@ void redis_parser::reply_all_ready()
     std::vector<dsn::message_ex *> ready_responses;
     fetch_and_dequeue_messages(ready_responses, true);
     for (dsn::message_ex *m : ready_responses) {
-        dassert(m != nullptr, "");
+        CHECK(m != nullptr, "");
         dsn_rpc_reply(m, ::dsn::ERR_OK);
         // added when message is created
         m->release_ref();
@@ -934,8 +933,8 @@ void redis_parser::decr_by(message_entry &entry) { counter_internal(entry); }
 
 void redis_parser::counter_internal(message_entry &entry)
 {
-    dassert(!entry.request.sub_requests.empty(), "");
-    dassert(entry.request.sub_requests[0].length > 0, "");
+    CHECK(!entry.request.sub_requests.empty(), "");
+    CHECK(entry.request.sub_requests[0].length > 0, "");
     const char *command = entry.request.sub_requests[0].data.data();
     int64_t increment = 1;
     if (strcasecmp(command, "INCR") == 0 || strcasecmp(command, "DECR") == 0) {
@@ -1328,9 +1327,9 @@ void redis_parser::handle_command(std::unique_ptr<message_entry> &&entry)
               e.sequence_id);
     enqueue_pending_response(std::move(entry));
 
-    dassert(request.sub_request_count > 0,
-            "invalid request, request.length = %d",
-            request.sub_request_count);
+    CHECK(request.sub_request_count > 0,
+          "invalid request, request.length = %d",
+          request.sub_request_count);
     ::dsn::blob &command = request.sub_requests[0].data;
     redis_call_handler handler = redis_parser::get_handler(command.data(), command.length());
     handler(this, e);
@@ -1355,10 +1354,10 @@ void redis_parser::redis_simple_string::marshalling(::dsn::binary_writer &write_
 
 void redis_parser::redis_bulk_string::marshalling(::dsn::binary_writer &write_stream) const
 {
-    dassert_f((-1 == length && data.length() == 0) || data.length() == length,
-              "{} VS {}",
-              data.length(),
-              length);
+    CHECK_F((-1 == length && data.length() == 0) || data.length() == length,
+            "{} VS {}",
+            data.length(),
+            length);
     write_stream.write_pod('$');
     std::string length_str = std::to_string(length);
     write_stream.write(length_str.c_str(), (int)length_str.length());
@@ -1373,10 +1372,10 @@ void redis_parser::redis_bulk_string::marshalling(::dsn::binary_writer &write_st
 
 void redis_parser::redis_array::marshalling(::dsn::binary_writer &write_stream) const
 {
-    dassert_f((-1 == count && array.size() == 0) || array.size() == count,
-              "{} VS {}",
-              array.size(),
-              count);
+    CHECK_F((-1 == count && array.size() == 0) || array.size() == count,
+            "{} VS {}",
+            array.size(),
+            count);
     write_stream.write_pod('*');
     std::string count_str = std::to_string(count);
     write_stream.write(count_str.c_str(), (int)count_str.length());

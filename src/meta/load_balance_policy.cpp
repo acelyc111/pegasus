@@ -53,7 +53,7 @@ bool calc_disk_load(node_mapper &nodes,
 {
     load.clear();
     const node_state *ns = get_node_state(nodes, node, false);
-    dassert(ns != nullptr, "can't find node(%s) from node_state", node.to_string());
+    CHECK(ns != nullptr, "can't find node(%s) from node_state", node.to_string());
 
     auto add_one_replica_to_disk_load = [&](const gpid &pid) {
         LOG_DEBUG("add gpid(%d.%d) to node(%s) disk load",
@@ -109,11 +109,11 @@ const std::string &get_disk_tag(const app_mapper &apps, const rpc_address &node,
 {
     const config_context &cc = *get_config_context(apps, pid);
     auto iter = cc.find_from_serving(node);
-    dassert(iter != cc.serving.end(),
-            "can't find disk tag of gpid(%d.%d) for %s",
-            pid.get_app_id(),
-            pid.get_partition_index(),
-            node.to_string());
+    CHECK(iter != cc.serving.end(),
+          "can't find disk tag of gpid(%d.%d) for %s",
+          pid.get_app_id(),
+          pid.get_partition_index(),
+          node.to_string());
     return iter->disk_tag;
 }
 
@@ -159,7 +159,7 @@ generate_balancer_request(const app_mapper &apps,
             new_proposal_action(pc.primary, from, config_type::CT_REMOVE));
         break;
     default:
-        dassert(false, "");
+        CHECK(false, "");
     }
     LOG_INFO("generate balancer: %d.%d %s from %s of disk_tag(%s) to %s",
              pc.pid.get_app_id(),
@@ -191,8 +191,8 @@ void load_balance_policy::init(const meta_view *global_view, migration_list *lis
 bool load_balance_policy::primary_balance(const std::shared_ptr<app_state> &app,
                                           bool only_move_primary)
 {
-    dassert(_alive_nodes >= FLAGS_min_live_node_count_for_unfreeze,
-            "too few alive nodes will lead to freeze");
+    CHECK(_alive_nodes >= FLAGS_min_live_node_count_for_unfreeze,
+          "too few alive nodes will lead to freeze");
     LOG_INFO_F("primary balancer for app({}:{})", app->app_name, app->app_id);
 
     auto graph = ford_fulkerson::builder(app, *_global_view->nodes, address_id).build();
@@ -278,12 +278,12 @@ void load_balance_policy::start_moving_primary(const std::shared_ptr<app_state> 
 {
     std::list<dsn::gpid> potential_moving = calc_potential_moving(app, from, to);
     auto potential_moving_size = potential_moving.size();
-    dassert_f(plan_moving <= potential_moving_size,
-              "from({}) to({}) plan({}), can_move({})",
-              from.to_string(),
-              to.to_string(),
-              plan_moving,
-              potential_moving_size);
+    CHECK_F(plan_moving <= potential_moving_size,
+            "from({}) to({}) plan({}), can_move({})",
+            from.to_string(),
+            to.to_string(),
+            plan_moving,
+            potential_moving_size);
 
     while (plan_moving-- > 0) {
         dsn::gpid selected = select_moving(potential_moving, prev_load, current_load, from, to);
@@ -293,7 +293,7 @@ void load_balance_policy::start_moving_primary(const std::shared_ptr<app_state> 
             selected,
             generate_balancer_request(
                 *_global_view->apps, pc, balance_type::MOVE_PRIMARY, from, to));
-        dassert_f(balancer_result.second, "gpid({}) already inserted as an action", selected);
+        CHECK_F(balancer_result.second, "gpid({}) already inserted as an action", selected);
 
         --(*prev_load)[get_disk_tag(*_global_view->apps, from, selected)];
         ++(*current_load)[get_disk_tag(*_global_view->apps, to, selected)];
@@ -333,10 +333,10 @@ dsn::gpid load_balance_policy::select_moving(std::list<dsn::gpid> &potential_mov
         }
     }
 
-    dassert_f(selected != potential_moving.end(),
-              "can't find gpid to move from({}) to({})",
-              from.to_string(),
-              to.to_string());
+    CHECK_F(selected != potential_moving.end(),
+            "can't find gpid to move from({}) to({})",
+            from.to_string(),
+            to.to_string());
     auto res = *selected;
     potential_moving.erase(selected);
     return res;
@@ -479,8 +479,8 @@ void load_balance_policy::number_nodes(const node_mapper &nodes)
     address_id.clear();
     address_vec.resize(_alive_nodes + 2);
     for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
-        dassert(!iter->first.is_invalid() && !iter->second.addr().is_invalid(), "invalid address");
-        dassert(iter->second.alive(), "dead node");
+        CHECK(!iter->first.is_invalid() && !iter->second.addr().is_invalid(), "invalid address");
+        CHECK(iter->second.alive(), "dead node");
 
         address_id[iter->first] = current_id;
         address_vec[current_id] = iter->first;
@@ -554,9 +554,9 @@ void ford_fulkerson::update_decree(int node_id, const node_state &ns)
         const partition_configuration &pc = _app->partitions[pid.get_partition_index()];
         for (const auto &secondary : pc.secondaries) {
             auto i = _address_id.find(secondary);
-            dassert_f(i != _address_id.end(),
-                      "invalid secondary address, address = {}",
-                      secondary.to_string());
+            CHECK_F(i != _address_id.end(),
+                    "invalid secondary address, address = {}",
+                    secondary.to_string());
             _network[node_id][i->second]++;
         }
         return true;
@@ -738,9 +738,9 @@ gpid copy_replica_operation::select_partition(migration_list *result)
 
     int id_max = *_ordered_address_ids.rbegin();
     const node_state &ns = _nodes.find(_address_vec[id_max])->second;
-    dassert_f(partitions != nullptr && !partitions->empty(),
-              "max load({}) shouldn't empty",
-              ns.addr().to_string());
+    CHECK_F(partitions != nullptr && !partitions->empty(),
+            "max load({}) shouldn't empty",
+            ns.addr().to_string());
 
     return select_max_load_gpid(partitions, result);
 }

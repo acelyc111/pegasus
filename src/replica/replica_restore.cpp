@@ -93,12 +93,12 @@ bool replica::read_cold_backup_metadata(const std::string &file,
         return false;
     }
     fin.read(buf.get(), file_sz);
-    dassert(file_sz == fin.gcount(),
-            "%s: read file(%s) failed, need %" PRId64 ", but read %" PRId64 "",
-            name(),
-            file.c_str(),
-            file_sz,
-            fin.gcount());
+    CHECK(file_sz == fin.gcount(),
+          "%s: read file(%s) failed, need %" PRId64 ", but read %" PRId64 "",
+          name(),
+          file.c_str(),
+          file_sz,
+          fin.gcount());
     fin.close();
 
     buf.get()[fin.gcount()] = '\0';
@@ -307,41 +307,41 @@ dsn::error_code replica::restore_checkpoint()
     // first check the parameter
     configuration_restore_request restore_req;
     auto iter = _app_info.envs.find(backup_restore_constant::BLOCK_SERVICE_PROVIDER);
-    dassert(iter != _app_info.envs.end(),
-            "%s: can't find %s in app_info.envs",
-            name(),
-            backup_restore_constant::BLOCK_SERVICE_PROVIDER.c_str());
+    CHECK(iter != _app_info.envs.end(),
+          "%s: can't find %s in app_info.envs",
+          name(),
+          backup_restore_constant::BLOCK_SERVICE_PROVIDER.c_str());
     restore_req.backup_provider_name = iter->second;
     iter = _app_info.envs.find(backup_restore_constant::CLUSTER_NAME);
-    dassert(iter != _app_info.envs.end(),
-            "%s: can't find %s in app_info.envs",
-            name(),
-            backup_restore_constant::CLUSTER_NAME.c_str());
+    CHECK(iter != _app_info.envs.end(),
+          "%s: can't find %s in app_info.envs",
+          name(),
+          backup_restore_constant::CLUSTER_NAME.c_str());
     restore_req.cluster_name = iter->second;
     iter = _app_info.envs.find(backup_restore_constant::POLICY_NAME);
-    dassert(iter != _app_info.envs.end(),
-            "%s: can't find %s in app_info.envs",
-            name(),
-            backup_restore_constant::POLICY_NAME.c_str());
+    CHECK(iter != _app_info.envs.end(),
+          "%s: can't find %s in app_info.envs",
+          name(),
+          backup_restore_constant::POLICY_NAME.c_str());
     restore_req.policy_name = iter->second;
     iter = _app_info.envs.find(backup_restore_constant::APP_NAME);
-    dassert(iter != _app_info.envs.end(),
-            "%s: can't find %s in app_info.envs",
-            name(),
-            backup_restore_constant::APP_NAME.c_str());
+    CHECK(iter != _app_info.envs.end(),
+          "%s: can't find %s in app_info.envs",
+          name(),
+          backup_restore_constant::APP_NAME.c_str());
     restore_req.app_name = iter->second;
     iter = _app_info.envs.find(backup_restore_constant::APP_ID);
-    dassert(iter != _app_info.envs.end(),
-            "%s: can't find %s in app_info.envs",
-            name(),
-            backup_restore_constant::APP_ID.c_str());
+    CHECK(iter != _app_info.envs.end(),
+          "%s: can't find %s in app_info.envs",
+          name(),
+          backup_restore_constant::APP_ID.c_str());
     restore_req.app_id = boost::lexical_cast<int32_t>(iter->second);
 
     iter = _app_info.envs.find(backup_restore_constant::BACKUP_ID);
-    dassert(iter != _app_info.envs.end(),
-            "%s: can't find %s in app_info.envs",
-            name(),
-            backup_restore_constant::BACKUP_ID.c_str());
+    CHECK(iter != _app_info.envs.end(),
+          "%s: can't find %s in app_info.envs",
+          name(),
+          backup_restore_constant::BACKUP_ID.c_str());
     restore_req.time_stamp = boost::lexical_cast<int64_t>(iter->second);
 
     bool skip_bad_partition = false;

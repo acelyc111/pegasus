@@ -92,7 +92,7 @@ extern DSN_API void dsn_coredump();
 #define LOG_ERROR(...) dlog(LOG_LEVEL_ERROR, __VA_ARGS__)
 #define LOG_FATAL(...) dlog(LOG_LEVEL_FATAL, __VA_ARGS__)
 
-#define dassert(x, ...)                                                                            \
+#define CHECK(x, ...)                                                                              \
     do {                                                                                           \
         if (dsn_unlikely(!(x))) {                                                                  \
             dlog(LOG_LEVEL_FATAL, "assertion expression: " #x);                                    \
@@ -110,9 +110,9 @@ extern DSN_API void dsn_coredump();
     } while (0)
 
 #ifndef NDEBUG
-#define dbg_dassert dassert
+#define DCHECK CHECK
 #else
-#define dbg_dassert(x, ...)
+#define DCHECK(x, ...)
 #endif
 
 #ifdef DSN_MOCK_TEST

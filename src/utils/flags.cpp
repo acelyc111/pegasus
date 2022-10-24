@@ -61,7 +61,7 @@ public:
     case type_enum:                                                                                \
         value<type>() = dsn_config_get_value_##suffix(_section, _name, value<type>(), _desc);      \
         if (_validator) {                                                                          \
-            dassert_f(_validator(), "validation failed: {}", _name);                               \
+            CHECK_F(_validator(), "validation failed: {}", _name);                                 \
         }                                                                                          \
         break
 
@@ -265,7 +265,7 @@ public:
     void add_validator(const char *name, validator_fn &validator)
     {
         auto it = _flags.find(name);
-        dassert(it != _flags.end(), "flag \"%s\" does not exist", name);
+        CHECK(it != _flags.end(), "flag \"%s\" does not exist", name);
         flag_data &flag = it->second;
         if (!flag.validator()) {
             flag.set_validator(validator);
@@ -275,8 +275,7 @@ public:
     void add_group_validator(const char *name, group_validator_fn &validator)
     {
         auto it = _group_flag_validators.find(name);
-        dassert_f(
-            it == _group_flag_validators.end(), "duplicate group flag validator \"{}\"", name);
+        CHECK_F(it == _group_flag_validators.end(), "duplicate group flag validator \"{}\"", name);
         _group_flag_validators[name] = validator;
     }
 
@@ -289,14 +288,14 @@ public:
 
         std::string total_message;
         if (!run_group_validators(&total_message)) {
-            dassert_f(false, "{}", total_message);
+            CHECK_F(false, "{}", total_message);
         }
     }
 
     void add_tag(const char *name, const flag_tag &tag)
     {
         auto it = _flags.find(name);
-        dassert(it != _flags.end(), "flag \"%s\" does not exist", name);
+        CHECK(it != _flags.end(), "flag \"%s\" does not exist", name);
         it->second.add_tag(tag);
     }
 

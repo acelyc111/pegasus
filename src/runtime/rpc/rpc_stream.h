@@ -57,7 +57,7 @@ public:
         if (nullptr != _msg) {
             ::dsn::blob bb;
             bool r = ((::dsn::message_ex *)_msg)->read_next(bb);
-            dassert(r, "read msg must have one segment of buffer ready");
+            CHECK(r, "read msg must have one segment of buffer ready");
 
             init(std::move(bb));
         }
@@ -121,7 +121,7 @@ private:
         void *ptr;
         size_t sz;
         _msg->write_next(&ptr, &sz, size);
-        dbg_dassert(sz >= size, "allocated buffer size must be not less than the required size");
+        DCHECK(sz >= size, "allocated buffer size must be not less than the required size");
         bb.assign((const char *)ptr, 0, (int)sz);
 
         _last_write_next_total_size = total_size();

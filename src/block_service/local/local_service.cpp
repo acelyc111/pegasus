@@ -85,7 +85,7 @@ error_code local_service::initialize(const std::vector<std::string> &args)
                         _root.c_str());
         } else {
             if (!::dsn::utils::filesystem::create_directory(_root)) {
-                dassert(false, "local block service create directory(%s) fail", _root.c_str());
+                CHECK(false, "local block service create directory(%s) fail", _root.c_str());
                 return ERR_FS_INTERNAL;
             }
         }

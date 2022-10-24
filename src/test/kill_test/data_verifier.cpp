@@ -349,7 +349,7 @@ void do_mark()
     while (true) {
         sleep(1);
         long long new_id = get_min_thread_setting_id();
-        dassert(new_id >= old_id, "%" PRId64 " VS %" PRId64 "", new_id, old_id);
+        CHECK(new_id >= old_id, "%" PRId64 " VS %" PRId64 "", new_id, old_id);
         if (new_id == old_id) {
             continue;
         }

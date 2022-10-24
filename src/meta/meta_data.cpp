@@ -118,9 +118,9 @@ void maintain_drops(std::vector<rpc_address> &drops, const rpc_address &node, co
                 drops.erase(it);
             }
         } else {
-            dassert(it == drops.end(),
-                    "the node(%s) cannot be in drops set before this update",
-                    node.to_string());
+            CHECK(it == drops.end(),
+                  "the node(%s) cannot be in drops set before this update",
+                  node.to_string());
             drops.push_back(node);
             if (drops.size() > 3) {
                 drops.erase(drops.begin());
@@ -135,11 +135,11 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
     partition_configuration &pc = *get_config(*view.apps, pid);
     config_context &cc = *get_config_context(*view.apps, pid);
 
-    dassert(replica_count(pc) == 0,
-            "replica count of gpid(%d.%d) must be 0",
-            pid.get_app_id(),
-            pid.get_partition_index());
-    dassert(
+    CHECK(replica_count(pc) == 0,
+          "replica count of gpid(%d.%d) must be 0",
+          pid.get_app_id(),
+          pid.get_partition_index());
+    CHECK(
         max_replica_count > 0, "max replica count is %d, should be at lease 1", max_replica_count);
 
     std::vector<dropped_replica> &drop_list = cc.dropped;
@@ -152,9 +152,9 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
 
     // treat last server in drop_list as the primary
     const dropped_replica &server = drop_list.back();
-    dassert(server.ballot != invalid_ballot,
-            "the ballot of server must not be invalid_ballot, node = %s",
-            server.node.to_string());
+    CHECK(server.ballot != invalid_ballot,
+          "the ballot of server must not be invalid_ballot, node = %s",
+          server.node.to_string());
     pc.primary = server.node;
     pc.ballot = server.ballot;
     pc.partition_flags = 0;
@@ -174,10 +174,10 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
     // we put max_replica_count-1 recent replicas to last_drops, in case of the DDD-state when the
     // only primary dead
     // when add node to pc.last_drops, we don't remove it from our cc.drop_list
-    dassert(pc.last_drops.empty(),
-            "last_drops of partition(%d.%d) must be empty",
-            pid.get_app_id(),
-            pid.get_partition_index());
+    CHECK(pc.last_drops.empty(),
+          "last_drops of partition(%d.%d) must be empty",
+          pid.get_app_id(),
+          pid.get_partition_index());
     for (auto iter = drop_list.rbegin(); iter != drop_list.rend(); ++iter) {
         if (pc.last_drops.size() + 1 >= max_replica_count)
             break;
@@ -215,7 +215,7 @@ bool collect_replica(meta_view view, const rpc_address &node, const replica_info
 
     // adjust the drop list
     int ans = cc.collect_drop_replica(node, info);
-    dassert(cc.check_order(), "");
+    CHECK(cc.check_order(), "");
 
     return info.status == partition_status::PS_POTENTIAL_SECONDARY || ans != -1;
 }
@@ -421,11 +421,11 @@ int config_context::collect_drop_replica(const rpc_address &node, const replica_
 
     iter = find_from_dropped(node);
     if (iter == dropped.end()) {
-        dassert(!in_dropped,
-                "adjust position of existing node(%s) failed, this is a bug, partition(%d.%d)",
-                node.to_string(),
-                config_owner->pid.get_app_id(),
-                config_owner->pid.get_partition_index());
+        CHECK(!in_dropped,
+              "adjust position of existing node(%s) failed, this is a bug, partition(%d.%d)",
+              node.to_string(),
+              config_owner->pid.get_app_id(),
+              config_owner->pid.get_partition_index());
         return -1;
     }
     return in_dropped ? 1 : 0;
@@ -544,11 +544,11 @@ void app_state_helper::reset_manual_compact_status()
 bool app_state_helper::get_manual_compact_progress(/*out*/ int32_t &progress) const
 {
     int32_t total_replica_count = owner->partition_count * owner->max_replica_count;
-    dassert_f(total_replica_count > 0,
-              "invalid app metadata, app({}), partition_count({}), max_replica_count({})",
-              owner->app_name,
-              owner->partition_count,
-              owner->max_replica_count);
+    CHECK_F(total_replica_count > 0,
+            "invalid app metadata, app({}), partition_count({}), max_replica_count({})",
+            owner->app_name,
+            owner->partition_count,
+            owner->max_replica_count);
     int32_t finish_count = 0, idle_count = 0;
     for (const auto &cc : contexts) {
         for (const auto &r : cc.serving) {
@@ -671,11 +671,11 @@ bool node_state::for_each_primary(app_id id, const std::function<bool(const gpid
         return true;
     }
     for (const gpid &pid : *pri) {
-        dassert(id == pid.get_app_id(),
-                "invalid gpid(%d.%d), app_id must be %d",
-                pid.get_app_id(),
-                pid.get_partition_index(),
-                id);
+        CHECK(id == pid.get_app_id(),
+              "invalid gpid(%d.%d), app_id must be %d",
+              pid.get_app_id(),
+              pid.get_partition_index(),
+              id);
         if (!f(pid))
             return false;
     }
@@ -689,11 +689,11 @@ bool node_state::for_each_partition(app_id id, const std::function<bool(const gp
         return true;
     }
     for (const gpid &pid : *par) {
-        dassert(id == pid.get_app_id(),
-                "invalid gpid(%d.%d), app_id must be %d",
-                pid.get_app_id(),
-                pid.get_partition_index(),
-                id);
+        CHECK(id == pid.get_app_id(),
+              "invalid gpid(%d.%d), app_id must be %d",
+              pid.get_app_id(),
+              pid.get_partition_index(),
+              id);
         if (!f(pid))
             return false;
     }

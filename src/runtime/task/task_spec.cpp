@@ -71,7 +71,7 @@ void task_spec::register_task_code(task_code code,
     } else {
         auto spec = task_spec::get(code);
         if (spec->type != type) {
-            dassert(
+            CHECK(
                 false,
                 "task code %s registerd for %s, which does not match with previously registered %s",
                 code.to_string(),
@@ -165,11 +165,11 @@ task_spec::task_spec(int code,
       on_rpc_response_enqueue((std::string(name) + std::string(".rpc.response.enqueue")).c_str()),
       on_rpc_create_response((std::string(name) + std::string(".rpc.response.create")).c_str())
 {
-    dassert(strlen(name) < DSN_MAX_TASK_CODE_NAME_LENGTH,
-            "task code name '%s' is too long: length must be smaller than "
-            "DSN_MAX_TASK_CODE_NAME_LENGTH (%u)",
-            name,
-            DSN_MAX_TASK_CODE_NAME_LENGTH);
+    CHECK(strlen(name) < DSN_MAX_TASK_CODE_NAME_LENGTH,
+          "task code name '%s' is too long: length must be smaller than "
+          "DSN_MAX_TASK_CODE_NAME_LENGTH (%u)",
+          name,
+          DSN_MAX_TASK_CODE_NAME_LENGTH);
 
     rpc_call_channel = RPC_CHANNEL_TCP;
     rpc_timeout_milliseconds = 5 * 1000; // 5 seconds
@@ -201,7 +201,7 @@ bool task_spec::init()
         std::string section_name =
             std::string("task.") + std::string(dsn::task_code(code).to_string());
         task_spec *spec = task_spec::get(code);
-        dassert(spec != nullptr, "task_spec cannot be null");
+        CHECK(spec != nullptr, "task_spec cannot be null");
 
         if (!read_config(section_name.c_str(), *spec, &default_spec))
             return false;
@@ -210,9 +210,9 @@ bool task_spec::init()
             spec->allow_inline = true;
         }
 
-        dassert(spec->rpc_request_delays_milliseconds.size() == 0 ||
-                    spec->rpc_request_delays_milliseconds.size() == 6,
-                "invalid length of rpc_request_delays_milliseconds, must be of length 6");
+        CHECK(spec->rpc_request_delays_milliseconds.size() == 0 ||
+                  spec->rpc_request_delays_milliseconds.size() == 6,
+              "invalid length of rpc_request_delays_milliseconds, must be of length 6");
         if (spec->rpc_request_delays_milliseconds.size() > 0) {
             spec->rpc_request_delayer.initialize(spec->rpc_request_delays_milliseconds);
         }

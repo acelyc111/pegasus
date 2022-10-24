@@ -66,7 +66,7 @@ const char *partition_status_to_short_string(partition_status::type s)
     case partition_status::PS_INVALID:
         return "inv";
     default:
-        dassert(false, "invalid partition_status, status = %s", ::dsn::enum_to_string(s));
+        CHECK(false, "invalid partition_status, status = %s", ::dsn::enum_to_string(s));
         return "";
     }
 }
@@ -85,7 +85,7 @@ partition_status::type partition_status_from_short_string(const std::string &str
         return partition_status::PS_POTENTIAL_SECONDARY;
     if (str == "inv")
         return partition_status::PS_INVALID;
-    dassert(false, "");
+    CHECK(false, "");
     return partition_status::PS_INVALID;
 }
 
@@ -93,7 +93,7 @@ std::string address_to_node(rpc_address addr)
 {
     if (addr.is_invalid())
         return "-";
-    dassert(test_checker::s_inited, "");
+    CHECK(test_checker::s_inited, "");
     return test_checker::instance().address_to_node_name(addr);
 }
 
@@ -101,7 +101,7 @@ rpc_address node_to_address(const std::string &name)
 {
     if (name == "-")
         return rpc_address();
-    dassert(test_checker::s_inited, "");
+    CHECK(test_checker::s_inited, "");
     return test_checker::instance().node_name_to_address(name);
 }
 
@@ -246,10 +246,10 @@ std::string state_snapshot::diff_string(const state_snapshot &other) const
             oss << add_mark << cur_it->second.to_string() << std::endl;
             ++cur_it;
         } else {
-            dassert(oth_it->first == cur_it->first,
-                    "invalid replica_id, %s VS %s",
-                    oth_it->first.to_string().c_str(),
-                    cur_it->first.to_string().c_str());
+            CHECK(oth_it->first == cur_it->first,
+                  "invalid replica_id, %s VS %s",
+                  oth_it->first.to_string().c_str(),
+                  cur_it->first.to_string().c_str());
             if (oth_it->second != cur_it->second) {
                 oss << chg_mark << cur_it->second.to_string()
                     << " <= " << oth_it->second.to_string() << std::endl;

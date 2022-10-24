@@ -50,7 +50,7 @@ pegasus_client_impl::pegasus_client_impl(const char *cluster_name, const char *a
     std::vector<dsn::rpc_address> meta_servers;
     dsn::replication::replica_helper::load_meta_servers(
         meta_servers, PEGASUS_CLUSTER_SECTION_NAME.c_str(), cluster_name);
-    dassert(meta_servers.size() > 0, "");
+    CHECK(meta_servers.size() > 0, "");
     _meta_server.assign_group("meta-servers");
     _meta_server.group_address()->add_list(meta_servers);
 
@@ -1274,8 +1274,7 @@ void pegasus_client_impl::async_duplicate(dsn::apps::duplicate_rpc rpc,
 const char *pegasus_client_impl::get_error_string(int error_code) const
 {
     auto it = _client_error_to_string.find(error_code);
-    dassert(
-        it != _client_error_to_string.end(), "client error %d have no error string", error_code);
+    CHECK(it != _client_error_to_string.end(), "client error %d have no error string", error_code);
     return it->second.c_str();
 }
 

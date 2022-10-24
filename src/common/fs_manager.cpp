@@ -243,11 +243,11 @@ void fs_manager::allocate_dir(const gpid &pid, const std::string &type, /*out*/ 
     unsigned least_total_replicas_count = 0;
 
     for (auto &n : _dir_nodes) {
-        dassert(!n->has(pid),
-                "gpid(%d.%d) already in dir_node(%s)",
-                pid.get_app_id(),
-                pid.get_partition_index(),
-                n->tag.c_str());
+        CHECK(!n->has(pid),
+              "gpid(%d.%d) already in dir_node(%s)",
+              pid.get_app_id(),
+              pid.get_partition_index(),
+              n->tag.c_str());
         unsigned app_replicas = n->replicas_count(pid.get_app_id());
         unsigned total_replicas = n->replicas_count();
 
@@ -281,11 +281,11 @@ void fs_manager::remove_replica(const gpid &pid)
     unsigned remove_count = 0;
     for (auto &n : _dir_nodes) {
         unsigned r = n->remove(pid);
-        dassert(remove_count + r <= 1,
-                "gpid(%d.%d) found in dir(%s), which was removed before",
-                pid.get_app_id(),
-                pid.get_partition_index(),
-                n->tag.c_str());
+        CHECK(remove_count + r <= 1,
+              "gpid(%d.%d) found in dir(%s), which was removed before",
+              pid.get_app_id(),
+              pid.get_partition_index(),
+              n->tag.c_str());
         if (r != 0) {
             LOG_INFO("%s: remove gpid(%d.%d) from dir(%s)",
                      dsn_primary_address().to_string(),

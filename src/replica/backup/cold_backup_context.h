@@ -225,9 +225,9 @@ public:
     // Progress should be in range of [0, 1000].
     void update_progress(int progress)
     {
-        dassert(progress >= 0 && progress <= cold_backup_constant::PROGRESS_FINISHED,
-                "invalid progress %d",
-                progress);
+        CHECK(progress >= 0 && progress <= cold_backup_constant::PROGRESS_FINISHED,
+              "invalid progress %d",
+              progress);
         _progress.store(progress);
     }
 

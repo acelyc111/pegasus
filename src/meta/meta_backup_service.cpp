@@ -63,10 +63,10 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
             _backup_sig.c_str(),
             app_id);
         auto iter = _progress.unfinished_partitions_per_app.find(app_id);
-        dassert(iter != _progress.unfinished_partitions_per_app.end(),
-                "%s: can't find app(%d) in unfished_map",
-                _backup_sig.c_str(),
-                app_id);
+        CHECK(iter != _progress.unfinished_partitions_per_app.end(),
+              "%s: can't find app(%d) in unfished_map",
+              _backup_sig.c_str(),
+              app_id);
         _progress.is_app_skipped[app_id] = true;
         int total_partitions = iter->second;
         for (int32_t pidx = 0; pidx < total_partitions; ++pidx) {
@@ -108,10 +108,10 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
                          _backup_service->backup_option().block_retry_delay_ms);
         return;
     }
-    dassert(remote_file != nullptr,
-            "%s: create file(%s) succeed, but can't get handle",
-            _backup_sig.c_str(),
-            create_file_req.file_name.c_str());
+    CHECK(remote_file != nullptr,
+          "%s: create file(%s) succeed, but can't get handle",
+          _backup_sig.c_str(),
+          create_file_req.file_name.c_str());
 
     remote_file->write(
         dist::block_service::write_request{buffer},
@@ -153,10 +153,10 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
 void policy_context::start_backup_app_partitions_unlocked(int32_t app_id)
 {
     auto iter = _progress.unfinished_partitions_per_app.find(app_id);
-    dassert(iter != _progress.unfinished_partitions_per_app.end(),
-            "%s: can't find app(%d) in unfinished apps",
-            _backup_sig.c_str(),
-            app_id);
+    CHECK(iter != _progress.unfinished_partitions_per_app.end(),
+          "%s: can't find app(%d) in unfinished apps",
+          _backup_sig.c_str(),
+          app_id);
     for (int32_t i = 0; i < iter->second; ++i) {
         start_backup_partition_unlocked(gpid(app_id, i));
     }
@@ -215,10 +215,10 @@ void policy_context::write_backup_app_finish_flag_unlocked(int32_t app_id,
         return;
     }
 
-    dassert(remote_file != nullptr,
-            "%s: create file(%s) succeed, but can't get handle",
-            _backup_sig.c_str(),
-            create_file_req.file_name.c_str());
+    CHECK(remote_file != nullptr,
+          "%s: create file(%s) succeed, but can't get handle",
+          _backup_sig.c_str(),
+          create_file_req.file_name.c_str());
     if (remote_file->get_size() > 0) {
         // we only focus whether app_backup_status file is exist, so ignore app_backup_status file's
         // context
@@ -281,10 +281,10 @@ void policy_context::finish_backup_app_unlocked(int32_t app_id)
                     tasking::create_task(LPC_DEFAULT_CALLBACK, &_tracker, [this]() {
                         zauto_lock l(_lock);
                         auto iter = _backup_history.emplace(_cur_backup.backup_id, _cur_backup);
-                        dassert(iter.second,
-                                "%s: backup_id(%lld) already in the backup_history",
-                                _policy.policy_name.c_str(),
-                                _cur_backup.backup_id);
+                        CHECK(iter.second,
+                              "%s: backup_id(%lld) already in the backup_history",
+                              _policy.policy_name.c_str(),
+                              _cur_backup.backup_id);
                         _cur_backup.start_time_ms = 0;
                         _cur_backup.end_time_ms = 0;
                         LOG_INFO("%s: finish an old backup, try to start a new one",
@@ -332,10 +332,10 @@ void policy_context::write_backup_info_unlocked(const backup_info &b_info,
         return;
     }
 
-    dassert(remote_file != nullptr,
-            "%s: create file(%s) succeed, but can't get handle",
-            _backup_sig.c_str(),
-            create_file_req.file_name.c_str());
+    CHECK(remote_file != nullptr,
+          "%s: create file(%s) succeed, but can't get handle",
+          _backup_sig.c_str(),
+          create_file_req.file_name.c_str());
 
     blob buf = dsn::json::json_forwarder<backup_info>::encode(b_info);
 
@@ -490,28 +490,28 @@ void policy_context::on_backup_reply(error_code err,
                pid.to_string(),
                primary.to_string());
     if (err == dsn::ERR_OK && response.err == dsn::ERR_OK) {
-        dassert(response.policy_name == _policy.policy_name,
-                "policy name(%s vs %s) don't match, pid(%d.%d), replica_server(%s)",
-                _policy.policy_name.c_str(),
-                response.policy_name.c_str(),
-                pid.get_app_id(),
-                pid.get_partition_index(),
-                primary.to_string());
-        dassert(response.pid == pid,
-                "%s: backup pid[(%d.%d) vs (%d.%d)] don't match, replica_server(%s)",
-                _policy.policy_name.c_str(),
-                response.pid.get_app_id(),
-                response.pid.get_partition_index(),
-                pid.get_app_id(),
-                pid.get_partition_index(),
-                primary.to_string());
-        dassert(response.backup_id <= _cur_backup.backup_id,
-                "%s: replica server(%s) has bigger backup_id(%lld), gpid(%d.%d)",
-                _backup_sig.c_str(),
-                primary.to_string(),
-                response.backup_id,
-                pid.get_app_id(),
-                pid.get_partition_index());
+        CHECK(response.policy_name == _policy.policy_name,
+              "policy name(%s vs %s) don't match, pid(%d.%d), replica_server(%s)",
+              _policy.policy_name.c_str(),
+              response.policy_name.c_str(),
+              pid.get_app_id(),
+              pid.get_partition_index(),
+              primary.to_string());
+        CHECK(response.pid == pid,
+              "%s: backup pid[(%d.%d) vs (%d.%d)] don't match, replica_server(%s)",
+              _policy.policy_name.c_str(),
+              response.pid.get_app_id(),
+              response.pid.get_partition_index(),
+              pid.get_app_id(),
+              pid.get_partition_index(),
+              primary.to_string());
+        CHECK(response.backup_id <= _cur_backup.backup_id,
+              "%s: replica server(%s) has bigger backup_id(%lld), gpid(%d.%d)",
+              _backup_sig.c_str(),
+              primary.to_string(),
+              response.backup_id,
+              pid.get_app_id(),
+              pid.get_partition_index());
 
         if (response.backup_id < _cur_backup.backup_id) {
             LOG_WARNING_F(
@@ -644,10 +644,10 @@ void policy_context::sync_backup_to_remote_storage_unlocked(const backup_info &b
                              0,
                              _backup_service->backup_option().meta_retry_delay_ms);
         } else {
-            dassert(false,
-                    "%s: we can't handle this right now, error(%s)",
-                    _backup_sig.c_str(),
-                    err.to_string());
+            CHECK(false,
+                  "%s: we can't handle this right now, error(%s)",
+                  _backup_sig.c_str(),
+                  err.to_string());
         }
     };
 
@@ -830,16 +830,16 @@ void policy_context::add_backup_history(const backup_info &info)
                  _policy.policy_name.c_str(),
                  info.backup_id,
                  info.start_time_ms);
-        dassert(_cur_backup.start_time_ms == 0,
-                "%s: shouldn't have multiple unfinished backup instance in a policy, %lld vs %lld",
-                _policy.policy_name.c_str(),
-                _cur_backup.backup_id,
-                info.backup_id);
-        dassert(_backup_history.empty() || info.backup_id > _backup_history.rbegin()->first,
-                "%s: backup_id(%lld) in history larger than current(%lld)",
-                _policy.policy_name.c_str(),
-                _backup_history.rbegin()->first,
-                info.backup_id);
+        CHECK(_cur_backup.start_time_ms == 0,
+              "%s: shouldn't have multiple unfinished backup instance in a policy, %lld vs %lld",
+              _policy.policy_name.c_str(),
+              _cur_backup.backup_id,
+              info.backup_id);
+        CHECK(_backup_history.empty() || info.backup_id > _backup_history.rbegin()->first,
+              "%s: backup_id(%lld) in history larger than current(%lld)",
+              _policy.policy_name.c_str(),
+              _backup_history.rbegin()->first,
+              info.backup_id);
         _cur_backup = info;
         initialize_backup_progress_unlocked();
         _backup_sig =
@@ -850,17 +850,17 @@ void policy_context::add_backup_history(const backup_info &info)
                  info.backup_id,
                  info.start_time_ms,
                  info.end_time_ms);
-        dassert(_cur_backup.end_time_ms == 0 || info.backup_id < _cur_backup.backup_id,
-                "%s: backup_id(%lld) in history larger than current(%lld)",
-                _policy.policy_name.c_str(),
-                info.backup_id,
-                _cur_backup.backup_id);
+        CHECK(_cur_backup.end_time_ms == 0 || info.backup_id < _cur_backup.backup_id,
+              "%s: backup_id(%lld) in history larger than current(%lld)",
+              _policy.policy_name.c_str(),
+              info.backup_id,
+              _cur_backup.backup_id);
 
         auto result_pair = _backup_history.emplace(info.backup_id, info);
-        dassert(result_pair.second,
-                "%s: conflict backup id(%lld)",
-                _policy.policy_name.c_str(),
-                info.backup_id);
+        CHECK(result_pair.second,
+              "%s: conflict backup id(%lld)",
+              _policy.policy_name.c_str(),
+              info.backup_id);
     }
 }
 
@@ -902,9 +902,9 @@ void policy_context::set_policy(const policy &p)
                              ->get_block_service_manager()
                              .get_or_create_block_filesystem(_policy.backup_provider_type);
     }
-    dassert(_block_service,
-            "can't initialize block filesystem by provider (%s)",
-            _policy.backup_provider_type.c_str());
+    CHECK(_block_service,
+          "can't initialize block filesystem by provider (%s)",
+          _policy.backup_provider_type.c_str());
 }
 
 policy policy_context::get_policy()
@@ -1021,10 +1021,10 @@ void policy_context::sync_remove_backup_info(const backup_info &info, dsn::task_
                 0,
                 _backup_service->backup_option().meta_retry_delay_ms);
         } else {
-            dassert(false,
-                    "%s: we can't handle this right now, error(%s)",
-                    _policy.policy_name.c_str(),
-                    err.to_string());
+            CHECK(false,
+                  "%s: we can't handle this right now, error(%s)",
+                  _policy.policy_name.c_str(),
+                  err.to_string());
         }
     };
 
@@ -1073,7 +1073,7 @@ void backup_service::start_create_policy_meta_root(dsn::task_ptr callback)
                     0,
                     _opt.meta_retry_delay_ms);
             } else {
-                dassert(false, "we can't handle this error(%s) right now", err.to_string());
+                CHECK(false, "we can't handle this error(%s) right now", err.to_string());
             }
         });
 }
@@ -1102,9 +1102,9 @@ void backup_service::start_sync_policies()
                               0,
                               _opt.meta_retry_delay_ms);
     } else {
-        dassert(false,
-                "sync policies from remote storage encounter error(%s), we can't handle "
-                "this right now");
+        CHECK(false,
+              "sync policies from remote storage encounter error(%s), we can't handle "
+              "this right now");
     }
 }
 
@@ -1128,8 +1128,8 @@ error_code backup_service::sync_policies_from_remote_storage()
                     zauto_lock l(_lock);
                     auto it = _policy_states.find(policy_name);
                     if (it == _policy_states.end()) {
-                        dassert(false,
-                                "before initializing the backup_info, initialize the policy first");
+                        CHECK(false,
+                              "before initializing the backup_info, initialize the policy first");
                         return;
                     }
                     ptr = it->second.get();
@@ -1303,7 +1303,7 @@ void backup_service::add_backup_policy(dsn::message_ex *msg)
 
     LOG_INFO_F("start to add backup polciy {}.", request.policy_name);
     std::shared_ptr<policy_context> policy_context_ptr = _factory(this);
-    dassert(policy_context_ptr != nullptr, "invalid policy_context");
+    CHECK(policy_context_ptr != nullptr, "invalid policy_context");
     policy p;
     p.policy_name = request.policy_name;
     p.backup_provider_type = request.backup_provider_type;
@@ -1352,9 +1352,9 @@ void backup_service::do_add_policy(dsn::message_ex *req,
                                  _opt.meta_retry_delay_ms);
                 return;
             } else {
-                dassert(false,
-                        "we can't handle this when create backup policy, err(%s)",
-                        err.to_string());
+                CHECK(false,
+                      "we can't handle this when create backup policy, err(%s)",
+                      err.to_string());
             }
         },
         value);
@@ -1390,9 +1390,9 @@ void backup_service::do_update_policy_to_remote_storage(
                                  0,
                                  _opt.meta_retry_delay_ms);
             } else {
-                dassert(false,
-                        "we can't handle this when create backup policy, err(%s)",
-                        err.to_string());
+                CHECK(false,
+                      "we can't handle this when create backup policy, err(%s)",
+                      err.to_string());
             }
         });
 }
