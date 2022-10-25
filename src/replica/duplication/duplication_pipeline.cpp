@@ -89,13 +89,13 @@ void ship_mutation::run(decree &&last_decree, mutation_tuple_set &&in)
 
 void ship_mutation::update_progress()
 {
-    dcheck_eq_replica(
+    CHECK_EQ_PREFIX(
         _duplicator->update_progress(duplication_progress().set_last_decree(_last_decree)),
         error_s::ok());
 
     // committed decree never decreases
     decree last_committed_decree = _replica->last_committed_decree();
-    dcheck_ge_replica(last_committed_decree, _last_decree);
+    CHECK_GE_PREFIX(last_committed_decree, _last_decree);
 }
 
 ship_mutation::ship_mutation(replica_duplicator *duplicator)
