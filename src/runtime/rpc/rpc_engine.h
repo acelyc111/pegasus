@@ -47,8 +47,7 @@ class rpc_engine;
 //     the RPC request message is sent to. In this case, a shared rpc_engine level matcher is used.
 //
 // WE NOW USE option (3) so as to enable more features and the performance should not be degraded
-// (due to
-// less std::shared_ptr<rpc_client_matcher> operations in rpc_timeout_task
+// (due to less std::shared_ptr<rpc_client_matcher> operations in rpc_timeout_task)
 //
 #define MATCHER_BUCKET_NR 13
 class rpc_client_matcher : public ref_counter
@@ -65,7 +64,7 @@ public:
     void on_call(message_ex *request, const rpc_response_task_ptr &call);
 
     //
-    // when a RPC response is received, call this function to trigger calback
+    // when a RPC response is received, call this function to trigger callback
     //  key - message.header.id
     //  reply - rpc response message
     //  delay_ms - sometimes we want to delay the delivery of the message for certain purposes
@@ -159,6 +158,7 @@ public:
     //
     service_node *node() const { return _node; }
     ::dsn::rpc_address primary_address() const { return _local_primary_address; }
+    host_port primary_host_port() const { return _local_primary_host_port; }
     rpc_client_matcher *matcher() { return &_rpc_matcher; }
 
     // call with group address only
@@ -186,6 +186,7 @@ private:
     std::unordered_map<int, std::vector<std::unique_ptr<network>>>
         _server_nets; // <port, <CHANNEL, network*>>
     ::dsn::rpc_address _local_primary_address;
+    host_port _local_primary_host_port;
     rpc_client_matcher _rpc_matcher;
     rpc_server_dispatcher _rpc_dispatcher;
 
@@ -206,7 +207,10 @@ rpc_engine::call_address(rpc_address addr, message_ex *request, const rpc_respon
         call_group(addr, request, call);
         break;
     default:
-        CHECK(false, "invalid target address type {}", request->server_address.type());
+        CHECK(false,
+              "invalid target address({}) with type {}",
+              request->server_address,
+              request->server_address.type());
         break;
     }
 }

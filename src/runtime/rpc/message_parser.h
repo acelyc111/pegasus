@@ -71,6 +71,7 @@ public:
 public:
     // TODO(wutao1): make them private members
     blob _buffer;
+    // The buffer has been received ?
     unsigned int _buffer_occupied;
     const unsigned int _buffer_block_size;
 };

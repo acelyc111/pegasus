@@ -636,17 +636,10 @@ static void freeHintsCallback(void *ptr) { sdsfree((sds)ptr); }
 
 /*extern*/ void check_in_cluster(std::string cluster_name)
 {
-    s_global_context.current_cluster_name = cluster_name;
-    std::string server_list =
-        dsn_config_get_value_string(pegasus::PEGASUS_CLUSTER_SECTION_NAME.c_str(),
-                                    s_global_context.current_cluster_name.c_str(),
-                                    "",
-                                    "");
-
-    dsn::replication::replica_helper::load_meta_servers(
-        s_global_context.meta_list,
-        pegasus::PEGASUS_CLUSTER_SECTION_NAME.c_str(),
-        cluster_name.c_str());
+    CHECK(dsn::host_port_group::load_servers(
+              pegasus::PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &s_global_context.meta_list)
+              .is_ok(),
+          "");
     s_global_context.ddl_client =
         dsn::make_unique<dsn::replication::replication_ddl_client>(s_global_context.meta_list);
 
@@ -654,10 +647,10 @@ static void freeHintsCallback(void *ptr) { sdsfree((sds)ptr); }
     std::string name;
     ::dsn::error_code err = s_global_context.ddl_client->cluster_name(1000, name);
     if (err == dsn::ERR_OK) {
-        cluster_name = name;
+        s_global_context.current_cluster_name = name;
     }
-    std::cout << "The cluster name is: " << cluster_name << std::endl;
-    std::cout << "The cluster meta list is: " << server_list << std::endl;
+    std::cout << "1 The cluster name is: " << s_global_context.current_cluster_name << std::endl;
+    std::cout << "1 The cluster meta list is: " << s_global_context.meta_list << std::endl;
 }
 
 void initialize(int argc, char **argv)

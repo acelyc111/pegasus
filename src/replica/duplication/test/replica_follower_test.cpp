@@ -15,12 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#include "duplication_test_base.h"
+#include "replica/duplication/replica_follower.h"
+#include "runtime/rpc/dns_resolver.h"
+#include "utils/fail_point.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
-#include "utils/fail_point.h"
-
-#include "replica/duplication/replica_follower.h"
-#include "duplication_test_base.h"
 
 namespace dsn {
 namespace apps {
@@ -94,7 +94,7 @@ public:
 
     void init_nfs()
     {
-        stub->_nfs = nfs_node::create();
+        stub->_nfs = nfs_node::create(std::make_shared<dns_resolver>());
         stub->_nfs->start();
     }
 
@@ -115,10 +115,11 @@ TEST_F(replica_follower_test, test_init_master_info)
     ASSERT_EQ(follower->get_master_cluster_name(), "master");
     ASSERT_TRUE(follower->is_need_duplicate());
     ASSERT_TRUE(_mock_replica->is_duplication_follower());
-    std::vector<std::string> test_ip{"127.0.0.1:34801", "127.0.0.2:34801", "127.0.0.3:34802"};
-    for (int i = 0; i < follower->get_master_meta_list().size(); i++) {
-        ASSERT_EQ(std::string(follower->get_master_meta_list()[i].to_string()), test_ip[i]);
-    }
+    host_port_group test_ip;
+    test_ip.add_list({host_port("127.0.0.1", 34801),
+                      host_port("127.0.0.2", 34801),
+                      host_port("127.0.0.3", 34802)});
+    ASSERT_EQ(test_ip, follower->get_master_meta_list());
 
     _app_info.envs.clear();
     update_mock_replica(_app_info);
@@ -179,40 +180,42 @@ TEST_F(replica_follower_test, test_update_master_replica_config)
 
     query_cfg_response resp;
     ASSERT_EQ(update_master_replica_config(follower, resp), ERR_INCONSISTENT_STATE);
-    ASSERT_EQ(master_replica_config(follower).primary, rpc_address::s_invalid_address);
+    ASSERT_FALSE(master_replica_config(follower).host_port_primary.initialized());
 
     resp.partition_count = 100;
     ASSERT_EQ(update_master_replica_config(follower, resp), ERR_INCONSISTENT_STATE);
-    ASSERT_EQ(master_replica_config(follower).primary, rpc_address::s_invalid_address);
+    ASSERT_FALSE(master_replica_config(follower).host_port_primary.initialized());
 
     resp.partition_count = _app_info.partition_count;
     partition_configuration p;
     resp.partitions.emplace_back(p);
     resp.partitions.emplace_back(p);
     ASSERT_EQ(update_master_replica_config(follower, resp), ERR_INVALID_DATA);
-    ASSERT_EQ(master_replica_config(follower).primary, rpc_address::s_invalid_address);
+    ASSERT_FALSE(master_replica_config(follower).host_port_primary.initialized());
 
     resp.partitions.clear();
     p.pid = gpid(2, 100);
     resp.partitions.emplace_back(p);
     ASSERT_EQ(update_master_replica_config(follower, resp), ERR_INCONSISTENT_STATE);
-    ASSERT_EQ(master_replica_config(follower).primary, rpc_address::s_invalid_address);
+    ASSERT_FALSE(master_replica_config(follower).host_port_primary.initialized());
 
     resp.partitions.clear();
-    p.primary = rpc_address::s_invalid_address;
+    p.host_port_primary.reset();
     p.pid = gpid(2, 1);
     resp.partitions.emplace_back(p);
     ASSERT_EQ(update_master_replica_config(follower, resp), ERR_INVALID_STATE);
-    ASSERT_EQ(master_replica_config(follower).primary, rpc_address::s_invalid_address);
+    ASSERT_FALSE(master_replica_config(follower).host_port_primary.initialized());
 
     resp.partitions.clear();
     p.pid = gpid(2, 1);
-    p.primary = rpc_address("127.0.0.1", 34801);
+    p.host_port_primary = host_port("127.0.0.1", 34801);
     p.secondaries.emplace_back(rpc_address("127.0.0.2", 34801));
     p.secondaries.emplace_back(rpc_address("127.0.0.3", 34801));
+    p.host_port_secondaries.emplace_back(host_port("127.0.0.2", 34801));
+    p.host_port_secondaries.emplace_back(host_port("127.0.0.3", 34801));
     resp.partitions.emplace_back(p);
     ASSERT_EQ(update_master_replica_config(follower, resp), ERR_OK);
-    ASSERT_EQ(master_replica_config(follower).primary, p.primary);
+    ASSERT_EQ(master_replica_config(follower).host_port_primary, p.host_port_primary);
     ASSERT_EQ(master_replica_config(follower).pid, p.pid);
 }
 
@@ -229,6 +232,7 @@ TEST_F(replica_follower_test, test_nfs_copy_checkpoint)
 
     auto resp = learn_response();
     resp.address = rpc_address("127.0.0.1", 34801);
+    resp.host_port = host_port("127.0.0.1", 34801);
 
     std::string dest = utils::filesystem::path_combine(
         _mock_replica->dir(), duplication_constants::kDuplicationCheckpointRootDir);

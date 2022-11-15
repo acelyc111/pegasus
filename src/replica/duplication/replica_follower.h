@@ -18,6 +18,9 @@
 */
 
 #pragma once
+
+#include <gtest/gtest_prod.h>
+
 #include "replica/replica.h"
 
 namespace dsn {
@@ -34,19 +37,24 @@ public:
 
     const std::string &get_master_app_name() const { return _master_app_name; };
 
-    const std::vector<rpc_address> &get_master_meta_list() const { return _master_meta_list; };
-
     const bool is_need_duplicate() const { return need_duplicate; }
 
+protected:
+    replica *_replica = nullptr;
+
 private:
-    replica *_replica;
+    friend class replica_follower_test;
+    FRIEND_TEST(replica_follower_test, test_init_master_info);
+
+    const host_port_group &get_master_meta_list() const { return _master_meta_list; };
+
     task_tracker _tracker;
     bool _duplicating_checkpoint{false};
     mutable zlock _lock;
 
     std::string _master_cluster_name;
     std::string _master_app_name;
-    std::vector<rpc_address> _master_meta_list;
+    host_port_group _master_meta_list;
     partition_configuration _master_replica_config;
 
     bool need_duplicate{false};
@@ -56,7 +64,7 @@ private:
     error_code update_master_replica_config(error_code err, query_cfg_response &&resp);
     void copy_master_replica_checkpoint();
     error_code nfs_copy_checkpoint(error_code err, learn_response &&resp);
-    void nfs_copy_remote_files(const rpc_address &remote_node,
+    void nfs_copy_remote_files(const host_port &remote_node,
                                const std::string &remote_disk,
                                const std::string &remote_dir,
                                std::vector<std::string> &file_list,
@@ -65,16 +73,14 @@ private:
     std::string master_replica_name()
     {
         std::string app_info = fmt::format("{}.{}", _master_cluster_name, _master_app_name);
-        if (_master_replica_config.primary != rpc_address::s_invalid_address) {
+        if (_master_replica_config.host_port_primary.initialized()) {
             return fmt::format("{}({}|{})",
                                app_info,
-                               _master_replica_config.primary.to_string(),
-                               _master_replica_config.pid.to_string());
+                               _master_replica_config.host_port_primary,
+                               _master_replica_config.pid);
         }
         return app_info;
     }
-
-    friend class replica_follower_test;
 };
 
 } // namespace replication

@@ -59,7 +59,11 @@ DSN_DEFINE_validator(min_live_node_count_for_unfreeze,
                      [](uint64_t min_live_node_count) -> bool { return min_live_node_count > 0; });
 
 meta_service::meta_service()
-    : serverlet("meta_service"), _failure_detector(nullptr), _started(false), _recovering(false)
+    : serverlet("meta_service"),
+      _failure_detector(nullptr),
+      _started(false),
+      _recovering(false),
+      _dns_resolver(new dns_resolver())
 {
     _opts.initialize();
     _meta_opts.initialize();
@@ -151,7 +155,7 @@ error_code meta_service::remote_storage_initialize()
 }
 
 // visited in protection of failure_detector::_lock
-void meta_service::set_node_state(const std::vector<rpc_address> &nodes, bool is_alive)
+void meta_service::set_node_state(const std::vector<host_port> &nodes, bool is_alive)
 {
     for (auto &node : nodes) {
         if (is_alive) {
@@ -170,16 +174,16 @@ void meta_service::set_node_state(const std::vector<rpc_address> &nodes, bool is
     if (!_started) {
         return;
     }
-    for (const rpc_address &address : nodes) {
+    for (const auto &node : nodes) {
         tasking::enqueue(
             LPC_META_STATE_HIGH,
             nullptr,
-            std::bind(&server_state::on_change_node_state, _state.get(), address, is_alive),
+            std::bind(&server_state::on_change_node_state, _state.get(), node, is_alive),
             server_state::sStateHash);
     }
 }
 
-void meta_service::get_node_state(/*out*/ std::map<rpc_address, bool> &all_nodes)
+void meta_service::get_node_state(/*out*/ std::map<host_port, bool> &all_nodes)
 {
     zauto_lock l(_failure_detector->_lock);
     for (auto &node : _alive_set)
@@ -250,20 +254,20 @@ void meta_service::start_service()
 
     _alive_nodes_count->set(_alive_set.size());
 
-    for (const dsn::rpc_address &node : _alive_set) {
+    for (const auto &node : _alive_set) {
         // sync alive set and the failure_detector
         _failure_detector->unregister_worker(node);
         _failure_detector->register_worker(node, true);
     }
 
     _started = true;
-    for (const dsn::rpc_address &node : _alive_set) {
+    for (const auto &node : _alive_set) {
         tasking::enqueue(LPC_META_STATE_HIGH,
                          nullptr,
                          std::bind(&server_state::on_change_node_state, _state.get(), node, true),
                          server_state::sStateHash);
     }
-    for (const dsn::rpc_address &node : _dead_set) {
+    for (const auto &node : _dead_set) {
         tasking::enqueue(LPC_META_STATE_HIGH,
                          nullptr,
                          std::bind(&server_state::on_change_node_state, _state.get(), node, false),
@@ -305,7 +309,7 @@ error_code meta_service::start()
     LOG_INFO("remote storage is successfully initialized");
 
     // start failure detector, and try to acquire the leader lock
-    _failure_detector.reset(new meta_server_failure_detector(this));
+    _failure_detector.reset(new meta_server_failure_detector(_dns_resolver, this));
     if (_meta_opts.enable_white_list)
         _failure_detector->set_allow_list(_meta_opts.replica_white_list);
     _failure_detector->register_ctrl_commands();
@@ -329,9 +333,11 @@ error_code meta_service::start()
     dist::cmd::register_remote_command_rpc();
 
     _failure_detector->acquire_leader_lock();
-    CHECK(_failure_detector->get_leader(nullptr), "must be primary at this point");
-    LOG_INFO("%s got the primary lock, start to recover server state from remote storage",
-             dsn_primary_address().to_string());
+    host_port leader;
+    CHECK(_failure_detector->get_leader(&leader), "must be primary at this point");
+    // TODO: check 'leader' is the current node
+    LOG_INFO_F("{} got the primary lock, start to recover server state from remote storage",
+               leader);
 
     // initialize the load balancer
     server_load_balancer *balancer = utils::factory_store<server_load_balancer>::create(
@@ -477,9 +483,10 @@ void meta_service::register_rpc_handlers()
                                          &meta_service::on_set_max_replica_count);
 }
 
-int meta_service::check_leader(dsn::message_ex *req, dsn::rpc_address *forward_address)
+int meta_service::check_leader(dsn::message_ex *req, host_port *forward_address)
 {
-    dsn::rpc_address leader;
+    host_port leader;
+    // TODO: refactor if-statements
     if (!_failure_detector->get_leader(&leader)) {
         if (!req->header->context.u.is_forward_supported) {
             if (forward_address != nullptr)
@@ -487,13 +494,13 @@ int meta_service::check_leader(dsn::message_ex *req, dsn::rpc_address *forward_a
             return -1;
         }
 
-        LOG_DEBUG("leader address: %s", leader.to_string());
-        if (!leader.is_invalid()) {
-            dsn_rpc_forward(req, leader);
+        LOG_DEBUG_F("leader address: {}", leader);
+        if (leader.initialized()) {
+            dsn_rpc_forward(req, _dns_resolver->resolve_address(leader));
             return 0;
         } else {
             if (forward_address != nullptr)
-                forward_address->set_invalid();
+                forward_address->reset();
             return -1;
         }
     }
@@ -578,7 +585,8 @@ void meta_service::on_list_nodes(configuration_list_nodes_rpc rpc)
         if (request.status == node_status::NS_INVALID || request.status == node_status::NS_ALIVE) {
             info.status = node_status::NS_ALIVE;
             for (auto &node : _alive_set) {
-                info.address = node;
+                info.address = _dns_resolver->resolve_address(node);
+                info.__set_host_port(node);
                 response.infos.push_back(info);
             }
         }
@@ -586,7 +594,8 @@ void meta_service::on_list_nodes(configuration_list_nodes_rpc rpc)
             request.status == node_status::NS_UNALIVE) {
             info.status = node_status::NS_UNALIVE;
             for (auto &node : _dead_set) {
-                info.address = node;
+                info.address = _dns_resolver->resolve_address(node);
+                info.__set_host_port(node);
                 response.infos.push_back(info);
             }
         }
@@ -600,18 +609,11 @@ void meta_service::on_query_cluster_info(configuration_cluster_info_rpc rpc)
         return;
     }
 
-    std::stringstream oss;
     configuration_cluster_info_response &response = rpc.response();
     response.keys.push_back("meta_servers");
-    for (size_t i = 0; i < _opts.meta_servers.size(); ++i) {
-        if (i != 0)
-            oss << ",";
-        oss << _opts.meta_servers[i].to_string();
-    }
-
-    response.values.push_back(oss.str());
+    response.values.push_back(_opts.meta_servers1.to_string());
     response.keys.push_back("primary_meta_server");
-    response.values.push_back(dsn_primary_address().to_std_string());
+    response.values.push_back(dsn_primary_host_port().to_string());
     std::string zk_hosts =
         dsn_config_get_value_string("zookeeper", "hosts_list", "", "zookeeper_hosts");
     zk_hosts.erase(std::remove_if(zk_hosts.begin(), zk_hosts.end(), ::isspace), zk_hosts.end());
@@ -641,11 +643,12 @@ void meta_service::on_query_cluster_info(configuration_cluster_info_rpc rpc)
 void meta_service::on_query_configuration_by_index(configuration_query_by_index_rpc rpc)
 {
     query_cfg_response &response = rpc.response();
-    rpc_address forward_address;
+    host_port forward_address;
     if (!check_status(rpc, &forward_address)) {
-        if (!forward_address.is_invalid()) {
+        if (forward_address.initialized()) {
             partition_configuration config;
-            config.primary = forward_address;
+            config.primary = _dns_resolver->resolve_address(forward_address);
+            config.__set_host_port_primary(forward_address);
             response.partitions.push_back(std::move(config));
         }
         return;
@@ -766,8 +769,8 @@ void meta_service::on_start_recovery(configuration_recovery_rpc rpc)
     } else {
         zauto_write_lock l(_meta_lock);
         if (_started.load()) {
-            LOG_INFO("service(%s) is already started, ignore the recovery request",
-                     dsn_primary_address().to_string());
+            LOG_INFO_F("service({}) is already started, ignore the recovery request",
+                       dsn_primary_host_port());
             response.err = ERR_SERVICE_ALREADY_RUNNING;
         } else {
             _state->on_start_recovery(rpc.request(), response);

@@ -28,6 +28,7 @@
 
 #include "base/pegasus_const.h"
 #include "test/function_test/utils/global_env.h"
+#include "runtime/rpc/rpc_host_port.h"
 
 using namespace dsn;
 using namespace dsn::replication;
@@ -54,10 +55,10 @@ public:
     void SetUp() override
     {
         // initialize ddl_client
-        std::vector<rpc_address> meta_list;
-        ASSERT_TRUE(replica_helper::load_meta_servers(
-            meta_list, PEGASUS_CLUSTER_SECTION_NAME.c_str(), _cluster_name.c_str()));
-        ASSERT_FALSE(meta_list.empty());
+        host_port_group meta_list;
+        ASSERT_TRUE(
+            host_port_group::load_servers(PEGASUS_CLUSTER_SECTION_NAME, _cluster_name, &meta_list)
+                .is_ok());
         _ddl_client = std::make_shared<replication_ddl_client>(meta_list);
         ASSERT_TRUE(_ddl_client != nullptr);
     }
@@ -175,10 +176,10 @@ public:
             }
             int32_t healthy_partition_count = 0;
             for (const auto &partition : partitions) {
-                if (partition.primary.is_invalid()) {
+                if (partition.host_port_primary.is_invalid()) {
                     break;
                 }
-                if (partition.secondaries.size() + 1 < partition.max_replica_count) {
+                if (partition.host_port_secondaries.size() + 1 < partition.max_replica_count) {
                     break;
                 }
                 healthy_partition_count++;

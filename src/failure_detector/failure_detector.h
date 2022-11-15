@@ -25,17 +25,6 @@
  */
 
 /*
- * Description:
- *     interface for a perfect failure detector
- *
- * Revision history:
- *     Mar., 2015, @imzhenyu (Zhenyu Guo), first version
- *     Dec., 2015, @shengofsun (Weijie Sun), make zlock preoteced,
- *                 give the subClasses flexibility
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
-/*
  * Notes on the failure detector:
  *
  * 1. Due to the fact that we can only check the liveness inside check-all-records call,
@@ -67,6 +56,10 @@
 #include "utils/zlocks.h"
 
 namespace dsn {
+
+class dns_resolver;
+class host_port;
+
 namespace fd {
 
 DEFINE_THREAD_POOL_CODE(THREAD_POOL_FD)
@@ -79,12 +72,12 @@ public:
     virtual ~failure_detector_callback() {}
 
     // worker side
-    virtual void on_master_disconnected(const std::vector<::dsn::rpc_address> &nodes) = 0;
-    virtual void on_master_connected(::dsn::rpc_address node) = 0;
+    virtual void on_master_disconnected(const std::vector<host_port> &nodes) = 0;
+    virtual void on_master_connected(const host_port &node) = 0;
 
     // master side
-    virtual void on_worker_disconnected(const std::vector<::dsn::rpc_address> &nodes) = 0;
-    virtual void on_worker_connected(::dsn::rpc_address node) = 0;
+    virtual void on_worker_disconnected(const std::vector<host_port> &nodes) = 0;
+    virtual void on_worker_connected(const host_port &node) = 0;
 };
 
 class failure_detector : public failure_detector_service,
@@ -92,7 +85,7 @@ class failure_detector : public failure_detector_service,
                          public failure_detector_callback
 {
 public:
-    failure_detector();
+    failure_detector(const std::shared_ptr<dns_resolver> &resolver);
     virtual ~failure_detector();
 
     virtual void on_ping(const beacon_msg &beacon, ::dsn::rpc_replier<beacon_ack> &reply);
@@ -114,30 +107,32 @@ public:
     uint32_t get_lease_ms() const { return _lease_milliseconds; }
     uint32_t get_grace_ms() const { return _grace_milliseconds; }
 
-    void register_master(::dsn::rpc_address target);
+    void register_master(const host_port &target);
 
-    bool switch_master(::dsn::rpc_address from, ::dsn::rpc_address to, uint32_t delay_milliseconds);
+    bool switch_master(const host_port &from, const host_port &to, uint32_t delay_milliseconds);
 
-    bool unregister_master(::dsn::rpc_address node);
+    bool unregister_master(const host_port &node);
 
-    virtual bool is_master_connected(::dsn::rpc_address node) const;
+    bool is_master_connected(const host_port &node) const;
 
     // ATTENTION: be very careful to set is_connected to false as
     // workers are always considered *connected* initially which is ok even when workers think
     // master is disconnected
     // Considering workers *disconnected* initially is *dangerous* coz it may violate the invariance
     // when workers think they are online
-    void register_worker(::dsn::rpc_address node, bool is_connected = true);
+    void register_worker(const host_port &node, bool is_connected = true);
 
-    bool unregister_worker(::dsn::rpc_address node);
+    bool unregister_worker(const host_port &node);
 
     void clear_workers();
 
-    virtual bool is_worker_connected(::dsn::rpc_address node) const;
+    // TODO(yingchun): no callers?
+    virtual bool is_worker_connected(const host_port &node) const;
 
-    void add_allow_list(::dsn::rpc_address node);
+    void add_allow_list(const host_port &node);
 
-    bool remove_from_allow_list(::dsn::rpc_address node);
+    // TODO(yingchun): no callers?
+    bool remove_from_allow_list(const host_port &node);
 
     void set_allow_list(const std::vector<std::string> &replica_addrs);
 
@@ -147,6 +142,8 @@ public:
 
     int master_count() const { return static_cast<int>(_masters.size()); }
 
+    std::shared_ptr<dns_resolver> get_dns_resolver() const { return _dns_resolver; }
+
 protected:
     void on_ping_internal(const beacon_msg &beacon, /*out*/ beacon_ack &ack);
 
@@ -155,7 +152,7 @@ protected:
 
     bool is_time_greater_than(uint64_t ts, uint64_t base);
 
-    void report(::dsn::rpc_address node, bool is_master, bool is_connected);
+    void report(const host_port &node, bool is_master, bool is_connected);
 
 private:
     void check_all_records();
@@ -164,7 +161,7 @@ private:
     class master_record
     {
     public:
-        ::dsn::rpc_address node;
+        host_port node;
         uint64_t last_send_time_for_beacon_with_ack;
         bool is_alive;
         bool rejected;
@@ -172,7 +169,7 @@ private:
 
         // masters are always considered *disconnected* initially which is ok even when master
         // thinks workers are connected
-        master_record(::dsn::rpc_address n, uint64_t last_send_time_for_beacon_with_ack_)
+        master_record(const host_port &n, uint64_t last_send_time_for_beacon_with_ack_)
         {
             node = n;
             last_send_time_for_beacon_with_ack = last_send_time_for_beacon_with_ack_;
@@ -184,13 +181,13 @@ private:
     class worker_record
     {
     public:
-        ::dsn::rpc_address node;
+        host_port node;
         uint64_t last_beacon_recv_time;
         bool is_alive;
 
         // workers are always considered *connected* initially which is ok even when workers think
         // master is disconnected
-        worker_record(::dsn::rpc_address node, uint64_t last_beacon_recv_time)
+        worker_record(const host_port &node, uint64_t last_beacon_recv_time)
         {
             this->node = node;
             this->last_beacon_recv_time = last_beacon_recv_time;
@@ -198,12 +195,15 @@ private:
         }
     };
 
+protected:
+    std::shared_ptr<dns_resolver> _dns_resolver;
+
 private:
-    typedef std::unordered_map<::dsn::rpc_address, master_record> master_map;
-    typedef std::unordered_map<::dsn::rpc_address, worker_record> worker_map;
+    typedef std::unordered_map<host_port, master_record> master_map;
+    typedef std::unordered_map<host_port, worker_record> worker_map;
 
     // allow list are set on machine name (port can vary)
-    typedef std::unordered_set<::dsn::rpc_address> allow_list;
+    typedef std::unordered_set<host_port> allow_list;
 
     master_map _masters;
     worker_map _workers;
@@ -227,8 +227,8 @@ protected:
     mutable zlock _lock;
     dsn::task_tracker _tracker;
 
-    // subClass can rewrite these method.
-    virtual void send_beacon(::dsn::rpc_address node, uint64_t time);
+    // sub-class can rewrite these method.
+    virtual void send_beacon(const host_port &node, uint64_t time);
 };
 }
 } // end namespace

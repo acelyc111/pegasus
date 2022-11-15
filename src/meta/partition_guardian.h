@@ -69,7 +69,7 @@ private:
         _ddd_partitions[partition.config.pid] = std::move(partition);
     }
 
-    bool in_black_list(dsn::rpc_address addr)
+    bool in_black_list(const host_port &addr)
     {
         dsn::zauto_read_lock l(_black_list_lock);
         return _assign_secondary_black_list.count(addr) != 0;
@@ -86,7 +86,7 @@ private:
     // but when adding secondary, the black list is accessed in THREADPOOL_META_STATE
     // so we need a lock to protect it
     dsn::zrwlock_nr _black_list_lock; // [
-    std::set<dsn::rpc_address> _assign_secondary_black_list;
+    std::set<host_port> _assign_secondary_black_list;
     // ]
 
     std::vector<std::unique_ptr<command_deregister>> _cmds;

@@ -31,7 +31,6 @@ namespace tools {
 
 void asio_rpc_session::set_options()
 {
-
     if (_socket->is_open()) {
         boost::system::error_code ec;
         boost::asio::socket_base::send_buffer_size option, option2(16 * 1024 * 1024);
@@ -87,27 +86,20 @@ void asio_rpc_session::do_read(int read_next)
         [this](boost::system::error_code ec, std::size_t length) {
             if (!!ec) {
                 if (ec == boost::asio::error::make_error_code(boost::asio::error::eof)) {
-                    LOG_INFO("asio read from %s failed: %s",
-                             _remote_addr.to_string(),
-                             ec.message().c_str());
+                    LOG_INFO_F("asio read from {} EOF: {}", _remote_addr, ec.message());
                 } else {
-                    LOG_ERROR("asio read from %s failed: %s",
-                              _remote_addr.to_string(),
-                              ec.message().c_str());
+                    LOG_ERROR_F("asio read from {} failed: {}", _remote_addr, ec.message());
                 }
                 on_failure();
             } else {
                 _reader.mark_read(length);
-
                 int read_next = -1;
-
                 if (!_parser) {
                     read_next = prepare_parser();
                 }
 
                 if (_parser) {
                     message_ex *msg = _parser->get_message_on_receive(&_reader, read_next);
-
                     while (msg != nullptr) {
                         this->on_message_read(msg);
                         msg = _parser->get_message_on_receive(&_reader, read_next);
@@ -115,7 +107,7 @@ void asio_rpc_session::do_read(int read_next)
                 }
 
                 if (read_next == -1) {
-                    LOG_ERROR("asio read from %s failed", _remote_addr.to_string());
+                    LOG_ERROR_F("asio read from {} failed", _remote_addr);
                     on_failure();
                 } else {
                     start_read_next(read_next);
@@ -142,8 +134,7 @@ void asio_rpc_session::send(uint64_t signature)
     boost::asio::async_write(
         *_socket, asio_wbufs, [this, signature](boost::system::error_code ec, std::size_t length) {
             if (ec) {
-                LOG_ERROR(
-                    "asio write to %s failed: %s", _remote_addr.to_string(), ec.message().c_str());
+                LOG_ERROR_F("asio write to {} failed: {}", _remote_addr, ec.message());
                 on_failure(true);
             } else {
                 on_send_completed(signature);
@@ -165,14 +156,15 @@ asio_rpc_session::asio_rpc_session(asio_network_provider &net,
 
 void asio_rpc_session::close()
 {
-
     boost::system::error_code ec;
     _socket->shutdown(boost::asio::socket_base::shutdown_type::shutdown_both, ec);
-    if (ec)
-        LOG_WARNING("asio socket shutdown failed, error = %s", ec.message().c_str());
+    if (ec) {
+        LOG_WARNING_F("asio socket shutdown failed, error = {}", ec.message());
+    }
     _socket->close(ec);
-    if (ec)
-        LOG_WARNING("asio socket close failed, error = %s", ec.message().c_str());
+    if (ec) {
+        LOG_WARNING_F("asio socket close failed, error = {}", ec.message());
+    }
 }
 
 void asio_rpc_session::connect()
@@ -184,16 +176,15 @@ void asio_rpc_session::connect()
         add_ref();
         _socket->async_connect(ep, [this](boost::system::error_code ec) {
             if (!ec) {
-                LOG_DEBUG("client session %s connected", _remote_addr.to_string());
+                LOG_DEBUG_F("client session {} connected", _remote_addr);
 
                 set_options();
                 set_connected();
                 on_send_completed();
                 start_read_next();
             } else {
-                LOG_ERROR("client session connect to %s failed, error = %s",
-                          _remote_addr.to_string(),
-                          ec.message().c_str());
+                LOG_ERROR_F(
+                    "client session connect to {} failed, error = {}", _remote_addr, ec.message());
                 on_failure(true);
             }
             release_ref();

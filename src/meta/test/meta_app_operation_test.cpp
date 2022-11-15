@@ -251,7 +251,15 @@ public:
                     partition_configuration partition_config;
                     dsn::json::json_forwarder<partition_configuration>::decode(value,
                                                                                partition_config);
-
+                    if (!partition_config.host_port_primary.is_invalid()) {
+                        partition_config.__isset.host_port_primary = true;
+                    }
+                    if (!partition_config.host_port_secondaries.empty()) {
+                        partition_config.__isset.host_port_secondaries = true;
+                    }
+                    if (!partition_config.host_port_last_drops.empty()) {
+                        partition_config.__isset.host_port_last_drops = true;
+                    }
                     ASSERT_EQ(partition_config.pid, expected_pid);
                     ASSERT_EQ(partition_config.max_replica_count, expected_max_replica_count);
                 },
@@ -391,7 +399,7 @@ TEST_F(meta_app_operation_test, create_app)
 
     // keep the number of all nodes greater than that of alive nodes
     const int total_node_count = 10;
-    std::vector<rpc_address> nodes = ensure_enough_alive_nodes(total_node_count);
+    std::vector<host_port> nodes = ensure_enough_alive_nodes(total_node_count);
 
     // the meta function level will become freezed once
     // alive_nodes * 100 < total_nodes * node_live_percentage_threshold_for_update

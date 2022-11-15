@@ -153,11 +153,11 @@ void meta_duplication_service::add_duplication(duplication_add_rpc rpc)
         return;
     }
 
-    std::vector<rpc_address> meta_list;
-    if (!dsn::replication::replica_helper::load_meta_servers(
-            meta_list,
-            duplication_constants::kClustersSectionName.c_str(),
-            request.remote_cluster_name.c_str())) {
+    host_port_group meta_list;
+    // TODO: now only support FQDN format
+    if (!host_port_group::load_servers(
+             duplication_constants::kClustersSectionName, request.remote_cluster_name, &meta_list)
+             .is_ok()) {
         response.err = ERR_INVALID_PARAMETERS;
         response.__set_hint(fmt::format("failed to find cluster[{}] address in config [{}]",
                                         request.remote_cluster_name,
@@ -250,9 +250,10 @@ void meta_duplication_service::duplication_sync(duplication_sync_rpc rpc)
     auto &response = rpc.response();
     response.err = ERR_OK;
 
-    node_state *ns = get_node_state(_state->_nodes, request.node, false);
+    // TODO: now only support FQDN format
+    node_state *ns = get_node_state(_state->_nodes, request.host_port_node, false);
     if (ns == nullptr) {
-        LOG_WARNING_F("node({}) is not found in meta server", request.node.to_string());
+        LOG_WARNING_F("node({}) is not found in meta server", request.host_port_node.to_string());
         response.err = ERR_OBJECT_NOT_FOUND;
         return;
     }
@@ -333,16 +334,12 @@ void meta_duplication_service::create_follower_app_for_duplication(
     request.options.envs.emplace(duplication_constants::kDuplicationEnvMasterClusterKey,
                                  get_current_cluster_name());
     request.options.envs.emplace(duplication_constants::kDuplicationEnvMasterMetasKey,
-                                 _meta_svc->get_meta_list_string());
-
-    rpc_address meta_servers;
-    meta_servers.assign_group(dup->follower_cluster_name.c_str());
-    meta_servers.group_address()->add_list(dup->follower_cluster_metas);
+                                 _meta_svc->get_options().meta_servers1.to_string());
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_CREATE_APP);
     dsn::marshall(msg, request);
     rpc::call(
-        meta_servers,
+        _meta_svc->get_dns_resolver()->resolve_address(dup->follower_cluster_metas.leader()),
         msg,
         _meta_svc->tracker(),
         [=](error_code err, configuration_create_app_response &&resp) mutable {
@@ -382,16 +379,12 @@ void meta_duplication_service::create_follower_app_for_duplication(
 void meta_duplication_service::check_follower_app_if_create_completed(
     const std::shared_ptr<duplication_info> &dup)
 {
-    rpc_address meta_servers;
-    meta_servers.assign_group(dup->follower_cluster_name.c_str());
-    meta_servers.group_address()->add_list(dup->follower_cluster_metas);
-
     query_cfg_request meta_config_request;
     meta_config_request.app_name = dup->app_name;
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX);
     dsn::marshall(msg, meta_config_request);
-    rpc::call(meta_servers,
+    rpc::call(_meta_svc->get_dns_resolver()->resolve_address(dup->follower_cluster_metas.leader()),
               msg,
               _meta_svc->tracker(),
               [=](error_code err, query_cfg_response &&resp) mutable {
@@ -400,9 +393,10 @@ void meta_duplication_service::check_follower_app_if_create_completed(
                       int count = dup->partition_count;
                       while (count-- > 0) {
                           partition_configuration p;
-                          p.primary = rpc_address("127.0.0.1", 34801);
-                          p.secondaries.emplace_back(rpc_address("127.0.0.2", 34801));
-                          p.secondaries.emplace_back(rpc_address("127.0.0.3", 34801));
+                          p.__set_host_port_primary(host_port("127.0.0.1", 34801));
+                          p.__isset.host_port_secondaries = true;
+                          p.host_port_secondaries.emplace_back(host_port("127.0.0.2", 34801));
+                          p.host_port_secondaries.emplace_back(host_port("127.0.0.3", 34801));
                           resp.partitions.emplace_back(p);
                       }
                   });
@@ -415,17 +409,26 @@ void meta_duplication_service::check_follower_app_if_create_completed(
                           query_err = ERR_INCONSISTENT_STATE;
                       } else {
                           for (const auto &partition : resp.partitions) {
-                              if (partition.primary.is_invalid()) {
+                              if (partition.primary.is_invalid() &&
+                                  partition.host_port_primary.is_invalid()) {
                                   query_err = ERR_INACTIVE_STATE;
                                   break;
                               }
 
-                              if (partition.secondaries.empty()) {
+                              if (partition.secondaries.empty() &&
+                                  partition.host_port_secondaries.empty()) {
                                   query_err = ERR_NOT_ENOUGH_MEMBER;
                                   break;
                               }
 
                               for (const auto &secondary : partition.secondaries) {
+                                  if (secondary.is_invalid()) {
+                                      query_err = ERR_INACTIVE_STATE;
+                                      break;
+                                  }
+                              }
+
+                              for (const auto &secondary : partition.host_port_secondaries) {
                                   if (secondary.is_invalid()) {
                                       query_err = ERR_INACTIVE_STATE;
                                       break;
@@ -498,7 +501,7 @@ void meta_duplication_service::do_update_partition_confirmed(
 
 std::shared_ptr<duplication_info>
 meta_duplication_service::new_dup_from_init(const std::string &follower_cluster_name,
-                                            std::vector<rpc_address> &&follower_cluster_metas,
+                                            host_port_group &&follower_cluster_metas,
                                             std::shared_ptr<app_state> &app) const
 {
     duplication_info_s_ptr dup;

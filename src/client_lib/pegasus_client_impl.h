@@ -26,6 +26,10 @@
 #include "base/pegasus_key_schema.h"
 #include "base/pegasus_utils.h"
 
+namespace dsn {
+class dns_resolver;
+} // namespace dsn
+
 namespace pegasus {
 namespace client {
 
@@ -348,7 +352,8 @@ private:
 private:
     std::string _cluster_name;
     std::string _app_name;
-    ::dsn::rpc_address _meta_server;
+    ::dsn::host_port_group _meta_server;
+    std::shared_ptr<dsn::dns_resolver> _dns_resolver;
     ::dsn::apps::rrdb_client *_client;
 
     ///

@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <fmt/ostream.h>
 
 // The macros below no longer use the default snprintf method for log message formatting,
@@ -56,6 +58,13 @@
 #define LOG_WARNING_PREFIX(...) LOG_WARNING_F("[{}] {}", log_prefix(), fmt::format(__VA_ARGS__))
 #define LOG_ERROR_PREFIX(...) LOG_ERROR_F("[{}] {}", log_prefix(), fmt::format(__VA_ARGS__))
 #define LOG_FATAL_PREFIX(...) LOG_FATAL_F("[{}] {}", log_prefix(), fmt::format(__VA_ARGS__))
+
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
+{
+    os << fmt::format("[{}]", fmt::join(vec, ","));
+    return os;
+}
 
 // Macros to check expected condition. It will abort the application
 // and log a fatal message when the condition is not met.

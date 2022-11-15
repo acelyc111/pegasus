@@ -208,7 +208,7 @@ public:
         _group_req.meta_bulk_load_status = status;
         _group_req.config.status = partition_status::PS_SECONDARY;
         _group_req.config.ballot = b;
-        _group_req.target_address = SECONDARY;
+        _group_req.__set_host_port_target_address(SECONDARY);
     }
 
     void mock_replica_config(partition_status::type status)
@@ -216,7 +216,7 @@ public:
         replica_configuration rconfig;
         rconfig.ballot = BALLOT;
         rconfig.pid = PID;
-        rconfig.primary = PRIMARY;
+        rconfig.__set_host_port_primary(PRIMARY);
         rconfig.status = status;
         _replica->set_replica_config(rconfig);
     }
@@ -228,9 +228,10 @@ public:
         config.max_replica_count = 3;
         config.pid = PID;
         config.ballot = BALLOT;
-        config.primary = PRIMARY;
-        config.secondaries.emplace_back(SECONDARY);
-        config.secondaries.emplace_back(SECONDARY2);
+        config.__set_host_port_primary(PRIMARY);
+        config.__isset.host_port_secondaries = true;
+        config.host_port_secondaries.emplace_back(SECONDARY);
+        config.host_port_secondaries.emplace_back(SECONDARY2);
         _replica->set_primary_partition_configuration(config);
     }
 
@@ -429,9 +430,9 @@ public:
     std::string ROOT_PATH = "bulk_load_root";
     gpid PID = gpid(1, 0);
     ballot BALLOT = 3;
-    rpc_address PRIMARY = rpc_address("127.0.0.2", 34801);
-    rpc_address SECONDARY = rpc_address("127.0.0.3", 34801);
-    rpc_address SECONDARY2 = rpc_address("127.0.0.4", 34801);
+    host_port PRIMARY = host_port("127.0.0.2", 34801);
+    host_port SECONDARY = host_port("127.0.0.3", 34801);
+    host_port SECONDARY2 = host_port("127.0.0.4", 34801);
     int32_t MAX_DOWNLOADING_COUNT = 5;
     std::string LOCAL_DIR = bulk_load_constant::BULK_LOAD_LOCAL_ROOT_DIR;
     std::string METADATA = bulk_load_constant::BULK_LOAD_METADATA;
@@ -791,7 +792,7 @@ TEST_F(replica_bulk_loader_test, report_group_ingestion_status_test)
 // report_group_context_clean_flag unit tests
 TEST_F(replica_bulk_loader_test, report_group_cleanup_flag_in_unhealthy_state)
 {
-    // _primary_states.membership.secondaries is empty
+    // _primary_states.membership.host_port_secondaries is empty
     mock_replica_config(partition_status::PS_PRIMARY);
     ASSERT_FALSE(test_report_group_cleaned_up());
 }

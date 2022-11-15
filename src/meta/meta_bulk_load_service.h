@@ -61,7 +61,7 @@ struct partition_bulk_load_info
     bulk_load_status::type status;
     bulk_load_metadata metadata;
     bool ever_ingest_succeed;
-    std::vector<rpc_address> addresses;
+    std::vector<host_port> addresses;
     DEFINE_JSON_SERIALIZATION(status, metadata, ever_ingest_succeed, addresses)
 };
 
@@ -170,17 +170,15 @@ private:
     // if app is still in bulk load, resend bulk_load_request to primary after interval seconds
     void try_resend_bulk_load_request(const std::string &app_name, const gpid &pid);
 
-    void handle_app_downloading(const bulk_load_response &response,
-                                const rpc_address &primary_addr);
+    void handle_app_downloading(const bulk_load_response &response, const host_port &primary_addr);
 
-    void handle_app_ingestion(const bulk_load_response &response, const rpc_address &primary_addr);
+    void handle_app_ingestion(const bulk_load_response &response, const host_port &primary_addr);
 
     // when app status is `succeed, `failed`, `canceled`, meta and replica should cleanup bulk load
     // states
-    void handle_bulk_load_finish(const bulk_load_response &response,
-                                 const rpc_address &primary_addr);
+    void handle_bulk_load_finish(const bulk_load_response &response, const host_port &primary_addr);
 
-    void handle_app_pausing(const bulk_load_response &response, const rpc_address &primary_addr);
+    void handle_app_pausing(const bulk_load_response &response, const host_port &primary_addr);
 
     // app not existed or not available during bulk load
     void handle_app_unavailable(int32_t app_id, const std::string &app_name);
@@ -195,14 +193,14 @@ private:
 
     void send_ingestion_request(const std::string &app_name,
                                 const gpid &pid,
-                                const rpc_address &primary_addr,
+                                const host_port &primary_addr,
                                 const ballot &meta_ballot);
 
     void on_partition_ingestion_reply(error_code err,
                                       const ingestion_response &&resp,
                                       const std::string &app_name,
                                       const gpid &pid,
-                                      const rpc_address &primary_addr);
+                                      const host_port &primary_addr);
 
     // Called by `partition_ingestion`
     // - true : this partition has ever executed ingestion succeed, no need to send ingestion
@@ -489,7 +487,7 @@ private:
     // partition_index -> group total download progress
     std::unordered_map<gpid, int32_t> _partitions_total_download_progress;
     // partition_index -> group bulk load states(node address -> state)
-    std::unordered_map<gpid, std::map<rpc_address, partition_bulk_load_state>>
+    std::unordered_map<gpid, std::map<host_port, partition_bulk_load_state>>
         _partitions_bulk_load_state;
 
     std::unordered_map<gpid, bool> _partitions_cleaned_up;

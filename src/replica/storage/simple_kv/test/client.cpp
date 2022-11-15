@@ -48,7 +48,7 @@ using namespace dsn::replication::application;
 DEFINE_TASK_CODE(LPC_SIMPLE_KV_TEST, TASK_PRIORITY_COMMON, dsn::THREAD_POOL_DEFAULT)
 
 simple_kv_client_app::simple_kv_client_app(const service_app_info *info)
-    : ::dsn::service_app(info), _simple_kv_client(nullptr)
+    : ::dsn::service_app(info), _resolver(new dns_resolver()), _simple_kv_client(nullptr)
 {
 }
 
@@ -59,13 +59,11 @@ simple_kv_client_app::~simple_kv_client_app() { stop(); }
     if (args.size() < 2)
         return ::dsn::ERR_INVALID_PARAMETERS;
 
-    std::vector<rpc_address> meta_servers;
-    replica_helper::load_meta_servers(meta_servers);
-    _meta_server_group.assign_group("meta_servers");
-    _meta_server_group.group_address()->add_list(meta_servers);
+    CHECK(host_port_group::load_servers("meta_server", "server_list", &_meta_server_group).is_ok(),
+          "");
 
     _simple_kv_client.reset(
-        new application::simple_kv_client("mycluster", meta_servers, "simple_kv.instance0"));
+        new application::simple_kv_client("mycluster", _meta_server_group, "simple_kv.instance0"));
 
     dsn::tasking::enqueue(
         LPC_SIMPLE_KV_TEST, &_tracker, std::bind(&simple_kv_client_app::run, this));
@@ -87,9 +85,9 @@ void simple_kv_client_app::run()
     std::string value;
     int timeout_ms;
 
-    rpc_address receiver;
+    host_port receiver;
     dsn::replication::config_type::type type;
-    rpc_address node;
+    host_port node;
 
     while (!g_done) {
         if (test_case::instance().check_client_write(id, key, value, timeout_ms)) {
@@ -138,9 +136,9 @@ void simple_kv_client_app::begin_write(int id,
                              std::chrono::milliseconds(timeout_ms));
 }
 
-void simple_kv_client_app::send_config_to_meta(const rpc_address &receiver,
+void simple_kv_client_app::send_config_to_meta(const host_port &receiver,
                                                dsn::replication::config_type::type type,
-                                               const rpc_address &node)
+                                               const host_port &node)
 {
     dsn::message_ex *req = dsn::message_ex::create_request(RPC_CM_PROPOSE_BALANCER, 30000);
 
@@ -148,15 +146,15 @@ void simple_kv_client_app::send_config_to_meta(const rpc_address &receiver,
     request.gpid = g_default_gpid;
 
     configuration_proposal_action act;
-    act.__set_target(receiver);
-    act.__set_node(node);
+    act.__set_host_port_target(receiver);
+    act.__set_host_port_node(node);
     act.__set_type(type);
     request.action_list.emplace_back(std::move(act));
     request.__set_force(true);
 
     dsn::marshall(req, request);
 
-    dsn_rpc_call_one_way(_meta_server_group, req);
+    dsn_rpc_call_one_way(_resolver->resolve_address(_meta_server_group.leader()), req);
 }
 
 struct read_context

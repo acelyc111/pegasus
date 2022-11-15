@@ -538,10 +538,11 @@ void event_on_rpc::init(message_ex *msg, task *tsk)
 {
     event_on_task::init(tsk);
     if (msg != nullptr) {
-        _trace_id = fmt::sprintf("%016llx", msg->header->trace_id);
+        _trace_id = fmt::sprintf("{:#018x}", msg->header->trace_id);
         _rpc_name = msg->header->rpc_name;
-        _from = address_to_node(msg->header->from_address);
-        _to = address_to_node(msg->to_address);
+        // TODO: we have to add rpc_address to message_header to full support FQDN
+        _from = address_to_node(host_port(msg->header->from_address));
+        _to = address_to_node(host_port(msg->to_address));
     }
 }
 
@@ -917,9 +918,9 @@ void client_case_line::get_read_params(int &id, std::string &key, int &timeout_m
     timeout_ms = _timeout;
 }
 
-void client_case_line::get_replica_config_params(rpc_address &receiver,
+void client_case_line::get_replica_config_params(host_port &receiver,
                                                  dsn::replication::config_type::type &type,
-                                                 rpc_address &node) const
+                                                 host_port &node) const
 {
     CHECK_EQ(_type, replica_config);
     receiver = _config_receiver;
@@ -1169,12 +1170,14 @@ bool test_case::check_client_write(int &id, std::string &key, std::string &value
     return true;
 }
 
-bool test_case::check_replica_config(rpc_address &receiver,
+bool test_case::check_replica_config(host_port &receiver,
                                      dsn::replication::config_type::type &type,
-                                     rpc_address &node)
+                                     host_port &node)
 {
-    if (!check_client_instruction(client_case_line::replica_config))
+    if (!check_client_instruction(client_case_line::replica_config)) {
         return false;
+    }
+
     client_case_line *cl = static_cast<client_case_line *>(_case_lines[_next]);
     cl->get_replica_config_params(receiver, type, node);
     forward();

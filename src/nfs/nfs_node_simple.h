@@ -24,14 +24,6 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
 #pragma once
 
 #include "runtime/tool_api.h"
@@ -46,19 +38,20 @@ class nfs_client_impl;
 class nfs_node_simple : public nfs_node
 {
 public:
-    nfs_node_simple();
+    nfs_node_simple(const std::shared_ptr<dns_resolver> &resolver);
 
     virtual ~nfs_node_simple();
 
-    virtual void call(std::shared_ptr<remote_copy_request> rci, aio_task *callback) override;
+    void call(std::shared_ptr<remote_copy_request> rci, aio_task *callback) override;
 
-    virtual ::dsn::error_code start() override;
+    error_code start() override;
 
-    virtual error_code stop() override;
+    error_code stop() override;
 
 private:
-    nfs_service_impl *_server;
-    nfs_client_impl *_client;
+    std::unique_ptr<nfs_service_impl> _server;
+    std::unique_ptr<nfs_client_impl> _client;
+    std::shared_ptr<dns_resolver> _dns_resolver;
 };
 } // namespace service
 } // namespace dsn

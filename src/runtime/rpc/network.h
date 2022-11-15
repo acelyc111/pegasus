@@ -66,13 +66,6 @@ public:
     typedef network *(*factory)(rpc_engine *, network *);
 
 public:
-    //
-    // srv - the rpc engine, could contain many networks there
-    // inner_provider - when not null, this network is simply a wrapper for tooling purpose (e.g.,
-    // tracing)
-    //                  all downcalls should be redirected to the inner provider in the end
-    //
-    network(rpc_engine *srv, network *inner_provider);
     virtual ~network() {}
 
     //
@@ -132,6 +125,14 @@ public:
     static uint32_t get_local_ipv4();
 
 protected:
+    //
+    // srv - the rpc engine, could contain many networks there
+    // inner_provider - when not null, this network is simply a wrapper for tooling purpose (e.g.,
+    // tracing)
+    //                  all downcalls should be redirected to the inner provider in the end
+    //
+    network(rpc_engine *srv, network *inner_provider);
+
     rpc_engine *_engine;
     network_header_format _client_hdr_format;
     network_header_format _unknown_msg_header_format; // default is NET_HDR_INVALID
@@ -151,26 +152,26 @@ class connection_oriented_network : public network
 {
 public:
     connection_oriented_network(rpc_engine *srv, network *inner_provider);
-    virtual ~connection_oriented_network() {}
+    ~connection_oriented_network() override {}
 
     // server session management
     rpc_session_ptr get_server_session(::dsn::rpc_address ep);
-    void on_server_session_accepted(rpc_session_ptr &s);
-    void on_server_session_disconnected(rpc_session_ptr &s);
+    void on_server_session_accepted(const rpc_session_ptr &s);
+    void on_server_session_disconnected(const rpc_session_ptr &s);
 
     // Checks if IP of the incoming session has too much connections.
     // Related config: [network] conn_threshold_per_ip. No limit if the value is 0.
     bool check_if_conn_threshold_exceeded(::dsn::rpc_address ep);
 
     // client session management
-    void on_client_session_connected(rpc_session_ptr &s);
-    void on_client_session_disconnected(rpc_session_ptr &s);
+    void on_client_session_connected(const rpc_session_ptr &s);
+    void on_client_session_disconnected(const rpc_session_ptr &s);
 
     // called upon RPC call, rpc client session is created on demand
-    virtual void send_message(message_ex *request) override;
+    void send_message(message_ex *request) override;
 
     // called by rpc engine
-    virtual void inject_drop_message(message_ex *msg, bool is_send) override;
+    void inject_drop_message(message_ex *msg, bool is_send) override;
 
     // to be defined
     virtual rpc_session_ptr create_client_session(::dsn::rpc_address server_addr) = 0;
@@ -206,6 +207,7 @@ public:
     @addtogroup tool-api-hooks
     @{
     */
+    // TODO(yingchun): if not use, remove them
     static join_point<void, rpc_session *> on_rpc_session_connected;
     static join_point<void, rpc_session *> on_rpc_session_disconnected;
     static join_point<bool, message_ex *> on_rpc_recv_message;
@@ -214,9 +216,9 @@ public:
 public:
     rpc_session(connection_oriented_network &net,
                 ::dsn::rpc_address remote_addr,
-                message_parser_ptr &parser,
+                const message_parser_ptr &parser,
                 bool is_client);
-    virtual ~rpc_session();
+    ~rpc_session() override;
 
     virtual void connect() = 0;
     virtual void close() = 0;
@@ -323,8 +325,8 @@ protected:
 protected:
     // constant info
     connection_oriented_network &_net;
-    dsn::rpc_address _remote_addr;
-    int _max_buffer_block_count_per_send;
+    const dsn::rpc_address _remote_addr;
+    const int _max_buffer_block_count_per_send;
     message_reader _reader;
     message_parser_ptr _parser;
 

@@ -287,8 +287,7 @@ private:
                  int thread_hash)
             : thrift_request(std::move(req)), auto_reply(false)
         {
-            CHECK(thrift_request, "req should not be null");
-
+            CHECK(thrift_request, "");
             dsn_request = message_ex::create_request(
                 code, static_cast<int>(timeout.count()), thread_hash, partition_hash);
             dsn_request->add_ref();

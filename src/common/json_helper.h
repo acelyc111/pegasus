@@ -404,6 +404,20 @@ inline bool json_decode(const dsn::json::JsonObject &in, dsn::rpc_address &addre
     return address.from_string_ipv4(rpc_address_string.c_str());
 }
 
+inline void json_encode(JsonWriter &out, const dsn::host_port &hp)
+{
+    json_encode(out, hp.to_string());
+}
+inline bool json_decode(const dsn::json::JsonObject &in, dsn::host_port &hp)
+{
+    std::string host_port_str;
+    dverify(json_decode(in, host_port_str));
+    if (host_port_str.empty()) {
+        return true;
+    }
+    return hp.parse_string(host_port_str).is_ok();
+}
+
 inline void json_encode(JsonWriter &out, const dsn::partition_configuration &config);
 inline bool json_decode(const JsonObject &in, dsn::partition_configuration &config);
 inline void json_encode(JsonWriter &out, const dsn::app_info &info);
@@ -640,6 +654,7 @@ public:
     }
 
     // decode the member that's const qualified.
+    // TODO: WTF
     static bool decode(const JsonObject &in, const T &t)
     {
         using MutableT = typename std::remove_const<T>::type;
@@ -660,7 +675,10 @@ NON_MEMBER_JSON_SERIALIZATION(dsn::partition_configuration,
                               secondaries,
                               last_drops,
                               last_committed_decree,
-                              partition_flags)
+                              partition_flags,
+                              host_port_primary,
+                              host_port_secondaries,
+                              host_port_last_drops)
 
 NON_MEMBER_JSON_SERIALIZATION(dsn::app_info,
                               status,

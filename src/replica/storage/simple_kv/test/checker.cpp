@@ -72,52 +72,45 @@ public:
             return pc_status::healthy;
 
         pc_status result;
-        if (pc.primary.is_invalid()) {
-            if (pc.secondaries.size() > 0) {
-                action.node = pc.secondaries[0];
-                for (unsigned int i = 1; i < pc.secondaries.size(); ++i)
-                    if (pc.secondaries[i] < action.node)
-                        action.node = pc.secondaries[i];
+        if (pc.host_port_primary.is_invalid()) {
+            if (pc.host_port_secondaries.size() > 0) {
+                action.__set_host_port_node(pc.host_port_secondaries[0]);
+                for (unsigned int i = 1; i < pc.host_port_secondaries.size(); ++i) {
+                    if (pc.host_port_secondaries[i] < action.host_port_node) {
+                        action.__set_host_port_node(pc.host_port_secondaries[i]);
+                    }
+                }
                 action.type = config_type::CT_UPGRADE_TO_PRIMARY;
                 result = pc_status::ill;
-            }
-
-            else if (pc.last_drops.size() == 0) {
-                std::vector<rpc_address> sort_result;
+            } else if (pc.host_port_last_drops.empty()) {
+                std::vector<host_port> sort_result;
                 sort_alive_nodes(*view.nodes,
                                  server_load_balancer::primary_comparator(*view.nodes),
                                  sort_result);
-                action.node = sort_result[0];
+                action.__set_host_port_node(sort_result[0]);
                 action.type = config_type::CT_ASSIGN_PRIMARY;
                 result = pc_status::ill;
-            }
-
-            // DDD
-            else {
-                action.node = *pc.last_drops.rbegin();
+            } else { // DDD
+                action.__set_host_port_node(*pc.host_port_last_drops.rbegin());
                 action.type = config_type::CT_ASSIGN_PRIMARY;
-                LOG_ERROR("%d.%d enters DDD state, we are waiting for its last primary node %s to "
-                          "come back ...",
-                          pc.pid.get_app_id(),
-                          pc.pid.get_partition_index(),
-                          action.node.to_string());
+                LOG_ERROR_F("{} enters DDD state, we are waiting for its last primary node {} to "
+                            "come back ...",
+                            pc.pid,
+                            action.host_port_node);
                 result = pc_status::dead;
             }
-            action.target = action.node;
-        }
-
-        else if (static_cast<int>(pc.secondaries.size()) + 1 < pc.max_replica_count) {
-            std::vector<rpc_address> sort_result;
+            action.__set_host_port_target(action.host_port_node);
+        } else if (static_cast<int>(pc.host_port_secondaries.size()) + 1 < pc.max_replica_count) {
+            std::vector<host_port> sort_result;
             sort_alive_nodes(
                 *view.nodes, server_load_balancer::partition_comparator(*view.nodes), sort_result);
-
             for (auto &node : sort_result) {
                 if (!is_member(pc, node)) {
-                    action.node = node;
+                    action.__set_host_port_node(node);
                     break;
                 }
             }
-            action.target = pc.primary;
+            action.__set_host_port_target(pc.host_port_primary);
             action.type = config_type::CT_ADD_SECONDARY;
             result = pc_status::ill;
         } else {
@@ -126,15 +119,15 @@ public:
         return result;
     }
 
-    typedef std::function<bool(const rpc_address &addr1, const rpc_address &addr2)> node_comparator;
+    typedef std::function<bool(const host_port &addr1, const host_port &addr2)> node_comparator;
     static void sort_alive_nodes(const node_mapper &nodes,
                                  const node_comparator &cmp,
-                                 std::vector<rpc_address> &sorted_node)
+                                 std::vector<host_port> &sorted_node)
     {
         sorted_node.clear();
         sorted_node.reserve(nodes.size());
         for (auto &iter : nodes) {
-            if (!iter.first.is_invalid() && iter.second.alive()) {
+            if (iter.first.initialized() && iter.second.alive()) {
                 sorted_node.push_back(iter.first);
             }
         }
@@ -194,15 +187,16 @@ bool test_checker::init(const std::string &name, const std::vector<service_app *
     for (const auto &node : nodes) {
         int id = node.second->id();
         std::string name = node.second->full_name();
-        rpc_address paddr = node.second->rpc()->primary_address();
-        int port = paddr.port();
-        _node_to_address[name] = paddr;
-        LOG_INFO("=== node_to_address[%s]=%s", name.c_str(), paddr.to_string());
+        // TODO: rpc_address in rpc() should be refctored
+        host_port hp = node.second->rpc()->primary_host_port();
+        int port = hp.port();
+        _node_to_address[name] = hp;
+        LOG_INFO_F("=== node_to_address[{}]={}", name, hp);
         _address_to_node[port] = name;
-        LOG_INFO("=== address_to_node[%u]=%s", port, name.c_str());
+        LOG_INFO_F("=== address_to_node[{}]={}", port, name);
         if (id != port) {
             _address_to_node[id] = name;
-            LOG_INFO("=== address_to_node[%u]=%s", id, name.c_str());
+            LOG_INFO_F("=== address_to_node[{}]={}", id, name);
         }
     }
 
@@ -256,7 +250,7 @@ void test_checker::check()
     }
 }
 
-void test_checker::on_replica_state_change(::dsn::rpc_address from,
+void test_checker::on_replica_state_change(const host_port &from,
                                            const replica_configuration &new_config,
                                            bool is_closing)
 {
@@ -365,20 +359,22 @@ bool test_checker::check_replica_state(int primary_count, int secondary_count, i
     return p == primary_count && s == secondary_count && i == inactive_count;
 }
 
-std::string test_checker::address_to_node_name(rpc_address addr)
+std::string test_checker::address_to_node_name(const host_port &addr)
 {
     auto find = _address_to_node.find(addr.port());
-    if (find != _address_to_node.end())
+    if (find != _address_to_node.end()) {
         return find->second;
-    return "node@" + boost::lexical_cast<std::string>(addr.port());
+    }
+    return "node@" + std::to_string(addr.port());
 }
 
-rpc_address test_checker::node_name_to_address(const std::string &name)
+host_port test_checker::node_name_to_address(const std::string &name)
 {
     auto find = _node_to_address.find(name);
-    if (find != _node_to_address.end())
+    if (find != _node_to_address.end()) {
         return find->second;
-    return rpc_address();
+    }
+    return host_port();
 }
 
 void install_checkers()

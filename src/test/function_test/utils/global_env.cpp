@@ -67,4 +67,5 @@ void global_env::get_hostip()
     memset(buffer, 0, sizeof(buffer));
     CHECK(inet_ntop(AF_INET, &ipnet, buffer, sizeof(buffer)), "");
     _host_ip = buffer;
+    LOG_INFO_F("_host_ip: {}", _host_ip);
 }

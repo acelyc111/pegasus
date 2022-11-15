@@ -27,21 +27,28 @@ namespace replication {
 class meta_service_test : public meta_test_base
 {
 public:
+    meta_service_test() {}
+
+    void SetUp() override
+    {
+        meta_test_base::SetUp();
+        _ms->_dns_resolver->add_item_TEST(host_port("host1", 10086), rpc_address("1.2.3.4", 10086));
+    }
+
     void check_status_failure()
     {
         fail::setup();
-        fail::cfg("meta_server_failure_detector_get_leader", "return(false#1.2.3.4:10086)");
+        fail::cfg("meta_server_failure_detector_get_leader", "return(false#host1:10086)");
 
         /** can't forward to others */
         RPC_MOCKING(app_env_rpc)
         {
-            rpc_address leader;
+            host_port leader;
             auto rpc = create_fake_rpc();
             rpc.dsn_request()->header->context.u.is_forward_supported = false;
-            bool res = _ms->check_status(rpc, &leader);
-            ASSERT_EQ(false, res);
+            ASSERT_FALSE(_ms->check_status(rpc, &leader));
             ASSERT_EQ(ERR_FORWARD_TO_OTHERS, rpc.response().err);
-            ASSERT_EQ(leader.to_std_string(), "1.2.3.4:10086");
+            ASSERT_EQ(leader.to_string(), "host1:10086");
             ASSERT_EQ(app_env_rpc::forward_mail_box().size(), 0);
         }
 
@@ -49,8 +56,7 @@ public:
         RPC_MOCKING(app_env_rpc)
         {
             auto rpc = create_fake_rpc();
-            bool res = _ms->check_status(rpc);
-            ASSERT_EQ(false, res);
+            ASSERT_FALSE(_ms->check_status(rpc));
             ASSERT_EQ(app_env_rpc::forward_mail_box().size(), 1);
             ASSERT_EQ(app_env_rpc::forward_mail_box()[0].remote_address().to_std_string(),
                       "1.2.3.4:10086");
@@ -62,11 +68,11 @@ public:
     void check_status_success()
     {
         fail::setup();
-        fail::cfg("meta_server_failure_detector_get_leader", "return(true#1.2.3.4:10086)");
+        fail::cfg("meta_server_failure_detector_get_leader", "return(true#host1:10086)");
 
         RPC_MOCKING(app_env_rpc)
         {
-            rpc_address leader;
+            host_port leader;
             auto rpc = create_fake_rpc();
             auto res = _ms->check_status(rpc, &leader);
             ASSERT_EQ(true, res);
@@ -107,8 +113,7 @@ private:
         ::dsn::marshall(fake_request, request);
 
         dsn::message_ex *recvd_request = fake_request->copy(true, true);
-        std::unique_ptr<tools::sim_network_provider> sim_net(
-            new tools::sim_network_provider(nullptr, nullptr));
+        auto sim_net = dsn::make_unique<tools::sim_network_provider>(nullptr, nullptr);
         recvd_request->io_session = sim_net->create_client_session(rpc_address());
         return app_env_rpc::auto_reply(recvd_request);
     }

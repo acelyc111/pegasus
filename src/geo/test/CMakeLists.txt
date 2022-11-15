@@ -32,6 +32,7 @@ set(MY_PROJ_LIBS
         s2testing
         s2
         pegasus_client_static
+        dsn_client
         dsn_utils
         gtest)
 

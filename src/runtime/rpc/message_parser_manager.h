@@ -24,15 +24,6 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     message parser manager
- *
- * Revision history:
- *     Mar., 2015, @imzhenyu (Zhenyu Guo), first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #pragma once
 
 #include "runtime/rpc/message_parser.h"
@@ -43,11 +34,9 @@ class message_parser_manager : public utils::singleton<message_parser_manager>
 public:
     struct parser_factory_info
     {
-        parser_factory_info() : fmt(NET_HDR_INVALID), factory(nullptr), parser_size(0) {}
-
-        network_header_format fmt;
-        message_parser::factory factory;
-        size_t parser_size;
+        network_header_format fmt = NET_HDR_INVALID;
+        message_parser::factory factory = nullptr;
+        size_t parser_size = 0;
     };
 
 public:

@@ -46,6 +46,7 @@
 #include "utils/fail_point.h"
 #include "utils/string_conv.h"
 #include "common/replica_envs.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -63,14 +64,40 @@ bool get_bool_envs(const std::map<std::string, std::string> &envs,
     return true;
 }
 
+namespace {
+bool get_replica_config(const partition_configuration &partition_config,
+                        const host_port &node,
+                        /*out*/ replica_configuration &replica_config)
+{
+    replica_config.pid = partition_config.pid;
+    replica_config.__set_host_port_primary(partition_config.host_port_primary);
+    replica_config.ballot = partition_config.ballot;
+    replica_config.learner_signature = invalid_signature;
+
+    if (node == partition_config.host_port_primary) {
+        replica_config.status = partition_status::PS_PRIMARY;
+        return true;
+    } else if (std::find(partition_config.host_port_secondaries.begin(),
+                         partition_config.host_port_secondaries.end(),
+                         node) != partition_config.host_port_secondaries.end()) {
+        replica_config.status = partition_status::PS_SECONDARY;
+        return true;
+    } else {
+        replica_config.status = partition_status::PS_INACTIVE;
+        return false;
+    }
+}
+
+} // anonymous namespace
+
 void replica::on_config_proposal(configuration_update_request &proposal)
 {
     _checker.only_one_thread_access();
 
-    LOG_INFO("%s: process config proposal %s for %s",
-             name(),
-             enum_to_string(proposal.type),
-             proposal.node.to_string());
+    LOG_INFO_F("{}: process config proposal {} for {}",
+               name(),
+               enum_to_string(proposal.type),
+               proposal.host_port_node);
 
     if (proposal.config.ballot < get_ballot()) {
         LOG_WARNING("%s: on_config_proposal out-dated, %" PRId64 " vs %" PRId64,
@@ -118,7 +145,7 @@ void replica::on_config_proposal(configuration_update_request &proposal)
 
 void replica::assign_primary(configuration_update_request &proposal)
 {
-    CHECK_EQ(proposal.node, _stub->_primary_address);
+    CHECK_EQ(proposal.host_port_node, _stub->_primary_address);
 
     if (status() == partition_status::PS_PRIMARY) {
         LOG_WARNING("%s: invalid assgin primary proposal as the node is in %s",
@@ -139,10 +166,10 @@ void replica::assign_primary(configuration_update_request &proposal)
         return;
     }
 
-    proposal.config.primary = _stub->_primary_address;
-    replica_helper::remove_node(_stub->_primary_address, proposal.config.secondaries);
+    proposal.config.__set_host_port_primary(_stub->_primary_address);
+    remove_node(_stub->_primary_address, proposal.config.host_port_secondaries);
 
-    update_configuration_on_meta_server(proposal.type, proposal.node, proposal.config);
+    update_configuration_on_meta_server(proposal.type, proposal.host_port_node, proposal.config);
 }
 
 // run on primary to send ADD_LEARNER request to candidate replica server
@@ -157,20 +184,22 @@ void replica::add_potential_secondary(configuration_update_request &proposal)
 
     CHECK_EQ(proposal.config.ballot, get_ballot());
     CHECK_EQ(proposal.config.pid, _primary_states.membership.pid);
-    CHECK_EQ(proposal.config.primary, _primary_states.membership.primary);
-    CHECK(proposal.config.secondaries == _primary_states.membership.secondaries, "");
-    CHECK(!_primary_states.check_exist(proposal.node, partition_status::PS_PRIMARY),
+    CHECK_EQ(proposal.config.host_port_primary, _primary_states.membership.host_port_primary);
+    CHECK(proposal.config.host_port_secondaries == _primary_states.membership.host_port_secondaries,
+          "");
+    CHECK(!_primary_states.check_exist(proposal.host_port_node, partition_status::PS_PRIMARY),
           "node = {}",
-          proposal.node);
-    CHECK(!_primary_states.check_exist(proposal.node, partition_status::PS_SECONDARY),
+          proposal.host_port_node);
+    CHECK(!_primary_states.check_exist(proposal.host_port_node, partition_status::PS_SECONDARY),
           "node = {}",
-          proposal.node);
+          proposal.host_port_node);
 
     int potential_secondaries_count =
-        _primary_states.membership.secondaries.size() + _primary_states.learners.size();
+        _primary_states.membership.host_port_secondaries.size() + _primary_states.learners.size();
     if (potential_secondaries_count >= _primary_states.membership.max_replica_count - 1) {
         if (proposal.type == config_type::CT_ADD_SECONDARY) {
-            if (_primary_states.learners.find(proposal.node) == _primary_states.learners.end()) {
+            if (_primary_states.learners.find(proposal.host_port_node) ==
+                _primary_states.learners.end()) {
                 LOG_INFO("%s: already have enough secondaries or potential secondaries, ignore new "
                          "potential secondary proposal",
                          name());
@@ -183,9 +212,9 @@ void replica::add_potential_secondary(configuration_update_request &proposal)
                          name());
                 return;
             } else {
-                LOG_INFO("%s: add a new secondary(%s) for future load balancer",
-                         name(),
-                         proposal.node.to_string());
+                LOG_INFO_F("{}: add a new secondary({}) for future load balancer",
+                           name(),
+                           proposal.host_port_node);
             }
         } else {
             CHECK(false, "invalid config_type, type = {}", enum_to_string(proposal.type));
@@ -196,39 +225,44 @@ void replica::add_potential_secondary(configuration_update_request &proposal)
     state.prepare_start_decree = invalid_decree;
     state.timeout_task = nullptr; // TODO: add timer for learner task
 
-    auto it = _primary_states.learners.find(proposal.node);
+    auto it = _primary_states.learners.find(proposal.host_port_node);
     if (it != _primary_states.learners.end()) {
         state.signature = it->second.signature;
     } else {
         state.signature = ++_primary_states.next_learning_version;
-        _primary_states.learners[proposal.node] = state;
-        _primary_states.statuses[proposal.node] = partition_status::PS_POTENTIAL_SECONDARY;
+        _primary_states.learners[proposal.host_port_node] = state;
+        _primary_states.statuses[proposal.host_port_node] =
+            partition_status::PS_POTENTIAL_SECONDARY;
     }
 
     group_check_request request;
     request.app = _app_info;
-    request.node = proposal.node;
+    request.__set_host_port_node(proposal.host_port_node);
     _primary_states.get_replica_config(
         partition_status::PS_POTENTIAL_SECONDARY, request.config, state.signature);
     request.last_committed_decree = last_committed_decree();
 
-    LOG_INFO("%s: call one way %s to start learning with signature [%016" PRIx64 "]",
-             name(),
-             proposal.node.to_string(),
-             state.signature);
+    // TODO: check log
+    LOG_INFO_F("{}: call one way {} to start learning with signature [{:#018x}]",
+               name(),
+               proposal.host_port_node,
+               state.signature);
 
-    rpc::call_one_way_typed(
-        proposal.node, RPC_LEARN_ADD_LEARNER, request, get_gpid().thread_hash());
+    rpc::call_one_way_typed(_dns_resolver->resolve_address(proposal.host_port_node),
+                            RPC_LEARN_ADD_LEARNER,
+                            request,
+                            get_gpid().thread_hash());
 }
 
-void replica::upgrade_to_secondary_on_primary(::dsn::rpc_address node)
+void replica::upgrade_to_secondary_on_primary(const host_port &node)
 {
-    LOG_INFO("%s: upgrade potential secondary %s to secondary", name(), node.to_string());
+    LOG_INFO_PREFIX("upgrade potential secondary {} to secondary", node.to_string());
 
     partition_configuration newConfig = _primary_states.membership;
 
     // add secondary
-    newConfig.secondaries.push_back(node);
+    newConfig.__isset.host_port_secondaries = true;
+    newConfig.host_port_secondaries.push_back(node);
 
     update_configuration_on_meta_server(config_type::CT_UPGRADE_TO_SECONDARY, node, newConfig);
 }
@@ -239,15 +273,17 @@ void replica::downgrade_to_secondary_on_primary(configuration_update_request &pr
         return;
 
     CHECK_EQ(proposal.config.pid, _primary_states.membership.pid);
-    CHECK_EQ(proposal.config.primary, _primary_states.membership.primary);
-    CHECK(proposal.config.secondaries == _primary_states.membership.secondaries, "");
-    CHECK_EQ(proposal.node, proposal.config.primary);
+    CHECK_EQ(proposal.config.host_port_primary, _primary_states.membership.host_port_primary);
+    CHECK(proposal.config.host_port_secondaries == _primary_states.membership.host_port_secondaries,
+          "");
+    CHECK_EQ(proposal.host_port_node, proposal.config.host_port_primary);
 
-    proposal.config.primary.set_invalid();
-    proposal.config.secondaries.push_back(proposal.node);
+    proposal.config.host_port_primary.reset();
+    proposal.config.__isset.host_port_secondaries = true;
+    proposal.config.host_port_secondaries.push_back(proposal.host_port_node);
 
     update_configuration_on_meta_server(
-        config_type::CT_DOWNGRADE_TO_SECONDARY, proposal.node, proposal.config);
+        config_type::CT_DOWNGRADE_TO_SECONDARY, proposal.host_port_node, proposal.config);
 }
 
 void replica::downgrade_to_inactive_on_primary(configuration_update_request &proposal)
@@ -256,19 +292,20 @@ void replica::downgrade_to_inactive_on_primary(configuration_update_request &pro
         return;
 
     CHECK_EQ(proposal.config.pid, _primary_states.membership.pid);
-    CHECK_EQ(proposal.config.primary, _primary_states.membership.primary);
-    CHECK(proposal.config.secondaries == _primary_states.membership.secondaries, "");
+    CHECK_EQ(proposal.config.host_port_primary, _primary_states.membership.host_port_primary);
+    CHECK(proposal.config.host_port_secondaries == _primary_states.membership.host_port_secondaries,
+          "");
 
-    if (proposal.node == proposal.config.primary) {
-        proposal.config.primary.set_invalid();
+    if (proposal.host_port_node == proposal.config.host_port_primary) {
+        proposal.config.host_port_primary.reset();
     } else {
-        CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
+        CHECK(remove_node(proposal.host_port_node, proposal.config.host_port_secondaries),
               "remove node failed, node = {}",
-              proposal.node);
+              proposal.host_port_node);
     }
 
     update_configuration_on_meta_server(
-        config_type::CT_DOWNGRADE_TO_INACTIVE, proposal.node, proposal.config);
+        config_type::CT_DOWNGRADE_TO_INACTIVE, proposal.host_port_node, proposal.config);
 }
 
 void replica::remove(configuration_update_request &proposal)
@@ -277,20 +314,21 @@ void replica::remove(configuration_update_request &proposal)
         return;
 
     CHECK_EQ(proposal.config.pid, _primary_states.membership.pid);
-    CHECK_EQ(proposal.config.primary, _primary_states.membership.primary);
-    CHECK(proposal.config.secondaries == _primary_states.membership.secondaries, "");
+    CHECK_EQ(proposal.config.host_port_primary, _primary_states.membership.host_port_primary);
+    CHECK(proposal.config.host_port_secondaries == _primary_states.membership.host_port_secondaries,
+          "");
 
-    auto st = _primary_states.get_node_status(proposal.node);
+    auto st = _primary_states.get_node_status(proposal.host_port_node);
 
     switch (st) {
     case partition_status::PS_PRIMARY:
-        CHECK_EQ(proposal.config.primary, proposal.node);
-        proposal.config.primary.set_invalid();
+        CHECK_EQ(proposal.config.host_port_primary, proposal.host_port_node);
+        proposal.config.host_port_primary.reset();
         break;
     case partition_status::PS_SECONDARY: {
-        CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
+        CHECK(remove_node(proposal.host_port_node, proposal.config.host_port_secondaries),
               "remove_node failed, node = {}",
-              proposal.node);
+              proposal.host_port_node);
     } break;
     case partition_status::PS_POTENTIAL_SECONDARY:
         break;
@@ -298,7 +336,8 @@ void replica::remove(configuration_update_request &proposal)
         break;
     }
 
-    update_configuration_on_meta_server(config_type::CT_REMOVE, proposal.node, proposal.config);
+    update_configuration_on_meta_server(
+        config_type::CT_REMOVE, proposal.host_port_node, proposal.config);
 }
 
 // from primary
@@ -330,7 +369,7 @@ void replica::on_remove(const replica_configuration &request)
 }
 
 void replica::update_configuration_on_meta_server(config_type::type type,
-                                                  ::dsn::rpc_address node,
+                                                  const host_port &node,
                                                   partition_configuration &newConfig)
 {
     // type should never be `CT_REGISTER_CHILD`
@@ -344,7 +383,7 @@ void replica::update_configuration_on_meta_server(config_type::type type,
         CHECK(status() == partition_status::PS_INACTIVE && _inactive_is_transient &&
                   _is_initializing,
               "");
-        CHECK_EQ(newConfig.primary, node);
+        CHECK_EQ(newConfig.host_port_primary, node);
     } else if (type != config_type::CT_ASSIGN_PRIMARY &&
                type != config_type::CT_UPGRADE_TO_PRIMARY) {
         CHECK_EQ(status(), partition_status::PS_PRIMARY);
@@ -365,7 +404,8 @@ void replica::update_configuration_on_meta_server(config_type::type type,
     request->config = newConfig;
     request->config.ballot++;
     request->type = type;
-    request->node = node;
+    // TODO(yingchun): both
+    request->__set_host_port_node(node);
 
     ::dsn::marshall(msg, *request);
 
@@ -373,16 +413,14 @@ void replica::update_configuration_on_meta_server(config_type::type type,
         _primary_states.reconfiguration_task->cancel(true);
     }
 
-    LOG_INFO("%s: send update configuration request to meta server, ballot = %" PRId64
-             ", type = %s, node = %s",
-             name(),
-             request->config.ballot,
-             enum_to_string(request->type),
-             request->node.to_string());
+    LOG_INFO_PREFIX(
+        "send update configuration request to meta server, ballot = {}, type = {}, node = {}",
+        request->config.ballot,
+        enum_to_string(request->type),
+        request->node);
 
-    rpc_address target(_stub->_failure_detector->get_servers());
     _primary_states.reconfiguration_task =
-        rpc::call(target,
+        rpc::call(_dns_resolver->resolve_address(_stub->_failure_detector->get_servers().leader()),
                   msg,
                   &_tracker,
                   [=](error_code err, dsn::message_ex *reqmsg, dsn::message_ex *response) {
@@ -423,7 +461,7 @@ void replica::on_update_configuration_on_meta_server_reply(
                 LPC_DELAY_UPDATE_CONFIG,
                 &_tracker,
                 [ this, request, req2 = std::move(req) ]() {
-                    rpc_address target(_stub->_failure_detector->get_servers());
+                    const auto &target(_stub->_failure_detector->get_servers());
                     rpc_response_task_ptr t = rpc::create_rpc_response_task(
                         request,
                         &_tracker,
@@ -434,7 +472,7 @@ void replica::on_update_configuration_on_meta_server_reply(
                         },
                         get_gpid().thread_hash());
                     _primary_states.reconfiguration_task = t;
-                    dsn_rpc_call(target, t.get());
+                    dsn_rpc_call(_dns_resolver->resolve_address(target.leader()), t.get());
                     request->release_ref();
                 },
                 get_gpid().thread_hash(),
@@ -460,8 +498,11 @@ void replica::on_update_configuration_on_meta_server_reply(
     // post-update work items?
     if (resp.err == ERR_OK) {
         CHECK_EQ(req->config.pid, resp.config.pid);
-        CHECK_EQ(req->config.primary, resp.config.primary);
-        CHECK(req->config.secondaries == resp.config.secondaries, "");
+        CHECK_EQ(req->config.host_port_primary, resp.config.host_port_primary);
+        CHECK_EQ(req->config.host_port_secondaries.size(),
+                 resp.config.host_port_secondaries.size());
+        CHECK_EQ(fmt::format("{}", fmt::join(req->config.host_port_secondaries, ",")),
+                 fmt::format("{}", fmt::join(resp.config.host_port_secondaries, ",")));
 
         switch (req->type) {
         case config_type::CT_UPGRADE_TO_PRIMARY:
@@ -475,11 +516,14 @@ void replica::on_update_configuration_on_meta_server_reply(
         case config_type::CT_UPGRADE_TO_SECONDARY:
             break;
         case config_type::CT_REMOVE:
-            if (req->node != _stub->_primary_address) {
+            // TODO: both
+            if (req->host_port_node != _stub->_primary_address) {
                 replica_configuration rconfig;
-                replica_helper::get_replica_config(resp.config, req->node, rconfig);
-                rpc::call_one_way_typed(
-                    req->node, RPC_REMOVE_REPLICA, rconfig, get_gpid().thread_hash());
+                get_replica_config(resp.config, req->host_port_node, rconfig);
+                rpc::call_one_way_typed(_dns_resolver->resolve_address(req->host_port_node),
+                                        RPC_REMOVE_REPLICA,
+                                        rconfig,
+                                        get_gpid().thread_hash());
             }
             break;
         case config_type::CT_PRIMARY_FORCE_UPDATE_BALLOT:
@@ -592,11 +636,12 @@ bool replica::update_configuration(const partition_configuration &config)
     CHECK_GE(config.ballot, get_ballot());
 
     replica_configuration rconfig;
-    replica_helper::get_replica_config(config, _stub->_primary_address, rconfig);
+    get_replica_config(config, _stub->_primary_address, rconfig);
 
     if (rconfig.status == partition_status::PS_PRIMARY &&
         (rconfig.ballot > get_ballot() || status() != partition_status::PS_PRIMARY)) {
-        _primary_states.reset_membership(config, config.primary != _stub->_primary_address);
+        _primary_states.reset_membership(config,
+                                         config.host_port_primary != _stub->_primary_address);
     }
 
     if (config.ballot > get_ballot() ||
@@ -993,7 +1038,7 @@ bool replica::update_local_configuration(const replica_configuration &config,
             init_prepare(next, false);
         }
 
-        if (_primary_states.membership.secondaries.size() + 1 <
+        if (_primary_states.membership.host_port_secondaries.size() + 1 <
             _options->app_mutation_2pc_min_replica_count(_app_info.max_replica_count)) {
             std::vector<mutation_ptr> queued;
             _primary_states.write_queue.clear(queued);
@@ -1042,10 +1087,10 @@ void replica::on_config_sync(const app_info &info,
     } else {
         if (_is_initializing) {
             // in initializing, when replica still primary, need to inc ballot
-            if (config.primary == _stub->_primary_address &&
+            if (config.host_port_primary == _stub->_primary_address &&
                 status() == partition_status::PS_INACTIVE && _inactive_is_transient) {
                 update_configuration_on_meta_server(config_type::CT_PRIMARY_FORCE_UPDATE_BALLOT,
-                                                    config.primary,
+                                                    config.host_port_primary,
                                                     const_cast<partition_configuration &>(config));
                 return;
             }
@@ -1055,9 +1100,10 @@ void replica::on_config_sync(const app_info &info,
         update_configuration(config);
 
         if (status() == partition_status::PS_INACTIVE && !_inactive_is_transient) {
-            if (config.primary == _stub->_primary_address // dead primary
+            if (config.host_port_primary == _stub->_primary_address // dead primary
                 ||
-                config.primary.is_invalid() // primary is dead (otherwise let primary remove this)
+                config.host_port_primary
+                    .is_invalid() // primary is dead (otherwise let primary remove this)
                 ) {
                 LOG_INFO("%s: downgrade myself as inactive is not transient, remote_config(%s)",
                          name(),

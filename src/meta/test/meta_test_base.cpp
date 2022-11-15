@@ -24,20 +24,24 @@
 #include "meta/meta_split_service.h"
 #include "meta/meta_bulk_load_service.h"
 #include "meta/test/misc/misc.h"
-
 #include "meta_service_test_app.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
 
 DSN_DECLARE_uint64(min_live_node_count_for_unfreeze);
 
+meta_test_base::meta_test_base() {}
+
 meta_test_base::~meta_test_base() {}
 
 void meta_test_base::SetUp()
 {
     _ms = make_unique<fake_receiver_meta_service>();
-    _ms->_failure_detector.reset(new meta_server_failure_detector(_ms.get()));
+    _ms->_failure_detector.reset(
+        new meta_server_failure_detector(std::make_shared<dns_resolver>(), _ms.get()));
+    _ms->_balancer.reset(); // TODO: move to TearDown
     _ms->_balancer.reset(utils::factory_store<server_load_balancer>::create(
         _ms->_meta_opts._lb_opts.server_load_balancer_type.c_str(), PROVIDER_TYPE_MAIN, _ms.get()));
     _ms->_partition_guardian.reset(utils::factory_store<partition_guardian>::create(
@@ -70,7 +74,7 @@ void meta_test_base::TearDown()
     }
 
     _ss.reset();
-    _ms.reset(nullptr);
+    _ms.reset();
 }
 
 void meta_test_base::delete_all_on_meta_storage()
@@ -98,9 +102,9 @@ void meta_test_base::set_node_live_percentage_threshold_for_update(uint64_t perc
     _ms->_node_live_percentage_threshold_for_update = percentage_threshold;
 }
 
-std::vector<rpc_address> meta_test_base::get_alive_nodes() const
+std::vector<host_port> meta_test_base::get_alive_nodes() const
 {
-    std::vector<dsn::rpc_address> nodes;
+    std::vector<dsn::host_port> nodes;
 
     zauto_read_lock l(_ss->_lock);
 
@@ -113,13 +117,13 @@ std::vector<rpc_address> meta_test_base::get_alive_nodes() const
     return nodes;
 }
 
-std::vector<rpc_address> meta_test_base::ensure_enough_alive_nodes(int min_node_count)
+std::vector<host_port> meta_test_base::ensure_enough_alive_nodes(int min_node_count)
 {
     if (min_node_count < 1) {
-        return std::vector<dsn::rpc_address>();
+        return std::vector<dsn::host_port>();
     }
 
-    std::vector<dsn::rpc_address> nodes(get_alive_nodes());
+    std::vector<dsn::host_port> nodes(get_alive_nodes());
     if (!nodes.empty()) {
         auto node_count = static_cast<int>(nodes.size());
         CHECK_GE_MSG(node_count,
@@ -143,7 +147,7 @@ std::vector<rpc_address> meta_test_base::ensure_enough_alive_nodes(int min_node_
 
     while (true) {
         {
-            std::vector<dsn::rpc_address> alive_nodes(get_alive_nodes());
+            std::vector<dsn::host_port> alive_nodes(get_alive_nodes());
             if (static_cast<int>(alive_nodes.size()) >= min_node_count) {
                 break;
             }
@@ -219,7 +223,7 @@ meta_test_base::update_app_envs(const std::string &app_name,
     return rpc.response();
 }
 
-void meta_test_base::mock_node_state(const rpc_address &addr, const node_state &node)
+void meta_test_base::mock_node_state(const host_port &addr, const node_state &node)
 {
     _ss->_nodes[addr] = node;
 }

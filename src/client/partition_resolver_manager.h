@@ -30,7 +30,7 @@
 #include <map>
 #include "utils/singleton.h"
 #include "utils/zlocks.h"
-#include "runtime/rpc/rpc_address.h"
+#include "runtime/rpc/rpc_host_port.h"
 #include "client/partition_resolver.h"
 
 namespace dsn {
@@ -40,8 +40,9 @@ class partition_resolver_manager : public dsn::utils::singleton<partition_resolv
 {
 public:
     partition_resolver_ptr find_or_create(const char *cluster_name,
-                                          const std::vector<rpc_address> &meta_list,
-                                          const char *app_name);
+                                          const host_port_group &meta_list,
+                                          const char *app_name,
+                                          const std::shared_ptr<dns_resolver> &dns_resolver);
 
 private:
     dsn::zlock _lock;

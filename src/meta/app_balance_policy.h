@@ -44,11 +44,12 @@ private:
 class copy_secondary_operation : public copy_replica_operation
 {
 public:
+    // TODO(yingchun): ip
     copy_secondary_operation(const std::shared_ptr<app_state> app,
                              const app_mapper &apps,
                              node_mapper &nodes,
-                             const std::vector<dsn::rpc_address> &address_vec,
-                             const std::unordered_map<dsn::rpc_address, int> &address_id,
+                             const std::vector<dsn::host_port> &address_vec,
+                             const std::unordered_map<dsn::host_port, int> &address_id,
                              int replicas_low);
     ~copy_secondary_operation() = default;
 

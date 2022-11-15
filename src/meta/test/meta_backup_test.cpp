@@ -195,7 +195,8 @@ public:
           _app_name("test_app"),
           _app_id(1),
           _partition_count(8),
-          _backup_engine(nullptr)
+          _backup_engine(nullptr),
+          _dns_resolver(new dns_resolver())
     {
     }
 
@@ -204,7 +205,7 @@ public:
         meta_test_base::SetUp();
         _ms->_backup_handler =
             std::make_shared<backup_service>(_ms.get(), _policy_root, _backup_root, nullptr);
-        _backup_engine = std::make_shared<backup_engine>(_ms->_backup_handler.get());
+        _backup_engine = std::make_shared<backup_engine>(_ms->_backup_handler.get(), _dns_resolver);
         _backup_engine->set_block_service("local_service");
 
         zauto_lock lock(_backup_engine->_lock);
@@ -232,7 +233,7 @@ public:
                               int32_t progress)
     {
         gpid pid = gpid(_app_id, partition_index);
-        rpc_address mock_primary_address = rpc_address("127.0.0.1", 10000 + partition_index);
+        host_port mock_primary_address = host_port("127.0.0.1", 10000 + partition_index);
 
         backup_response resp;
         resp.backup_id = _backup_engine->_cur_backup.backup_id;
@@ -246,7 +247,7 @@ public:
     void mock_on_backup_reply_when_timeout(int32_t partition_index, error_code rpc_err)
     {
         gpid pid = gpid(_app_id, partition_index);
-        rpc_address mock_primary_address = rpc_address("127.0.0.1", 10000 + partition_index);
+        host_port mock_primary_address = host_port("127.0.0.1", 10000 + partition_index);
         backup_response resp;
         _backup_engine->on_backup_reply(rpc_err, resp, pid, mock_primary_address);
     }
@@ -270,6 +271,7 @@ protected:
     const int32_t _app_id;
     const int32_t _partition_count;
     std::shared_ptr<backup_engine> _backup_engine;
+    std::shared_ptr<dns_resolver> _dns_resolver;
 };
 
 TEST_F(backup_engine_test, test_on_backup_reply)

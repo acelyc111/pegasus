@@ -25,6 +25,7 @@
 #include "utils/command_manager.h"
 #include "utils/output_utils.h"
 #include "utils/string_conv.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -49,8 +50,9 @@ void duplication_sync_timer::run()
         }
     }
 
-    auto req = make_unique<duplication_sync_request>();
-    req->node = _stub->primary_address();
+    auto req = dsn::make_unique<duplication_sync_request>();
+    req->__set_node(_stub->primary_rpc_address());
+    req->__set_host_port_node(_stub->primary_address());
 
     // collects confirm points from all primaries on this server
     uint64_t pending_muts_cnt = 0;
@@ -64,14 +66,14 @@ void duplication_sync_timer::run()
     _stub->_counter_dup_pending_mutations_count->set(pending_muts_cnt);
 
     duplication_sync_rpc rpc(std::move(req), RPC_CM_DUPLICATION_SYNC, 3_s);
-    rpc_address meta_server_address(_stub->get_meta_server_address());
-    LOG_INFO_F("duplication_sync to meta({})", meta_server_address.to_string());
+    rpc_address leader =
+        _stub->get_dns_resolver()->resolve_address(_stub->get_meta_servers().leader());
+    LOG_INFO_F("duplication_sync to meta({}), leader({})", _stub->get_meta_servers(), leader);
 
     zauto_lock l(_lock);
-    _rpc_task =
-        rpc.call(meta_server_address, &_stub->_tracker, [this, rpc](error_code err) mutable {
-            on_duplication_sync_reply(err, rpc.response());
-        });
+    _rpc_task = rpc.call(leader, &_stub->_tracker, [this, rpc](error_code err) mutable {
+        on_duplication_sync_reply(err, rpc.response());
+    });
 }
 
 void duplication_sync_timer::on_duplication_sync_reply(error_code err,

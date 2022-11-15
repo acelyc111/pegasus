@@ -46,34 +46,34 @@ TEST(cluster_balance_policy, node_migration_info)
 {
     {
         cluster_balance_policy::node_migration_info info1;
-        info1.address = rpc_address(1, 10086);
+        info1.address = host_port("1.1.1.1", 10086);
         cluster_balance_policy::node_migration_info info2;
-        info2.address = rpc_address(2, 10086);
+        info2.address = host_port("1.1.1.2", 10086);
         ASSERT_LT(info1, info2);
     }
 
     {
         cluster_balance_policy::node_migration_info info1;
-        info1.address = rpc_address(1, 10000);
+        info1.address = host_port("1.1.1.1", 10000);
         cluster_balance_policy::node_migration_info info2;
-        info2.address = rpc_address(1, 10086);
+        info2.address = host_port("1.1.1.1", 10086);
         ASSERT_LT(info1, info2);
     }
 
     {
         cluster_balance_policy::node_migration_info info1;
-        info1.address = rpc_address(1, 10086);
+        info1.address = host_port("1.1.1.1", 10086);
         cluster_balance_policy::node_migration_info info2;
-        info2.address = rpc_address(1, 10086);
+        info2.address = host_port("1.1.1.1", 10086);
         ASSERT_EQ(info1, info2);
     }
 }
 
 TEST(cluster_balance_policy, get_skew)
 {
-    std::map<rpc_address, uint32_t> count_map = {
-        {rpc_address(1, 10086), 1}, {rpc_address(2, 10086), 3}, {rpc_address(3, 10086), 5},
-    };
+    std::map<host_port, uint32_t> count_map = {{host_port("1.1.1.1", 10086), 1},
+                                               {host_port("1.1.1.2", 10086), 3},
+                                               {host_port("1.1.1.3", 10086), 5}};
 
     ASSERT_EQ(get_skew(count_map), count_map.rbegin()->second - count_map.begin()->second);
 }
@@ -97,13 +97,13 @@ TEST(cluster_balance_policy, get_app_migration_info)
 
     int appid = 1;
     std::string appname = "test";
-    auto address = rpc_address(1, 10086);
+    auto address = host_port("1.1.1.1", 10086);
     app_info info;
     info.app_id = appid;
     info.app_name = appname;
     info.partition_count = 1;
     auto app = std::make_shared<app_state>(info);
-    app->partitions[0].primary = address;
+    app->partitions[0].__set_host_port_primary(address);
 
     node_state ns;
     ns.set_addr(address);
@@ -126,7 +126,7 @@ TEST(cluster_balance_policy, get_app_migration_info)
         ASSERT_TRUE(res);
         ASSERT_EQ(migration_info.app_id, appid);
         ASSERT_EQ(migration_info.app_name, appname);
-        std::map<rpc_address, partition_status::type> pstatus_map;
+        std::map<host_port, partition_status::type> pstatus_map;
         pstatus_map[address] = partition_status::type::PS_PRIMARY;
         ASSERT_EQ(migration_info.partitions[0], pstatus_map);
         ASSERT_EQ(migration_info.replicas_count[address], 1);
@@ -139,13 +139,13 @@ TEST(cluster_balance_policy, get_node_migration_info)
 
     int appid = 1;
     std::string appname = "test";
-    auto address = rpc_address(1, 10086);
+    auto address = host_port("1.1.1.1", 10086);
     app_info info;
     info.app_id = appid;
     info.app_name = appname;
     info.partition_count = 1;
     auto app = std::make_shared<app_state>(info);
-    app->partitions[0].primary = address;
+    app->partitions[0].__set_host_port_primary(address);
     serving_replica sr;
     sr.node = address;
     std::string disk_tag = "disk1";
@@ -176,33 +176,33 @@ TEST(cluster_balance_policy, get_node_migration_info)
 
 TEST(cluster_balance_policy, get_min_max_set)
 {
-    std::map<rpc_address, uint32_t> node_count_map;
-    node_count_map.emplace(rpc_address(1, 10086), 1);
-    node_count_map.emplace(rpc_address(2, 10086), 3);
-    node_count_map.emplace(rpc_address(3, 10086), 5);
-    node_count_map.emplace(rpc_address(4, 10086), 5);
+    std::map<host_port, uint32_t> node_count_map;
+    node_count_map.emplace(host_port("1.1.1.1", 10086), 1);
+    node_count_map.emplace(host_port("1.1.1.2", 10086), 3);
+    node_count_map.emplace(host_port("1.1.1.3", 10086), 5);
+    node_count_map.emplace(host_port("1.1.1.4", 10086), 5);
 
-    std::set<rpc_address> min_set, max_set;
+    std::set<host_port> min_set, max_set;
     get_min_max_set(node_count_map, min_set, max_set);
 
     ASSERT_EQ(min_set.size(), 1);
-    ASSERT_EQ(*min_set.begin(), rpc_address(1, 10086));
+    ASSERT_EQ(*min_set.begin(), host_port("1.1.1.1", 10086));
     ASSERT_EQ(max_set.size(), 2);
-    ASSERT_EQ(*max_set.begin(), rpc_address(3, 10086));
-    ASSERT_EQ(*max_set.rbegin(), rpc_address(4, 10086));
+    ASSERT_EQ(*max_set.begin(), host_port("1.1.1.3", 10086));
+    ASSERT_EQ(*max_set.rbegin(), host_port("1.1.1.4", 10086));
 }
 
 TEST(cluster_balance_policy, get_disk_partitions_map)
 {
     cluster_balance_policy policy(nullptr);
     cluster_balance_policy::cluster_migration_info cluster_info;
-    rpc_address addr(1, 10086);
+    host_port addr("1.1.1.1", 10086);
     int32_t app_id = 1;
 
     auto disk_partitions = policy.get_disk_partitions_map(cluster_info, addr, app_id);
     ASSERT_TRUE(disk_partitions.empty());
 
-    std::map<rpc_address, partition_status::type> partition;
+    std::map<host_port, partition_status::type> partition;
     partition[addr] = partition_status::PS_SECONDARY;
     cluster_balance_policy::app_migration_info app_info;
     app_info.partitions.push_back(partition);
@@ -230,11 +230,11 @@ TEST(cluster_balance_policy, get_max_load_disk_set)
     cluster_info.type = balance_type::COPY_SECONDARY;
 
     int32_t app_id = 1;
-    rpc_address addr(1, 10086);
-    rpc_address addr2(2, 10086);
-    std::map<rpc_address, partition_status::type> partition;
+    host_port addr("1.1.1.1", 10086);
+    host_port addr2("1.1.1.2", 10086);
+    std::map<host_port, partition_status::type> partition;
     partition[addr] = partition_status::PS_SECONDARY;
-    std::map<rpc_address, partition_status::type> partition2;
+    std::map<host_port, partition_status::type> partition2;
     partition2[addr] = partition_status::PS_SECONDARY;
     partition2[addr2] = partition_status::PS_SECONDARY;
     cluster_balance_policy::app_migration_info app_info;
@@ -264,7 +264,7 @@ TEST(cluster_balance_policy, get_max_load_disk_set)
     cluster_info.nodes_info[addr2] = node_info2;
 
     cluster_balance_policy policy(nullptr);
-    std::set<rpc_address> max_nodes;
+    std::set<host_port> max_nodes;
     max_nodes.insert(addr);
     max_nodes.insert(addr2);
 
@@ -280,11 +280,11 @@ TEST(cluster_balance_policy, apply_move)
     int32_t app_id = 1;
     int32_t partition_index = 1;
     minfo.pid = gpid(app_id, partition_index);
-    rpc_address source_node(1, 10086);
+    host_port source_node("1.1.1.1", 10086);
     minfo.source_node = source_node;
     std::string disk_tag = "disk1";
     minfo.source_disk_tag = disk_tag;
-    rpc_address target_node(2, 10086);
+    host_port target_node("1.1.1.2", 10086);
     minfo.target_node = target_node;
     minfo.type = balance_type::MOVE_PRIMARY;
 
@@ -335,7 +335,7 @@ TEST(cluster_balance_policy, apply_move)
     ASSERT_FALSE(res);
 
     // all of the partition status are not PS_SECONDARY
-    std::map<rpc_address, partition_status::type> partition_status;
+    std::map<host_port, partition_status::type> partition_status;
     partition_status[source_node] = partition_status::type::PS_PRIMARY;
     cluster_info.apps_info[app_id].partitions.push_back(partition_status);
     cluster_info.apps_info[app_id].partitions.push_back(partition_status);
@@ -370,9 +370,9 @@ TEST(cluster_balance_policy, apply_move)
 TEST(cluster_balance_policy, pick_up_partition)
 {
     cluster_balance_policy::cluster_migration_info cluster_info;
-    rpc_address addr(1, 10086);
+    host_port addr("1.1.1.1", 10086);
     int32_t app_id = 1;
-    std::map<rpc_address, partition_status::type> partition;
+    std::map<host_port, partition_status::type> partition;
     partition[addr] = partition_status::PS_SECONDARY;
     cluster_balance_policy::app_migration_info app_info;
     app_info.partitions.push_back(partition);
@@ -422,7 +422,7 @@ TEST(cluster_balance_policy, pick_up_partition)
         gpid pid(app_id, 0);
         max_load_partitions.insert(pid);
         partition_set selected_pid;
-        rpc_address not_exist_addr(3, 12345);
+        host_port not_exist_addr("1.1.1.3", 12345);
 
         gpid picked_pid;
         auto found = policy.pick_up_partition(
@@ -483,9 +483,9 @@ TEST(cluster_balance_policy, execute_balance)
 
 TEST(cluster_balance_policy, calc_potential_moving)
 {
-    auto addr1 = rpc_address(1, 1);
-    auto addr2 = rpc_address(1, 2);
-    auto addr3 = rpc_address(1, 3);
+    auto addr1 = host_port("1.1.1.1", 1);
+    auto addr2 = host_port("1.1.1.1", 2);
+    auto addr3 = host_port("1.1.1.1", 3);
 
     int32_t app_id = 1;
     dsn::app_info info;
@@ -493,9 +493,10 @@ TEST(cluster_balance_policy, calc_potential_moving)
     info.partition_count = 4;
     std::shared_ptr<app_state> app = app_state::create(info);
     partition_configuration pc;
-    pc.primary = addr1;
-    pc.secondaries.push_back(addr2);
-    pc.secondaries.push_back(addr3);
+    pc.__set_host_port_primary(addr1);
+    pc.__isset.host_port_secondaries = true;
+    pc.host_port_secondaries.push_back(addr2);
+    pc.host_port_secondaries.push_back(addr3);
     app->partitions[0] = pc;
     app->partitions[1] = pc;
 

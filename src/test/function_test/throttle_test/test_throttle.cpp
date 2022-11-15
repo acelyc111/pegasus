@@ -36,7 +36,6 @@
 #include "runtime/rpc/rpc_stream.h"
 #include "runtime/serverlet.h"
 #include "runtime/service_app.h"
-#include "runtime/rpc/rpc_address.h"
 #include "utils/fmt_logging.h"
 #include <fstream>
 

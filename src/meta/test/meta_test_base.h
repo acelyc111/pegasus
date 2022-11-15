@@ -39,6 +39,8 @@ class server_state;
 class meta_test_base : public testing::Test
 {
 public:
+    meta_test_base();
+
     ~meta_test_base();
 
     void SetUp() override;
@@ -55,7 +57,7 @@ public:
 
     void set_node_live_percentage_threshold_for_update(uint64_t percentage_threshold);
 
-    std::vector<rpc_address> ensure_enough_alive_nodes(int min_node_count);
+    std::vector<host_port> ensure_enough_alive_nodes(int min_node_count);
 
     // create an app for test with specified name and specified partition count
     void create_app(const std::string &name, uint32_t partition_count);
@@ -69,7 +71,7 @@ public:
                                                           const std::vector<std::string> &env_keys,
                                                           const std::vector<std::string> &env_vals);
 
-    void mock_node_state(const rpc_address &addr, const node_state &node);
+    void mock_node_state(const host_port &addr, const node_state &node);
 
     std::shared_ptr<app_state> find_app(const std::string &name);
 
@@ -84,7 +86,7 @@ public:
     std::string _app_root;
 
 private:
-    std::vector<rpc_address> get_alive_nodes() const;
+    std::vector<host_port> get_alive_nodes() const;
 };
 
 } // namespace replication

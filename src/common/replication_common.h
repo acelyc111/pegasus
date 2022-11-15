@@ -26,28 +26,31 @@
 
 #pragma once
 
-#include "runtime/api_task.h"
+#include <string>
+
+#include "common/gpid.h"
+#include "common/replication_other_types.h"
+#include "common/replication.codes.h"
 #include "runtime/api_layer1.h"
 #include "runtime/app_model.h"
+#include "runtime/api_task.h"
+#include "runtime/rpc/rpc_address.h"
+#include "runtime/rpc/rpc_host_port.h"
+#include "runtime/rpc/rpc_stream.h"
+#include "runtime/rpc/serialization.h"
+#include "runtime/serverlet.h"
+#include "runtime/service_app.h"
+#include "runtime/task/task_code.h"
 #include "utils/api_utilities.h"
 #include "utils/error_code.h"
 #include "utils/threadpool_code.h"
-#include "runtime/task/task_code.h"
-#include "common/gpid.h"
-#include "runtime/rpc/serialization.h"
-#include "runtime/rpc/rpc_stream.h"
-#include "runtime/serverlet.h"
-#include "runtime/service_app.h"
-#include "runtime/rpc/rpc_address.h"
-#include "common/replication_other_types.h"
-#include "common/replication.codes.h"
-#include <string>
 
 namespace dsn {
+class host_port;
 namespace replication {
 
-typedef std::unordered_map<::dsn::rpc_address, partition_status::type> node_statuses;
-typedef std::unordered_map<::dsn::rpc_address, dsn::task_ptr> node_tasks;
+typedef std::unordered_map<host_port, partition_status::type> node_statuses;
+typedef std::unordered_map<host_port, dsn::task_ptr> node_tasks;
 
 typedef rpc_holder<configuration_update_app_env_request, configuration_update_app_env_response>
     update_app_env_rpc;
@@ -57,7 +60,7 @@ typedef rpc_holder<query_replica_info_request, query_replica_info_response> quer
 class replication_options
 {
 public:
-    std::vector<::dsn::rpc_address> meta_servers;
+    ::dsn::host_port_group meta_servers1;
 
     std::string app_name;
     std::string app_dir;

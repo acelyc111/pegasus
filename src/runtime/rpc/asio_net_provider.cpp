@@ -69,8 +69,13 @@ asio_network_provider::~asio_network_provider()
 
 error_code asio_network_provider::start(rpc_channel channel, int port, bool client_only)
 {
-    if (_acceptor != nullptr)
+    CHECK(channel == RPC_CHANNEL_TCP || channel == RPC_CHANNEL_UDP,
+          "invalid given channel {}",
+          channel);
+
+    if (_acceptor != nullptr) {
         return ERR_SERVICE_ALREADY_RUNNING;
+    }
 
     // get connection threshold from config, default value 0 means no threshold
     _cfg_conn_threshold_per_ip = (uint32_t)dsn_config_get_value_uint64(
@@ -94,10 +99,7 @@ error_code asio_network_provider::start(rpc_channel channel, int port, bool clie
 
     _acceptor = nullptr;
 
-    CHECK(channel == RPC_CHANNEL_TCP || channel == RPC_CHANNEL_UDP,
-          "invalid given channel {}",
-          channel);
-
+    // TODO: use local function instead
     _address.assign_ipv4(get_local_ipv4(), port);
 
     if (!client_only) {
@@ -107,23 +109,23 @@ error_code asio_network_provider::start(rpc_channel channel, int port, bool clie
         _acceptor.reset(new boost::asio::ip::tcp::acceptor(get_io_service()));
         _acceptor->open(endpoint.protocol(), ec);
         if (ec) {
-            LOG_ERROR("asio tcp acceptor open failed, error = %s", ec.message().c_str());
+            LOG_ERROR_F("asio tcp acceptor open failed, error = {}", ec.message());
             _acceptor.reset();
             return ERR_NETWORK_INIT_FAILED;
         }
         _acceptor->set_option(boost::asio::socket_base::reuse_address(true));
         _acceptor->bind(endpoint, ec);
         if (ec) {
-            LOG_ERROR("asio tcp acceptor bind failed, error = %s", ec.message().c_str());
+            LOG_ERROR_F("asio tcp acceptor bind failed, error = {}", ec.message());
             _acceptor.reset();
             return ERR_NETWORK_INIT_FAILED;
         }
         int backlog = boost::asio::socket_base::max_connections;
         _acceptor->listen(backlog, ec);
         if (ec) {
-            LOG_ERROR("asio tcp acceptor listen failed, port = %u, error = %s",
-                      _address.port(),
-                      ec.message().c_str());
+            LOG_ERROR_F("asio tcp acceptor listen failed, port = %u, error = {}",
+                        _address.port(),
+                        ec.message());
             _acceptor.reset();
             return ERR_NETWORK_INIT_FAILED;
         }
@@ -145,10 +147,11 @@ void asio_network_provider::do_accept()
     auto socket = std::make_shared<boost::asio::ip::tcp::socket>(get_io_service());
 
     _acceptor->async_accept(*socket, [this, socket](boost::system::error_code ec) {
+        // TODO: use do..while.. to simplify code
         if (!ec) {
             auto remote = socket->remote_endpoint(ec);
             if (ec) {
-                LOG_ERROR("failed to get the remote endpoint: %s", ec.message().data());
+                LOG_ERROR_F("failed to get the remote endpoint: {}", ec.message().data());
             } else {
                 auto ip = remote.address().to_v4().to_ulong();
                 auto port = remote.port();
@@ -164,10 +167,10 @@ void asio_network_provider::do_accept()
 
                 // when server connection threshold is hit, close the session, otherwise accept it
                 if (check_if_conn_threshold_exceeded(s->remote_address())) {
-                    LOG_WARNING("close rpc connection from %s to %s due to hitting server "
-                                "connection threshold per ip",
-                                s->remote_address().to_string(),
-                                address().to_string());
+                    LOG_WARNING_F("close rpc connection from {} to {} due to hitting server "
+                                  "connection threshold per ip",
+                                  s->remote_address(),
+                                  address());
                     s->close();
                 } else {
                     on_server_session_accepted(s);
@@ -403,7 +406,7 @@ error_code asio_udp_provider::start(rpc_channel channel, int port, bool client_o
     return ERR_OK;
 }
 
-// use a round-robin scheme to choose the next io_service to use.
+// use a random scheme to choose the next io_service to use.
 boost::asio::io_service &asio_network_provider::get_io_service()
 {
     return *_io_services[rand::next_u32(0, FLAGS_io_service_worker_count - 1)];

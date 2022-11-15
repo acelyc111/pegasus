@@ -42,7 +42,15 @@ namespace replication {
 class replica_stub_test_base : public ::testing::Test
 {
 public:
-    replica_stub_test_base() { stub = make_unique<mock_replica_stub>(); }
+    replica_stub_test_base()
+    {
+        stub = make_unique<mock_replica_stub>();
+        host_port_group hpg;
+        hpg.add(dsn_primary_host_port());
+        stub->set_failure_detector_TEST(
+            std::make_shared<dsn::dist::slave_failure_detector_with_multimaster>(
+                nullptr, hpg, nullptr, nullptr));
+    }
 
     ~replica_stub_test_base() { stub.reset(); }
 

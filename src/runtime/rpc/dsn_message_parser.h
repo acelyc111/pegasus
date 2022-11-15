@@ -24,15 +24,6 @@
 * THE SOFTWARE.
 */
 
-/*
-* Description:
-*     message parser for browser-generated http request
-*
-* Revision history:
-*     Jun. 2016, Zuoyan Qin, first version
-*     xxxx-xx-xx, author, fix bug about xxx
-*/
-
 #pragma once
 
 #include "runtime/rpc/message_parser.h"
@@ -44,21 +35,15 @@ class dsn_message_parser : public message_parser
 {
 public:
     dsn_message_parser() : _header_checked(false) {}
-    virtual ~dsn_message_parser() {}
+    ~dsn_message_parser() override {}
 
-    virtual void reset() override;
+    void reset() override;
 
-    virtual message_ex *get_message_on_receive(message_reader *reader,
-                                               /*out*/ int &read_next) override;
+    message_ex *get_message_on_receive(message_reader *reader, /*out*/ int &read_next) override;
 
-    virtual void prepare_on_send(message_ex *msg) override;
+    void prepare_on_send(message_ex *msg) override;
 
-    virtual int get_buffers_on_send(message_ex *msg, /*out*/ send_buf *buffers) override;
-
-private:
-    static bool is_right_header(char *hdr);
-
-    static bool is_right_body(message_ex *msg);
+    int get_buffers_on_send(message_ex *msg, /*out*/ send_buf *buffers) override;
 
 private:
     bool _header_checked;

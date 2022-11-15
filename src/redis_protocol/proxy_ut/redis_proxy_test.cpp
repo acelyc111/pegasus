@@ -499,7 +499,7 @@ TEST_F(proxy_test, test_parse_parameters)
     }
 }
 
-TEST(proxy, connection)
+TEST_F(proxy_test, connection)
 {
     ::dsn::rpc_address redis_address("127.0.0.1", 12345);
     ip::tcp::endpoint redis_endpoint(ip::address_v4(redis_address.ip()), redis_address.port());

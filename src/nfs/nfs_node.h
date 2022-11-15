@@ -37,7 +37,7 @@ namespace dsn {
 
 struct remote_copy_request
 {
-    dsn::rpc_address source;
+    dsn::host_port host_port_source;
     std::string source_disk_tag;
     std::string source_dir;
     std::vector<std::string> files;
@@ -47,13 +47,14 @@ struct remote_copy_request
     bool high_priority;
 };
 
+class dns_resolver;
 class nfs_node
 {
 public:
-    static std::unique_ptr<nfs_node> create();
+    static std::unique_ptr<nfs_node> create(const std::shared_ptr<dns_resolver> &resolver);
 
 public:
-    aio_task_ptr copy_remote_directory(const rpc_address &remote,
+    aio_task_ptr copy_remote_directory(const host_port &remote,
                                        const std::string &source_disk_tag,
                                        const std::string &source_dir,
                                        const std::string &dest_disk_tag,
@@ -64,7 +65,7 @@ public:
                                        task_tracker *tracker,
                                        aio_handler &&callback,
                                        int hash = 0);
-    aio_task_ptr copy_remote_files(const rpc_address &remote,
+    aio_task_ptr copy_remote_files(const host_port &remote,
                                    const std::string &source_disk_tag,
                                    const std::string &source_dir,
                                    const std::vector<std::string> &files, // empty for all

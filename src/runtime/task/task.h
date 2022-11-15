@@ -416,7 +416,7 @@ class rpc_request_task : public task
 {
 public:
     rpc_request_task(message_ex *request, rpc_request_handler &&h, service_node *node);
-    virtual ~rpc_request_task() override;
+    ~rpc_request_task() override;
 
     message_ex *get_request() const { return _request; }
 
@@ -431,10 +431,11 @@ public:
                 _handler(_request);
             }
         } else {
-            LOG_DEBUG("rpc_request_task(%s) from(%s) stop to execute due to timeout_ms(%d) exceed",
-                      spec().name.c_str(),
-                      _request->header->from_address.to_string(),
-                      _request->header->client.timeout_ms);
+            LOG_DEBUG_F(
+                "rpc_request_task({}) from({}) stop to execute due to timeout_ms({}) exceed",
+                spec().name,
+                _request->header->from_address,
+                _request->header->client.timeout_ms);
             spec().on_rpc_task_dropped.execute(this);
         }
     }
@@ -460,7 +461,7 @@ public:
                       rpc_response_handler &&cb,
                       int hash,
                       service_node *node = nullptr);
-    virtual ~rpc_response_task() override;
+    ~rpc_response_task() override;
 
     // return true for normal case, false for fault injection applied
     bool enqueue(error_code err, message_ex *reply);

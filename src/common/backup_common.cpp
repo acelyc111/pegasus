@@ -98,8 +98,8 @@ std::string get_current_chkpt_file(const std::string &root,
 std::string get_remote_chkpt_dirname()
 {
     // here using server address as suffix of remote_chkpt_dirname
-    std::string local_address = dsn_primary_address().ipv4_str();
-    std::string port = std::to_string(dsn_primary_address().port());
+    std::string local_address = dsn_primary_host_port().host();
+    std::string port = std::to_string(dsn_primary_host_port().port());
     return "chkpt_" + local_address + "_" + port;
 }
 

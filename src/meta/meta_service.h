@@ -53,6 +53,7 @@
 #include "partition_guardian.h"
 #include "meta_server_failure_detector.h"
 #include "runtime/security/access_controller.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace security {
@@ -141,20 +142,20 @@ public:
     {
         dsn_rpc_reply(response);
     }
-    virtual void send_message(const rpc_address &target, dsn::message_ex *request)
+    virtual void send_message(const host_port &target, dsn::message_ex *request)
     {
-        dsn_rpc_call_one_way(target, request);
+        dsn_rpc_call_one_way(_dns_resolver->resolve_address(target), request);
     }
     virtual void send_request(dsn::message_ex * /*req*/,
-                              const rpc_address &target,
+                              const host_port &target,
                               const rpc_response_task_ptr &callback)
     {
-        dsn_rpc_call(target, callback);
+        dsn_rpc_call(_dns_resolver->resolve_address(target), callback);
     }
 
     // these two callbacks are running in fd's thread_pool, and in fd's lock
-    void set_node_state(const std::vector<rpc_address> &nodes_list, bool is_alive);
-    void get_node_state(/*out*/ std::map<rpc_address, bool> &all_nodes);
+    void set_node_state(const std::vector<host_port> &nodes_list, bool is_alive);
+    void get_node_state(/*out*/ std::map<host_port, bool> &all_nodes);
 
     void start_service();
     void balancer_run();
@@ -167,14 +168,7 @@ public:
     void unlock_meta_op_status();
     meta_op_status get_op_status() const { return _meta_op_status.load(); }
 
-    std::string get_meta_list_string() const
-    {
-        std::string metas;
-        for (const auto &node : _opts.meta_servers) {
-            metas = fmt::format("{}{},", metas, node.to_string());
-        }
-        return metas.substr(0, metas.length() - 1);
-    }
+    std::shared_ptr<dns_resolver> get_dns_resolver() { return _dns_resolver; }
 
 private:
     void register_rpc_handlers();
@@ -252,20 +246,21 @@ private:
     void on_get_max_replica_count(configuration_get_max_replica_count_rpc rpc);
     void on_set_max_replica_count(configuration_set_max_replica_count_rpc rpc);
 
+    // TODO(yingchun): refactor the return value to enum class
     // common routines
     // ret:
     //   1. the meta is leader
     //   0. meta isn't leader, and rpc-msg can forward to others
     //  -1. meta isn't leader, and rpc-msg can't forward to others
     // if return -1 and `forward_address' != nullptr, then return leader by `forward_address'.
-    int check_leader(dsn::message_ex *req, dsn::rpc_address *forward_address);
+    int check_leader(dsn::message_ex *req, host_port *forward_address);
     template <typename TRpcHolder>
-    int check_leader(TRpcHolder rpc, /*out*/ rpc_address *forward_address);
+    int check_leader(TRpcHolder rpc, /*out*/ host_port *forward_address);
     // ret:
     //    false: check failed
     //    true:  check succeed
     template <typename TRpcHolder>
-    bool check_status(TRpcHolder rpc, /*out*/ rpc_address *forward_address = nullptr);
+    bool check_status(TRpcHolder rpc, /*out*/ host_port *forward_address = nullptr);
     template <typename TRespType>
     bool check_status_with_msg(message_ex *req, TRespType &response_struct);
 
@@ -317,8 +312,8 @@ private:
 
     // [
     // this is protected by failure_detector::_lock
-    std::set<rpc_address> _alive_set;
-    std::set<rpc_address> _dead_set;
+    std::set<host_port> _alive_set;
+    std::set<host_port> _dead_set;
     // ]
     mutable zrwlock_nr _meta_lock;
 
@@ -339,12 +334,15 @@ private:
 
     // indicate which operation is processeding in meta server
     std::atomic<meta_op_status> _meta_op_status;
+
+    std::shared_ptr<dns_resolver> _dns_resolver;
 };
 
 template <typename TRpcHolder>
-int meta_service::check_leader(TRpcHolder rpc, rpc_address *forward_address)
+int meta_service::check_leader(TRpcHolder rpc, host_port *forward_address)
 {
-    dsn::rpc_address leader;
+    host_port leader;
+    // TODO(yingchun): refactor if-statements
     if (!_failure_detector->get_leader(&leader)) {
         if (!rpc.dsn_request()->header->context.u.is_forward_supported) {
             if (forward_address != nullptr)
@@ -352,13 +350,14 @@ int meta_service::check_leader(TRpcHolder rpc, rpc_address *forward_address)
             return -1;
         }
 
-        LOG_DEBUG("leader address: %s", leader.to_string());
-        if (!leader.is_invalid()) {
-            rpc.forward(leader);
+        LOG_DEBUG_F("leader address: {}", leader);
+        if (leader.initialized()) {
+            rpc.forward(_dns_resolver->resolve_address(leader));
             return 0;
         } else {
-            if (forward_address != nullptr)
-                forward_address->set_invalid();
+            if (forward_address != nullptr) {
+                forward_address->reset();
+            }
             return -1;
         }
     }
@@ -366,7 +365,7 @@ int meta_service::check_leader(TRpcHolder rpc, rpc_address *forward_address)
 }
 
 template <typename TRpcHolder>
-bool meta_service::check_status(TRpcHolder rpc, rpc_address *forward_address)
+bool meta_service::check_status(TRpcHolder rpc, host_port *forward_address)
 {
     if (!_access_controller->allowed(rpc.dsn_request())) {
         rpc.response().err = ERR_ACL_DENY;

@@ -24,16 +24,7 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-#ifndef replication_OTHER_TYPES_H
-#define replication_OTHER_TYPES_H
+#pragma once
 
 #include <sstream>
 #include "meta_admin_types.h"
@@ -52,52 +43,69 @@ typedef int32_t app_id;
 typedef int64_t ballot;
 typedef int64_t decree;
 
+// TODO: refactor: renaming
 #define invalid_ballot ((::dsn::replication::ballot)-1LL)
 #define invalid_decree ((::dsn::replication::decree)-1LL)
 #define invalid_offset (-1LL)
 #define invalid_signature 0
 
-inline bool is_primary(const partition_configuration &pc, const rpc_address &node)
+// TODO: make sure now only operate on host_port
+inline bool is_primary(const partition_configuration &pc, const host_port &node)
 {
-    return !node.is_invalid() && pc.primary == node;
+    return node.initialized() && pc.host_port_primary == node;
 }
-inline bool is_secondary(const partition_configuration &pc, const rpc_address &node)
+
+inline bool is_secondary(const partition_configuration &pc, const host_port &node)
 {
-    return !node.is_invalid() &&
-           std::find(pc.secondaries.begin(), pc.secondaries.end(), node) != pc.secondaries.end();
+    return node.initialized() &&
+           std::find(pc.host_port_secondaries.begin(), pc.host_port_secondaries.end(), node) !=
+               pc.host_port_secondaries.end();
 }
-inline bool is_member(const partition_configuration &pc, const rpc_address &node)
+
+inline bool is_member(const partition_configuration &pc, const host_port &node)
 {
     return is_primary(pc, node) || is_secondary(pc, node);
 }
+
 inline bool is_partition_config_equal(const partition_configuration &pc1,
                                       const partition_configuration &pc2)
 {
     // secondaries no need to be same order
-    for (const rpc_address &addr : pc1.secondaries)
-        if (!is_secondary(pc2, addr))
+    LOG_INFO_F("is_partition_config_equal");
+    for (const auto &secondary : pc1.host_port_secondaries) {
+        LOG_INFO_F("secondary: {}", secondary);
+    }
+    for (const auto &secondary : pc2.host_port_secondaries) {
+        LOG_INFO_F("secondary: {}", secondary);
+    }
+    for (const auto &node : pc1.host_port_secondaries) {
+        if (!is_secondary(pc2, node)) {
             return false;
+        }
+    }
+    LOG_INFO_F("pc1.ballot: {}, pc1.pid: {}, pc1.max_replica_count: {}, pc1.host_port_primary: {}, "
+               "pc1.host_port_secondaries.size(): {}, pc1.last_committed_decree: {}",
+               pc1.ballot,
+               pc1.pid,
+               pc1.max_replica_count,
+               pc1.host_port_primary,
+               pc1.host_port_secondaries.size(),
+               pc1.last_committed_decree);
+    LOG_INFO_F("pc2.ballot: {}, pc2.pid: {}, pc2.max_replica_count: {}, pc2.host_port_primary: {}, "
+               "pc2.host_port_secondaries.size(): {}, pc2.last_committed_decree: {}",
+               pc2.ballot,
+               pc2.pid,
+               pc2.max_replica_count,
+               pc2.host_port_primary,
+               pc2.host_port_secondaries.size(),
+               pc2.last_committed_decree);
     // last_drops is not considered into equality check
     return pc1.ballot == pc2.ballot && pc1.pid == pc2.pid &&
-           pc1.max_replica_count == pc2.max_replica_count && pc1.primary == pc2.primary &&
-           pc1.secondaries.size() == pc2.secondaries.size() &&
+           pc1.max_replica_count == pc2.max_replica_count &&
+           pc1.host_port_primary == pc2.host_port_primary &&
+           pc1.host_port_secondaries.size() == pc2.host_port_secondaries.size() &&
            pc1.last_committed_decree == pc2.last_committed_decree;
 }
 
-class replica_helper
-{
-public:
-    static bool remove_node(::dsn::rpc_address node,
-                            /*inout*/ std::vector<::dsn::rpc_address> &nodeList);
-    static bool get_replica_config(const partition_configuration &partition_config,
-                                   ::dsn::rpc_address node,
-                                   /*out*/ replica_configuration &replica_config);
-    // true if meta_list's value of config is valid, otherwise return false
-    static bool load_meta_servers(/*out*/ std::vector<dsn::rpc_address> &servers,
-                                  const char *section = "meta_server",
-                                  const char *key = "server_list");
-};
-}
-} // namespace
-
-#endif
+} // namespace replication
+} // namespace dsn

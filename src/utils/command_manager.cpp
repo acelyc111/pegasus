@@ -114,7 +114,7 @@ command_manager::command_manager()
                                                 }
                                             } else {
                                                 utils::auto_read_lock l(_lock);
-                                                auto it = _handlers.find(args[0]);
+                                                const auto &it = _handlers.find(args[0]);
                                                 if (it == _handlers.end())
                                                     ss << "cannot find command '" << args[0] << "'";
                                                 else {
@@ -178,6 +178,7 @@ command_manager::command_manager()
 command_manager::~command_manager()
 {
     _cmds.clear();
+    utils::auto_read_lock l(_lock);
     CHECK(_handlers.empty(),
           "All commands must be deregistered before command_manager is destroyed, however {} is "
           "still registered",

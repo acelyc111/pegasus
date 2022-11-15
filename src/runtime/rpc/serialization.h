@@ -26,10 +26,11 @@
 
 #pragma once
 
-#include "utils/utils.h"
-#include "rpc_address.h"
-#include "runtime/rpc/rpc_stream.h"
 #include "common/serialization_helper/thrift_helper.h"
+#include "runtime/rpc/rpc_address.h"
+#include "runtime/rpc/rpc_host_port.h"
+#include "runtime/rpc/rpc_stream.h"
+#include "utils/utils.h"
 
 namespace dsn {
 namespace serialization {

@@ -17,12 +17,12 @@
  * under the License.
  */
 
+#include "common/replication_common.h"
+
 #include <fstream>
 #include <gtest/gtest.h>
 
 #include "utils/filesystem.h"
-
-#include "common/replication_common.h"
 
 namespace dsn {
 namespace replication {

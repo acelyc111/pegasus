@@ -60,9 +60,9 @@ available_detector::available_detector()
         "available_detect_alert_email_address",
         "",
         "available detect alert email address, empty means not send email");
-    _meta_list.clear();
-    dsn::replication::replica_helper::load_meta_servers(_meta_list);
-    CHECK(!_meta_list.empty(), "");
+    CHECK(dsn::host_port_group::load_servers("meta_server", "server_list", &_meta_list).is_ok(),
+          "");
+
     _detect_interval_seconds =
         (uint32_t)dsn_config_get_value_uint64("pegasus.collector",
                                               "available_detect_interval_seconds",
@@ -85,7 +85,7 @@ available_detector::available_detector()
     CHECK_NOTNULL(_client, "Initialize the _client failed");
     _result_writer = dsn::make_unique<result_writer>(_client);
     _ddl_client.reset(new replication_ddl_client(_meta_list));
-    CHECK_NOTNULL(_ddl_client, "Initialize the _ddl_client failed");
+    CHECK(_ddl_client, "Initialize the _ddl_client failed");
     if (!_alert_email_address.empty()) {
         _send_alert_email_cmd = "cd " + _alert_script_dir + "; bash sendmail.sh alert " +
                                 _alert_email_address + " " + _cluster_name + " " + _app_name + " ";

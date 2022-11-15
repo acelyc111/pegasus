@@ -248,7 +248,7 @@ mock_private :
     //
 
     mock_virtual bool
-    update_partition_progress_unlocked(gpid pid, int32_t progress, const rpc_address &source);
+    update_partition_progress_unlocked(gpid pid, int32_t progress, const host_port &source);
     mock_virtual void record_partition_checkpoint_size_unlock(const gpid& pid, int64_t size);
 
     mock_virtual void start_backup_app_meta_unlocked(int32_t app_id);
@@ -277,7 +277,7 @@ mock_private :
     mock_virtual void on_backup_reply(dsn::error_code err,
                                       backup_response &&response,
                                       gpid pid,
-                                      const rpc_address &primary);
+                                      const host_port &primary);
 
     mock_virtual void gc_backup_info_unlocked(const backup_info &info_to_gc);
     mock_virtual void issue_gc_backup_info_task_unlocked();

@@ -24,15 +24,6 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     Replication testing framework.
- *
- * Revision history:
- *     Nov., 2015, @qinzuoyan (Zuoyan Qin), first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #pragma once
 
 #include "runtime/service_app.h"
@@ -44,8 +35,10 @@
 #include "consensus_types.h"
 #include "replica_admin_types.h"
 #include "replica/storage/simple_kv/simple_kv.client.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
+class dns_resolver;
 namespace replication {
 namespace test {
 
@@ -62,14 +55,15 @@ public:
 
     void begin_read(int id, const std::string &key, int timeout_ms);
     void begin_write(int id, const std::string &key, const std::string &value, int timeout_ms);
-    void send_config_to_meta(const rpc_address &receiver,
+    void send_config_to_meta(const host_port &receiver,
                              dsn::replication::config_type::type type,
-                             const rpc_address &node);
+                             const host_port &node);
 
 private:
+    std::unique_ptr<dns_resolver> _resolver;
     std::unique_ptr<application::simple_kv_client> _simple_kv_client;
-    rpc_address _meta_server_group;
-    rpc_address _service_addr;
+    host_port_group _meta_server_group;
+    host_port _service_addr;
     dsn::task_tracker _tracker;
 };
 }

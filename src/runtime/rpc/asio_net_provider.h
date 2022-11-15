@@ -35,7 +35,7 @@ namespace tools {
 /// asio_network_provider is a wrapper of Asio library for rDSN to accept a connection and create
 /// sockets. Each io_service only allows one thread polling, so the operations of the single socket
 /// are always done in a single thread. we create many io_service instances to take advantage of the
-/// multi-core capabilities of the processor, and use the round-robin scheme to decide which
+/// multi-core capabilities of the processor, and use the random scheme to decide which
 /// io_service for socket to choose.
 ///
 ///    +-----------------------------------------------+
@@ -62,9 +62,9 @@ public:
 
     ~asio_network_provider() override;
 
-    virtual error_code start(rpc_channel channel, int port, bool client_only) override;
-    virtual ::dsn::rpc_address address() override { return _address; }
-    virtual rpc_session_ptr create_client_session(::dsn::rpc_address server_addr) override;
+    error_code start(rpc_channel channel, int port, bool client_only) override;
+    ::dsn::rpc_address address() override { return _address; }
+    rpc_session_ptr create_client_session(::dsn::rpc_address server_addr) override;
 
 private:
     void do_accept();

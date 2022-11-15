@@ -24,15 +24,6 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #include "nfs_node_simple.h"
 #include "nfs_client_impl.h"
 #include "nfs_server_impl.h"
@@ -40,10 +31,9 @@
 namespace dsn {
 namespace service {
 
-nfs_node_simple::nfs_node_simple() : nfs_node()
+nfs_node_simple::nfs_node_simple(const std::shared_ptr<dns_resolver> &resolver)
+    : _dns_resolver(resolver)
 {
-    _server = nullptr;
-    _client = nullptr;
 }
 
 nfs_node_simple::~nfs_node_simple() { stop(); }
@@ -53,24 +43,18 @@ void nfs_node_simple::call(std::shared_ptr<remote_copy_request> rci, aio_task *c
     _client->begin_remote_copy(rci, callback); // copy file request entry
 }
 
+// TODO(yingchun): remove return code
 error_code nfs_node_simple::start()
 {
-    _server = new nfs_service_impl();
+    _server = dsn::make_unique<nfs_service_impl>();
     _server->open_service();
 
-    _client = new nfs_client_impl();
-    return ERR_OK;
-}
-
-error_code nfs_node_simple::stop()
-{
-    delete _server;
-    _server = nullptr;
-
-    delete _client;
-    _client = nullptr;
+    _client = dsn::make_unique<nfs_client_impl>(_dns_resolver);
 
     return ERR_OK;
 }
+
+// TODO(yingchun): remove return code
+error_code nfs_node_simple::stop() { return ERR_OK; }
 } // namespace service
 } // namespace dsn

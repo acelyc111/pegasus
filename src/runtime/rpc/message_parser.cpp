@@ -24,15 +24,6 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #include "message_parser_manager.h"
 #include "runtime/api_task.h"
 #include "runtime/api_layer1.h"
@@ -139,13 +130,12 @@ char *message_reader::read_buffer_ptr(unsigned int read_next)
     if (read_next + _buffer_occupied > _buffer.length()) {
         // remember currently read content
         blob rb;
-        if (_buffer_occupied > 0)
+        if (_buffer_occupied > 0) {
             rb = _buffer.range(0, _buffer_occupied);
+        }
 
         // switch to next
-        unsigned int sz =
-            (read_next + _buffer_occupied > _buffer_block_size ? read_next + _buffer_occupied
-                                                               : _buffer_block_size);
+        unsigned int sz = std::max(read_next + _buffer_occupied, _buffer_block_size);
         // TODO(wutao1): make it a buffer queue like what sofa-pbrpc does
         //               (https://github.com/baidu/sofa-pbrpc/blob/master/src/sofa/pbrpc/buffer.h)
         //               to reduce memory copy.
@@ -193,9 +183,10 @@ void message_parser_manager::register_factory(network_header_format fmt,
 message_parser *message_parser_manager::create_parser(network_header_format fmt)
 {
     parser_factory_info &info = _factory_vec[fmt];
-    if (info.factory)
+    if (info.factory) {
         return info.factory();
-    else
+    } else {
         return nullptr;
+    }
 }
 }

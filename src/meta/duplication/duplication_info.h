@@ -53,7 +53,7 @@ public:
                      int32_t partition_count,
                      uint64_t create_now_ms,
                      std::string follower_cluster_name,
-                     std::vector<rpc_address> &&follower_cluster_metas,
+                     host_port_group &&follower_cluster_metas,
                      std::string meta_store_path)
         : id(dupid),
           app_id(appid),
@@ -237,7 +237,7 @@ public:
     const int32_t partition_count{0};
 
     const std::string follower_cluster_name;
-    const std::vector<rpc_address> follower_cluster_metas;
+    const host_port_group follower_cluster_metas;
     const std::string store_path; // store path on meta service = get_duplication_path(app, dupid)
     const uint64_t create_timestamp_ms{0}; // the time when this dup is created.
     const std::string prefix_for_log;

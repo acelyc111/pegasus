@@ -414,6 +414,8 @@ private:
     static const std::string META_COLUMN_FAMILY_NAME;
 
     dsn::gpid _gpid;
+    // In IP address format, used to fill the 'server' field of response messages.
+    // TODO(yingchun): to keep compatiblity, FQDN format should be returned in another field.
     std::string _primary_address;
     bool _verbose_log;
     uint64_t _abnormal_get_size_threshold;

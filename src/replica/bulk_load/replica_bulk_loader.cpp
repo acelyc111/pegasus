@@ -15,14 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#include "replica_bulk_loader.h"
+
 #include "block_service/block_service.h"
-#include "utils/fmt_logging.h"
+#include "replica/disk_cleaner.h"
 #include "replica/replication_app_base.h"
+#include "runtime/rpc/dns_resolver.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
-
-#include "replica_bulk_loader.h"
-#include "replica/disk_cleaner.h"
+#include "utils/fmt_logging.h"
 
 namespace dsn {
 namespace replication {
@@ -109,13 +110,13 @@ void replica_bulk_loader::broadcast_group_bulk_load(const bulk_load_request &met
 
     LOG_INFO_PREFIX("start to broadcast group bulk load");
 
-    for (const auto &addr : _replica->_primary_states.membership.secondaries) {
+    for (const auto &addr : _replica->_primary_states.membership.host_port_secondaries) {
         if (addr == _stub->_primary_address)
             continue;
 
         auto request = make_unique<group_bulk_load_request>();
         request->app_name = _replica->_app_info.app_name;
-        request->target_address = addr;
+        request->__set_host_port_target_address(addr);
         _replica->_primary_states.get_replica_config(partition_status::PS_SECONDARY,
                                                      request->config);
         request->cluster_name = meta_req.cluster_name;
@@ -127,9 +128,12 @@ void replica_bulk_loader::broadcast_group_bulk_load(const bulk_load_request &met
 
         group_bulk_load_rpc rpc(
             std::move(request), RPC_GROUP_BULK_LOAD, 0_ms, 0, get_gpid().thread_hash());
-        auto callback_task = rpc.call(addr, tracker(), [this, rpc](error_code err) mutable {
-            on_group_bulk_load_reply(err, rpc.request(), rpc.response());
-        });
+        auto callback_task =
+            rpc.call(_replica->get_dns_resolver()->resolve_address(addr),
+                     tracker(),
+                     [this, rpc](error_code err) mutable {
+                         on_group_bulk_load_reply(err, rpc.request(), rpc.response());
+                     });
         _replica->_primary_states.group_bulk_load_pending_replies[addr] = callback_task;
     }
 }
@@ -168,7 +172,7 @@ void replica_bulk_loader::on_group_bulk_load(const group_bulk_load_request &requ
 
     LOG_INFO_PREFIX("receive group_bulk_load request, primary address = {}, ballot = {}, "
                     "meta bulk_load_status = {}, local bulk_load_status = {}",
-                    request.config.primary.to_string(),
+                    request.config.host_port_primary.to_string(),
                     request.config.ballot,
                     enum_to_string(request.meta_bulk_load_status),
                     enum_to_string(_status));
@@ -201,35 +205,36 @@ void replica_bulk_loader::on_group_bulk_load_reply(error_code err,
         return;
     }
 
-    _replica->_primary_states.group_bulk_load_pending_replies.erase(req.target_address);
+    _replica->_primary_states.group_bulk_load_pending_replies.erase(req.host_port_target_address);
 
     if (err != ERR_OK) {
         LOG_ERROR_PREFIX("failed to receive group_bulk_load_reply from {}, error = {}",
-                         req.target_address.to_string(),
+                         req.host_port_target_address.to_string(),
                          err.to_string());
-        _replica->_primary_states.reset_node_bulk_load_states(req.target_address);
+        _replica->_primary_states.reset_node_bulk_load_states(req.host_port_target_address);
         return;
     }
 
     if (resp.err != ERR_OK) {
         LOG_ERROR_PREFIX("receive group_bulk_load response from {} failed, error = {}",
-                         req.target_address.to_string(),
+                         req.host_port_target_address.to_string(),
                          resp.err.to_string());
-        _replica->_primary_states.reset_node_bulk_load_states(req.target_address);
+        _replica->_primary_states.reset_node_bulk_load_states(req.host_port_target_address);
         return;
     }
 
     if (req.config.ballot != get_ballot()) {
         LOG_ERROR_PREFIX("recevied wrong group_bulk_load response from {}, request ballot = {}, "
                          "current ballot = {}",
-                         req.target_address.to_string(),
+                         req.host_port_target_address.to_string(),
                          req.config.ballot,
                          get_ballot());
-        _replica->_primary_states.reset_node_bulk_load_states(req.target_address);
+        _replica->_primary_states.reset_node_bulk_load_states(req.host_port_target_address);
         return;
     }
 
-    _replica->_primary_states.secondary_bulk_load_states[req.target_address] = resp.bulk_load_state;
+    _replica->_primary_states.secondary_bulk_load_states[req.host_port_target_address] =
+        resp.bulk_load_state;
 }
 
 // ThreadPool: THREAD_POOL_REPLICATION
@@ -354,7 +359,7 @@ error_code replica_bulk_loader::start_download(const std::string &remote_dir,
     if (_stub->_bulk_load_downloading_count.load() >=
         _stub->_max_concurrent_bulk_load_downloading_count) {
         LOG_WARNING_PREFIX("node[{}] already has {} replica downloading, wait for next round",
-                           _stub->_primary_address_str,
+                           _stub->primary_address().to_string(),
                            _stub->_bulk_load_downloading_count.load());
         return ERR_BUSY;
     }
@@ -373,7 +378,7 @@ error_code replica_bulk_loader::start_download(const std::string &remote_dir,
     _status = bulk_load_status::BLS_DOWNLOADING;
     ++_stub->_bulk_load_downloading_count;
     LOG_INFO_PREFIX("node[{}] has {} replica executing downloading",
-                    _stub->_primary_address_str,
+                    _stub->primary_address().to_string(),
                     _stub->_bulk_load_downloading_count.load());
     _bulk_load_start_time_ms = dsn_now_ms();
     _stub->_counter_bulk_load_downloading_count->increment();
@@ -591,7 +596,7 @@ void replica_bulk_loader::try_decrease_bulk_load_download_count()
     --_stub->_bulk_load_downloading_count;
     _is_downloading.store(false);
     LOG_INFO_PREFIX("node[{}] has {} replica executing downloading",
-                    _stub->_primary_address_str,
+                    _stub->primary_address().to_string(),
                     _stub->_bulk_load_downloading_count.load());
 }
 
@@ -666,7 +671,8 @@ void replica_bulk_loader::handle_bulk_load_finish(bulk_load_status::type new_sta
     }
 
     if (status() == partition_status::PS_PRIMARY) {
-        for (const auto &target_address : _replica->_primary_states.membership.secondaries) {
+        for (const auto &target_address :
+             _replica->_primary_states.membership.host_port_secondaries) {
             _replica->_primary_states.reset_node_bulk_load_states(target_address);
         }
     }
@@ -853,14 +859,17 @@ void replica_bulk_loader::report_group_download_progress(/*out*/ bulk_load_respo
         primary_state.__set_download_progress(_download_progress.load());
         primary_state.__set_download_status(_download_status.load());
     }
-    response.group_bulk_load_state[_replica->_primary_states.membership.primary] = primary_state;
+    response.__isset.host_port_group_bulk_load_state = true;
+    response
+        .host_port_group_bulk_load_state[_replica->_primary_states.membership.host_port_primary] =
+        primary_state;
     LOG_INFO_PREFIX("primary = {}, download progress = {}%, status = {}",
-                    _replica->_primary_states.membership.primary.to_string(),
+                    _replica->_primary_states.membership.host_port_primary.to_string(),
                     primary_state.download_progress,
                     primary_state.download_status);
 
     int32_t total_progress = primary_state.download_progress;
-    for (const auto &target_address : _replica->_primary_states.membership.secondaries) {
+    for (const auto &target_address : _replica->_primary_states.membership.host_port_secondaries) {
         const auto &secondary_state =
             _replica->_primary_states.secondary_bulk_load_states[target_address];
         int32_t s_progress =
@@ -871,7 +880,7 @@ void replica_bulk_loader::report_group_download_progress(/*out*/ bulk_load_respo
                         target_address.to_string(),
                         s_progress,
                         s_status);
-        response.group_bulk_load_state[target_address] = secondary_state;
+        response.host_port_group_bulk_load_state[target_address] = secondary_state;
         total_progress += s_progress;
     }
 
@@ -893,16 +902,19 @@ void replica_bulk_loader::report_group_ingestion_status(/*out*/ bulk_load_respon
 
     partition_bulk_load_state primary_state;
     primary_state.__set_ingest_status(_replica->_app->get_ingestion_status());
-    response.group_bulk_load_state[_replica->_primary_states.membership.primary] = primary_state;
+    response.__isset.host_port_group_bulk_load_state = true;
+    response
+        .host_port_group_bulk_load_state[_replica->_primary_states.membership.host_port_primary] =
+        primary_state;
     LOG_INFO_PREFIX("primary = {}, ingestion status = {}",
-                    _replica->_primary_states.membership.primary.to_string(),
+                    _replica->_primary_states.membership.host_port_primary.to_string(),
                     enum_to_string(primary_state.ingest_status));
 
     bool is_group_ingestion_finish =
         (primary_state.ingest_status == ingestion_status::IS_SUCCEED) &&
-        (_replica->_primary_states.membership.secondaries.size() + 1 ==
+        (_replica->_primary_states.membership.host_port_secondaries.size() + 1 ==
          _replica->_primary_states.membership.max_replica_count);
-    for (const auto &target_address : _replica->_primary_states.membership.secondaries) {
+    for (const auto &target_address : _replica->_primary_states.membership.host_port_secondaries) {
         const auto &secondary_state =
             _replica->_primary_states.secondary_bulk_load_states[target_address];
         ingestion_status::type ingest_status = secondary_state.__isset.ingest_status
@@ -911,7 +923,7 @@ void replica_bulk_loader::report_group_ingestion_status(/*out*/ bulk_load_respon
         LOG_INFO_PREFIX("secondary = {}, ingestion status={}",
                         target_address.to_string(),
                         enum_to_string(ingest_status));
-        response.group_bulk_load_state[target_address] = secondary_state;
+        response.host_port_group_bulk_load_state[target_address] = secondary_state;
         is_group_ingestion_finish &= (ingest_status == ingestion_status::IS_SUCCEED);
     }
     response.__set_is_group_ingestion_finished(is_group_ingestion_finish);
@@ -937,15 +949,18 @@ void replica_bulk_loader::report_group_cleaned_up(bulk_load_response &response)
 
     partition_bulk_load_state primary_state;
     primary_state.__set_is_cleaned_up(is_cleaned_up());
-    response.group_bulk_load_state[_replica->_primary_states.membership.primary] = primary_state;
+    response.__isset.host_port_group_bulk_load_state = true;
+    response
+        .host_port_group_bulk_load_state[_replica->_primary_states.membership.host_port_primary] =
+        primary_state;
     LOG_INFO_PREFIX("primary = {}, bulk load states cleaned_up = {}",
-                    _replica->_primary_states.membership.primary.to_string(),
+                    _replica->_primary_states.membership.host_port_primary.to_string(),
                     primary_state.is_cleaned_up);
 
     bool group_flag = (primary_state.is_cleaned_up) &&
-                      (_replica->_primary_states.membership.secondaries.size() + 1 ==
+                      (_replica->_primary_states.membership.host_port_secondaries.size() + 1 ==
                        _replica->_primary_states.membership.max_replica_count);
-    for (const auto &target_address : _replica->_primary_states.membership.secondaries) {
+    for (const auto &target_address : _replica->_primary_states.membership.host_port_secondaries) {
         const auto &secondary_state =
             _replica->_primary_states.secondary_bulk_load_states[target_address];
         bool is_cleaned_up =
@@ -953,7 +968,7 @@ void replica_bulk_loader::report_group_cleaned_up(bulk_load_response &response)
         LOG_INFO_PREFIX("secondary = {}, bulk load states cleaned_up = {}",
                         target_address.to_string(),
                         is_cleaned_up);
-        response.group_bulk_load_state[target_address] = secondary_state;
+        response.host_port_group_bulk_load_state[target_address] = secondary_state;
         group_flag &= is_cleaned_up;
     }
     LOG_INFO_PREFIX("group bulk load states cleaned_up = {}", group_flag);
@@ -973,21 +988,24 @@ void replica_bulk_loader::report_group_is_paused(bulk_load_response &response)
 
     partition_bulk_load_state primary_state;
     primary_state.__set_is_paused(_status == bulk_load_status::BLS_PAUSED);
-    response.group_bulk_load_state[_replica->_primary_states.membership.primary] = primary_state;
+    response.__isset.host_port_group_bulk_load_state = true;
+    response
+        .host_port_group_bulk_load_state[_replica->_primary_states.membership.host_port_primary] =
+        primary_state;
     LOG_INFO_PREFIX("primary = {}, bulk_load is_paused = {}",
-                    _replica->_primary_states.membership.primary.to_string(),
+                    _replica->_primary_states.membership.host_port_primary.to_string(),
                     primary_state.is_paused);
 
-    bool group_is_paused =
-        primary_state.is_paused && (_replica->_primary_states.membership.secondaries.size() + 1 ==
-                                    _replica->_primary_states.membership.max_replica_count);
-    for (const auto &target_address : _replica->_primary_states.membership.secondaries) {
+    bool group_is_paused = primary_state.is_paused &&
+                           (_replica->_primary_states.membership.host_port_secondaries.size() + 1 ==
+                            _replica->_primary_states.membership.max_replica_count);
+    for (const auto &target_address : _replica->_primary_states.membership.host_port_secondaries) {
         partition_bulk_load_state secondary_state =
             _replica->_primary_states.secondary_bulk_load_states[target_address];
         bool is_paused = secondary_state.__isset.is_paused ? secondary_state.is_paused : false;
         LOG_INFO_PREFIX(
             "secondary = {}, bulk_load is_paused = {}", target_address.to_string(), is_paused);
-        response.group_bulk_load_state[target_address] = secondary_state;
+        response.host_port_group_bulk_load_state[target_address] = secondary_state;
         group_is_paused &= is_paused;
     }
     LOG_INFO_PREFIX("group bulk load is_paused = {}", group_is_paused);

@@ -106,14 +106,14 @@ public:
 
     virtual ~rpc_write_stream() { flush(); }
 
-    virtual void flush() override
+    void flush() override
     {
         binary_writer::flush();
         commit_buffer();
     }
 
 private:
-    virtual void create_new_buffer(size_t size, /*out*/ blob &bb) override
+    void create_new_buffer(size_t size, /*out*/ blob &bb) override
     {
         commit_buffer();
 

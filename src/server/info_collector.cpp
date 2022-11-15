@@ -47,26 +47,18 @@ DEFINE_TASK_CODE(LPC_PEGASUS_STORAGE_SIZE_STAT_TIMER,
 
 info_collector::info_collector()
 {
-    std::vector<::dsn::rpc_address> meta_servers;
-    replica_helper::load_meta_servers(meta_servers);
-
-    _meta_servers.assign_group("meta-servers");
-    for (auto &ms : meta_servers) {
-        CHECK(_meta_servers.group_address()->add(ms), "");
-    }
-
+    ::dsn::host_port_group meta_servers;
+    CHECK(dsn::host_port_group::load_servers("meta_server", "server_list", &meta_servers).is_ok(),
+          "");
     _cluster_name = dsn::get_current_cluster_name();
-
     _shell_context = std::make_shared<shell_context>();
     _shell_context->current_cluster_name = _cluster_name;
     _shell_context->meta_list = meta_servers;
     _shell_context->ddl_client.reset(new replication_ddl_client(meta_servers));
-
     _app_stat_interval_seconds = (uint32_t)dsn_config_get_value_uint64("pegasus.collector",
                                                                        "app_stat_interval_seconds",
                                                                        10, // default value 10s
                                                                        "app stat interval seconds");
-
     _usage_stat_app = dsn_config_get_value_string(
         "pegasus.collector", "usage_stat_app", "", "app for recording usage statistics");
     CHECK(!_usage_stat_app.empty(), "");

@@ -30,6 +30,7 @@
 
 #include <queue>
 
+#include "runtime/rpc/dns_resolver.h"
 #include "utils/command_manager.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
@@ -89,12 +90,14 @@ DSN_DEFINE_int32("nfs",
                  "rpc timeout in milliseconds for nfs copy, "
                  "0 means use default timeout of rpc engine");
 
-nfs_client_impl::nfs_client_impl()
+nfs_client_impl::nfs_client_impl(const std::shared_ptr<dns_resolver> &resolver)
+    // TODO(yingchun): 1. std::atomic<int> in ctor can be removed 2. FLAGS_* can be optimized
     : _concurrent_copy_request_count(0),
       _concurrent_local_write_count(0),
       _buffered_local_write_count(0),
       _copy_requests_low(FLAGS_max_file_copy_request_count_per_file),
-      _high_priority_remaining_time(FLAGS_high_priority_speed_rate)
+      _high_priority_remaining_time(FLAGS_high_priority_speed_rate),
+      _dns_resolver(resolver)
 {
     _recent_copy_data_size.init_app_counter("eon.nfs_client",
                                             "recent_copy_data_size",
@@ -127,7 +130,8 @@ void nfs_client_impl::begin_remote_copy(std::shared_ptr<remote_copy_request> &rc
 {
     user_request_ptr req(new user_request());
     req->high_priority = rci->high_priority;
-    req->file_size_req.source = rci->source;
+    req->file_size_req.source = _dns_resolver->resolve_address(rci->host_port_source);
+    req->file_size_req.__set_host_port_source(rci->host_port_source);
     req->file_size_req.dst_dir = rci->dest_dir;
     req->file_size_req.file_list = rci->files;
     req->file_size_req.source_dir = rci->source_dir;

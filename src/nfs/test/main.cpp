@@ -26,14 +26,15 @@
 
 #include <gtest/gtest.h>
 
-#include "runtime/api_task.h"
+#include "nfs/nfs_node.h"
 #include "runtime/api_layer1.h"
+#include "runtime/api_task.h"
 #include "runtime/app_model.h"
+#include "runtime/rpc/dns_resolver.h"
+#include "runtime/task/async_calls.h"
+#include "runtime/task/task.h"
 #include "utils/api_utilities.h"
 #include "utils/filesystem.h"
-#include "runtime/task/task.h"
-#include "runtime/task/async_calls.h"
-#include "nfs/nfs_node.h"
 
 using namespace dsn;
 
@@ -46,7 +47,7 @@ struct aio_result
 
 TEST(nfs, basic)
 {
-    std::unique_ptr<dsn::nfs_node> nfs(dsn::nfs_node::create());
+    auto nfs = dsn::nfs_node::create(std::make_shared<dns_resolver>());
     nfs->start();
 
     utils::filesystem::remove_path("nfs_test_dir");
@@ -66,7 +67,7 @@ TEST(nfs, basic)
         std::vector<std::string> files{"nfs_test_file1", "nfs_test_file2"};
 
         aio_result r;
-        dsn::aio_task_ptr t = nfs->copy_remote_files(dsn::rpc_address("localhost", 20101),
+        dsn::aio_task_ptr t = nfs->copy_remote_files(dsn::host_port("localhost", 20101),
                                                      "default",
                                                      ".",
                                                      files,
@@ -107,7 +108,7 @@ TEST(nfs, basic)
         std::vector<std::string> files{"nfs_test_file1", "nfs_test_file2"};
 
         aio_result r;
-        dsn::aio_task_ptr t = nfs->copy_remote_files(dsn::rpc_address("localhost", 20101),
+        dsn::aio_task_ptr t = nfs->copy_remote_files(dsn::host_port("localhost", 20101),
                                                      "default",
                                                      ".",
                                                      files,
@@ -138,7 +139,7 @@ TEST(nfs, basic)
         ASSERT_FALSE(utils::filesystem::directory_exists("nfs_test_dir_copy"));
 
         aio_result r;
-        dsn::aio_task_ptr t = nfs->copy_remote_directory(dsn::rpc_address("localhost", 20101),
+        dsn::aio_task_ptr t = nfs->copy_remote_directory(dsn::host_port("localhost", 20101),
                                                          "default",
                                                          "nfs_test_dir",
                                                          "default",

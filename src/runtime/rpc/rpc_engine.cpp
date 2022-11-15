@@ -107,6 +107,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
 
     // if rpc is early terminated with empty reply
     if (nullptr == reply) {
+        // TODO(yingchun): what does it mean?
         if (req->server_address.type() == HOST_TYPE_GROUP && spec->grpc_mode == GRPC_TO_LEADER &&
             req->server_address.group_address()->is_update_leader_automatically()) {
             req->server_address.group_address()->leader_forward();
@@ -124,6 +125,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
     // in this case, the server will return ERR_FORWARD_TO_OTHERS
     if (err == ERR_FORWARD_TO_OTHERS) {
         rpc_address addr;
+        // ::dsn::unmarshall(reply, addr);
         ::dsn::unmarshall((dsn::message_ex *)reply, addr);
 
         // handle the case of forwarding to itself where addr == req->to_address.
@@ -147,8 +149,11 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
                 break;
             }
             break;
+        case HOST_TYPE_IPV4:
+            LOG_INFO_F("should use group_address");
+            break;
         default:
-            CHECK(false, "not implemented");
+            CHECK(false, "not implemented, rpc_address={}", addr);
             break;
         }
 
@@ -176,7 +181,8 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
                 }
                 break;
             default:
-                CHECK(false, "not implemented");
+                // ./pegasus_rproxy_test --gtest_filter=proxy_test.connection
+                //                CHECK(false, "not implemented");
                 break;
             }
         }
@@ -185,9 +191,9 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
 
         // failure injection applied
         if (!call->enqueue(err, reply)) {
-            LOG_INFO("rpc reply %s is dropped (fault inject), trace_id = %016" PRIx64,
-                     reply->header->rpc_name,
-                     reply->header->trace_id);
+            LOG_INFO_F("rpc reply {} is dropped (fault inject), trace_id = {:#018x}",
+                       reply->header->rpc_name,
+                       reply->header->trace_id);
 
             // call network failure model
             net->inject_drop_message(reply, false);
@@ -207,6 +213,7 @@ void rpc_client_matcher::on_rpc_timeout(uint64_t key)
     {
         utils::auto_lock<::dsn::utils::ex_lock_nr_spin> l(_requests_lock[bucket_index]);
         auto it = _requests[bucket_index].find(key);
+        // TODO(yingchun): refactor
         if (it != _requests[bucket_index].end()) {
             timeout_ts_ms = it->second.timeout_ts_ms;
             call = it->second.resp_task;
@@ -270,9 +277,9 @@ void rpc_client_matcher::on_rpc_timeout(uint64_t key)
 
     if (resend) {
         auto req = call->get_request();
-        LOG_DEBUG("resend request message for rpc trace_id = %016" PRIx64 ", key = %" PRIu64,
-                  req->header->trace_id,
-                  key);
+        LOG_DEBUG_F("resend request message for rpc trace_id = {:#018x}, key = {}",
+                    req->header->trace_id,
+                    key);
 
         // resend without handling rpc_matcher, use the same request_id
         _engine->call_ip(req->to_address, req, nullptr);
@@ -319,7 +326,6 @@ rpc_server_dispatcher::rpc_server_dispatcher()
     for (auto &h : _vhandlers) {
         h = new std::pair<std::unique_ptr<handler_entry>, utils::rw_lock_nr>();
     }
-    _handlers.clear();
 }
 
 rpc_server_dispatcher::~rpc_server_dispatcher()
@@ -341,11 +347,9 @@ bool rpc_server_dispatcher::register_rpc_handler(dsn::task_code code,
 
     utils::auto_write_lock l(_handlers_lock);
     auto it = _handlers.find(code.to_string());
+    CHECK(it == _handlers.end(), "rpc registration confliction for code '{}'", code);
     auto it2 = _handlers.find(extra_name);
-    CHECK(it == _handlers.end() && it2 == _handlers.end(),
-          "rpc registration confliction for '{}' '{}'",
-          code,
-          extra_name);
+    CHECK(it2 == _handlers.end(), "rpc registration confliction for extra_name '{}'", extra_name);
     _handlers[code.to_string()] = ctx.get();
     _handlers[ctx->extra_name] = ctx.get();
 
@@ -401,8 +405,9 @@ rpc_request_task *rpc_server_dispatcher::on_request(message_ex *msg, service_nod
         auto r = new rpc_request_task(msg, std::move(handler), node);
         r->spec().on_task_create.execute(task::get_current_task(), r);
         return r;
-    } else
+    } else {
         return nullptr;
+    }
 }
 
 //----------------------------------------------------------------------------------------------
@@ -439,7 +444,6 @@ error_code rpc_engine::start(const service_app_spec &aspec)
 
     // start client networks
     _client_nets.resize(network_header_format::max_value() + 1);
-
     // for each format
     for (int i = NET_HDR_INVALID + 1; i <= network_header_format::max_value(); i++) {
         std::vector<std::unique_ptr<network>> &pnet = _client_nets[i];
@@ -457,9 +461,8 @@ error_code rpc_engine::start(const service_app_spec &aspec)
                 factory = it1->second.factory_name;
                 blk_size = it1->second.message_buffer_block_size;
             } else {
-                LOG_WARNING(
-                    "network client for channel %s not registered, assuming not used further",
-                    c.to_string());
+                LOG_WARNING_F(
+                    "network client for channel {} not registered, assuming not used further", c);
                 continue;
             }
 
@@ -468,15 +471,16 @@ error_code rpc_engine::start(const service_app_spec &aspec)
             cs.message_buffer_block_size = blk_size;
 
             auto net = create_network(cs, true, client_hdr_format);
-            if (!net)
+            if (!net) {
                 return ERR_NETWORK_INIT_FAILED;
+            }
             pnet[j].reset(net);
 
-            LOG_INFO("[%s] network client started at port %u, channel = %s, fmt = %s ...",
-                     node()->full_name(),
-                     (uint32_t)(cs.port),
-                     cs.channel.to_string(),
-                     client_hdr_format.to_string());
+            LOG_INFO_F("[{}] network client started at port {}, channel = {}, fmt = {} ...",
+                       node()->full_name(),
+                       cs.port,
+                       cs.channel,
+                       client_hdr_format);
         }
     }
 
@@ -486,7 +490,6 @@ error_code rpc_engine::start(const service_app_spec &aspec)
 
         std::vector<std::unique_ptr<network>> *pnets;
         auto it = _server_nets.find(port);
-
         if (it == _server_nets.end()) {
             auto pr = _server_nets.emplace(port, std::vector<std::unique_ptr<network>>{});
             pnets = &pr.first->second;
@@ -502,18 +505,20 @@ error_code rpc_engine::start(const service_app_spec &aspec)
 
         (*pnets)[sp.second.channel].reset(net);
 
-        LOG_WARNING("[%s] network server started at port %u, channel = %s, ...",
-                    node()->full_name(),
-                    (uint32_t)(port),
-                    sp.second.channel.to_string());
+        LOG_WARNING_F("[{}] network server started at port {}, channel = {}, ...",
+                      node()->full_name(),
+                      port,
+                      sp.second.channel);
     }
 
     _local_primary_address = _client_nets[NET_HDR_DSN][0]->address();
     _local_primary_address.set_port(aspec.ports.size() > 0 ? *aspec.ports.begin() : aspec.id);
+    CHECK(_local_primary_host_port.parse_rpc_address(_local_primary_address).is_ok(), "");
 
-    LOG_INFO("=== service_node=[%s], primary_address=[%s] ===",
-             _node->full_name(),
-             _local_primary_address.to_string());
+    LOG_INFO_F("=== service_node=[{}], primary_address=[{}], primary_host_port=[{}] ===",
+               _node->full_name(),
+               _local_primary_address,
+               _local_primary_host_port);
 
     _is_running = true;
     return ERR_OK;
@@ -534,77 +539,77 @@ bool rpc_engine::unregister_rpc_handler(dsn::task_code rpc_code)
 void rpc_engine::on_recv_request(network *net, message_ex *msg, int delay_ms)
 {
     if (!_is_serving) {
-        LOG_WARNING(
-            "recv message with rpc name %s from %s when rpc engine is not serving, trace_id = "
-            "%" PRIu64,
+        LOG_WARNING_F(
+            "recv message with rpc name {} from {} when rpc engine is not serving, trace_id = {}",
             msg->header->rpc_name,
-            msg->header->from_address.to_string(),
+            msg->header->from_address,
             msg->header->trace_id);
-
         CHECK_EQ_MSG(msg->get_count(), 0, "request should not be referenced by anybody so far");
+
         delete msg;
         return;
     }
 
     auto code = msg->rpc_code();
-
-    if (code != ::dsn::TASK_CODE_INVALID) {
-        rpc_request_task *tsk = nullptr;
-
-        // handle replication
-        if (msg->header->gpid.get_app_id() > 0) {
-            tsk = _node->generate_intercepted_request_task(msg);
-        }
-
-        if (tsk == nullptr) {
-            tsk = _rpc_dispatcher.on_request(msg, _node);
-        }
-
-        if (tsk != nullptr) {
-            // injector
-            if (tsk->spec().on_rpc_request_enqueue.execute(tsk, true)) {
-                // we set a default delay if it isn't generated by fault-injector
-                if (tsk->delay_milliseconds() == 0)
-                    tsk->set_delay(delay_ms);
-                tsk->enqueue();
-            }
-
-            // release the task when necessary
-            else {
-                LOG_INFO("rpc request %s is dropped (fault inject), trace_id = %016" PRIx64,
-                         msg->header->rpc_name,
-                         msg->header->trace_id);
-
-                // call network failure model when network is present
-                net->inject_drop_message(msg, false);
-
-                // because (1) initially, the ref count is zero
-                //         (2) upper apps may call add_ref already
-                tsk->add_ref();
-                tsk->release_ref();
-            }
-        } else {
-            LOG_WARNING("recv message with unhandled rpc name %s from %s, trace_id = %016" PRIx64,
-                        msg->header->rpc_name,
-                        msg->header->from_address.to_string(),
-                        msg->header->trace_id);
-
-            CHECK_EQ_MSG(msg->get_count(), 0, "request should not be referenced by anybody so far");
-            msg->add_ref();
-            dsn_rpc_reply(msg->create_response(), ::dsn::ERR_HANDLER_NOT_FOUND);
-            msg->release_ref();
-        }
-    } else {
-        LOG_WARNING("recv message with unknown rpc name %s from %s, trace_id = %016" PRIx64,
-                    msg->header->rpc_name,
-                    msg->header->from_address.to_string(),
-                    msg->header->trace_id);
-
+    if (code == ::dsn::TASK_CODE_INVALID) {
+        LOG_WARNING_F("recv message with unknown rpc name {} from {}, trace_id = {:#018x}",
+                      msg->header->rpc_name,
+                      msg->header->from_address,
+                      msg->header->trace_id);
         CHECK_EQ_MSG(msg->get_count(), 0, "request should not be referenced by anybody so far");
+
         msg->add_ref();
         dsn_rpc_reply(msg->create_response(), ::dsn::ERR_HANDLER_NOT_FOUND);
         msg->release_ref();
+        return;
     }
+
+    rpc_request_task *tsk = nullptr;
+    // handle replication
+    if (msg->header->gpid.get_app_id() > 0) {
+        tsk = _node->generate_intercepted_request_task(msg);
+    }
+
+    if (tsk == nullptr) {
+        tsk = _rpc_dispatcher.on_request(msg, _node);
+    }
+
+    if (tsk == nullptr) {
+        LOG_WARNING_F("recv message with unhandled rpc name {} from {}, trace_id = {:#018x}",
+                      msg->header->rpc_name,
+                      msg->header->from_address,
+                      msg->header->trace_id);
+        CHECK_EQ_MSG(msg->get_count(), 0, "request should not be referenced by anybody so far");
+
+        msg->add_ref();
+        dsn_rpc_reply(msg->create_response(), ::dsn::ERR_HANDLER_NOT_FOUND);
+        msg->release_ref();
+        return;
+    }
+
+    // injector
+    if (!tsk->spec().on_rpc_request_enqueue.execute(tsk, true)) {
+        // release the task when necessary
+        LOG_INFO_F("rpc request {} is dropped (fault inject), trace_id = {:#018x}",
+                   msg->header->rpc_name,
+                   msg->header->trace_id);
+
+        // call network failure model when network is present
+        net->inject_drop_message(msg, false);
+
+        // because (1) initially, the ref count is zero
+        //         (2) upper apps may call add_ref already
+        tsk->add_ref();
+        tsk->release_ref();
+        return;
+    }
+
+    // we set a default delay if it isn't generated by fault-injector
+    if (tsk->delay_milliseconds() == 0) {
+        tsk->set_delay(delay_ms);
+    }
+
+    tsk->enqueue();
 }
 
 void rpc_engine::call(message_ex *request, const rpc_response_task_ptr &call)
@@ -614,6 +619,7 @@ void rpc_engine::call(message_ex *request, const rpc_response_task_ptr &call)
     hdr.trace_id = rand::next_u64(std::numeric_limits<decltype(hdr.trace_id)>::min(),
                                   std::numeric_limits<decltype(hdr.trace_id)>::max());
 
+    // TODO: real address will be used
     call_address(request->server_address, request, call);
 }
 
@@ -652,10 +658,10 @@ void rpc_engine::call_ip(rpc_address addr,
           "from address must be set before call call_ip");
 
     while (!request->dl.is_alone()) {
-        LOG_WARNING("msg request %s (trace_id = %016" PRIx64
-                    ") is in sending queue, try to pick out ...",
-                    request->header->rpc_name,
-                    request->header->trace_id);
+        LOG_WARNING_F("msg request {} (trace_id = {:#018x}) is in sending queue, "
+                      "try to pick out ...",
+                      request->header->rpc_name,
+                      request->header->trace_id);
         auto s = request->io_session;
         if (s.get() != nullptr) {
             s->cancel(request);
@@ -687,15 +693,15 @@ void rpc_engine::call_ip(rpc_address addr,
         hdr.id = message_ex::new_id();
     }
 
-    if (set_forwarded && request->header->context.u.is_forwarded == false) {
+    if (set_forwarded && !request->header->context.u.is_forwarded) {
         request->header->context.u.is_forwarded = true;
     }
 
     // join point and possible fault injection
     if (!sp->on_rpc_call.execute(task::get_current_task(), request, call, true)) {
-        LOG_INFO("rpc request %s is dropped (fault inject), trace_id = %016" PRIx64,
-                 request->header->rpc_name,
-                 request->header->trace_id);
+        LOG_INFO_F("rpc request {} is dropped (fault inject), trace_id = {:#018x}",
+                   request->header->rpc_name,
+                   request->header->trace_id);
 
         // call network failure model
         net->inject_drop_message(request, true);
@@ -725,9 +731,9 @@ void rpc_engine::reply(message_ex *response, error_code err)
     // for example, the profiler may be mistakenly calculated
     auto s = response->io_session.get();
     if (s == nullptr && response->to_address.is_invalid()) {
-        LOG_DEBUG("rpc reply %s is dropped (invalid to-address), trace_id = %016" PRIx64,
-                  response->header->rpc_name,
-                  response->header->trace_id);
+        LOG_DEBUG_F("rpc reply {} is dropped (invalid to-address), trace_id = {:#018x}",
+                    response->header->rpc_name,
+                    response->header->trace_id);
         response->add_ref();
         response->release_ref();
         return;
@@ -788,10 +794,8 @@ void rpc_engine::reply(message_ex *response, error_code err)
                 net->inject_drop_message(response, true);
             }
         }
-    }
-
-    // not connection oriented network, we always use the named network to send msgs
-    else {
+    } else {
+        // not connection oriented network, we always use the named network to send msgs
         DCHECK_GT_MSG(response->to_address.port(),
                       MAX_CLIENT_PORT,
                       "target address must have named port in this case");

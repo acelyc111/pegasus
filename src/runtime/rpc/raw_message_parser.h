@@ -24,16 +24,7 @@
 * THE SOFTWARE.
 */
 
-/*
-* Description:
-*     message parser for user customed request
-*
-* Revision history:
-*     xxxx-xx-xx, author, fix bug about xxx
-*/
-
-#ifndef RAW_MESSAGE_PARSER_H
-#define RAW_MESSAGE_PARSER_H
+#pragma once
 
 #include "runtime/rpc/message_parser.h"
 #include "runtime/rpc/rpc_message.h"
@@ -51,10 +42,8 @@ private:
 
 public:
     raw_message_parser();
-    virtual ~raw_message_parser() {}
-    virtual message_ex *get_message_on_receive(message_reader *reader,
-                                               /*out*/ int &read_next) override;
-    virtual int get_buffers_on_send(message_ex *msg, /*out*/ send_buf *buffers) override;
+    ~raw_message_parser() override {}
+    message_ex *get_message_on_receive(message_reader *reader, /*out*/ int &read_next) override;
+    int get_buffers_on_send(message_ex *msg, /*out*/ send_buf *buffers) override;
 };
-}
-#endif // RAW_MESSAGE_PARSER_H
+} // namespace dsn

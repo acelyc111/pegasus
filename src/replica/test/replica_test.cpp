@@ -370,6 +370,7 @@ TEST_F(replica_test, update_allow_ingest_behind_test)
     }
 }
 
+// TODO(yingchun): last too long time, 600001 ms
 TEST_F(replica_test, test_replica_backup_and_restore)
 {
     test_on_cold_backup();
@@ -377,6 +378,7 @@ TEST_F(replica_test, test_replica_backup_and_restore)
     ASSERT_EQ(ERR_OK, err);
 }
 
+// TODO(yingchun): last too long time, 600001 ms
 TEST_F(replica_test, test_replica_backup_and_restore_with_specific_path)
 {
     std::string user_specified_path = "test/backup";

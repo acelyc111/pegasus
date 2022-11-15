@@ -225,24 +225,25 @@ void rpc_session::start_read_next(int read_next)
 
 int rpc_session::prepare_parser()
 {
-    if (_reader._buffer_occupied < sizeof(uint32_t))
+    if (_reader._buffer_occupied < sizeof(uint32_t)) {
         return sizeof(uint32_t) - _reader._buffer_occupied;
+    }
 
     auto hdr_format = message_parser::get_header_type(_reader._buffer.data());
     if (hdr_format == NET_HDR_INVALID) {
         hdr_format = _net.unknown_msg_hdr_format();
 
         if (hdr_format == NET_HDR_INVALID) {
-            LOG_ERROR("invalid header type, remote_client = %s, header_type = '%s'",
-                      _remote_addr.to_string(),
-                      message_parser::get_debug_string(_reader._buffer.data()).c_str());
+            LOG_ERROR_F("invalid header type, remote_client = {}, header_type = '{}'",
+                        _remote_addr,
+                        message_parser::get_debug_string(_reader._buffer.data()));
             return -1;
         }
     }
     _parser = _net.new_message_parser(hdr_format);
-    LOG_DEBUG("message parser created, remote_client = %s, header_format = %s",
-              _remote_addr.to_string(),
-              hdr_format.to_string());
+    LOG_DEBUG_F("message parser created, remote_client = {}, header_format = {}",
+                _remote_addr,
+                hdr_format.to_string());
 
     return 0;
 }
@@ -281,13 +282,15 @@ void rpc_session::send_message(message_ex *msg)
 
 bool rpc_session::cancel(message_ex *request)
 {
-    if (request->io_session.get() != this)
+    if (request->io_session.get() != this) {
         return false;
+    }
 
     {
         utils::auto_lock<utils::ex_lock_nr> l(_lock);
-        if (request->dl.is_alone())
+        if (request->dl.is_alone()) {
             return false;
+        }
 
         request->dl.remove();
         --_message_count;
@@ -340,7 +343,7 @@ void rpc_session::on_send_completed(uint64_t signature)
 
 rpc_session::rpc_session(connection_oriented_network &net,
                          ::dsn::rpc_address remote_addr,
-                         message_parser_ptr &parser,
+                         const message_parser_ptr &parser,
                          bool is_client)
     : _connect_state(is_client ? SS_DISCONNECTED : SS_CONNECTED),
       _message_count(0),
@@ -393,8 +396,10 @@ void rpc_session::on_failure(bool is_write)
 
 bool rpc_session::on_recv_message(message_ex *msg, int delay_ms)
 {
-    if (msg->header->from_address.is_invalid())
+    if (msg->header->from_address.is_invalid()) {
+        // TODO: from_address is used
         msg->header->from_address = _remote_addr;
+    }
     msg->to_address = _net.address();
     msg->io_session = this;
 
@@ -408,19 +413,17 @@ bool rpc_session::on_recv_message(message_ex *msg, int delay_ms)
         // ATTENTION: need to check if self connection occurred.
         //
         // When we try to connect some socket in the same host, if we don't bind the client to a
-        // specific port,
-        // operating system will provide ephemeral port for us. If it's happened to be the one we
-        // want to connect to,
-        // it causes self connection.
+        // specific port, operating system will provide ephemeral port for us. If it's happened
+        // to be the one we want to connect to, it causes self connection.
         //
         // The case is:
         // - this session is a client session
         // - the remote address is in the same host
         // - the remote address is not listened, which means the remote port is not occupied
         // - operating system chooses the remote port as client's ephemeral port
+        // TODO: from_address is used
         if (is_client() && msg->header->from_address == _net.engine()->primary_address()) {
-            LOG_ERROR("self connection detected, address = %s",
-                      msg->header->from_address.to_string());
+            LOG_ERROR_F("self connection detected, address = {}", msg->header->from_address);
             CHECK_EQ_MSG(msg->get_count(), 0, "message should not be referenced by anybody so far");
             delete msg;
             return false;
@@ -608,7 +611,7 @@ void connection_oriented_network::inject_drop_message(message_ex *msg, bool is_s
         //   the io_session has also been set.
         CHECK(is_send, "received message should always has io_session set");
         utils::auto_read_lock l(_clients_lock);
-        auto it = _clients.find(msg->to_address);
+        const auto &it = _clients.find(msg->to_address);
         if (it != _clients.end()) {
             s = it->second;
         }
@@ -622,12 +625,12 @@ void connection_oriented_network::inject_drop_message(message_ex *msg, bool is_s
 void connection_oriented_network::send_message(message_ex *request)
 {
     rpc_session_ptr client = nullptr;
-    auto &to = request->to_address;
+    const auto &to = request->to_address;
 
     // TODO: thread-local client ptr cache
     {
         utils::auto_read_lock l(_clients_lock);
-        auto it = _clients.find(to);
+        const auto &it = _clients.find(to);
         if (it != _clients.end()) {
             client = it->second;
         }
@@ -637,7 +640,7 @@ void connection_oriented_network::send_message(message_ex *request)
     bool new_client = false;
     if (nullptr == client.get()) {
         utils::auto_write_lock l(_clients_lock);
-        auto it = _clients.find(to);
+        const auto &it = _clients.find(to);
         if (it != _clients.end()) {
             client = it->second;
         } else {
@@ -650,14 +653,14 @@ void connection_oriented_network::send_message(message_ex *request)
 
     // init connection if necessary
     if (new_client) {
-        LOG_INFO("client session created, remote_server = %s, current_count = %d",
-                 client->remote_address().to_string(),
-                 ip_count);
+        LOG_INFO_F("client session created, remote_server = {}, current_count = {}",
+                   client->remote_address(),
+                   ip_count);
         _client_session_count->set(ip_count);
+        // Init connection.
         client->connect();
     }
 
-    // rpc call
     client->send_message(request);
 }
 
@@ -668,7 +671,7 @@ rpc_session_ptr connection_oriented_network::get_server_session(::dsn::rpc_addre
     return it != _servers.end() ? it->second : nullptr;
 }
 
-void connection_oriented_network::on_server_session_accepted(rpc_session_ptr &s)
+void connection_oriented_network::on_server_session_accepted(const rpc_session_ptr &s)
 {
     int ip_count = 0;
     int ip_conn_count = 1;
@@ -680,8 +683,8 @@ void connection_oriented_network::on_server_session_accepted(rpc_session_ptr &s)
             // nothing to do
         } else {
             pr.first->second = s;
-            LOG_WARNING("server session already exists, remote_client = %s, preempted",
-                        s->remote_address().to_string());
+            LOG_WARNING_F("server session already exists, remote_client = {}, preempted",
+                          s->remote_address());
         }
         ip_count = (int)_servers.size();
 
@@ -692,19 +695,19 @@ void connection_oriented_network::on_server_session_accepted(rpc_session_ptr &s)
         }
     }
 
-    LOG_INFO("server session accepted, remote_client = %s, current_count = %d",
-             s->remote_address().to_string(),
-             ip_count);
+    LOG_INFO_F("server session accepted, remote_client = {}, current_count = {}",
+               s->remote_address(),
+               ip_count);
 
-    LOG_INFO("ip session %s, remote_client = %s, current_count = %d",
-             ip_conn_count == 1 ? "inserted" : "increased",
-             s->remote_address().to_string(),
-             ip_conn_count);
+    LOG_INFO_F("ip session {}, remote_client = {}, current_count = {}",
+               ip_conn_count == 1 ? "inserted" : "increased",
+               s->remote_address(),
+               ip_conn_count);
 
     _client_session_count->set(ip_count);
 }
 
-void connection_oriented_network::on_server_session_disconnected(rpc_session_ptr &s)
+void connection_oriented_network::on_server_session_disconnected(const rpc_session_ptr &s)
 {
     // how many unique client(the same ip:port is considered to be a unique client)
     int ip_count = 0;
@@ -734,29 +737,28 @@ void connection_oriented_network::on_server_session_disconnected(rpc_session_ptr
     }
 
     if (session_removed) {
-        LOG_INFO("session %s disconnected, the total client sessions count remains %d",
-                 s->remote_address().to_string(),
-                 ip_count);
+        LOG_INFO_F("session {} disconnected, the total client sessions count remains {}",
+                   s->remote_address(),
+                   ip_count);
         _client_session_count->set(ip_count);
     }
 
     if (ip_conn_count == 0) {
-        // TODO(wutao1): print ip only
-        LOG_INFO("client ip %s has no more session to this server",
-                 s->remote_address().to_string());
+        LOG_INFO_F("client ip {} has no more session to this server",
+                   s->remote_address().ipv4_str());
     } else {
-        LOG_INFO("client ip %s has still %d of sessions to this server",
-                 s->remote_address().to_string(),
-                 ip_conn_count);
+        LOG_INFO_F("client ip {} has still {} of sessions to this server",
+                   s->remote_address(),
+                   ip_conn_count);
     }
 }
 
 bool connection_oriented_network::check_if_conn_threshold_exceeded(::dsn::rpc_address ep)
 {
     if (_cfg_conn_threshold_per_ip <= 0) {
-        LOG_DEBUG("new client from %s is connecting to server %s, no connection threshold",
-                  ep.ipv4_str(),
-                  address().to_string());
+        LOG_DEBUG_F("new client from {} is connecting to server {}, no connection threshold",
+                    ep.ipv4_str(),
+                    address());
         return false;
     }
 
@@ -764,7 +766,7 @@ bool connection_oriented_network::check_if_conn_threshold_exceeded(::dsn::rpc_ad
     int ip_conn_count = 0; // the amount of connections from this ip address.
     {
         utils::auto_read_lock l(_servers_lock);
-        auto it = _ip_conn_count.find(ep.ip());
+        const auto &it = _ip_conn_count.find(ep.ip());
         if (it != _ip_conn_count.end()) {
             ip_conn_count = it->second;
         }
@@ -773,55 +775,56 @@ bool connection_oriented_network::check_if_conn_threshold_exceeded(::dsn::rpc_ad
         exceeded = true;
     }
 
-    LOG_DEBUG("new client from %s is connecting to server %s, existing connection count "
-              "= %d, threshold = %u",
-              ep.ipv4_str(),
-              address().to_string(),
-              ip_conn_count,
-              _cfg_conn_threshold_per_ip);
+    LOG_DEBUG_F("new client from {} is connecting to server {}, existing connection count = {}, "
+                "threshold = {}",
+                ep.ipv4_str(),
+                address(),
+                ip_conn_count,
+                _cfg_conn_threshold_per_ip);
 
     return exceeded;
 }
 
-void connection_oriented_network::on_client_session_connected(rpc_session_ptr &s)
+void connection_oriented_network::on_client_session_connected(const rpc_session_ptr &s)
 {
     int ip_count = 0;
-    bool r = false;
+    bool exsit = false;
     {
         utils::auto_read_lock l(_clients_lock);
         auto it = _clients.find(s->remote_address());
         if (it != _clients.end() && it->second.get() == s.get()) {
-            r = true;
+            exsit = true;
         }
         ip_count = (int)_clients.size();
     }
 
-    if (r) {
-        LOG_INFO("client session connected, remote_server = %s, current_count = %d",
-                 s->remote_address().to_string(),
-                 ip_count);
+    // TODO(yingchun): change to '!exsit' ?
+    if (exsit) {
+        LOG_INFO_F("client session connected, remote_server = {}, current_count = {}",
+                   s->remote_address(),
+                   ip_count);
         _client_session_count->set(ip_count);
     }
 }
 
-void connection_oriented_network::on_client_session_disconnected(rpc_session_ptr &s)
+void connection_oriented_network::on_client_session_disconnected(const rpc_session_ptr &s)
 {
     int ip_count = 0;
-    bool r = false;
+    bool exsit = false;
     {
         utils::auto_write_lock l(_clients_lock);
         auto it = _clients.find(s->remote_address());
         if (it != _clients.end() && it->second.get() == s.get()) {
             _clients.erase(it);
-            r = true;
+            exsit = true;
         }
         ip_count = (int)_clients.size();
     }
 
-    if (r) {
-        LOG_INFO("client session disconnected, remote_server = %s, current_count = %d",
-                 s->remote_address().to_string(),
-                 ip_count);
+    if (exsit) {
+        LOG_INFO_F("client session disconnected, remote_server = {}, current_count = {}",
+                   s->remote_address(),
+                   ip_count);
         _client_session_count->set(ip_count);
     }
 }

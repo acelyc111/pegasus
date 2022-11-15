@@ -24,20 +24,21 @@
  * THE SOFTWARE.
  */
 
-#include "utils/smart_pointers.h"
-#include "runtime/task/async_calls.h"
 #include "nfs/nfs_node.h"
 
 #include "nfs_node_simple.h"
+#include "runtime/rpc/dns_resolver.h"
+#include "runtime/task/async_calls.h"
+#include "utils/smart_pointers.h"
 
 namespace dsn {
 
-std::unique_ptr<nfs_node> nfs_node::create()
+std::unique_ptr<nfs_node> nfs_node::create(const std::shared_ptr<dns_resolver> &resolver)
 {
-    return dsn::make_unique<dsn::service::nfs_node_simple>();
+    return dsn::make_unique<dsn::service::nfs_node_simple>(resolver);
 }
 
-aio_task_ptr nfs_node::copy_remote_directory(const rpc_address &remote,
+aio_task_ptr nfs_node::copy_remote_directory(const host_port &remote,
                                              const std::string &source_disk_tag,
                                              const std::string &source_dir,
                                              const std::string &dest_disk_tag,
@@ -63,7 +64,7 @@ aio_task_ptr nfs_node::copy_remote_directory(const rpc_address &remote,
                              hash);
 }
 
-aio_task_ptr nfs_node::copy_remote_files(const rpc_address &remote,
+aio_task_ptr nfs_node::copy_remote_files(const host_port &remote,
                                          const std::string &source_disk_tag,
                                          const std::string &source_dir,
                                          const std::vector<std::string> &files,
@@ -78,8 +79,8 @@ aio_task_ptr nfs_node::copy_remote_files(const rpc_address &remote,
 {
     auto cb = dsn::file::create_aio_task(callback_code, tracker, std::move(callback), hash);
 
-    std::shared_ptr<remote_copy_request> rci = std::make_shared<remote_copy_request>();
-    rci->source = remote;
+    auto rci = std::make_shared<remote_copy_request>();
+    rci->host_port_source = remote;
     rci->source_disk_tag = source_disk_tag;
     rci->source_dir = source_dir;
     rci->files = files;

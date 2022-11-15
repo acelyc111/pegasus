@@ -47,10 +47,10 @@ public:
                      dsn::utils::filesystem::path_combine(cluster_name, policy_name);
         backup_dir = "onebox/" + provider_dir + '/' + cluster_name;
 
-        std::vector<dsn::rpc_address> meta_list;
-        ASSERT_TRUE(replica_helper::load_meta_servers(
-            meta_list, PEGASUS_CLUSTER_SECTION_NAME.c_str(), cluster_name.c_str()));
-        ASSERT_FALSE(meta_list.empty());
+        dsn::host_port_group meta_list;
+        ASSERT_TRUE(dsn::host_port_group::load_servers(
+                        PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &meta_list)
+                        .is_ok());
         ddl_client = std::make_shared<replication_ddl_client>(meta_list);
         ASSERT_TRUE(ddl_client != nullptr);
         error_code err =
@@ -193,13 +193,13 @@ public:
             for (index = 0; index < p_confs.size(); index++) {
                 const auto &pc = p_confs[index];
                 int replica_count = 0;
-                if (pc.primary.is_invalid()) {
+                if (pc.host_port_primary.is_invalid()) {
                     std::cout << "partition[" << index
                               << "] is unhealthy, coz primary is invalid..." << std::endl;
                     break;
                 }
                 replica_count += 1;
-                replica_count += pc.secondaries.size();
+                replica_count += pc.host_port_secondaries.size();
                 if (replica_count != pc.max_replica_count) {
                     std::cout << "partition[" << index
                               << "] is unhealthy, coz replica_cont = " << replica_count

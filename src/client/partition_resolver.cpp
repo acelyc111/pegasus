@@ -24,20 +24,25 @@
  * THE SOFTWARE.
  */
 
-#include "utils/zlocks.h"
-#include "runtime/rpc/group_address.h"
 #include "client/partition_resolver.h"
-#include "partition_resolver_simple.h"
+
 #include "partition_resolver_manager.h"
+#include "partition_resolver_simple.h"
+#include "runtime/rpc/dns_resolver.h"
+#include "runtime/rpc/group_address.h"
+#include "utils/zlocks.h"
 
 namespace dsn {
 namespace replication {
 /*static*/
-partition_resolver_ptr partition_resolver::get_resolver(const char *cluster_name,
-                                                        const std::vector<rpc_address> &meta_list,
-                                                        const char *app_name)
+partition_resolver_ptr
+partition_resolver::get_resolver(const char *cluster_name,
+                                 const host_port_group &meta_list,
+                                 const char *app_name,
+                                 const std::shared_ptr<dns_resolver> &dns_resolver)
 {
-    return partition_resolver_manager::instance().find_or_create(cluster_name, meta_list, app_name);
+    return partition_resolver_manager::instance().find_or_create(
+        cluster_name, meta_list, app_name, dns_resolver);
 }
 
 DEFINE_TASK_CODE(LPC_RPC_DELAY_CALL, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
@@ -102,7 +107,7 @@ void partition_resolver::call_task(const rpc_response_task_ptr &t)
     t->replace_callback(std::move(new_callback));
 
     resolve(hdr.client.partition_hash,
-            [t](resolve_result &&result) mutable {
+            [this, t](resolve_result &&result) mutable {
                 if (result.err != ERR_OK) {
                     t->enqueue(result.err, nullptr);
                     return;
@@ -119,7 +124,7 @@ void partition_resolver::call_task(const rpc_response_task_ptr &t)
                     }
                     hdr.gpid = result.pid;
                 }
-                dsn_rpc_call(result.address, t.get());
+                dsn_rpc_call(this->_dns_resolver->resolve_address(result.address), t.get());
             },
             hdr.client.timeout_ms);
 }

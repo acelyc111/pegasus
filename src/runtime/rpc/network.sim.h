@@ -39,15 +39,15 @@ public:
                        ::dsn::rpc_address remote_addr,
                        message_parser_ptr &parser);
 
-    virtual void connect();
+    void connect() override;
 
-    virtual void send(uint64_t signature) override;
+    void send(uint64_t signature) override;
 
-    virtual void do_read(int sz) override {}
+    void do_read(int sz) override {}
 
-    virtual void close() override {}
+    void close() override {}
 
-    virtual void on_failure(bool is_write = false) override {}
+    void on_failure(bool is_write = false) override {}
 };
 
 class sim_server_session : public rpc_session
@@ -58,31 +58,32 @@ public:
                        rpc_session_ptr &client,
                        message_parser_ptr &parser);
 
-    virtual void send(uint64_t signature) override;
+    void connect() override {}
 
-    virtual void connect() {}
+    void send(uint64_t signature) override;
 
-    virtual void do_read(int sz) override {}
+    void do_read(int sz) override {}
 
-    virtual void close() override {}
+    void close() override {}
 
-    virtual void on_failure(bool is_write = false) override {}
+    void on_failure(bool is_write = false) override {}
 
 private:
     rpc_session_ptr _client;
 };
 
+// TODO: use host port
 class sim_network_provider : public connection_oriented_network
 {
 public:
     sim_network_provider(rpc_engine *rpc, network *inner_provider);
     ~sim_network_provider(void) {}
 
-    virtual error_code start(rpc_channel channel, int port, bool client_only);
+    error_code start(rpc_channel channel, int port, bool client_only) override;
 
-    virtual ::dsn::rpc_address address() { return _address; }
+    ::dsn::rpc_address address() override { return _address; }
 
-    virtual rpc_session_ptr create_client_session(::dsn::rpc_address server_addr)
+    rpc_session_ptr create_client_session(::dsn::rpc_address server_addr) override
     {
         message_parser_ptr parser(new_message_parser(_client_hdr_format));
         return rpc_session_ptr(new sim_client_session(*this, server_addr, parser));

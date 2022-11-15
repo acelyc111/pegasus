@@ -19,16 +19,18 @@
 
 #pragma once
 
-#include "utils/singleton.h"
-#include "utils/synchronize.h"
-#include "common/json_helper.h"
-
 #include <boost/asio/deadline_timer.hpp>
 #include <event2/http.h>
 #include <event2/http_struct.h>
-
 #include <prometheus/registry.h>
 #include <prometheus/exposer.h>
+
+#include "common/json_helper.h"
+#include "runtime/rpc/rpc_host_port.h"
+#include "utils/singleton.h"
+#include "utils/synchronize.h"
+
+using dsn::host_port;
 
 namespace pegasus {
 namespace server {
@@ -81,8 +83,7 @@ private:
                          const boost::system::error_code &ec);
 
     mutable ::dsn::utils::rw_lock_nr _lock;
-    std::string _local_host;
-    uint16_t _local_port;
+    host_port _host_port;
     std::string _app_name;
     std::string _cluster_name;
 

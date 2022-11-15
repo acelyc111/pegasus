@@ -93,7 +93,7 @@ typedef struct message_header
     uint32_t body_crc32;
     uint64_t id;       // sequence id, used to match request and response
     uint64_t trace_id; // used for tracking source
-    char rpc_name[DSN_MAX_TASK_CODE_NAME_LENGTH];
+    char rpc_name[DSN_MAX_TASK_CODE_NAME_LENGTH] = {};
     fast_code rpc_code; // dsn::task_code
     dsn::gpid gpid;     // global partition id
     msg_context_t context;
@@ -108,6 +108,8 @@ typedef struct message_header
     //
     // in the forwarding case, the from_address is always the orignal client's address
     rpc_address from_address;
+
+    // TODO: we have to add host_port to message_header to full support FQDN
 
     struct
     {
@@ -140,6 +142,7 @@ public:
 
     // by rpc and network
     rpc_session_ptr io_session; // send/recv session
+    // TODO: take care
     rpc_address to_address;     // always ipv4/v6 address, it is the to_node's net address
     rpc_address server_address; // used by requests, and may be of uri/group address
     dsn::task_code local_rpc_code;
@@ -150,7 +153,6 @@ public:
     dlink dl;
 
 public:
-    // message_ex(blob bb, bool parse_hdr = true); // read
     ~message_ex();
 
     //
@@ -159,7 +161,6 @@ public:
     error_code error();
     task_code rpc_code();
     static uint64_t new_id() { return ++_id; }
-    static unsigned int get_body_length(char *hdr) { return ((message_header *)hdr)->body_length; }
 
     //
     // routines for create messages

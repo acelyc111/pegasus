@@ -61,8 +61,9 @@ sim_client_session::sim_client_session(sim_network_provider &net,
 
 void sim_client_session::connect()
 {
-    if (set_connecting())
+    if (set_connecting()) {
         set_connected();
+    }
 }
 
 static message_ex *virtual_send_message(message_ex *msg)
@@ -91,7 +92,7 @@ void sim_client_session::send(uint64_t sig)
         sim_network_provider *rnet = nullptr;
         if (!s_switch[task_spec::get(msg->local_rpc_code)->rpc_call_channel][msg->hdr_format].get(
                 remote_address(), rnet)) {
-            LOG_ERROR("cannot find destination node %s in simulator", remote_address().to_string());
+            LOG_ERROR_F("cannot find destination node {} in simulator", remote_address());
             // on_disconnected();  // disable this to avoid endless resending
         } else {
             auto server_session = rnet->get_server_session(_net.address());

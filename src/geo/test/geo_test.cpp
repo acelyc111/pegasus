@@ -39,10 +39,10 @@ class geo_client_test : public ::testing::Test
 public:
     geo_client_test()
     {
-        std::vector<dsn::rpc_address> meta_list;
-        bool ok = dsn::replication::replica_helper::load_meta_servers(
-            meta_list, PEGASUS_CLUSTER_SECTION_NAME.c_str(), "onebox");
-        CHECK(ok, "load_meta_servers failed");
+        dsn::host_port_group meta_list;
+        CHECK(dsn::host_port_group::load_servers(PEGASUS_CLUSTER_SECTION_NAME, "onebox", &meta_list)
+                  .is_ok(),
+              "");
         auto ddl_client = new dsn::replication::replication_ddl_client(meta_list);
         dsn::error_code error = ddl_client->create_app("temp_geo", "pegasus", 4, 3, {}, false);
         CHECK_EQ(dsn::ERR_OK, error);

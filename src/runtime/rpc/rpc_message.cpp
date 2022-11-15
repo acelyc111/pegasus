@@ -38,6 +38,7 @@ using namespace dsn::utils;
 namespace dsn {
 
 std::atomic<uint64_t> message_ex::_id(0);
+// TODO(yingchun): s_local_hash is always 0 be default?
 uint32_t message_ex::s_local_hash = 0;
 
 message_ex::message_ex()
@@ -83,7 +84,7 @@ error_code message_ex::error()
     dsn::error_code code;
     auto binary_hash = header->server.error_code.local_hash;
     if (binary_hash != 0 && binary_hash == ::dsn::message_ex::s_local_hash) {
-        code = dsn::error_code(header->server.error_code.local_code);
+        code = error_code(header->server.error_code.local_code);
     } else {
         code = error_code::try_get(header->server.error_name, dsn::ERR_UNKNOWN);
         header->server.error_code.local_hash = ::dsn::message_ex::s_local_hash;
@@ -336,6 +337,7 @@ message_ex *message_ex::create_response()
     // ATTENTION: the from_address may not be the primary address of this node
     // if there are more than one ports listened and the to_address is not equal to
     // the primary address.
+    // TODO(yingchun): we should rewrite the adresses if supporting FQDN
     msg->header->from_address = to_address;
     msg->to_address = header->from_address;
     msg->io_session = io_session;
@@ -390,7 +392,6 @@ void message_ex::release_buffer_header()
 
 void message_ex::write_next(void **ptr, size_t *size, size_t min_size)
 {
-    // printf("%p %s\n", this, __FUNCTION__);
     CHECK(!this->_is_read && this->_rw_committed,
           "there are pending msg write not committed"
           ", please invoke dsn_msg_write_next and dsn_msg_write_commit in pairs");
@@ -409,7 +410,6 @@ void message_ex::write_next(void **ptr, size_t *size, size_t min_size)
 
 void message_ex::write_commit(size_t size)
 {
-    // printf("%p %s\n", this, __FUNCTION__);
     CHECK(!this->_rw_committed,
           "there are no pending msg write to be committed"
           ", please invoke dsn_msg_write_next and dsn_msg_write_commit in pairs");
@@ -422,7 +422,6 @@ void message_ex::write_commit(size_t size)
 
 bool message_ex::read_next(void **ptr, size_t *size)
 {
-    // printf("%p %s %d\n", this, __FUNCTION__, utils::get_current_tid());
     CHECK(this->_is_read && this->_rw_committed,
           "there are pending msg read not committed"
           ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
@@ -447,7 +446,6 @@ bool message_ex::read_next(void **ptr, size_t *size)
 
 bool message_ex::read_next(blob &data)
 {
-    // printf("%p %s %d\n", this, __FUNCTION__, utils::get_current_tid());
     CHECK(this->_is_read && this->_rw_committed,
           "there are pending msg read not committed"
           ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
@@ -470,7 +468,6 @@ bool message_ex::read_next(blob &data)
 
 void message_ex::read_commit(size_t size)
 {
-    // printf("%p %s\n", this, __FUNCTION__);
     CHECK(!this->_rw_committed,
           "there are no pending msg read to be committed"
           ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
@@ -489,7 +486,6 @@ void message_ex::restore_read()
 
 void *message_ex::rw_ptr(size_t offset_begin)
 {
-    // printf("%p %s\n", this, __FUNCTION__);
     int i_max = (int)this->buffers.size();
 
     if (!_is_read)

@@ -52,7 +52,7 @@ class backup_service;
 class backup_engine
 {
 public:
-    backup_engine(backup_service *service);
+    backup_engine(backup_service *service, const std::shared_ptr<dns_resolver> &dns_resolver);
     ~backup_engine();
 
     error_code init_backup(int32_t app_id);
@@ -81,7 +81,7 @@ private:
     void on_backup_reply(error_code err,
                          const backup_response &response,
                          gpid pid,
-                         const rpc_address &primary);
+                         const host_port &primary);
     void write_backup_info();
     void complete_current_backup();
     void handle_replica_backup_failed(const backup_response &response, const gpid pid);
@@ -104,6 +104,7 @@ private:
     app_backup_info _cur_backup;
     // partition_id -> backup_status
     std::map<int32_t, backup_status> _backup_status;
+    std::shared_ptr<dns_resolver> _dns_resolver;
 };
 
 } // namespace replication

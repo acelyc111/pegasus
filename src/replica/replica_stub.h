@@ -45,6 +45,10 @@
 #include "replica.h"
 
 namespace dsn {
+
+class dns_resolver;
+class host_port;
+
 namespace replication {
 
 DSN_DECLARE_uint32(max_concurrent_manual_emergency_checkpointing_count);
@@ -74,7 +78,7 @@ class replica_split_manager;
 
 typedef std::unordered_map<gpid, replica_ptr> replicas;
 typedef std::function<void(
-    ::dsn::rpc_address /*from*/, const replica_configuration & /*new_config*/, bool /*is_closing*/)>
+    const host_port & /*from*/, const replica_configuration & /*new_config*/, bool /*is_closing*/)>
     replica_state_subscriber;
 
 class replica_stub;
@@ -91,7 +95,7 @@ public:
     static bool s_not_exit_on_log_failure; // for test
 
 public:
-    replica_stub(replica_state_subscriber subscriber = nullptr, bool is_long_subscriber = true);
+    replica_stub();
     ~replica_stub(void);
 
     //
@@ -159,8 +163,13 @@ public:
     replication_options &options() { return _options; }
     const replication_options &options() const { return _options; }
     bool is_connected() const { return NS_Connected == _state; }
-    virtual rpc_address get_meta_server_address() const { return _failure_detector->get_servers(); }
-    rpc_address primary_address() const { return _primary_address; }
+    const host_port_group &get_meta_servers() const
+    {
+        CHECK(_failure_detector, "");
+        return _failure_detector->get_servers();
+    }
+    host_port primary_address() const { return _primary_address; }
+    rpc_address primary_rpc_address() const { return _primary_rpc_address; }
 
     std::string get_replica_dir(const char *app_type, gpid id, bool create_new = true);
 
@@ -185,8 +194,9 @@ public:
     // partition split
     //
 
+    // TODO(yingchun): ip
     // called by parent partition, executed by child partition
-    void create_child_replica(dsn::rpc_address primary_address,
+    void create_child_replica(const host_port &primary_address,
                               app_info app,
                               ballot init_ballot,
                               gpid child_gpid,
@@ -231,6 +241,8 @@ public:
     void on_query_last_checkpoint(query_last_checkpoint_info_rpc rpc);
 
     void update_config(const std::string &name);
+
+    std::shared_ptr<dns_resolver> get_dns_resolver() { return _dns_resolver; }
 
 private:
     enum replica_node_state
@@ -313,6 +325,12 @@ private:
     void register_jemalloc_ctrl_command();
 #endif
 
+    void set_failure_detector_TEST(
+        const std::shared_ptr<dsn::dist::slave_failure_detector_with_multimaster> &failure_detector)
+    {
+        _failure_detector = failure_detector;
+    }
+
 private:
     friend class ::dsn::replication::test::test_checker;
     friend class ::dsn::replication::replica;
@@ -352,8 +370,9 @@ private:
     closed_replicas _closed_replicas;
 
     mutation_log_ptr _log;
-    ::dsn::rpc_address _primary_address;
-    char _primary_address_str[64];
+    // TODO(yingchun): improve naming
+    rpc_address _primary_rpc_address;
+    host_port _primary_address;
 
     std::shared_ptr<dsn::dist::slave_failure_detector_with_multimaster> _failure_detector;
     mutable zlock _state_lock;
@@ -408,6 +427,8 @@ private:
     std::atomic_int _manual_emergency_checkpointing_count;
 
     bool _is_running;
+
+    std::shared_ptr<dns_resolver> _dns_resolver;
 
 #ifdef DSN_ENABLE_GPERF
     std::atomic_bool _is_releasing_memory{false};

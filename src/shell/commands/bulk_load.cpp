@@ -305,7 +305,7 @@ bool query_bulk_load_status(command_executor *e, shell_context *sc, arguments ar
     if (print_download_progress) {
         for (auto i = 0; i < partition_count; ++i) {
             auto progress = 0;
-            for (const auto &kv : resp.bulk_load_states[i]) {
+            for (const auto &kv : resp.host_port_bulk_load_states[i]) {
                 progress += kv.second.download_progress;
             }
             progress /= resp.max_replica_count;

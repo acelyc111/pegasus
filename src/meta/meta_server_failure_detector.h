@@ -33,6 +33,9 @@
 #include "utils/fmt_logging.h"
 
 namespace dsn {
+
+class host_port;
+
 namespace replication {
 
 class meta_service;
@@ -51,22 +54,22 @@ public:
         {
         }
     };
-    typedef std::map<dsn::rpc_address, worker_stability> stability_map;
+    typedef std::map<host_port, worker_stability> stability_map;
 
 public:
-    meta_server_failure_detector(meta_service *svc);
+    meta_server_failure_detector(const std::shared_ptr<dns_resolver> &resolver, meta_service *svc);
     virtual ~meta_server_failure_detector();
 
     // get the meta-server's leader
     // leader: the leader's address. Invalid if no leader selected
     //         if leader==nullptr, then the new leader won't be returned
     // ret true if i'm the current leader; false if not.
-    bool get_leader(/*output*/ dsn::rpc_address *leader);
+    bool get_leader(/*output*/ host_port *leader);
 
     // return if acquire the leader lock, or-else blocked forever
     void acquire_leader_lock();
 
-    void reset_stability_stat(const dsn::rpc_address &node);
+    void reset_stability_stat(const host_port &node);
 
     // _fd_opts is initialized in constructor with a fd_suboption stored in meta_service.
     // so usually you don't need to call this.
@@ -75,18 +78,18 @@ public:
     void set_options(fd_suboptions *options) { _fd_opts = options; }
 
     // client side
-    virtual void on_master_disconnected(const std::vector<rpc_address> &)
+    void on_master_disconnected(const std::vector<host_port> &) override
     {
         CHECK(false, "unsupported method");
     }
-    virtual void on_master_connected(rpc_address) { CHECK(false, "unsupported method"); }
+    void on_master_connected(const host_port &) override { CHECK(false, "unsupported method"); }
 
     // server side
     // it is in the protection of failure_detector::_lock
-    virtual void on_worker_disconnected(const std::vector<rpc_address> &nodes) override;
+    void on_worker_disconnected(const std::vector<host_port> &nodes) override;
     // it is in the protection of failure_detector::_lock
-    virtual void on_worker_connected(rpc_address node) override;
-    virtual bool is_worker_connected(rpc_address node) const override
+    void on_worker_connected(const host_port &node) override;
+    bool is_worker_connected(const host_port &node) const override
     {
         // we treat all nodes not in the worker list alive in the first grace period.
         // For the reason, please consider this situation:
@@ -114,10 +117,10 @@ private:
     friend class test::test_checker;
 
     // initialize in the constructor
-    meta_service *_svc;
-    dist::distributed_lock_service *_lock_svc;
+    meta_service *_svc = nullptr;
+    dist::distributed_lock_service *_lock_svc = nullptr;
     std::string _primary_lock_id;
-    const fd_suboptions *_fd_opts;
+    const fd_suboptions *_fd_opts = nullptr;
 
     // initialize in acquire_leader_lock
     task_ptr _lock_grant_task;
@@ -131,8 +134,9 @@ private:
 
 public:
     /* these two functions are for test */
-    meta_server_failure_detector(rpc_address leader_address, bool is_myself_leader);
-    void set_leader_for_test(rpc_address leader_address, bool is_myself_leader);
+    meta_server_failure_detector(const std::shared_ptr<dns_resolver> &resolver,
+                                 bool is_myself_leader);
+    void set_leader_for_test(const host_port &leader_address, bool is_myself_leader);
     stability_map *get_stability_map_for_test();
 };
 }

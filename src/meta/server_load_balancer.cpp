@@ -124,7 +124,7 @@ void newly_partitions::newly_remove_partition(int32_t app_id)
     --total_partitions;
 }
 
-newly_partitions *get_newly_partitions(node_mapper &mapper, const dsn::rpc_address &addr)
+newly_partitions *get_newly_partitions(node_mapper &mapper, const dsn::host_port &addr)
 {
     node_state *ns = get_node_state(mapper, addr, false);
     if (ns == nullptr)

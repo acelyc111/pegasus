@@ -133,21 +133,21 @@ bool ls_nodes(command_executor *e, shell_context *sc, arguments args)
                       status.c_str());
     }
 
-    std::map<dsn::rpc_address, dsn::replication::node_status::type> nodes;
+    std::map<dsn::host_port, dsn::replication::node_status::type> nodes;
     auto r = sc->ddl_client->list_nodes(s, nodes);
     if (r != dsn::ERR_OK) {
         std::cout << "list nodes failed, error=" << r.to_string() << std::endl;
         return true;
     }
 
-    std::map<dsn::rpc_address, list_nodes_helper> tmp_map;
+    std::map<dsn::host_port, list_nodes_helper> tmp_map;
     int alive_node_count = 0;
     for (auto &kv : nodes) {
         if (kv.second == dsn::replication::node_status::NS_ALIVE)
             alive_node_count++;
         std::string status_str = dsn::enum_to_string(kv.second);
         status_str = status_str.substr(status_str.find("NS_") + 3);
-        std::string node_name = kv.first.to_std_string();
+        std::string node_name = kv.first.to_string();
         if (resolve_ip) {
             // TODO: put hostname_from_ip_port into common utils
             dsn::utils::hostname_from_ip_port(node_name.c_str(), &node_name);
@@ -175,13 +175,13 @@ bool ls_nodes(command_executor *e, shell_context *sc, arguments args)
             }
 
             for (const dsn::partition_configuration &p : partitions) {
-                if (!p.primary.is_invalid()) {
-                    auto find = tmp_map.find(p.primary);
+                if (!p.host_port_primary.is_invalid()) {
+                    auto find = tmp_map.find(p.host_port_primary);
                     if (find != tmp_map.end()) {
                         find->second.primary_count++;
                     }
                 }
-                for (const dsn::rpc_address &addr : p.secondaries) {
+                for (const dsn::host_port &addr : p.host_port_secondaries) {
                     auto find = tmp_map.find(addr);
                     if (find != tmp_map.end()) {
                         find->second.secondary_count++;
@@ -210,7 +210,7 @@ bool ls_nodes(command_executor *e, shell_context *sc, arguments args)
                                  "replica*app.pegasus*rdb.index_and_filter_blocks.memory_usage"});
 
         for (int i = 0; i < nodes.size(); ++i) {
-            dsn::rpc_address node_addr = nodes[i].address;
+            dsn::host_port node_addr = nodes[i].address;
             auto tmp_it = tmp_map.find(node_addr);
             if (tmp_it == tmp_map.end())
                 continue;
@@ -270,7 +270,7 @@ bool ls_nodes(command_executor *e, shell_context *sc, arguments args)
                                  "replica*app.pegasus*recent.write.cu"});
 
         for (int i = 0; i < nodes.size(); ++i) {
-            dsn::rpc_address node_addr = nodes[i].address;
+            dsn::host_port node_addr = nodes[i].address;
             auto tmp_it = tmp_map.find(node_addr);
             if (tmp_it == tmp_map.end())
                 continue;
@@ -329,7 +329,7 @@ bool ls_nodes(command_executor *e, shell_context *sc, arguments args)
                                  "zion*profiler*RPC_RRDB_RRDB_MULTI_PUT.latency.server"});
 
         for (int i = 0; i < nodes.size(); ++i) {
-            dsn::rpc_address node_addr = nodes[i].address;
+            dsn::host_port node_addr = nodes[i].address;
             auto tmp_it = tmp_map.find(node_addr);
             if (tmp_it == tmp_map.end())
                 continue;
@@ -488,7 +488,7 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
     std::string type;
     std::string nodes;
     optind = 0;
-    bool resolve_ip = false;
+    //    bool resolve_ip = false;
     while (true) {
         int option_index = 0;
         int c;
@@ -502,9 +502,9 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
         case 'l':
             nodes = optarg;
             break;
-        case 'r':
-            resolve_ip = true;
-            break;
+        //        case 'r':
+        //            resolve_ip = true;
+        //            break;
         default:
             return false;
         }
@@ -550,8 +550,9 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
         }
 
         for (std::string &token : tokens) {
-            dsn::rpc_address node;
-            if (!node.from_string_ipv4(token.c_str())) {
+            dsn::host_port node;
+            // TODO: support both IP and host
+            if (!node.parse_string(token).is_ok()) {
                 fprintf(stderr, "parse %s as a ip:port node failed\n", token.c_str());
                 return true;
             }
@@ -574,11 +575,11 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
     for (int i = 0; i < node_list.size(); ++i) {
         node_desc &n = node_list[i];
         std::string hostname;
-        if (resolve_ip) {
-            dsn::utils::hostname_from_ip_port(n.address.to_string(), &hostname);
-        } else {
-            hostname = n.address.to_string();
-        }
+        //        if (resolve_ip) {
+        //            dsn::utils::hostname_from_ip_port(n.address.to_string(), &hostname);
+        //        } else {
+        hostname = n.address.to_string();
+        //        }
         fprintf(stderr, "CALL [%s] [%s] ", n.desc.c_str(), hostname.c_str());
         if (results[i].first) {
             fprintf(stderr, "succeed: %s\n", results[i].second.c_str());

@@ -37,6 +37,7 @@
 #include "mutation.h"
 #include "mutation_log.h"
 #include "replica_stub.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -56,16 +57,15 @@ void replica::handle_local_failure(error_code error)
 }
 
 void replica::handle_remote_failure(partition_status::type st,
-                                    ::dsn::rpc_address node,
+                                    const host_port &node,
                                     error_code error,
                                     const std::string &caused_by)
 {
-    LOG_ERROR("%s: handle remote failure caused by %s, error = %s, status = %s, node = %s",
-              name(),
-              caused_by.c_str(),
-              error.to_string(),
-              enum_to_string(st),
-              node.to_string());
+    LOG_ERROR_PREFIX("handle remote failure caused by {}, error = {}, status = {}, node = {}",
+                     caused_by,
+                     error,
+                     enum_to_string(st),
+                     node);
 
     CHECK_EQ(status(), partition_status::PS_PRIMARY);
     CHECK_NE(node, _stub->_primary_address);
@@ -78,14 +78,15 @@ void replica::handle_remote_failure(partition_status::type st,
               enum_to_string(st));
         {
             configuration_update_request request;
-            request.node = node;
+            request.node = _dns_resolver->resolve_address(node);
+            request.__set_host_port_node(node);
             request.type = config_type::CT_DOWNGRADE_TO_INACTIVE;
             request.config = _primary_states.membership;
             downgrade_to_inactive_on_primary(request);
         }
         break;
     case partition_status::PS_POTENTIAL_SECONDARY: {
-        LOG_INFO("%s: remove learner %s for remote failure", name(), node.to_string());
+        LOG_INFO_PREFIX("remove learner {} for remote failure", node);
         // potential secondary failure does not lead to ballot change
         // therefore, it is possible to have multiple exec here
         _primary_states.learners.erase(node);

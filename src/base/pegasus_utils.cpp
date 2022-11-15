@@ -31,6 +31,7 @@
 namespace pegasus {
 namespace utils {
 
+// TODO(yingchun): network utils should be unified
 void addr2host(const ::dsn::rpc_address &addr, char *str, int len /* = 100*/)
 {
     struct sockaddr_in addr2;

@@ -21,16 +21,17 @@
 
 #include <rocksdb/status.h>
 
-#include <rrdb/rrdb.client.h>
-#include <pegasus/error.h>
-#include <pegasus_key_schema.h>
-#include <pegasus_utils.h>
-
 #include "base/pegasus_const.h"
 #include "common/replication_other_types.h"
+#include "pegasus/error.h"
+#include "pegasus_key_schema.h"
+#include "pegasus_utils.h"
+#include "rrdb/rrdb.client.h"
+#include "runtime/rpc/dns_resolver.h"
+#include "runtime/rpc/rpc_host_port.h"
 #include "utils/fmt_logging.h"
-#include "utils/string_conv.h"
 #include "utils/strings.h"
+#include "utils/string_conv.h"
 
 namespace pegasus {
 namespace proxy {
@@ -75,14 +76,20 @@ redis_parser::redis_parser(proxy_stub *op, dsn::message_ex *first_msg)
       _total_length(0),
       _current_buffer(nullptr),
       _current_buffer_length(0),
-      _current_cursor(0)
+      _current_cursor(0),
+      _dns_resolver(new dsn::dns_resolver())
 {
     ::dsn::apps::rrdb_client *r;
     if (op) {
-        std::vector<dsn::rpc_address> meta_list;
-        dsn::replication::replica_helper::load_meta_servers(
-            meta_list, PEGASUS_CLUSTER_SECTION_NAME.c_str(), op->get_cluster());
-        r = new ::dsn::apps::rrdb_client(op->get_cluster(), meta_list, op->get_app());
+        dsn::host_port_group meta_list;
+        CHECK(dsn::host_port_group::load_servers(
+                  PEGASUS_CLUSTER_SECTION_NAME, op->get_cluster(), &meta_list)
+                  .is_ok(),
+              "invalid config in {}.{}",
+              PEGASUS_CLUSTER_SECTION_NAME,
+              op->get_cluster());
+        r = new ::dsn::apps::rrdb_client(
+            op->get_cluster(), meta_list, op->get_app(), _dns_resolver);
         if (!dsn::utils::is_empty(op->get_geo_app())) {
             _geo_client = dsn::make_unique<geo::geo_client>(
                 "config.ini", op->get_cluster(), op->get_app(), op->get_geo_app());

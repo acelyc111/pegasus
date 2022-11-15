@@ -44,6 +44,7 @@
 #include "utils/fmt_logging.h"
 #include "replica/replication_app_base.h"
 #include "utils/fail_point.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -96,11 +97,13 @@ void replica::broadcast_group_check()
         if (it->first == _stub->_primary_address)
             continue;
 
-        ::dsn::rpc_address addr = it->first;
-        std::shared_ptr<group_check_request> request(new group_check_request);
+        const auto &hp = it->first;
+        rpc_address addr = _dns_resolver->resolve_address(hp);
+        auto request = std::make_shared<group_check_request>();
 
         request->app = _app_info;
         request->node = addr;
+        request->__set_host_port_node(hp);
         _primary_states.get_replica_config(it->second, request->config);
         request->last_committed_decree = last_committed_decree();
         request->__set_confirmed_decree(_duplication_mgr->min_confirmed_decree());
@@ -114,15 +117,13 @@ void replica::broadcast_group_check()
         }
 
         if (request->config.status == partition_status::PS_POTENTIAL_SECONDARY) {
-            auto it = _primary_states.learners.find(addr);
-            CHECK(it != _primary_states.learners.end(), "learner {} is missing", addr);
+            auto it = _primary_states.learners.find(hp);
+            CHECK(it != _primary_states.learners.end(), "learner {} is missing", hp);
             request->config.learner_signature = it->second.signature;
         }
 
-        LOG_INFO("%s: send group check to %s with state %s",
-                 name(),
-                 addr.to_string(),
-                 enum_to_string(it->second));
+        LOG_INFO_F(
+            "{}: send group check to {} with state {}", name(), hp, enum_to_string(it->second));
 
         dsn::task_ptr callback_task =
             rpc::call(addr,
@@ -136,7 +137,7 @@ void replica::broadcast_group_check()
                       std::chrono::milliseconds(0),
                       get_gpid().thread_hash());
 
-        _primary_states.group_check_pending_replies[addr] = callback_task;
+        _primary_states.group_check_pending_replies[hp] = callback_task;
     }
 
     // send empty prepare when necessary
@@ -198,7 +199,8 @@ void replica::on_group_check(const group_check_request &request,
     }
 
     response.pid = get_gpid();
-    response.node = _stub->_primary_address;
+    response.node = _stub->_primary_rpc_address;
+    response.__set_host_port_node(_stub->_primary_address);
     response.err = ERR_OK;
     if (status() == partition_status::PS_ERROR) {
         response.err = ERR_INVALID_STATE;
@@ -221,23 +223,29 @@ void replica::on_group_check_reply(error_code err,
         return;
     }
 
-    auto r = _primary_states.group_check_pending_replies.erase(req->node);
-    CHECK_EQ_MSG(r, 1, "invalid node address, address = {}", req->node);
+    host_port node;
+    if (req->__isset.host_port_node) {
+        node = req->host_port_node;
+    } else {
+        node = host_port(req->node);
+    }
+    auto r = _primary_states.group_check_pending_replies.erase(node);
+    CHECK_EQ_MSG(r, 1, "invalid node address '{}'", node);
 
     if (err != ERR_OK || resp->err != ERR_OK) {
         if (ERR_OK == err) {
             err = resp->err;
         }
-        handle_remote_failure(req->config.status, req->node, err, "group check");
+        handle_remote_failure(req->config.status, node, err, "group check");
         _stub->_counter_replicas_recent_group_check_fail_count->increment();
     } else {
         if (resp->learner_status_ == learner_status::LearningSucceeded &&
             req->config.status == partition_status::PS_POTENTIAL_SECONDARY) {
-            handle_learning_succeeded_on_primary(req->node, resp->learner_signature);
+            handle_learning_succeeded_on_primary(node, resp->learner_signature);
         }
         _split_mgr->primary_parent_handle_stop_split(req, resp);
         if (req->config.status == partition_status::PS_SECONDARY) {
-            _primary_states.secondary_disk_status[req->node] = resp->disk_status;
+            _primary_states.secondary_disk_status[node] = resp->disk_status;
         }
     }
 }

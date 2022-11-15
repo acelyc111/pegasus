@@ -25,8 +25,13 @@
 namespace dsn {
 namespace replication {
 
-backup_engine::backup_engine(backup_service *service)
-    : _backup_service(service), _block_service(nullptr), _backup_path(""), _is_backup_failed(false)
+backup_engine::backup_engine(backup_service *service,
+                             const std::shared_ptr<dns_resolver> &dns_resolver)
+    : _backup_service(service),
+      _block_service(nullptr),
+      _backup_path(""),
+      _is_backup_failed(false),
+      _dns_resolver(dns_resolver)
 {
 }
 
@@ -140,7 +145,7 @@ error_code backup_engine::backup_app_meta()
 
 void backup_engine::backup_app_partition(const gpid &pid)
 {
-    dsn::rpc_address partition_primary;
+    host_port partition_primary;
     {
         zauto_read_lock l;
         _backup_service->get_state()->lock_read(l);
@@ -152,14 +157,14 @@ void backup_engine::backup_app_partition(const gpid &pid)
             _is_backup_failed = true;
             return;
         }
-        partition_primary = app->partitions[pid.get_partition_index()].primary;
+        partition_primary = app->partitions[pid.get_partition_index()].host_port_primary;
     }
 
     if (partition_primary.is_invalid()) {
         LOG_WARNING_F(
             "backup_id({}): partition {} doesn't have a primary now, retry to backup it later.",
             _cur_backup.backup_id,
-            pid.to_string());
+            pid);
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          &_tracker,
                          [this, pid]() { backup_app_partition(pid); },
@@ -182,13 +187,14 @@ void backup_engine::backup_app_partition(const gpid &pid)
 
     LOG_INFO_F("backup_id({}): send backup request to partition {}, target_addr = {}",
                _cur_backup.backup_id,
-               pid.to_string(),
-               partition_primary.to_string());
+               pid,
+               partition_primary);
     backup_rpc rpc(std::move(req), RPC_COLD_BACKUP, 10000_ms, 0, pid.thread_hash());
-    rpc.call(
-        partition_primary, &_tracker, [this, rpc, pid, partition_primary](error_code err) mutable {
-            on_backup_reply(err, rpc.response(), pid, partition_primary);
-        });
+    rpc.call(_dns_resolver->resolve_address(partition_primary),
+             &_tracker,
+             [this, rpc, pid, partition_primary](error_code err) mutable {
+                 on_backup_reply(err, rpc.response(), pid, partition_primary);
+             });
 
     zauto_lock l(_lock);
     _backup_status[pid.get_partition_index()] = backup_status::ALIVE;
@@ -222,7 +228,7 @@ inline void backup_engine::retry_backup(const dsn::gpid pid)
 void backup_engine::on_backup_reply(const error_code err,
                                     const backup_response &response,
                                     const gpid pid,
-                                    const rpc_address &primary)
+                                    const host_port &primary)
 {
     {
         zauto_lock l(_lock);
@@ -249,8 +255,8 @@ void backup_engine::on_backup_reply(const error_code err,
         LOG_ERROR_F("backup_id({}): backup request to server {} failed, error: {}, retry to "
                     "send backup request.",
                     _cur_backup.backup_id,
-                    primary.to_string(),
-                    rep_error.to_string());
+                    primary,
+                    rep_error);
         retry_backup(pid);
         return;
     };
@@ -273,8 +279,8 @@ void backup_engine::on_backup_reply(const error_code err,
     LOG_INFO_F("backup_id({}): receive backup response for partition {} from server {}, now "
                "progress {}, retry to send backup request.",
                _cur_backup.backup_id,
-               pid.to_string(),
-               primary.to_string(),
+               pid,
+               primary,
                response.progress);
 
     retry_backup(pid);
