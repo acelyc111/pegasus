@@ -170,7 +170,7 @@ public:
     std::string get_meta_list_string() const
     {
         std::string metas;
-        for (const auto &node : _opts.meta_servers) {
+        for (const auto &node : _opts.meta_servers1) {
             metas = fmt::format("{}{},", metas, node.to_string());
         }
         return metas.substr(0, metas.length() - 1);

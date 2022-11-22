@@ -476,10 +476,10 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
 
     set_options(opts);
     std::ostringstream oss;
-    for (int i = 0; i < _options.meta_servers.size(); ++i) {
+    for (int i = 0; i < _options.meta_servers1.size(); ++i) {
         if (i != 0)
             oss << ",";
-        oss << _options.meta_servers[i].to_string();
+        oss << _options.meta_servers1[i].to_string();
     }
     LOG_INFO("meta_servers = %s", oss.str().c_str());
 
@@ -813,7 +813,7 @@ void replica_stub::initialize_start()
     CHECK_EQ(NS_Disconnected, _state);
     if (_options.fd_disabled == false) {
         _failure_detector = std::make_shared<dsn::dist::slave_failure_detector_with_multimaster>(
-            _options.meta_servers,
+            _options.meta_servers1,
             [this]() { this->on_meta_server_disconnected(); },
             [this]() { this->on_meta_server_connected(); });
 

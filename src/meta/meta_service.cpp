@@ -602,10 +602,10 @@ void meta_service::on_query_cluster_info(configuration_cluster_info_rpc rpc)
     std::stringstream oss;
     configuration_cluster_info_response &response = rpc.response();
     response.keys.push_back("meta_servers");
-    for (size_t i = 0; i < _opts.meta_servers.size(); ++i) {
+    for (size_t i = 0; i < _opts.meta_servers1.size(); ++i) {
         if (i != 0)
             oss << ",";
-        oss << _opts.meta_servers[i].to_string();
+        oss << _opts.meta_servers1[i].to_string();
     }
 
     response.values.push_back(oss.str());

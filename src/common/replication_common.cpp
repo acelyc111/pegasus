@@ -408,7 +408,7 @@ void replication_options::initialize()
 
     max_concurrent_bulk_load_downloading_count = FLAGS_max_concurrent_bulk_load_downloading_count;
 
-    CHECK(replica_helper::load_meta_servers(meta_servers), "invalid meta server config");
+    CHECK(replica_helper::load_meta_servers(meta_servers1), "invalid meta server config");
 
     sanity_check();
 }

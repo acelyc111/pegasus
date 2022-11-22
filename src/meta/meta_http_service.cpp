@@ -447,9 +447,9 @@ void meta_http_service::get_cluster_info_handler(const http_request &req, http_r
     dsn::utils::table_printer tp;
     std::ostringstream out;
     std::string meta_servers_str;
-    int ms_size = _service->_opts.meta_servers.size();
+    int ms_size = _service->_opts.meta_servers1.size();
     for (int i = 0; i < ms_size; i++) {
-        meta_servers_str += _service->_opts.meta_servers[i].to_std_string();
+        meta_servers_str += _service->_opts.meta_servers1[i].to_std_string();
         if (i != ms_size - 1) {
             meta_servers_str += ",";
         }
