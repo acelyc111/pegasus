@@ -445,16 +445,8 @@ void meta_http_service::get_cluster_info_handler(const http_request &req, http_r
         return;
 
     dsn::utils::table_printer tp;
-    std::ostringstream out;
-    std::string meta_servers_str;
-    int ms_size = _service->_opts.meta_servers1.size();
-    for (int i = 0; i < ms_size; i++) {
-        meta_servers_str += _service->_opts.meta_servers1[i].to_std_string();
-        if (i != ms_size - 1) {
-            meta_servers_str += ",";
-        }
-    }
-    tp.add_row_name_and_data("meta_servers", meta_servers_str);
+    tp.add_row_name_and_data("meta_servers",
+                             fmt::format("{}", fmt::join(_service->_opts.meta_servers1, ",")));
     tp.add_row_name_and_data("primary_meta_server", dsn_primary_address().to_std_string());
     std::string zk_hosts =
         dsn_config_get_value_string("zookeeper", "hosts_list", "", "zookeeper_hosts");
@@ -473,6 +465,8 @@ void meta_http_service::get_cluster_info_handler(const http_request &req, http_r
     _service->_state->get_cluster_balance_score(primary_stddev, total_stddev);
     tp.add_row_name_and_data("primary_replica_count_stddev", primary_stddev);
     tp.add_row_name_and_data("total_replica_count_stddev", total_stddev);
+
+    std::ostringstream out;
     tp.output(out, dsn::utils::table_printer::output_format::kJsonCompact);
 
     resp.body = out.str();

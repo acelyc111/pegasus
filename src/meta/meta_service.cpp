@@ -599,16 +599,9 @@ void meta_service::on_query_cluster_info(configuration_cluster_info_rpc rpc)
         return;
     }
 
-    std::stringstream oss;
     configuration_cluster_info_response &response = rpc.response();
     response.keys.push_back("meta_servers");
-    for (size_t i = 0; i < _opts.meta_servers1.size(); ++i) {
-        if (i != 0)
-            oss << ",";
-        oss << _opts.meta_servers1[i].to_string();
-    }
-
-    response.values.push_back(oss.str());
+    response.values.push_back(fmt::format("{}", fmt::join(_opts.meta_servers1, ",")));
     response.keys.push_back("primary_meta_server");
     response.values.push_back(dsn_primary_address().to_std_string());
     std::string zk_hosts =

@@ -475,13 +475,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
     LOG_INFO("primary_address = %s", _primary_address_str);
 
     set_options(opts);
-    std::ostringstream oss;
-    for (int i = 0; i < _options.meta_servers1.size(); ++i) {
-        if (i != 0)
-            oss << ",";
-        oss << _options.meta_servers1[i].to_string();
-    }
-    LOG_INFO("meta_servers = %s", oss.str().c_str());
+    LOG_INFO_F("meta_servers = {}", fmt::format("{}", fmt::join(_options.meta_servers1, ",")));
 
     _deny_client = _options.deny_client_on_start;
     _verbose_client_log = _options.verbose_client_log_on_start;
