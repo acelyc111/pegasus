@@ -91,4 +91,61 @@ error_s host_port::load_servers(const string &section, const string &key, vector
     return parse_strings(comma_sep_addrs, hps);
 }
 
+void host_port_group::add(const host_port& hp)
+{
+    CHECK(initialized(), "host_port is not initialized");
+    utils::auto_write_lock l(_lock);
+    if (_members.end() != std::find(_members.begin(), _members.end(), hp)) {
+        LOG_WARNING_F("duplicate host_port '{}' will be ignored", hp);
+        return;
+    }
+    _members.push_back(hp);
+}
+
+host_port host_port_group::next(const host_port& hp) const
+{
+    utils::auto_read_lock l(_lock);
+    if (_members.empty()) {
+        return host_port();
+    }
+
+    // TODO(yingchun): the following code can be optimized
+    if (!hp.initialized()) {
+        return _members[rand::next_u32(0, _members.size() - 1)];
+    }
+
+    auto it = std::find(_members.begin(), _members.end(), hp);
+    if (it == _members.end()) {
+        return _members[rand::next_u32(0, _members.size() - 1)];
+    }
+
+    it++;
+    return it == _members.end() ? _members[0] : *it;
+}
+
+void host_port_group::set_leader(const host_port& hp)
+{
+    utils::auto_write_lock l(_lock);
+    if (!hp.initialized()) {
+        _leader_index = -1;
+        return;
+    }
+
+    for (int i = 0; i < _members.size(); ++i) {
+        if (_members[i] == addr) {
+            _leader_index = i;
+            return;
+        }
+    }
+
+    _members.push_back(addr);
+    _leader_index = static_cast<int>(_members.size() - 1);
+}
+
+host_port host_port_group::leader() const
+{
+    alr_t l(_lock);
+    return _leader_index >= 0 ? _members[_leader_index] : host_port();
+}
+
 } // namespace dsn

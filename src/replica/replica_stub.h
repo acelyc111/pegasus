@@ -159,7 +159,7 @@ public:
     replication_options &options() { return _options; }
     const replication_options &options() const { return _options; }
     bool is_connected() const { return NS_Connected == _state; }
-    virtual rpc_address get_meta_server_address() const { return _failure_detector->get_servers(); }
+    rpc_address get_meta_server_address() const { return _failure_detector->get_servers(); }
     rpc_address primary_address() const { return _primary_address; }
 
     std::string get_replica_dir(const char *app_type, gpid id, bool create_new = true);

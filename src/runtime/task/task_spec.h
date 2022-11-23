@@ -76,6 +76,7 @@ ENUM_REG(TASK_STATE_FINISHED)
 ENUM_REG(TASK_STATE_CANCELLED)
 ENUM_END(task_state)
 
+// TODO(yingchun): can be simplified, only GRPC_TO_LEADER supported now
 typedef enum grpc_mode_t {
     GRPC_TO_LEADER, // the rpc is sent to the leader (if exist)
     GRPC_TO_ALL,    // the rpc is sent to all

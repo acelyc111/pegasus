@@ -36,6 +36,8 @@ public:
     // Note that <host> cannot be in IPv6 address notation.
     error_s parse_string(const std::string &str);
 
+    bool initialized() const { return !_host.empty(); }
+
     const std::string &host() const { return _host; }
     uint16_t port() const { return _port; }
 
@@ -62,5 +64,21 @@ inline bool operator==(const host_port &hp1, const host_port &hp2)
 {
     return hp1.port() == hp2.port() && hp1.host() == hp2.host();
 }
+
+class host_port_group
+{
+public:
+    host_port_group() = default;
+    void add(const host_port& hp);
+    host_port next(const host_port& hp) const;
+
+    void set_leader(const host_port& hp);
+    host_port leader() const;
+
+private:
+    mutable utils::rw_lock_nr _lock;
+    int _leader_index;
+    std::vector<host_port> _members;
+};
 
 } // namespace dsn

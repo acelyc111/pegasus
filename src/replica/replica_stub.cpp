@@ -1558,10 +1558,9 @@ void replica_stub::remove_replica_on_meta_server(const app_info &info,
     ::dsn::marshall(msg, *request);
 
     // TODO(yingchun): ip
-    rpc_address target(_failure_detector->get_servers());
     rpc::call(_failure_detector->get_servers(),
               msg,
-              nullptr,
+              &_tracker,
               [](error_code err, dsn::message_ex *, dsn::message_ex *) {});
 }
 
@@ -1590,6 +1589,7 @@ void replica_stub::on_meta_server_disconnected()
     }
 }
 
+// TODO(yingchun): replica_stub::close will wait all tasks to be finished, the following comment seems outdated?
 // this_ is used to hold a ref to replica_stub so we don't need to cancel the task on
 // replica_stub::close
 void replica_stub::on_meta_server_disconnected_scatter(replica_stub_ptr this_, gpid id)

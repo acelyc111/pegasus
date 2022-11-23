@@ -40,15 +40,15 @@ slave_failure_detector_with_multimaster::slave_failure_detector_with_multimaster
     std::function<void()> &&master_connected_callback)
 {
     _meta_servers.assign_group("meta-servers");
-    // TODO(yingchun): need update
-    //    for (const auto &s : meta_servers) {
-    //        if (!_meta_servers.group_address()->add(s)) {
-    //            LOG_WARNING_F("duplicate adress {}", s);
+    //     TODO(yingchun): need update
+    //        for (const auto &s : meta_servers) {
+    //            if (!_meta_servers.group_address()->add(s)) {
+    //                LOG_WARNING_F("duplicate adress {}", s);
+    //            }
     //        }
-    //    }
     //
-    //    _meta_servers.group_address()->set_leader(
-    //        meta_servers[rand::next_u32(0, (uint32_t)meta_servers.size() - 1)]);
+    //        _meta_servers.group_address()->set_leader(
+    //            meta_servers[rand::next_u32(0, (uint32_t)meta_servers.size() - 1)]);
 
     // ATTENTION: here we disable dsn_group_set_update_leader_automatically to avoid
     // failure detecting logic is affected by rpc failure or rpc forwarding.
@@ -77,22 +77,27 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
              ack.allowed ? "true" : "false");
 
     zauto_lock l(failure_detector::_lock);
-    if (!failure_detector::end_ping_internal(err, ack))
+    if (!failure_detector::end_ping_internal(err, ack)) {
         return;
+    }
 
     CHECK_EQ(ack.this_node, _meta_servers.group_address()->leader());
 
+    // TODO(yingchun): refactor the if-else statements
     if (ERR_OK != err) {
+        // Try to send beacon to the next master when current master return error.
         rpc_address next = _meta_servers.group_address()->next(ack.this_node);
         if (next != ack.this_node) {
             _meta_servers.group_address()->set_leader(next);
-            // do not start next send_beacon() immediately to avoid send rpc too frequently
+            // Do not start next send_beacon() immediately to avoid send rpc too frequently
             switch_master(ack.this_node, next, 1000);
         }
     } else {
         if (ack.is_master) {
-            // do nothing
+            // Do nothing if the current master not changed
         } else if (ack.primary_node.is_invalid()) {
+            // Try to send beacon to the next master when master changed and the hint master is
+            // invalid
             rpc_address next = _meta_servers.group_address()->next(ack.this_node);
             if (next != ack.this_node) {
                 _meta_servers.group_address()->set_leader(next);
@@ -100,6 +105,8 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
                 switch_master(ack.this_node, next, 1000);
             }
         } else {
+            // Try to send beacon to the hint master when master changed and give a valid hint
+            // master
             _meta_servers.group_address()->set_leader(ack.primary_node);
             // start next send_beacon() immediately because the leader is possibly right.
             switch_master(ack.this_node, ack.primary_node, 0);
@@ -114,8 +121,10 @@ void slave_failure_detector_with_multimaster::on_master_disconnected(
     bool primary_disconnected = false;
     rpc_address leader = _meta_servers.group_address()->leader();
     for (auto it = nodes.begin(); it != nodes.end(); ++it) {
-        if (leader == *it)
+        if (leader == *it) {
             primary_disconnected = true;
+            break;
+        }
     }
 
     if (primary_disconnected) {
@@ -129,8 +138,7 @@ void slave_failure_detector_with_multimaster::on_master_connected(::dsn::rpc_add
     * well, this is called in on_ping_internal, which is called by rep::end_ping.
     * So this function is called in the lock context of fd::_lock
     */
-    bool is_primary = (_meta_servers.group_address()->leader() == node);
-    if (is_primary) {
+    if (_meta_servers.group_address()->leader() == node) {
         _master_connected_callback();
     }
 }

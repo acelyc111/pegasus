@@ -73,6 +73,7 @@ public:
     void leader_forward();
     rpc_address possible_leader();
     bool is_update_leader_automatically() const { return _update_leader_automatically; }
+    // TODO(yingchun): never used, remove it
     void set_update_leader_automatically(bool value) { _update_leader_automatically = value; }
     const char *name() const { return _name.c_str(); }
 
