@@ -28,29 +28,25 @@ namespace dsn {
 class host_port
 {
 public:
+    host_port() = default;
     host_port(std::string host, uint16_t port);
 
     // Parse a <host>:<port> pair into this object.
     //
     // Note that <host> cannot be in IPv6 address notation.
-    error_s parse_string(const std::string& str);
+    error_s parse_string(const std::string &str);
 
-    const std::string& host() const { return _host; }
+    const std::string &host() const { return _host; }
     uint16_t port() const { return _port; }
 
-    std::string to_string() const
-    {
-        return fmt::format("{}:{}", _host, _port);
-    }
+    std::string to_string() const { return fmt::format("{}:{}", _host, _port); }
 
     // Parse a comma separated list of "host:port" pairs into a vector
     // host_port objects.
-    static error_s parse_strings(
-        const std::string& comma_sep_addrs, std::vector<host_port>* res);
+    static error_s parse_strings(const std::string &comma_sep_addrs, std::vector<host_port> *res);
 
-    static error_s load_servers(const std::string &section,
-                                const std::string &key,
-                                std::vector<host_port>* hps);
+    static error_s
+    load_servers(const std::string &section, const std::string &key, std::vector<host_port> *hps);
 
     friend std::ostream &operator<<(std::ostream &os, const host_port &hp)
     {
@@ -62,7 +58,8 @@ private:
     uint16_t _port = 0;
 };
 
-inline bool operator==(const host_port& hp1, const host_port& hp2) {
+inline bool operator==(const host_port &hp1, const host_port &hp2)
+{
     return hp1.port() == hp2.port() && hp1.host() == hp2.host();
 }
 

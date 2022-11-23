@@ -17,64 +17,74 @@
 
 #include "runtime/rpc/rpc_host_port.h"
 
-#include "utils/fmt_logging.h"
+#include <boost/algorithm/string/trim.hpp>
+#include <set>
 
+#include "utils/config_api.h"
+#include "utils/fmt_logging.h"
+#include "utils/string_conv.h"
+#include "utils/strings.h"
+
+using std::set;
 using std::string;
 using std::vector;
 
 namespace dsn {
 
-host_port::host_port(string host, uint16_t port)
-    : _host(std::move(host)), _port(port) {}
+host_port::host_port(string host, uint16_t port) : _host(std::move(host)), _port(port) {}
 
-error_s host_port::parse_string(const string& str) {
+error_s host_port::parse_string(const string &str)
+{
     vector<string> hostname_port;
     utils::split_args(str.c_str(), hostname_port, ':');
     if (hostname_port.size() != 2) {
-        return error_s::make(ERR_INVALID_PARAMETERS, fmt::format("invalid host:port format: {}", str));
+        return error_s::make(ERR_INVALID_PARAMETERS,
+                             fmt::format("invalid host:port format: {}", str));
     }
-    for (auto& v : hostname_port) {
+    for (auto &v : hostname_port) {
         boost::trim(v);
     }
 
     // Parse the port.
     uint32_t port;
     if (!buf2uint32(hostname_port[1], port) || port > UINT16_MAX) {
-        return error_s::make(ERR_INVALID_PARAMETERS, fmt::format("invalid port: {}", hostname_port[1]));
+        return error_s::make(ERR_INVALID_PARAMETERS,
+                             fmt::format("invalid port: {}", hostname_port[1]));
     }
 
-    host_.swap(hostname_port[0]);
-    port_ = port;
+    _host.swap(hostname_port[0]);
+    _port = port;
     return error_s::ok();
 }
 
-error_s host_port::parse_strings(const string& comma_sep_addrs, vector<host_port>* hps)
+error_s host_port::parse_strings(const string &comma_sep_addrs, vector<host_port> *hps)
 {
-    CHECK_NOTNULL(hps);
+    CHECK_NOTNULL(hps, "");
     hps->clear();
 
     vector<string> addrs;
     utils::split_args(comma_sep_addrs.c_str(), addrs, ',');
 
-    set<host_port> hp_set;
+    // TODO(yingchun): simply use to_string() for host_port set, we can override more operators if
+    // needed in the future.
+    set<string> hp_set;
     hps->reserve(addrs.size());
-    for (const string& addr : addrs) {
+    for (const string &addr : addrs) {
         host_port hp;
         RETURN_NOT_OK(hp.parse_string(addr));
-        if (hp_set.count(hp) != 0) {
+        if (hp_set.count(hp.to_string()) != 0) {
             LOG_WARNING_F("duplicate host:port '{}'", addr);
             continue;
         }
+        hp_set.emplace(std::move(hp.to_string()));
         hps->emplace_back(std::move(hp));
     }
     return error_s::ok();
 }
 
-error_s host_port::load_servers(const string &section,
-                                const string &key,
-                                vector<host_port>* hps)
+error_s host_port::load_servers(const string &section, const string &key, vector<host_port> *hps)
 {
-    CHECK_NOTNULL(hps);
+    CHECK_NOTNULL(hps, "");
     hps->clear();
 
     string comma_sep_addrs = dsn_config_get_value_string(section.c_str(), key.c_str(), "", "");
