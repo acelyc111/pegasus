@@ -26,22 +26,24 @@
 
 #pragma once
 
-#include "runtime/api_task.h"
+#include <string>
+
+#include "common/gpid.h"
+#include "common/replication_other_types.h"
+#include "common/replication.codes.h"
 #include "runtime/api_layer1.h"
 #include "runtime/app_model.h"
+#include "runtime/api_task.h"
+#include "runtime/rpc/rpc_address.h"
+#include "runtime/rpc/rpc_host_port.h"
+#include "runtime/rpc/rpc_stream.h"
+#include "runtime/rpc/serialization.h"
+#include "runtime/serverlet.h"
+#include "runtime/service_app.h"
+#include "runtime/task/task_code.h"
 #include "utils/api_utilities.h"
 #include "utils/error_code.h"
 #include "utils/threadpool_code.h"
-#include "runtime/task/task_code.h"
-#include "common/gpid.h"
-#include "runtime/rpc/serialization.h"
-#include "runtime/rpc/rpc_stream.h"
-#include "runtime/serverlet.h"
-#include "runtime/service_app.h"
-#include "runtime/rpc/rpc_address.h"
-#include "common/replication_other_types.h"
-#include "common/replication.codes.h"
-#include <string>
 
 namespace dsn {
 namespace replication {
@@ -57,7 +59,7 @@ typedef rpc_holder<query_replica_info_request, query_replica_info_response> quer
 class replication_options
 {
 public:
-    std::vector<::dsn::rpc_address> meta_servers1;
+    std::vector<::dsn::host_port> meta_servers1;
 
     std::string app_name;
     std::string app_dir;
