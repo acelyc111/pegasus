@@ -200,7 +200,9 @@ private:
     } _addr{.value = 0};
 };
 
-bool remove_node(rpc_address node, /*inout*/ std::vector<rpc_address> &node_list); // TODO(yingchun): WARN_UNUSED_RESULT
+bool remove_node(
+    rpc_address node,
+    /*inout*/ std::vector<rpc_address> &node_list); // TODO(yingchun): WARN_UNUSED_RESULT
 
 // TODO(yingchun): remove this function
 // true if meta_list's value of config is valid, otherwise return false

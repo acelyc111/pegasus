@@ -259,9 +259,7 @@ bool remove_node(rpc_address node, /*inout*/ vector<rpc_address> &node_list)
     }
 }
 
-bool load_meta_servers(/*out*/ vector<rpc_address> &servers,
-                       const char *section,
-                       const char *key)
+bool load_meta_servers(/*out*/ vector<rpc_address> &servers, const char *section, const char *key)
 {
     servers.clear();
     string server_list = dsn_config_get_value_string(section, key, "", "");

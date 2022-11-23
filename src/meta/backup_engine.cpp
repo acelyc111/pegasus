@@ -19,7 +19,7 @@
 #include "utils/filesystem.h"
 
 #include "common/backup_common.h"
-#include "replica/replication_common.h"
+#include "common/replication_common.h"
 #include "server_state.h"
 
 namespace dsn {

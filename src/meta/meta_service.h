@@ -41,7 +41,7 @@
 #include "meta/meta_state_service.h"
 #include "perf_counter/perf_counter_wrapper.h"
 
-#include "replica/replication_common.h"
+#include "common/replication_common.h"
 #include "common/bulk_load_common.h"
 #include "common/partition_split_common.h"
 #include "common/manual_compact.h"

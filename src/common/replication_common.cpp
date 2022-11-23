@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include "replication_common.h"
+#include "common/replication_common.h"
 
 #include <fstream>
 

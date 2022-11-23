@@ -17,7 +17,7 @@
 
 #include "app_env_validator.h"
 
-#include "replica/replication_common.h"
+#include "common/replication_common.h"
 #include <fmt/format.h>
 #include "utils/string_conv.h"
 #include "utils/fmt_logging.h"

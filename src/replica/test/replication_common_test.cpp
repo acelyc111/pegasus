@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "replica/replication_common.h"
+#include "common/replication_common.h"
 
 #include <fstream>
 #include <gtest/gtest.h>

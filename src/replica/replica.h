@@ -49,7 +49,7 @@
 #include "perf_counter/perf_counter_wrapper.h"
 #include "replica/replica_base.h"
 
-#include "replication_common.h"
+#include "common/replication_common.h"
 #include "mutation.h"
 #include "mutation_log.h"
 #include "prepare_list.h"

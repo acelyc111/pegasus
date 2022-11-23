@@ -166,8 +166,8 @@ public:
     {
         std::vector<host_port> master_group;
         // TODO(yingchun): need update
-//        for (int i = 0; i < 3; ++i)
-//            master_group.push_back(rpc_address("localhost", MPORT_START + i));
+        //        for (int i = 0; i < 3; ++i)
+        //            master_group.push_back(rpc_address("localhost", MPORT_START + i));
         _worker_fd = new worker_fd_test(nullptr, master_group);
         _worker_fd->start(1, 1, 9, 10);
         ++started_apps;

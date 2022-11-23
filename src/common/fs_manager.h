@@ -36,7 +36,7 @@
 #include "utils/zlocks.h"
 #include "utils/flags.h"
 
-#include "replica/replication_common.h"
+#include "common/replication_common.h"
 
 namespace dsn {
 namespace replication {

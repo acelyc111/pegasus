@@ -49,8 +49,11 @@ pegasus_client_impl::pegasus_client_impl(const char *cluster_name, const char *a
     : _cluster_name(cluster_name), _app_name(app_name)
 {
     std::vector<dsn::host_port> meta_servers;
-    CHECK(host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &meta_servers).is_ok(),
-          "invalid config in {}.{}", PEGASUS_CLUSTER_SECTION_NAME, cluster_name);
+    CHECK(
+        host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &meta_servers).is_ok(),
+        "invalid config in {}.{}",
+        PEGASUS_CLUSTER_SECTION_NAME,
+        cluster_name);
     _meta_server.assign_group("meta-servers");
 
     // TODO(yingchun): need update

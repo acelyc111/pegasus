@@ -56,7 +56,8 @@ public:
     {
         // initialize ddl_client
         std::vector<host_port> meta_list;
-        ASSERT_TRUE(host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, _cluster_name, &meta_list).is_ok());
+        ASSERT_TRUE(host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, _cluster_name, &meta_list)
+                        .is_ok());
 
         // TODO(yingchun): need update
         //_ddl_client = std::make_shared<replication_ddl_client>(meta_list);

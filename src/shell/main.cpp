@@ -640,10 +640,9 @@ static void freeHintsCallback(void *ptr) { sdsfree((sds)ptr); }
                                     "",
                                     "");
 
-    dsn::load_meta_servers(
-        s_global_context.meta_list,
-        pegasus::PEGASUS_CLUSTER_SECTION_NAME.c_str(),
-        cluster_name.c_str());
+    dsn::load_meta_servers(s_global_context.meta_list,
+                           pegasus::PEGASUS_CLUSTER_SECTION_NAME.c_str(),
+                           cluster_name.c_str());
     s_global_context.ddl_client =
         dsn::make_unique<dsn::replication::replication_ddl_client>(s_global_context.meta_list);
 

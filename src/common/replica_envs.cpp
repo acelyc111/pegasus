@@ -34,16 +34,16 @@ const string replica_envs::MANUAL_COMPACT_MAX_CONCURRENT_RUNNING_COUNT(
     MANUAL_COMPACT_PREFIX + "max_concurrent_running_count");
 const string MANUAL_COMPACT_ONCE_PREFIX(MANUAL_COMPACT_PREFIX + "once.");
 const string replica_envs::MANUAL_COMPACT_ONCE_TRIGGER_TIME(MANUAL_COMPACT_ONCE_PREFIX +
-                                                                 "trigger_time");
+                                                            "trigger_time");
 const string replica_envs::MANUAL_COMPACT_ONCE_TARGET_LEVEL(MANUAL_COMPACT_ONCE_PREFIX +
-                                                                 "target_level");
+                                                            "target_level");
 const string replica_envs::MANUAL_COMPACT_ONCE_BOTTOMMOST_LEVEL_COMPACTION(
     MANUAL_COMPACT_ONCE_PREFIX + "bottommost_level_compaction");
 const string MANUAL_COMPACT_PERIODIC_PREFIX(MANUAL_COMPACT_PREFIX + "periodic.");
-const string replica_envs::MANUAL_COMPACT_PERIODIC_TRIGGER_TIME(
-    MANUAL_COMPACT_PERIODIC_PREFIX + "trigger_time");
-const string replica_envs::MANUAL_COMPACT_PERIODIC_TARGET_LEVEL(
-    MANUAL_COMPACT_PERIODIC_PREFIX + "target_level");
+const string replica_envs::MANUAL_COMPACT_PERIODIC_TRIGGER_TIME(MANUAL_COMPACT_PERIODIC_PREFIX +
+                                                                "trigger_time");
+const string replica_envs::MANUAL_COMPACT_PERIODIC_TARGET_LEVEL(MANUAL_COMPACT_PERIODIC_PREFIX +
+                                                                "target_level");
 const string replica_envs::MANUAL_COMPACT_PERIODIC_BOTTOMMOST_LEVEL_COMPACTION(
     MANUAL_COMPACT_PERIODIC_PREFIX + "bottommost_level_compaction");
 const string
@@ -58,8 +58,7 @@ const string replica_envs::REPLICA_ACCESS_CONTROLLER_ALLOWED_USERS(
     "replica_access_controller.allowed_users");
 const string replica_envs::READ_QPS_THROTTLING("replica.read_throttling");
 const string replica_envs::READ_SIZE_THROTTLING("replica.read_throttling_by_size");
-const string
-    replica_envs::SPLIT_VALIDATE_PARTITION_HASH("replica.split.validate_partition_hash");
+const string replica_envs::SPLIT_VALIDATE_PARTITION_HASH("replica.split.validate_partition_hash");
 const string replica_envs::USER_SPECIFIED_COMPACTION("user_specified_compaction");
 const string replica_envs::BACKUP_REQUEST_QPS_THROTTLING("replica.backup_request_throttling");
 const string replica_envs::ROCKSDB_ALLOW_INGEST_BEHIND("rocksdb.allow_ingest_behind");

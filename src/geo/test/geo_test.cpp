@@ -41,8 +41,7 @@ public:
     {
         // TODO(yingchun): ip
         std::vector<dsn::rpc_address> meta_list;
-        bool ok = dsn::load_meta_servers(
-            meta_list, PEGASUS_CLUSTER_SECTION_NAME.c_str(), "onebox");
+        bool ok = dsn::load_meta_servers(meta_list, PEGASUS_CLUSTER_SECTION_NAME.c_str(), "onebox");
         CHECK(ok, "load_meta_servers failed");
         auto ddl_client = new dsn::replication::replication_ddl_client(meta_list);
         dsn::error_code error = ddl_client->create_app("temp_geo", "pegasus", 4, 3, {}, false);
