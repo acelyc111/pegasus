@@ -35,7 +35,7 @@
 
 #include "runtime/task/async_calls.h"
 
-#include "common/replication_common.h"
+#include "replica/replication_common.h"
 #include "distributed_lock_service_simple.h"
 
 namespace dsn {

@@ -22,6 +22,7 @@
 #include "utils/api_utilities.h"
 #include "utils/error_code.h"
 #include "utils/fmt_logging.h"
+#include "utils/ports.h"
 #include "utils/smart_pointers.h"
 #include "utils/string_view.h"
 

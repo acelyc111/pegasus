@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "common/replication_common.h"
+#include "replica/replication_common.h"
 #include "failure_detector/failure_detector.h"
 #include "meta_options.h"
 #include "utils/distributed_lock_service.h"

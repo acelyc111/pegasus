@@ -24,6 +24,7 @@
 
 namespace dsn {
 
+// TODO(yingchun): unit tests
 class host_port
 {
 public:
@@ -33,6 +34,9 @@ public:
     //
     // Note that <host> cannot be in IPv6 address notation.
     error_s parse_string(const std::string& str);
+
+    const std::string& host() const { return _host; }
+    uint16_t port() const { return _port; }
 
     std::string to_string() const
     {

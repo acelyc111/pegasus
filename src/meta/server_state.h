@@ -43,7 +43,7 @@
 #include <gtest/gtest_prod.h>
 #include <unordered_map>
 
-#include "common/replication_common.h"
+#include "replica/replication_common.h"
 #include "meta_data.h"
 #include "meta_service.h"
 

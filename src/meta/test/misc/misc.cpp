@@ -31,7 +31,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "common/replication_common.h"
+#include "replica/replication_common.h"
 #include "utils/fmt_logging.h"
 #include "utils/rand.h"
 

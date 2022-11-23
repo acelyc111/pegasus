@@ -27,7 +27,7 @@
 #include "replica/replication_service_app.h"
 #include "http/http_server.h"
 
-#include "common/replication_common.h"
+#include "replication_common.h"
 #include "replica_stub.h"
 #include "replica_http_service.h"
 #include "http/service_version.h"

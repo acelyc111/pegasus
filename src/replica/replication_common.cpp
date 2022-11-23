@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include "common/replication_common.h"
+#include "replication_common.h"
 
 #include <fstream>
 
@@ -408,7 +408,7 @@ void replication_options::initialize()
 
     max_concurrent_bulk_load_downloading_count = FLAGS_max_concurrent_bulk_load_downloading_count;
 
-    CHECK(replica_helper::load_meta_servers(meta_servers1), "invalid meta server config");
+    CHECK(host_port::load_servers("meta_server", "server_list", &meta_servers1).is_ok(), "invalid meta server config");
 
     sanity_check();
 }

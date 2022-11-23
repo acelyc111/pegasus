@@ -44,7 +44,7 @@
 #include <fmt/format.h>
 #include "utils/time_utils.h"
 
-#include "common/replication_common.h"
+#include "replica/replication_common.h"
 #include "common/bulk_load_common.h"
 #include "common/partition_split_common.h"
 #include "common/manual_compact.h"

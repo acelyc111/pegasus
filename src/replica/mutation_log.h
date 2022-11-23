@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "common/replication_common.h"
+#include "replication_common.h"
 #include "mutation.h"
 #include "log_block.h"
 #include "log_file.h"

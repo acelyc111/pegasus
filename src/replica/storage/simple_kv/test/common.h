@@ -50,7 +50,7 @@
 #include "runtime/rpc/rpc_address.h"
 #include "common/replication_other_types.h"
 #include "common/replication.codes.h"
-#include "common/replication_common.h"
+#include "replica/replication_common.h"
 
 namespace dsn {
 namespace replication {

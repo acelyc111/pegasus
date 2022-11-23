@@ -22,7 +22,7 @@
 
 #include "utils/filesystem.h"
 
-#include "common/replication_common.h"
+#include "replica/replication_common.h"
 
 namespace dsn {
 namespace replication {
