@@ -26,11 +26,9 @@
 
 #pragma once
 
-#include <cstdint>
 #include <string>
 
 namespace dsn {
-namespace replication {
 
 class replica_envs
 {
@@ -65,5 +63,4 @@ public:
     static const std::string UPDATE_MAX_REPLICA_COUNT;
 };
 
-} // namespace replication
 } // namespace dsn

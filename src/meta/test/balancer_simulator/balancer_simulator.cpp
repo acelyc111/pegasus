@@ -28,6 +28,7 @@
 
 #include <gtest/gtest.h>
 
+#include "common/replica_envs.h"
 #include "meta/greedy_load_balancer.h"
 #include "meta/meta_data.h"
 #include "meta/server_load_balancer.h"

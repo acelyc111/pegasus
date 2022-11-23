@@ -154,7 +154,7 @@ void meta_duplication_service::add_duplication(duplication_add_rpc rpc)
     }
 
     std::vector<rpc_address> meta_list;
-    if (!dsn::replication::replica_helper::load_meta_servers(
+    if (!dsn::load_meta_servers(
             meta_list,
             duplication_constants::kClustersSectionName.c_str(),
             request.remote_cluster_name.c_str())) {

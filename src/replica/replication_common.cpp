@@ -429,82 +429,6 @@ int32_t replication_options::app_mutation_2pc_min_replica_count(int32_t app_max_
     }
 }
 
-/*static*/ bool replica_helper::remove_node(::dsn::rpc_address node,
-                                            /*inout*/ std::vector<::dsn::rpc_address> &nodeList)
-{
-    auto it = std::find(nodeList.begin(), nodeList.end(), node);
-    if (it != nodeList.end()) {
-        nodeList.erase(it);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-/*static*/ bool replica_helper::get_replica_config(const partition_configuration &partition_config,
-                                                   ::dsn::rpc_address node,
-                                                   /*out*/ replica_configuration &replica_config)
-{
-    replica_config.pid = partition_config.pid;
-    replica_config.primary = partition_config.primary;
-    replica_config.ballot = partition_config.ballot;
-    replica_config.learner_signature = invalid_signature;
-
-    if (node == partition_config.primary) {
-        replica_config.status = partition_status::PS_PRIMARY;
-        return true;
-    } else if (std::find(partition_config.secondaries.begin(),
-                         partition_config.secondaries.end(),
-                         node) != partition_config.secondaries.end()) {
-        replica_config.status = partition_status::PS_SECONDARY;
-        return true;
-    } else {
-        replica_config.status = partition_status::PS_INACTIVE;
-        return false;
-    }
-}
-
-bool replica_helper::load_meta_servers(/*out*/ std::vector<dsn::rpc_address> &servers,
-                                       const char *section,
-                                       const char *key)
-{
-    servers.clear();
-    std::string server_list = dsn_config_get_value_string(section, key, "", "");
-    std::vector<std::string> lv;
-    ::dsn::utils::split_args(server_list.c_str(), lv, ',');
-    for (auto &s : lv) {
-        ::dsn::rpc_address addr;
-        std::vector<std::string> hostname_port;
-        uint32_t ip = 0;
-        utils::split_args(s.c_str(), hostname_port, ':');
-        CHECK_EQ_MSG(2,
-                     hostname_port.size(),
-                     "invalid address '{}' specified in config [{}].{}",
-                     s,
-                     section,
-                     key);
-        uint32_t port_num = 0;
-        CHECK(dsn::internal::buf2unsigned(hostname_port[1], port_num) && port_num < UINT16_MAX,
-              "invalid address '{}' specified in config [{}].{}",
-              s,
-              section,
-              key);
-        if (0 != (ip = ::dsn::rpc_address::ipv4_from_host(hostname_port[0].c_str()))) {
-            addr.assign_ipv4(ip, static_cast<uint16_t>(port_num));
-        } else if (!addr.from_string_ipv4(s.c_str())) {
-            LOG_ERROR_F("invalid address '{}' specified in config [{}].{}", s, section, key);
-            return false;
-        }
-        // TODO(yingchun): check there is no duplicates
-        servers.push_back(addr);
-    }
-    if (servers.empty()) {
-        LOG_ERROR_F("no meta server specified in config [{}].{}", section, key);
-        return false;
-    }
-    return true;
-}
-
 /*static*/ bool
 replication_options::get_data_dir_and_tag(const std::string &config_dirs_str,
                                           const std::string &default_dir,
@@ -614,50 +538,6 @@ replication_options::check_if_in_black_list(const std::vector<std::string> &blac
     }
     return false;
 }
-
-const std::string replica_envs::DENY_CLIENT_REQUEST("replica.deny_client_request");
-const std::string replica_envs::WRITE_QPS_THROTTLING("replica.write_throttling");
-const std::string replica_envs::WRITE_SIZE_THROTTLING("replica.write_throttling_by_size");
-const uint64_t replica_envs::MIN_SLOW_QUERY_THRESHOLD_MS = 20;
-const std::string replica_envs::SLOW_QUERY_THRESHOLD("replica.slow_query_threshold");
-const std::string replica_envs::ROCKSDB_USAGE_SCENARIO("rocksdb.usage_scenario");
-const std::string replica_envs::TABLE_LEVEL_DEFAULT_TTL("default_ttl");
-const std::string MANUAL_COMPACT_PREFIX("manual_compact.");
-const std::string replica_envs::MANUAL_COMPACT_DISABLED(MANUAL_COMPACT_PREFIX + "disabled");
-const std::string replica_envs::MANUAL_COMPACT_MAX_CONCURRENT_RUNNING_COUNT(
-    MANUAL_COMPACT_PREFIX + "max_concurrent_running_count");
-const std::string MANUAL_COMPACT_ONCE_PREFIX(MANUAL_COMPACT_PREFIX + "once.");
-const std::string replica_envs::MANUAL_COMPACT_ONCE_TRIGGER_TIME(MANUAL_COMPACT_ONCE_PREFIX +
-                                                                 "trigger_time");
-const std::string replica_envs::MANUAL_COMPACT_ONCE_TARGET_LEVEL(MANUAL_COMPACT_ONCE_PREFIX +
-                                                                 "target_level");
-const std::string replica_envs::MANUAL_COMPACT_ONCE_BOTTOMMOST_LEVEL_COMPACTION(
-    MANUAL_COMPACT_ONCE_PREFIX + "bottommost_level_compaction");
-const std::string MANUAL_COMPACT_PERIODIC_PREFIX(MANUAL_COMPACT_PREFIX + "periodic.");
-const std::string replica_envs::MANUAL_COMPACT_PERIODIC_TRIGGER_TIME(
-    MANUAL_COMPACT_PERIODIC_PREFIX + "trigger_time");
-const std::string replica_envs::MANUAL_COMPACT_PERIODIC_TARGET_LEVEL(
-    MANUAL_COMPACT_PERIODIC_PREFIX + "target_level");
-const std::string replica_envs::MANUAL_COMPACT_PERIODIC_BOTTOMMOST_LEVEL_COMPACTION(
-    MANUAL_COMPACT_PERIODIC_PREFIX + "bottommost_level_compaction");
-const std::string
-    replica_envs::ROCKSDB_CHECKPOINT_RESERVE_MIN_COUNT("rocksdb.checkpoint.reserve_min_count");
-const std::string replica_envs::ROCKSDB_CHECKPOINT_RESERVE_TIME_SECONDS(
-    "rocksdb.checkpoint.reserve_time_seconds");
-const std::string replica_envs::ROCKSDB_ITERATION_THRESHOLD_TIME_MS(
-    "replica.rocksdb_iteration_threshold_time_ms");
-const std::string replica_envs::ROCKSDB_BLOCK_CACHE_ENABLED("replica.rocksdb_block_cache_enabled");
-const std::string replica_envs::BUSINESS_INFO("business.info");
-const std::string replica_envs::REPLICA_ACCESS_CONTROLLER_ALLOWED_USERS(
-    "replica_access_controller.allowed_users");
-const std::string replica_envs::READ_QPS_THROTTLING("replica.read_throttling");
-const std::string replica_envs::READ_SIZE_THROTTLING("replica.read_throttling_by_size");
-const std::string
-    replica_envs::SPLIT_VALIDATE_PARTITION_HASH("replica.split.validate_partition_hash");
-const std::string replica_envs::USER_SPECIFIED_COMPACTION("user_specified_compaction");
-const std::string replica_envs::BACKUP_REQUEST_QPS_THROTTLING("replica.backup_request_throttling");
-const std::string replica_envs::ROCKSDB_ALLOW_INGEST_BEHIND("rocksdb.allow_ingest_behind");
-const std::string replica_envs::UPDATE_MAX_REPLICA_COUNT("max_replica_count.update");
 
 } // namespace replication
 } // namespace dsn

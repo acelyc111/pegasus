@@ -49,7 +49,7 @@ info_collector::info_collector()
 {
     // TODO(yingchun): ip
     std::vector<::dsn::rpc_address> meta_servers;
-    replica_helper::load_meta_servers(meta_servers);
+    load_meta_servers(meta_servers);
 
     _meta_servers.assign_group("meta-servers");
     for (auto &ms : meta_servers) {

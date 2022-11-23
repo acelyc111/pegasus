@@ -28,6 +28,7 @@
 
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace apache {
 namespace thrift {
@@ -198,6 +199,14 @@ private:
         uint64_t value;
     } _addr{.value = 0};
 };
+
+bool remove_node(rpc_address node, /*inout*/ std::vector<rpc_address> &node_list); // TODO(yingchun): WARN_UNUSED_RESULT
+
+// TODO(yingchun): remove this function
+// true if meta_list's value of config is valid, otherwise return false
+bool load_meta_servers(/*out*/ std::vector<rpc_address> &servers,
+                       const char *section = "meta_server",
+                       const char *key = "server_list");
 
 } // namespace dsn
 

@@ -17,22 +17,23 @@
  * under the License.
  */
 
-#include <cctype>
 #include <algorithm>
+#include <cctype>
 #include <string>
 #include <stdint.h>
 
-#include "utils/error_code.h"
-#include "utils/threadpool_code.h"
-#include "runtime/task/task_code.h"
+#include "base/pegasus_const.h"
 #include "common/gpid.h"
-#include "runtime/rpc/group_address.h"
 #include "common/replication_other_types.h"
 #include "common/serialization_helper/dsn.layer2_types.h"
-#include <rrdb/rrdb.code.definition.h>
-#include <pegasus/error.h>
+#include "pegasus/error.h"
 #include "pegasus_client_impl.h"
-#include "base/pegasus_const.h"
+#include "rrdb/rrdb.code.definition.h"
+#include "runtime/rpc/group_address.h"
+#include "runtime/rpc/rpc_host_port.h"
+#include "runtime/task/task_code.h"
+#include "utils/error_code.h"
+#include "utils/threadpool_code.h"
 
 using namespace ::dsn;
 
@@ -47,14 +48,14 @@ std::unordered_map<int, int> pegasus_client_impl::_server_error_to_client;
 pegasus_client_impl::pegasus_client_impl(const char *cluster_name, const char *app_name)
     : _cluster_name(cluster_name), _app_name(app_name)
 {
-    std::vector<dsn::rpc_address> meta_servers;
-    dsn::replication::replica_helper::load_meta_servers(
-        meta_servers, PEGASUS_CLUSTER_SECTION_NAME.c_str(), cluster_name);
-    CHECK_GT(meta_servers.size(), 0);
+    std::vector<dsn::host_port> meta_servers;
+    CHECK(host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &meta_servers).is_ok(),
+          "invalid config in {}.{}", PEGASUS_CLUSTER_SECTION_NAME, cluster_name);
     _meta_server.assign_group("meta-servers");
-    _meta_server.group_address()->add_list(meta_servers);
 
-    _client = new ::dsn::apps::rrdb_client(cluster_name, meta_servers, app_name);
+    // TODO(yingchun): need update
+    //_meta_server.group_address()->add_list(meta_servers);
+    //_client = new ::dsn::apps::rrdb_client(cluster_name, meta_servers, app_name);
 }
 
 pegasus_client_impl::~pegasus_client_impl() { delete _client; }

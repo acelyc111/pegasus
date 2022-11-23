@@ -63,6 +63,32 @@ bool get_bool_envs(const std::map<std::string, std::string> &envs,
     return true;
 }
 
+namespace {
+bool get_replica_config(const partition_configuration &partition_config,
+                        ::dsn::rpc_address node,
+                        /*out*/ replica_configuration &replica_config)
+{
+    replica_config.pid = partition_config.pid;
+    replica_config.primary = partition_config.primary;
+    replica_config.ballot = partition_config.ballot;
+    replica_config.learner_signature = invalid_signature;
+
+    if (node == partition_config.primary) {
+        replica_config.status = partition_status::PS_PRIMARY;
+        return true;
+    } else if (std::find(partition_config.secondaries.begin(),
+                         partition_config.secondaries.end(),
+                         node) != partition_config.secondaries.end()) {
+        replica_config.status = partition_status::PS_SECONDARY;
+        return true;
+    } else {
+        replica_config.status = partition_status::PS_INACTIVE;
+        return false;
+    }
+}
+
+} // anonymous namespace
+
 void replica::on_config_proposal(configuration_update_request &proposal)
 {
     _checker.only_one_thread_access();
@@ -140,7 +166,7 @@ void replica::assign_primary(configuration_update_request &proposal)
     }
 
     proposal.config.primary = _stub->_primary_address;
-    replica_helper::remove_node(_stub->_primary_address, proposal.config.secondaries);
+    remove_node(_stub->_primary_address, proposal.config.secondaries);
 
     update_configuration_on_meta_server(proposal.type, proposal.node, proposal.config);
 }
@@ -262,7 +288,7 @@ void replica::downgrade_to_inactive_on_primary(configuration_update_request &pro
     if (proposal.node == proposal.config.primary) {
         proposal.config.primary.set_invalid();
     } else {
-        CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
+        CHECK(remove_node(proposal.node, proposal.config.secondaries),
               "remove node failed, node = {}",
               proposal.node);
     }
@@ -288,7 +314,7 @@ void replica::remove(configuration_update_request &proposal)
         proposal.config.primary.set_invalid();
         break;
     case partition_status::PS_SECONDARY: {
-        CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
+        CHECK(remove_node(proposal.node, proposal.config.secondaries),
               "remove_node failed, node = {}",
               proposal.node);
     } break;
@@ -477,7 +503,7 @@ void replica::on_update_configuration_on_meta_server_reply(
         case config_type::CT_REMOVE:
             if (req->node != _stub->_primary_address) {
                 replica_configuration rconfig;
-                replica_helper::get_replica_config(resp.config, req->node, rconfig);
+                get_replica_config(resp.config, req->node, rconfig);
                 rpc::call_one_way_typed(
                     req->node, RPC_REMOVE_REPLICA, rconfig, get_gpid().thread_hash());
             }
@@ -592,7 +618,7 @@ bool replica::update_configuration(const partition_configuration &config)
     CHECK_GE(config.ballot, get_ballot());
 
     replica_configuration rconfig;
-    replica_helper::get_replica_config(config, _stub->_primary_address, rconfig);
+    get_replica_config(config, _stub->_primary_address, rconfig);
 
     if (rconfig.status == partition_status::PS_PRIMARY &&
         (rconfig.ballot > get_ballot() || status() != partition_status::PS_PRIMARY)) {

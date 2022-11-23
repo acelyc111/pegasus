@@ -30,7 +30,6 @@
 #include "test/function_test/utils/utils.h"
 
 using dsn::partition_configuration;
-using dsn::replication::replica_helper;
 using dsn::replication::replication_ddl_client;
 using dsn::rpc_address;
 using std::vector;
@@ -48,7 +47,7 @@ void test_util::SetUpTestCase() { ASSERT_TRUE(pegasus_client_factory::initialize
 
 void test_util::SetUp()
 {
-    ASSERT_TRUE(replica_helper::load_meta_servers(
+    ASSERT_TRUE(load_meta_servers(
         meta_list_, PEGASUS_CLUSTER_SECTION_NAME.c_str(), cluster_name_.c_str()));
     ASSERT_FALSE(meta_list_.empty());
 

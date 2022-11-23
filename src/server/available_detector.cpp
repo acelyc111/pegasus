@@ -61,7 +61,7 @@ available_detector::available_detector()
         "",
         "available detect alert email address, empty means not send email");
     _meta_list.clear();
-    dsn::replication::replica_helper::load_meta_servers(_meta_list);
+    dsn::load_meta_servers(_meta_list);
     CHECK(!_meta_list.empty(), "");
     _detect_interval_seconds =
         (uint32_t)dsn_config_get_value_uint64("pegasus.collector",

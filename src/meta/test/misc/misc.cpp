@@ -313,7 +313,7 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
 
         ns = &nodes[act.node];
         pc.primary = act.node;
-        CHECK(replica_helper::remove_node(act.node, pc.secondaries), "");
+        CHECK(remove_node(act.node, pc.secondaries), "");
         ns->put_partition(pc.pid, true);
         break;
 
@@ -335,7 +335,7 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         CHECK_EQ(pc.primary, act.target);
         CHECK(is_secondary(pc, act.node), "");
         CHECK(nodes.find(act.node) != nodes.end(), "");
-        CHECK(replica_helper::remove_node(act.node, pc.secondaries), "");
+        CHECK(remove_node(act.node, pc.secondaries), "");
 
         ns = &nodes[act.node];
         CHECK_EQ(ns->served_as(pc.pid), partition_status::PS_SECONDARY);

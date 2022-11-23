@@ -1550,7 +1550,7 @@ void replica_stub::remove_replica_on_meta_server(const app_info &info,
 
     if (_primary_address == config.primary) {
         request->config.primary.set_invalid();
-    } else if (replica_helper::remove_node(_primary_address, request->config.secondaries)) {
+    } else if (remove_node(_primary_address, request->config.secondaries)) {
     } else {
         return;
     }

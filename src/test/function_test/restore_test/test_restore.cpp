@@ -48,7 +48,7 @@ public:
         backup_dir = "onebox/" + provider_dir + '/' + cluster_name;
 
         std::vector<dsn::rpc_address> meta_list;
-        ASSERT_TRUE(replica_helper::load_meta_servers(
+        ASSERT_TRUE(load_meta_servers(
             meta_list, PEGASUS_CLUSTER_SECTION_NAME.c_str(), cluster_name.c_str()));
         ASSERT_FALSE(meta_list.empty());
         ddl_client = std::make_shared<replication_ddl_client>(meta_list);

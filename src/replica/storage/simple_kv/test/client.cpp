@@ -60,7 +60,7 @@ simple_kv_client_app::~simple_kv_client_app() { stop(); }
         return ::dsn::ERR_INVALID_PARAMETERS;
 
     std::vector<rpc_address> meta_servers;
-    replica_helper::load_meta_servers(meta_servers);
+    load_meta_servers(meta_servers);
     _meta_server_group.assign_group("meta_servers");
     _meta_server_group.group_address()->add_list(meta_servers);
 

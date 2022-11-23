@@ -30,6 +30,7 @@
 
 #include "failure_detector/failure_detector.h"
 #include "runtime/rpc/group_address.h"
+#include "runtime/rpc/rpc_host_port.h"
 #include "utils/fmt_logging.h"
 #include "utils/zlocks.h"
 
@@ -39,7 +40,7 @@ namespace dist {
 class slave_failure_detector_with_multimaster : public dsn::fd::failure_detector
 {
 public:
-    slave_failure_detector_with_multimaster(std::vector<::dsn::rpc_address> &meta_servers,
+    slave_failure_detector_with_multimaster(std::vector<::dsn::host_port> &meta_servers,
                                             std::function<void()> &&master_disconnected_callback,
                                             std::function<void()> &&master_connected_callback);
     virtual ~slave_failure_detector_with_multimaster() {}

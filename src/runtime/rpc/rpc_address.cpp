@@ -36,11 +36,16 @@
 
 #include "runtime/rpc/group_address.h"
 #include "utils/api_utilities.h"
+#include "utils/config_api.h"
 #include "utils/fixed_size_buffer_pool.h"
 #include "utils/ports.h"
 #include "utils/safe_strerror_posix.h"
+#include "utils/strings.h"
 #include "utils/string_conv.h"
 #include "utils/string_view.h"
+
+using std::string;
+using std::vector;
 
 namespace dsn {
 
@@ -197,13 +202,13 @@ const char *rpc_address::ipv4_str() const
 bool rpc_address::from_string_ipv4(const char *s)
 {
     set_invalid();
-    std::string ip_port(s);
+    string ip_port(s);
     auto pos = ip_port.find_last_of(':');
-    if (pos == std::string::npos) {
+    if (pos == string::npos) {
         return false;
     }
-    std::string ip = ip_port.substr(0, pos);
-    std::string port = ip_port.substr(pos + 1);
+    string ip = ip_port.substr(0, pos);
+    string port = ip_port.substr(pos + 1);
     // check port
     unsigned int port_num;
     if (!internal::buf2unsigned(port, port_num) || port_num > UINT16_MAX) {
@@ -242,4 +247,57 @@ const char *rpc_address::to_string() const
 
     return (const char *)p;
 }
+
+bool remove_node(rpc_address node, /*inout*/ vector<rpc_address> &node_list)
+{
+    auto it = std::find(node_list.begin(), node_list.end(), node);
+    if (it != node_list.end()) {
+        node_list.erase(it);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool load_meta_servers(/*out*/ vector<rpc_address> &servers,
+                       const char *section,
+                       const char *key)
+{
+    servers.clear();
+    string server_list = dsn_config_get_value_string(section, key, "", "");
+    vector<string> lv;
+    utils::split_args(server_list.c_str(), lv, ',');
+    for (auto &s : lv) {
+        rpc_address addr;
+        vector<string> hostname_port;
+        uint32_t ip = 0;
+        utils::split_args(s.c_str(), hostname_port, ':');
+        CHECK_EQ_MSG(2,
+                     hostname_port.size(),
+                     "invalid address '{}' specified in config [{}].{}",
+                     s,
+                     section,
+                     key);
+        uint32_t port_num = 0;
+        CHECK(internal::buf2unsigned(hostname_port[1], port_num) && port_num < UINT16_MAX,
+              "invalid address '{}' specified in config [{}].{}",
+              s,
+              section,
+              key);
+        if (0 != (ip = rpc_address::ipv4_from_host(hostname_port[0].c_str()))) {
+            addr.assign_ipv4(ip, static_cast<uint16_t>(port_num));
+        } else if (!addr.from_string_ipv4(s.c_str())) {
+            LOG_ERROR_F("invalid address '{}' specified in config [{}].{}", s, section, key);
+            return false;
+        }
+        // TODO(yingchun): check there is no duplicates
+        servers.push_back(addr);
+    }
+    if (servers.empty()) {
+        LOG_ERROR_F("no meta server specified in config [{}].{}", section, key);
+        return false;
+    }
+    return true;
+}
+
 } // namespace dsn

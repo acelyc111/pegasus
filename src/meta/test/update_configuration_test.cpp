@@ -86,7 +86,7 @@ public:
         case config_type::CT_ASSIGN_PRIMARY:
         case config_type::CT_UPGRADE_TO_PRIMARY:
             pc.primary = update_req->node;
-            replica_helper::remove_node(update_req->node, pc.secondaries);
+            remove_node(update_req->node, pc.secondaries);
             break;
 
         case config_type::CT_ADD_SECONDARY:
@@ -100,7 +100,7 @@ public:
             if (update_req->node == pc.primary)
                 pc.primary.set_invalid();
             else
-                replica_helper::remove_node(update_req->node, pc.secondaries);
+                remove_node(update_req->node, pc.secondaries);
             break;
 
         case config_type::CT_DOWNGRADE_TO_SECONDARY:
