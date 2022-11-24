@@ -139,8 +139,15 @@ void host_port_group::set_leader(const host_port& hp)
         }
     }
 
+    // TODO(yingchun): consider to remove push_back
     _members.push_back(hp);
     _leader_index = static_cast<int>(_members.size() - 1);
+}
+
+void host_port_group::set_rand_leader()
+{
+    utils::auto_write_lock l(_lock);
+    _leader_index = rand::next_u32(0, static_cast<uint32_t>(meta_servers.size()) - 1);
 }
 
 host_port host_port_group::leader() const

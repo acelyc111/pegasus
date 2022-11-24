@@ -39,28 +39,18 @@ slave_failure_detector_with_multimaster::slave_failure_detector_with_multimaster
     std::function<void()> &&master_disconnected_callback,
     std::function<void()> &&master_connected_callback)
 {
-    _meta_servers.assign_group("meta-servers");
-    //     TODO(yingchun): need update
-    //        for (const auto &s : meta_servers) {
-    //            if (!_meta_servers.group_address()->add(s)) {
-    //                LOG_WARNING_F("duplicate adress {}", s);
-    //            }
-    //        }
-    //
-    //        _meta_servers.group_address()->set_leader(
-    //            meta_servers[rand::next_u32(0, (uint32_t)meta_servers.size() - 1)]);
-
-    // ATTENTION: here we disable dsn_group_set_update_leader_automatically to avoid
-    // failure detecting logic is affected by rpc failure or rpc forwarding.
-    _meta_servers.group_address()->set_update_leader_automatically(false);
+    for (const auto &hp : meta_servers) {
+        _meta_servers.add(hp);
+    }
+    _meta_servers.set_rand_leader();
 
     _master_disconnected_callback = std::move(master_disconnected_callback);
     _master_connected_callback = std::move(master_connected_callback);
 }
 
-void slave_failure_detector_with_multimaster::set_leader_for_test(rpc_address meta)
+void slave_failure_detector_with_multimaster::set_leader_for_test(const host_port& hp)
 {
-    _meta_servers.group_address()->set_leader(meta);
+    _meta_servers.set_leader(hp);
 }
 
 void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,

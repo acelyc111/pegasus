@@ -1557,11 +1557,11 @@ void replica_stub::remove_replica_on_meta_server(const app_info &info,
 
     ::dsn::marshall(msg, *request);
 
-    // TODO(yingchun): ip
-    rpc::call(_failure_detector->get_servers(),
-              msg,
-              &_tracker,
-              [](error_code err, dsn::message_ex *, dsn::message_ex *) {});
+    // TODO(yingchun): rpc::call support to resolve
+//    rpc::call(_failure_detector->get_servers(),
+//              msg,
+//              &_tracker,
+//              [](error_code err, dsn::message_ex *, dsn::message_ex *) {});
 }
 
 void replica_stub::on_meta_server_disconnected()

@@ -62,21 +62,21 @@ public:
     }
 
     ::dsn::rpc_address current_server_contact() const;
-    ::dsn::rpc_address get_servers() const { return _meta_servers; }
+    ::dsn::host_port_group get_servers() const { return _meta_servers; }
 
-    void set_leader_for_test(dsn::rpc_address meta);
+    void set_leader_for_test(const dsn::host_port& hp);
 
 private:
-    dsn::rpc_address _meta_servers;
+    dsn::host_port_group _meta_servers;
     std::function<void()> _master_disconnected_callback;
     std::function<void()> _master_connected_callback;
 };
 
 //------------------ inline implementation --------------------------------
-inline ::dsn::rpc_address slave_failure_detector_with_multimaster::current_server_contact() const
+inline ::dsn::host_port slave_failure_detector_with_multimaster::current_server_contact() const
 {
     zauto_lock l(failure_detector::_lock);
-    return _meta_servers.group_address()->leader();
+    return _meta_servers.leader();
 }
 }
 } // end namespace

@@ -73,6 +73,7 @@ public:
     void add(const host_port& hp);
     host_port next(const host_port& hp) const;
 
+    void set_rand_leader();
     void set_leader(const host_port& hp);
     host_port leader() const;
 
