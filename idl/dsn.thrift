@@ -32,6 +32,11 @@ struct rpc_address
 }
 
 // place holder
+struct host_port
+{
+}
+
+// place holder
 struct blob
 {
 }

@@ -113,7 +113,7 @@ void failure_detector::stop()
     _workers.clear();
 }
 
-void failure_detector::register_master(::dsn::rpc_address target)
+void failure_detector::register_master(const ::dsn::host_port& target)
 {
     bool setup_timer = false;
 
@@ -123,7 +123,7 @@ void failure_detector::register_master(::dsn::rpc_address target)
 
     auto ret = _masters.insert(std::make_pair(target, record));
     if (ret.second) {
-        LOG_DEBUG("register master[%s] successfully", target.to_string());
+        LOG_INFO_F("register master[{}] successfully", target);
         setup_timer = true;
     } else {
         // active the beacon again in case previously local node is not in target's allow list
@@ -131,7 +131,7 @@ void failure_detector::register_master(::dsn::rpc_address target)
             ret.first->second.rejected = false;
             setup_timer = true;
         }
-        LOG_DEBUG("master[%s] already registered", target.to_string());
+        LOG_DEBUG_F("master[{}] already registered", target);
     }
 
     if (setup_timer) {
@@ -147,18 +147,18 @@ void failure_detector::register_master(::dsn::rpc_address target)
     }
 }
 
-bool failure_detector::switch_master(::dsn::rpc_address from,
-                                     ::dsn::rpc_address to,
+// TODO(yingchun): rename ro *_unlock
+bool failure_detector::switch_master(const ::dsn::host_port &from,
+                                     const ::dsn::host_port &to,
                                      uint32_t delay_milliseconds)
 {
     /* the caller of switch master shoud lock necessarily to protect _masters */
     auto it = _masters.find(from);
-    auto it2 = _masters.find(to);
     if (it != _masters.end()) {
-        if (it2 != _masters.end()) {
-            LOG_WARNING("switch master failed as both are already registered, from[%s], to[%s]",
-                        from.to_string(),
-                        to.to_string());
+        if (_masters.find(to) != _masters.end()) {
+            LOG_WARNING_F("switch master failed as both are already registered, from[{}] to[{}]",
+                          from,
+                          to);
             return false;
         }
 
@@ -176,9 +176,10 @@ bool failure_detector::switch_master(::dsn::rpc_address from,
         _masters.insert(std::make_pair(to, it->second));
         _masters.erase(from);
 
-        LOG_INFO("switch master successfully, from[%s], to[%s]", from.to_string(), to.to_string());
+        LOG_INFO_F("switch master successfully, from[{}] to[{}]", from, to);
     } else {
-        LOG_WARNING("switch master failed as from node is not registered yet, from[%s], to[%s]",
+        // TODO(yingchun): refactor to return early
+        LOG_WARNING_F("switch master failed as from node is not registered yet, from[{}] to[{}]",
                     from.to_string(),
                     to.to_string());
         return false;
@@ -488,23 +489,22 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
     return true;
 }
 
-bool failure_detector::unregister_master(::dsn::rpc_address node)
+bool failure_detector::unregister_master(const ::dsn::host_port& node)
 {
     zauto_lock l(_lock);
     auto it = _masters.find(node);
-
     if (it != _masters.end()) {
         it->second.send_beacon_timer->cancel(true);
         _masters.erase(it);
-        LOG_INFO("unregister master[%s] successfully", node.to_string());
+        LOG_INFO_F("unregister master[{}] successfully", node);
         return true;
     } else {
-        LOG_INFO("unregister master[%s] failed, cannot find it in FD", node.to_string());
+        LOG_INFO_F("unregister master[{}] failed, cannot find it in failure_detector", node);
         return false;
     }
 }
 
-bool failure_detector::is_master_connected(::dsn::rpc_address node) const
+bool failure_detector::is_master_connected(const ::dsn::host_port& node) const
 {
     zauto_lock l(_lock);
     auto it = _masters.find(node);

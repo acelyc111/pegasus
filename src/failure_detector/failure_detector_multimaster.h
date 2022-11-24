@@ -61,8 +61,8 @@ public:
         CHECK(false, "invalid execution flow");
     }
 
-    ::dsn::rpc_address current_server_contact() const;
-    ::dsn::host_port_group get_servers() const { return _meta_servers; }
+    ::dsn::host_port current_server_contact() const;
+    const dsn::host_port_group& get_servers() const { return _meta_servers; }
 
     void set_leader_for_test(const dsn::host_port& hp);
 

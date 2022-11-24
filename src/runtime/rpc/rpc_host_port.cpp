@@ -34,6 +34,8 @@ namespace dsn {
 
 host_port::host_port(string host, uint16_t port) : _host(std::move(host)), _port(port) {}
 
+host_port::host_port(const host_port &other) : _host(other._host), _port(other._port) {}
+
 error_s host_port::parse_string(const string &str)
 {
     vector<string> hostname_port;
@@ -147,7 +149,7 @@ void host_port_group::set_leader(const host_port& hp)
 void host_port_group::set_rand_leader()
 {
     utils::auto_write_lock l(_lock);
-    _leader_index = rand::next_u32(0, static_cast<uint32_t>(meta_servers.size()) - 1);
+    _leader_index = rand::next_u32(0, static_cast<uint32_t>(_members.size()) - 1);
 }
 
 host_port host_port_group::leader() const

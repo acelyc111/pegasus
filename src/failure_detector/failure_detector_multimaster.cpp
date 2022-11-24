@@ -71,16 +71,18 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
         return;
     }
 
-    CHECK_EQ(ack.this_node, _meta_servers.group_address()->leader());
+    // TODO(yingchun): ip -> host:port
+    const host_port this_node_hp; // from ack.this_node
+    CHECK_EQ(this_node_hp, _meta_servers.leader());
 
     // TODO(yingchun): refactor the if-else statements
     if (ERR_OK != err) {
         // Try to send beacon to the next master when current master return error.
-        rpc_address next = _meta_servers.group_address()->next(ack.this_node);
-        if (next != ack.this_node) {
-            _meta_servers.group_address()->set_leader(next);
+        host_port next = _meta_servers.next(this_node_hp);
+        if (next != this_node_hp) {
+            _meta_servers.set_leader(next);
             // Do not start next send_beacon() immediately to avoid send rpc too frequently
-            switch_master(ack.this_node, next, 1000);
+            switch_master(this_node_hp, next, 1000);
         }
     } else {
         if (ack.is_master) {
@@ -88,18 +90,18 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
         } else if (ack.primary_node.is_invalid()) {
             // Try to send beacon to the next master when master changed and the hint master is
             // invalid
-            rpc_address next = _meta_servers.group_address()->next(ack.this_node);
-            if (next != ack.this_node) {
-                _meta_servers.group_address()->set_leader(next);
+            rpc_address next = _meta_servers.next(this_node_hp);
+            if (next != this_node_hp) {
+                _meta_servers.set_leader(next);
                 // do not start next send_beacon() immediately to avoid send rpc too frequently
-                switch_master(ack.this_node, next, 1000);
+                switch_master(this_node_hp, next, 1000);
             }
         } else {
             // Try to send beacon to the hint master when master changed and give a valid hint
             // master
-            _meta_servers.group_address()->set_leader(ack.primary_node);
+            _meta_servers.set_leader(ack.primary_node);
             // start next send_beacon() immediately because the leader is possibly right.
-            switch_master(ack.this_node, ack.primary_node, 0);
+            switch_master(this_node_hp, ack.primary_node, 0);
         }
     }
 }

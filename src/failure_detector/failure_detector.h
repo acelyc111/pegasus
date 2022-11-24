@@ -114,13 +114,13 @@ public:
     uint32_t get_lease_ms() const { return _lease_milliseconds; }
     uint32_t get_grace_ms() const { return _grace_milliseconds; }
 
-    void register_master(::dsn::rpc_address target);
+    void register_master(const ::dsn::host_port& target);
 
-    bool switch_master(::dsn::rpc_address from, ::dsn::rpc_address to, uint32_t delay_milliseconds);
+    bool switch_master(const ::dsn::host_port& from, const ::dsn::host_port& to, uint32_t delay_milliseconds);
 
-    bool unregister_master(::dsn::rpc_address node);
+    bool unregister_master(const ::dsn::host_port& node);
 
-    virtual bool is_master_connected(::dsn::rpc_address node) const;
+    virtual bool is_master_connected(const ::dsn::host_port& node) const;
 
     // ATTENTION: be very careful to set is_connected to false as
     // workers are always considered *connected* initially which is ok even when workers think
@@ -199,8 +199,8 @@ private:
     };
 
 private:
-    typedef std::unordered_map<::dsn::rpc_address, master_record> master_map;
-    typedef std::unordered_map<::dsn::rpc_address, worker_record> worker_map;
+    typedef std::unordered_map<::dsn::host_port, master_record> master_map;
+    typedef std::unordered_map<::dsn::host_port, worker_record> worker_map;
 
     // allow list are set on machine name (port can vary)
     typedef std::unordered_set<::dsn::rpc_address> allow_list;

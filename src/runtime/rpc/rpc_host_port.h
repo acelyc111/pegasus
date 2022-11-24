@@ -32,6 +32,8 @@ public:
     host_port() = default;
     host_port(std::string host, uint16_t port);
 
+    host_port(const host_port &other);
+
     // Parse a <host>:<port> pair into this object.
     //
     // Note that <host> cannot be in IPv6 address notation.
@@ -64,6 +66,11 @@ private:
 inline bool operator==(const host_port &hp1, const host_port &hp2)
 {
     return hp1.port() == hp2.port() && hp1.host() == hp2.host();
+}
+
+inline bool operator!=(const host_port &hp1, const host_port &hp2)
+{
+    return !(hp1 == hp2);
 }
 
 class host_port_group

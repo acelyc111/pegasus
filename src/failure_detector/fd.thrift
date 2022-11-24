@@ -34,6 +34,8 @@ struct beacon_msg
     2: dsn.rpc_address from_addr;
     3: dsn.rpc_address to_addr;
     4: optional i64 start_time;
+    5: dsn.host_port from_host_port;
+    6: dsn.host_port to_host_port;
 }
 
 struct beacon_ack
@@ -43,6 +45,8 @@ struct beacon_ack
     3: dsn.rpc_address primary_node;
     4: bool is_master;
     5: bool allowed;
+    6: dsn.host_port this_node_host_port;
+    7: dsn.host_port primary_node_host_port;
 }
 
 struct config_master_message
