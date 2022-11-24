@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "utils/errors.h"
+#include "utils/synchronize.h"
 
 namespace dsn {
 

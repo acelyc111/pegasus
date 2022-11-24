@@ -22,6 +22,7 @@
 
 #include "utils/config_api.h"
 #include "utils/fmt_logging.h"
+#include "utils/rand.h"
 #include "utils/string_conv.h"
 #include "utils/strings.h"
 
@@ -93,7 +94,7 @@ error_s host_port::load_servers(const string &section, const string &key, vector
 
 void host_port_group::add(const host_port& hp)
 {
-    CHECK(initialized(), "host_port is not initialized");
+    CHECK(hp.initialized(), "host_port is not initialized");
     utils::auto_write_lock l(_lock);
     if (_members.end() != std::find(_members.begin(), _members.end(), hp)) {
         LOG_WARNING_F("duplicate host_port '{}' will be ignored", hp);
@@ -132,19 +133,19 @@ void host_port_group::set_leader(const host_port& hp)
     }
 
     for (int i = 0; i < _members.size(); ++i) {
-        if (_members[i] == addr) {
+        if (_members[i] == hp) {
             _leader_index = i;
             return;
         }
     }
 
-    _members.push_back(addr);
+    _members.push_back(hp);
     _leader_index = static_cast<int>(_members.size() - 1);
 }
 
 host_port host_port_group::leader() const
 {
-    alr_t l(_lock);
+    utils::auto_read_lock l(_lock);
     return _leader_index >= 0 ? _members[_leader_index] : host_port();
 }
 
