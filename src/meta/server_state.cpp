@@ -1788,14 +1788,12 @@ void server_state::downgrade_secondary_to_inactive(std::shared_ptr<app_state> &a
 
 void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
                                              int pidx,
-                                             const rpc_address &address)
+                                             const host_port &node)
 {
-    std::shared_ptr<configuration_update_request> req =
-        std::make_shared<configuration_update_request>();
+    auto req = std::make_shared<configuration_update_request>();
     req->info = *app;
     req->type = config_type::CT_REMOVE;
-    req->host_node = address;
-    req->node.set_invalid();
+//    req->host_node = node;   // TODO(yingchun): make sure nody use it
     req->config = app->partitions[pidx];
 
     config_context &cc = app->helpers->contexts[pidx];
@@ -1803,12 +1801,12 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
 
     unsigned i = 0;
     for (; i < pc.secondaries.size(); ++i) {
-        if (pc.secondaries[i] == address) {
+        if (pc.secondaries[i] == node) {
             req->node = pc.last_drops[i];
             break;
         }
     }
-    CHECK(!req->node.is_invalid(), "invalid node address, address = {}", req->node);
+    CHECK(req->node.initialized(), "invalid node");
     // remove host_node & node from secondaries/last_drops, as it will be sync to remote storage
     for (++i; i < pc.secondaries.size(); ++i) {
         pc.secondaries[i - 1] = pc.secondaries[i];
@@ -1818,12 +1816,11 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
     pc.last_drops.pop_back();
 
     if (config_status::pending_remote_sync == cc.stage) {
-        LOG_WARNING("gpid(%d.%d) is syncing another request with remote, cancel it due to meta is "
-                    "removing host(%s) worker(%s)",
-                    pc.pid.get_app_id(),
-                    pc.pid.get_partition_index(),
-                    req->host_node.to_string(),
-                    req->node.to_string());
+        LOG_WARNING_F("gpid({}) is syncing another request with remote, cancel it due to meta is "
+                      "removing host({}) worker({})",
+                      pc.pid,
+                      req->host_node,
+                      req->node);
         cc.cancel_sync();
     }
     cc.stage = config_status::pending_remote_sync;
@@ -1908,39 +1905,40 @@ void server_state::on_update_configuration(
 
 void server_state::on_partition_node_dead(std::shared_ptr<app_state> &app,
                                           int pidx,
-                                          const dsn::rpc_address &address)
+                                          const dsn::host_port &node)
 {
     partition_configuration &pc = app->partitions[pidx];
+    // TODO(yingchun): refactor if-statements
     if (app->is_stateful) {
-        if (is_primary(pc, address))
+        if (is_primary(pc, node)) {
             downgrade_primary_to_inactive(app, pidx);
-        else if (is_secondary(pc, address)) {
-            if (!pc.primary.is_invalid())
-                downgrade_secondary_to_inactive(app, pidx, address);
-            else if (is_secondary(pc, address)) {
-                LOG_INFO(
-                    "gpid(%d.%d): secondary(%s) is down, ignored it due to no primary for this "
+        } else if (is_secondary(pc, node)) {
+            if (!pc.primary.is_invalid()) {
+                downgrade_secondary_to_inactive(app, pidx, node);
+            } else if (is_secondary(pc, node)) {
+                LOG_INFO_F(
+                    "gpid({}): secondary({}) is down, ignored it due to no primary for this "
                     "partition available",
-                    pc.pid.get_app_id(),
-                    pc.pid.get_partition_index(),
-                    address.to_string());
+                    pc.pid,
+                    node);
             } else {
-                CHECK(false, "no primary/secondary on this node, node address = {}", address);
+                CHECK(false, "no primary/secondary on this node, node = {}", node);
             }
         }
     } else {
-        downgrade_stateless_nodes(app, pidx, address);
+        downgrade_stateless_nodes(app, pidx, node);
     }
 }
 
-void server_state::on_change_node_state(rpc_address node, bool is_alive)
+void server_state::on_change_node_state(const host_port& node, bool is_alive)
 {
-    LOG_DEBUG("change node(%s) state to %s", node.to_string(), is_alive ? "alive" : "dead");
+    LOG_DEBUG_F("change node({}) state to {}", node, is_alive ? "alive" : "dead");
     zauto_write_lock l(_lock);
+    // TODO(yingchun): refactor if-statements
     if (!is_alive) {
         auto iter = _nodes.find(node);
         if (iter == _nodes.end()) {
-            LOG_INFO("node(%s) doesn't exist in the node state, just ignore", node.to_string());
+            LOG_INFO_F("node({}) doesn't exist in the node state, just ignore", node);
         } else {
             node_state &ns = iter->second;
             ns.set_alive(false);

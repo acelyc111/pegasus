@@ -25,6 +25,8 @@
 
 namespace dsn {
 
+struct host_port_hash;
+
 // TODO(yingchun): unit tests
 class host_port
 {
@@ -58,7 +60,13 @@ public:
         return os << hp.to_string();
     }
 
+    // for serialization in thrift format
+    uint32_t read(::apache::thrift::protocol::TProtocol *iprot);
+    uint32_t write(::apache::thrift::protocol::TProtocol *oprot) const;
+
 private:
+    friend struct host_port_hash;
+
     std::string _host;
     uint16_t _port = 0;
 };
@@ -72,6 +80,12 @@ inline bool operator!=(const host_port &hp1, const host_port &hp2)
 {
     return !(hp1 == hp2);
 }
+
+struct host_port_hash {
+    size_t operator()(const host_port& hp) const {
+        return std::hash<std::string>()(hp._host) ^ hp._port;
+    }
+};
 
 class host_port_group
 {

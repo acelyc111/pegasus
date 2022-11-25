@@ -25,17 +25,6 @@
  */
 
 /*
- * Description:
- *     interface for a perfect failure detector
- *
- * Revision history:
- *     Mar., 2015, @imzhenyu (Zhenyu Guo), first version
- *     Dec., 2015, @shengofsun (Weijie Sun), make zlock preoteced,
- *                 give the subClasses flexibility
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
-/*
  * Notes on the failure detector:
  *
  * 1. Due to the fact that we can only check the liveness inside check-all-records call,
@@ -64,6 +53,7 @@
 #include "failure_detector/fd.client.h"
 #include "failure_detector/fd.server.h"
 #include "perf_counter/perf_counter_wrapper.h"
+#include "runtime/rpc/rpc_host_port.h"
 #include "utils/zlocks.h"
 
 namespace dsn {
@@ -79,12 +69,12 @@ public:
     virtual ~failure_detector_callback() {}
 
     // worker side
-    virtual void on_master_disconnected(const std::vector<::dsn::rpc_address> &nodes) = 0;
-    virtual void on_master_connected(::dsn::rpc_address node) = 0;
+    virtual void on_master_disconnected(const std::vector<::dsn::host_port> &nodes) = 0;
+    virtual void on_master_connected(const ::dsn::host_port& node) = 0;
 
     // master side
-    virtual void on_worker_disconnected(const std::vector<::dsn::rpc_address> &nodes) = 0;
-    virtual void on_worker_connected(::dsn::rpc_address node) = 0;
+    virtual void on_worker_disconnected(const std::vector<::dsn::host_port> &nodes) = 0;
+    virtual void on_worker_connected(const ::dsn::host_port& node) = 0;
 };
 
 class failure_detector : public failure_detector_service,
@@ -120,24 +110,26 @@ public:
 
     bool unregister_master(const ::dsn::host_port& node);
 
-    virtual bool is_master_connected(const ::dsn::host_port& node) const;
+    bool is_master_connected(const ::dsn::host_port& node) const;
 
     // ATTENTION: be very careful to set is_connected to false as
     // workers are always considered *connected* initially which is ok even when workers think
     // master is disconnected
     // Considering workers *disconnected* initially is *dangerous* coz it may violate the invariance
     // when workers think they are online
-    void register_worker(::dsn::rpc_address node, bool is_connected = true);
+    void register_worker(const ::dsn::host_port& node, bool is_connected = true);
 
-    bool unregister_worker(::dsn::rpc_address node);
+    bool unregister_worker(const ::dsn::host_port& node);
 
     void clear_workers();
 
-    virtual bool is_worker_connected(::dsn::rpc_address node) const;
+    // TODO(yingchun): no callers?
+    virtual bool is_worker_connected(const ::dsn::host_port& node) const;
 
-    void add_allow_list(::dsn::rpc_address node);
+    void add_allow_list(const ::dsn::host_port& node);
 
-    bool remove_from_allow_list(::dsn::rpc_address node);
+    // TODO(yingchun): no callers?
+    bool remove_from_allow_list(const ::dsn::host_port& node);
 
     void set_allow_list(const std::vector<std::string> &replica_addrs);
 
@@ -155,7 +147,7 @@ protected:
 
     bool is_time_greater_than(uint64_t ts, uint64_t base);
 
-    void report(::dsn::rpc_address node, bool is_master, bool is_connected);
+    void report(const ::dsn::host_port& node, bool is_master, bool is_connected);
 
 private:
     void check_all_records();
@@ -164,7 +156,7 @@ private:
     class master_record
     {
     public:
-        ::dsn::rpc_address node;
+        ::dsn::host_port node;
         uint64_t last_send_time_for_beacon_with_ack;
         bool is_alive;
         bool rejected;
@@ -172,7 +164,7 @@ private:
 
         // masters are always considered *disconnected* initially which is ok even when master
         // thinks workers are connected
-        master_record(::dsn::rpc_address n, uint64_t last_send_time_for_beacon_with_ack_)
+        master_record(const ::dsn::host_port& n, uint64_t last_send_time_for_beacon_with_ack_)
         {
             node = n;
             last_send_time_for_beacon_with_ack = last_send_time_for_beacon_with_ack_;
@@ -184,13 +176,13 @@ private:
     class worker_record
     {
     public:
-        ::dsn::rpc_address node;
+        ::dsn::host_port node;
         uint64_t last_beacon_recv_time;
         bool is_alive;
 
         // workers are always considered *connected* initially which is ok even when workers think
         // master is disconnected
-        worker_record(::dsn::rpc_address node, uint64_t last_beacon_recv_time)
+        worker_record(const ::dsn::host_port& node, uint64_t last_beacon_recv_time)
         {
             this->node = node;
             this->last_beacon_recv_time = last_beacon_recv_time;
@@ -199,11 +191,11 @@ private:
     };
 
 private:
-    typedef std::unordered_map<::dsn::host_port, master_record> master_map;
-    typedef std::unordered_map<::dsn::host_port, worker_record> worker_map;
+    typedef std::unordered_map<::dsn::host_port, master_record, host_port_hash> master_map;
+    typedef std::unordered_map<::dsn::host_port, worker_record, host_port_hash> worker_map;
 
     // allow list are set on machine name (port can vary)
-    typedef std::unordered_set<::dsn::rpc_address> allow_list;
+    typedef std::unordered_set<::dsn::host_port, host_port_hash> allow_list;
 
     master_map _masters;
     worker_map _workers;
@@ -228,7 +220,7 @@ protected:
     dsn::task_tracker _tracker;
 
     // subClass can rewrite these method.
-    virtual void send_beacon(::dsn::rpc_address node, uint64_t time);
+    virtual void send_beacon(const ::dsn::host_port& node, uint64_t time);
 };
 }
 } // end namespace

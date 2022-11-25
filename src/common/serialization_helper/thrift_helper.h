@@ -26,16 +26,17 @@
 
 #pragma once
 
-#include "runtime/tool_api.h"
-#include "runtime/rpc/rpc_stream.h"
-
-#include <thrift/Thrift.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include <thrift/protocol/TVirtualProtocol.h>
 #include <thrift/transport/TVirtualTransport.h>
 #include <thrift/TApplicationException.h>
+#include <thrift/Thrift.h>
 #include <type_traits>
+
+#include "runtime/rpc/rpc_host_port.h"
+#include "runtime/rpc/rpc_stream.h"
+#include "runtime/tool_api.h"
 
 using namespace ::apache::thrift::transport;
 namespace dsn {
@@ -456,6 +457,16 @@ inline uint32_t error_code::read(apache::thrift::protocol::TProtocol *iprot)
     }
     *this = error_code::try_get(ec_string, ERR_UNKNOWN);
     return xfer;
+}
+
+inline uint32_t host_port::read(apache::thrift::protocol::TProtocol *iprot)
+{
+    return 0;
+}
+
+inline uint32_t host_port::write(apache::thrift::protocol::TProtocol *oprot) const
+{
+    return 0;
 }
 
 inline uint32_t error_code::write(apache::thrift::protocol::TProtocol *oprot) const

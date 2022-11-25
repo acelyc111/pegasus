@@ -48,15 +48,15 @@ public:
     void end_ping(::dsn::error_code err, const fd::beacon_ack &ack, void *context) override;
 
     // client side
-    void on_master_disconnected(const std::vector<::dsn::rpc_address> &nodes) override;
-    void on_master_connected(::dsn::rpc_address node) override;
+    void on_master_disconnected(const std::vector<::dsn::host_port> &nodes) override;
+    void on_master_connected(const ::dsn::host_port& node) override;
 
     // server side
-    void on_worker_disconnected(const std::vector<::dsn::rpc_address> &nodes) override
+    void on_worker_disconnected(const std::vector<::dsn::host_port> &nodes) override
     {
         CHECK(false, "invalid execution flow");
     }
-    void on_worker_connected(::dsn::rpc_address node) override
+    void on_worker_connected(const ::dsn::host_port& node) override
     {
         CHECK(false, "invalid execution flow");
     }

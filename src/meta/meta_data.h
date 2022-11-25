@@ -391,7 +391,7 @@ private:
     // status
     bool is_alive;
     bool has_collected_replicas;
-    dsn::rpc_address address;
+    dsn::host_port address;
 
     const partition_set *get_partitions(app_id id, bool only_primary) const;
     partition_set *get_partitions(app_id id, bool only_primary, bool create_new);
@@ -415,8 +415,8 @@ public:
     void set_alive(bool alive) { is_alive = alive; }
     bool has_collected() { return has_collected_replicas; }
     void set_replicas_collect_flag(bool has_collected) { has_collected_replicas = has_collected; }
-    dsn::rpc_address addr() const { return address; }
-    void set_addr(const dsn::rpc_address &addr) { address = addr; }
+    dsn::host_port addr() const { return address; }
+    void set_addr(const dsn::host_port &addr) { address = addr; }
 
     void put_partition(const dsn::gpid &pid, bool is_primary);
     void remove_partition(const dsn::gpid &pid, bool only_primary);
@@ -426,7 +426,7 @@ public:
     bool for_each_primary(app_id id, const std::function<bool(const dsn::gpid &pid)> &f) const;
 };
 
-typedef std::unordered_map<rpc_address, node_state> node_mapper;
+typedef std::unordered_map<host_port, node_state, host_port_hash> node_mapper;
 typedef std::map<dsn::gpid, std::shared_ptr<configuration_balancer_request>> migration_list;
 
 struct meta_view
@@ -435,9 +435,9 @@ struct meta_view
     node_mapper *nodes;
 };
 
-inline node_state *get_node_state(node_mapper &nodes, rpc_address addr, bool create_new)
+inline node_state *get_node_state(node_mapper &nodes, const host_port& addr, bool create_new)
 {
-    node_state *ns;
+    node_state *ns = nullptr;
     if (nodes.find(addr) == nodes.end()) {
         if (!create_new)
             return nullptr;
@@ -448,7 +448,7 @@ inline node_state *get_node_state(node_mapper &nodes, rpc_address addr, bool cre
     return ns;
 }
 
-inline bool is_node_alive(const node_mapper &nodes, rpc_address addr)
+inline bool is_node_alive(const node_mapper &nodes, const host_port& addr)
 {
     auto iter = nodes.find(addr);
     if (iter == nodes.end())

@@ -66,12 +66,12 @@ meta_server_failure_detector::~meta_server_failure_detector()
     }
 }
 
-void meta_server_failure_detector::on_worker_disconnected(const std::vector<rpc_address> &nodes)
+void meta_server_failure_detector::on_worker_disconnected(const std::vector<host_port> &nodes)
 {
     _svc->set_node_state(nodes, false);
 }
 
-void meta_server_failure_detector::on_worker_connected(rpc_address node)
+void meta_server_failure_detector::on_worker_connected(const ::dsn::host_port& node)
 {
     _svc->set_node_state(std::vector<rpc_address>{node}, true);
 }

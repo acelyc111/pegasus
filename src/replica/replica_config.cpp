@@ -406,9 +406,11 @@ void replica::update_configuration_on_meta_server(config_type::type type,
              enum_to_string(request->type),
              request->node.to_string());
 
-    rpc_address target(_stub->_failure_detector->get_servers());
+    const auto& target(_stub->_failure_detector->get_servers());
+    // TODO(yingchun): send rpc_address
+    rpc_address addr; // from target
     _primary_states.reconfiguration_task =
-        rpc::call(target,
+        rpc::call(addr,
                   msg,
                   &_tracker,
                   [=](error_code err, dsn::message_ex *reqmsg, dsn::message_ex *response) {
@@ -449,7 +451,7 @@ void replica::on_update_configuration_on_meta_server_reply(
                 LPC_DELAY_UPDATE_CONFIG,
                 &_tracker,
                 [ this, request, req2 = std::move(req) ]() {
-                    rpc_address target(_stub->_failure_detector->get_servers());
+                    const auto& target(_stub->_failure_detector->get_servers());
                     rpc_response_task_ptr t = rpc::create_rpc_response_task(
                         request,
                         &_tracker,
@@ -460,7 +462,9 @@ void replica::on_update_configuration_on_meta_server_reply(
                         },
                         get_gpid().thread_hash());
                     _primary_states.reconfiguration_task = t;
-                    dsn_rpc_call(target, t.get());
+                    // TODO(yingchun): send
+                    rpc_address addr; // from target
+                    dsn_rpc_call(addr, t.get());
                     request->release_ref();
                 },
                 get_gpid().thread_hash(),

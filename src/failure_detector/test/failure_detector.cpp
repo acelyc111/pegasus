@@ -59,11 +59,11 @@ class worker_fd_test : public ::dsn::dist::slave_failure_detector_with_multimast
 private:
     volatile bool _send_ping_switch;
     /* this function only triggerd once*/
-    std::function<void(rpc_address addr)> _connected_cb;
-    std::function<void(const std::vector<rpc_address> &)> _disconnected_cb;
+    std::function<void(const host_port& addr)> _connected_cb;
+    std::function<void(const std::vector<host_port> &)> _disconnected_cb;
 
 protected:
-    virtual void send_beacon(::dsn::rpc_address node, uint64_t time) override
+    virtual void send_beacon(const ::dsn::host_port& node, uint64_t time) override
     {
         if (_send_ping_switch)
             failure_detector::send_beacon(node, time);
@@ -72,13 +72,13 @@ protected:
         }
     }
 
-    virtual void on_master_disconnected(const std::vector<rpc_address> &nodes) override
+    void on_master_disconnected(const std::vector<host_port> &nodes) override
     {
         if (_disconnected_cb)
             _disconnected_cb(nodes);
     }
 
-    virtual void on_master_connected(rpc_address node) override
+    virtual void on_master_connected(const host_port& node) override
     {
         if (_connected_cb)
             _connected_cb(node);
@@ -93,8 +93,8 @@ public:
         _send_ping_switch = false;
     }
     void toggle_send_ping(bool toggle) { _send_ping_switch = toggle; }
-    void when_connected(const std::function<void(rpc_address addr)> &func) { _connected_cb = func; }
-    void when_disconnected(const std::function<void(const std::vector<rpc_address> &nodes)> &func)
+    void when_connected(const std::function<void(const host_port &addr)> &func) { _connected_cb = func; }
+    void when_disconnected(const std::function<void(const std::vector<host_port> &nodes)> &func)
     {
         _disconnected_cb = func;
     }
@@ -108,8 +108,8 @@ public:
 class master_fd_test : public replication::meta_server_failure_detector
 {
 private:
-    std::function<void(rpc_address addr)> _connected_cb;
-    std::function<void(const std::vector<rpc_address> &)> _disconnected_cb;
+    std::function<void(const host_port& addr)> _connected_cb;
+    std::function<void(const std::vector<host_port> &)> _disconnected_cb;
     volatile bool _response_ping_switch;
 
 public:
@@ -125,12 +125,12 @@ public:
         }
     }
 
-    virtual void on_worker_disconnected(const std::vector<rpc_address> &worker_list) override
+    void on_worker_disconnected(const std::vector<host_port> &worker_list) override
     {
         if (_disconnected_cb)
             _disconnected_cb(worker_list);
     }
-    virtual void on_worker_connected(rpc_address node) override
+    virtual void on_worker_connected(const host_port& node) override
     {
         if (_connected_cb)
             _connected_cb(node);
@@ -140,12 +140,12 @@ public:
         _response_ping_switch = true;
     }
     void toggle_response_ping(bool toggle) { _response_ping_switch = toggle; }
-    void when_connected(const std::function<void(rpc_address addr)> &func) { _connected_cb = func; }
-    void when_disconnected(const std::function<void(const std::vector<rpc_address> &nodes)> &func)
+    void when_connected(const std::function<void(const host_port& addr)> &func) { _connected_cb = func; }
+    void when_disconnected(const std::function<void(const std::vector<host_port> &nodes)> &func)
     {
         _disconnected_cb = func;
     }
-    void test_register_worker(rpc_address node)
+    void test_register_worker(const ::dsn::host_port& node)
     {
         zauto_lock l(failure_detector::_lock);
         register_worker(node);

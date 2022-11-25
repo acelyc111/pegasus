@@ -118,8 +118,8 @@ std::shared_ptr<configuration_balancer_request>
 generate_balancer_request(const app_mapper &apps,
                           const partition_configuration &pc,
                           const balance_type &type,
-                          const rpc_address &from,
-                          const rpc_address &to)
+                          const host_port &from,
+                          const host_port &to)
 {
     FAIL_POINT_INJECT_F("generate_balancer_request", [](string_view name) { return nullptr; });
 
@@ -158,13 +158,12 @@ generate_balancer_request(const app_mapper &apps,
     default:
         CHECK(false, "");
     }
-    LOG_INFO("generate balancer: %d.%d %s from %s of disk_tag(%s) to %s",
-             pc.pid.get_app_id(),
-             pc.pid.get_partition_index(),
-             ans.c_str(),
-             from.to_string(),
-             get_disk_tag(apps, from, pc.pid).c_str(),
-             to.to_string());
+    LOG_INFO_F("generate balancer: {} {} from {} of disk_tag({}) to {}",
+               pc.pid,
+               ans,
+               from,
+               get_disk_tag(apps, from, pc.pid),
+               to);
     return std::make_shared<configuration_balancer_request>(std::move(result));
 }
 
@@ -673,8 +672,8 @@ gpid copy_replica_operation::select_max_load_gpid(const partition_set *partition
 
 void copy_replica_operation::copy_once(gpid selected_pid, migration_list *result)
 {
-    auto from = _address_vec[*_ordered_address_ids.rbegin()];
-    auto to = _address_vec[*_ordered_address_ids.begin()];
+    const auto& from = _address_vec[*_ordered_address_ids.rbegin()];
+    const auto& to = _address_vec[*_ordered_address_ids.begin()];
 
     auto pc = _app->partitions[selected_pid.get_partition_index()];
     auto request = generate_balancer_request(_apps, pc, get_balance_type(), from, to);

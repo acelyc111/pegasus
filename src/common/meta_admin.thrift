@@ -63,6 +63,7 @@ struct configuration_update_request
     2:dsn.layer2.partition_configuration  config;
     3:config_type              type = config_type.CT_INVALID;
     4:dsn.rpc_address          node;
+    // TODO(yingchun): make sure nody use it
     5:dsn.rpc_address          host_node; // deprecated, only used by stateless apps
 
     // Used for partition split
@@ -70,6 +71,7 @@ struct configuration_update_request
     // the `meta_split_status` will be set
     // only used when on_config_sync
     6:optional metadata.split_status    meta_split_status;
+    7:dsn.host_port          host_port_node;
 }
 
 // meta server (config mgr) => primary | secondary (downgrade) (w/ new config)

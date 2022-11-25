@@ -163,7 +163,7 @@ public:
     error_code restore_from_local_storage(const char *local_path);
 
     // TODO(yingchun): ip
-    void on_change_node_state(rpc_address node, bool is_alive);
+    void on_change_node_state(const host_port& node, bool is_alive);
     void on_propose_balancer(const configuration_balancer_request &request,
                              configuration_balancer_response &response);
     void on_start_recovery(const configuration_recovery_request &request,
@@ -269,12 +269,12 @@ private:
     // TODO(yingchun): ip
     void downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
                                    int pidx,
-                                   const rpc_address &address);
+                                   const host_port &address);
 
     // TODO(yingchun): ip
     void on_partition_node_dead(std::shared_ptr<app_state> &app,
                                 int pidx,
-                                const dsn::rpc_address &address);
+                                const dsn::host_port &node);
     // TODO(yingchun): ip
     void send_proposal(rpc_address target, const configuration_update_request &proposal);
     void send_proposal(const configuration_proposal_action &action,

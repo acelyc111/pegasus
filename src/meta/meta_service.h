@@ -153,8 +153,8 @@ public:
     }
 
     // these two callbacks are running in fd's thread_pool, and in fd's lock
-    void set_node_state(const std::vector<rpc_address> &nodes_list, bool is_alive);
-    void get_node_state(/*out*/ std::map<rpc_address, bool> &all_nodes);
+    void set_node_state(const std::vector<host_port> &nodes_list, bool is_alive);
+    void get_node_state(/*out*/ std::map<host_port, bool> &all_nodes);
 
     void start_service();
     void balancer_run();
@@ -313,8 +313,8 @@ private:
 
     // [
     // this is protected by failure_detector::_lock
-    std::set<rpc_address> _alive_set;
-    std::set<rpc_address> _dead_set;
+    std::set<host_port> _alive_set;
+    std::set<host_port> _dead_set;
     // ]
     mutable zrwlock_nr _meta_lock;
 

@@ -64,7 +64,7 @@ void duplication_sync_timer::run()
     _stub->_counter_dup_pending_mutations_count->set(pending_muts_cnt);
 
     duplication_sync_rpc rpc(std::move(req), RPC_CM_DUPLICATION_SYNC, 3_s);
-    host_port_group meta_servers(_stub->get_meta_servers());
+    const host_port_group& meta_servers(_stub->get_meta_servers());
     LOG_INFO_F("duplication_sync to meta({})", meta_servers.to_string());
 
     zauto_lock l(_lock);

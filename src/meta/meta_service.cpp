@@ -148,7 +148,7 @@ error_code meta_service::remote_storage_initialize()
 }
 
 // visited in protection of failure_detector::_lock
-void meta_service::set_node_state(const std::vector<rpc_address> &nodes, bool is_alive)
+void meta_service::set_node_state(const std::vector<host_port> &nodes, bool is_alive)
 {
     for (auto &node : nodes) {
         if (is_alive) {
@@ -167,11 +167,11 @@ void meta_service::set_node_state(const std::vector<rpc_address> &nodes, bool is
     if (!_started) {
         return;
     }
-    for (const rpc_address &address : nodes) {
+    for (const auto &node : nodes) {
         tasking::enqueue(
             LPC_META_STATE_HIGH,
             nullptr,
-            std::bind(&server_state::on_change_node_state, _state.get(), address, is_alive),
+            std::bind(&server_state::on_change_node_state, _state.get(), node, is_alive),
             server_state::sStateHash);
     }
 }
@@ -263,20 +263,20 @@ void meta_service::start_service()
 
     _alive_nodes_count->set(_alive_set.size());
 
-    for (const dsn::rpc_address &node : _alive_set) {
+    for (const ::dsn::host_port& node : _alive_set) {
         // sync alive set and the failure_detector
         _failure_detector->unregister_worker(node);
         _failure_detector->register_worker(node, true);
     }
 
     _started = true;
-    for (const dsn::rpc_address &node : _alive_set) {
+    for (const auto &node : _alive_set) {
         tasking::enqueue(LPC_META_STATE_HIGH,
                          nullptr,
                          std::bind(&server_state::on_change_node_state, _state.get(), node, true),
                          server_state::sStateHash);
     }
-    for (const dsn::rpc_address &node : _dead_set) {
+    for (const auto &node : _dead_set) {
         tasking::enqueue(LPC_META_STATE_HIGH,
                          nullptr,
                          std::bind(&server_state::on_change_node_state, _state.get(), node, false),
