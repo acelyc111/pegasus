@@ -193,7 +193,7 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
     return true;
 }
 
-bool collect_replica(meta_view view, const rpc_address &node, const replica_info &info)
+bool collect_replica(meta_view view, const host_port &node, const replica_info &info)
 {
     partition_configuration &pc = *get_config(*view.apps, info.pid);
     // current partition is during partition split
@@ -455,7 +455,7 @@ bool config_context::check_order()
     return true;
 }
 
-std::vector<serving_replica>::iterator config_context::find_from_serving(const rpc_address &node)
+std::vector<serving_replica>::iterator config_context::find_from_serving(const host_port &node)
 {
     return std::find_if(serving.begin(), serving.end(), [&node](const serving_replica &r) {
         return r.node == node;
@@ -463,7 +463,7 @@ std::vector<serving_replica>::iterator config_context::find_from_serving(const r
 }
 
 std::vector<serving_replica>::const_iterator
-config_context::find_from_serving(const rpc_address &node) const
+config_context::find_from_serving(const host_port &node) const
 {
     return std::find_if(serving.begin(), serving.end(), [&node](const serving_replica &r) {
         return r.node == node;
@@ -480,7 +480,7 @@ bool config_context::remove_from_serving(const rpc_address &node)
     return false;
 }
 
-void config_context::collect_serving_replica(const rpc_address &node, const replica_info &info)
+void config_context::collect_serving_replica(const host_port &node, const replica_info &info)
 {
     auto iter = find_from_serving(node);
     auto compact_status = info.__isset.manual_compact_status ? info.manual_compact_status
@@ -494,12 +494,12 @@ void config_context::collect_serving_replica(const rpc_address &node, const repl
     }
 }
 
-void config_context::adjust_proposal(const rpc_address &node, const replica_info &info)
+void config_context::adjust_proposal(const host_port &node, const replica_info &info)
 {
     lb_actions.track_current_learner(node, info);
 }
 
-bool config_context::get_disk_tag(const rpc_address &node, /*out*/ std::string &disk_tag) const
+bool config_context::get_disk_tag(const host_port &node, /*out*/ std::string &disk_tag) const
 {
     auto iter = find_from_serving(node);
     if (iter == serving.end()) {

@@ -72,7 +72,8 @@ TEST(cluster_balance_policy, node_migration_info)
 TEST(cluster_balance_policy, get_skew)
 {
     std::map<rpc_address, uint32_t> count_map = {
-        {rpc_address(1, 10086), 1}, {rpc_address(2, 10086), 3}, {rpc_address(3, 10086), 5},
+        {host_port("1", 10086), 1}, {host_port("2", 10086), 3}, {host_port("3", 10086), 5},
+//        {rpc_address(1, 10086), 1}, {rpc_address(2, 10086), 3}, {rpc_address(3, 10086), 5},
     };
 
     ASSERT_EQ(get_skew(count_map), count_map.rbegin()->second - count_map.begin()->second);
@@ -177,12 +178,16 @@ TEST(cluster_balance_policy, get_node_migration_info)
 TEST(cluster_balance_policy, get_min_max_set)
 {
     std::map<rpc_address, uint32_t> node_count_map;
-    node_count_map.emplace(rpc_address(1, 10086), 1);
-    node_count_map.emplace(rpc_address(2, 10086), 3);
-    node_count_map.emplace(rpc_address(3, 10086), 5);
-    node_count_map.emplace(rpc_address(4, 10086), 5);
+//    node_count_map.emplace(rpc_address(1, 10086), 1);
+//    node_count_map.emplace(rpc_address(2, 10086), 3);
+//    node_count_map.emplace(rpc_address(3, 10086), 5);
+//    node_count_map.emplace(rpc_address(4, 10086), 5);
+    node_count_map.emplace(host_port("1", 10086), 1);
+    node_count_map.emplace(host_port("2", 10086), 3);
+    node_count_map.emplace(host_port("3", 10086), 5);
+    node_count_map.emplace(host_port("4", 10086), 5);
 
-    std::set<rpc_address> min_set, max_set;
+    std::set<host_port> min_set, max_set;
     get_min_max_set(node_count_map, min_set, max_set);
 
     ASSERT_EQ(min_set.size(), 1);
@@ -196,7 +201,9 @@ TEST(cluster_balance_policy, get_disk_partitions_map)
 {
     cluster_balance_policy policy(nullptr);
     cluster_balance_policy::cluster_migration_info cluster_info;
-    rpc_address addr(1, 10086);
+//    rpc_address addr(1, 10086);
+    // TODO(yingchun): valid
+    host_port addr;
     int32_t app_id = 1;
 
     auto disk_partitions = policy.get_disk_partitions_map(cluster_info, addr, app_id);

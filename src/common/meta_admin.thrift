@@ -329,10 +329,9 @@ struct configuration_proposal_action
     1:dsn.rpc_address target;
     2:dsn.rpc_address node;
     3:config_type type;
-
-    // depricated now
-    // new fields of this struct should start with 5
-    // 4:i64 period_ts;
+    4:i64 depricated__period_ts;
+    5:dsn.host_port host_port_target;
+    6:dsn.host_port host_port_node;
 }
 
 struct configuration_balancer_request

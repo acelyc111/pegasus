@@ -71,6 +71,15 @@ private:
     uint16_t _port = 0;
 };
 
+inline bool operator<(const host_port &hp1, const host_port &hp2)
+{
+    if (hp1.host() == hp2.host()) {
+        return hp1.port() < hp2.port();
+    }
+
+    return hp1.host() < hp2.host();
+}
+
 inline bool operator==(const host_port &hp1, const host_port &hp2)
 {
     return hp1.port() == hp2.port() && hp1.host() == hp2.host();

@@ -102,8 +102,8 @@ bool hostname(const dsn::rpc_address &address, std::string *hostname_result);
 // invalid_ip_network_order -> return FALSE
 bool hostname_from_ip(uint32_t ip, std::string *hostname_result);
 
-template <typename A, typename B>
-std::multimap<B, A> flip_map(const std::map<A, B> &source)
+template <typename A, typename B, typename HashA>
+std::multimap<B, A> flip_map(const std::map<A, B, HashA> &source)
 {
     std::multimap<B, A> target;
     std::transform(source.begin(),

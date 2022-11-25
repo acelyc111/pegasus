@@ -83,7 +83,7 @@ public:
             }
 
             else if (pc.last_drops.size() == 0) {
-                std::vector<rpc_address> sort_result;
+                std::vector<host_port> sort_result;
                 sort_alive_nodes(*view.nodes,
                                  server_load_balancer::primary_comparator(*view.nodes),
                                  sort_result);
@@ -107,7 +107,7 @@ public:
         }
 
         else if (static_cast<int>(pc.secondaries.size()) + 1 < pc.max_replica_count) {
-            std::vector<rpc_address> sort_result;
+            std::vector<host_port> sort_result;
             sort_alive_nodes(
                 *view.nodes, server_load_balancer::partition_comparator(*view.nodes), sort_result);
 
@@ -126,15 +126,15 @@ public:
         return result;
     }
 
-    typedef std::function<bool(const rpc_address &addr1, const rpc_address &addr2)> node_comparator;
+    typedef std::function<bool(const host_port &addr1, const host_port &addr2)> node_comparator;
     static void sort_alive_nodes(const node_mapper &nodes,
                                  const node_comparator &cmp,
-                                 std::vector<rpc_address> &sorted_node)
+                                 std::vector<host_port> &sorted_node)
     {
         sorted_node.clear();
         sorted_node.reserve(nodes.size());
         for (auto &iter : nodes) {
-            if (!iter.first.is_invalid() && iter.second.alive()) {
+            if (iter.first.initialized() && iter.second.alive()) {
                 sorted_node.push_back(iter.first);
             }
         }

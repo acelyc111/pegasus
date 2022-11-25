@@ -132,7 +132,7 @@ void generate_app_serving_replica_info(/*out*/ std::shared_ptr<dsn::replication:
         ri.disk_tag = buffer;
         cc.collect_serving_replica(pc.primary, ri);
 
-        for (const dsn::rpc_address &addr : pc.secondaries) {
+        for (const auto &addr : pc.secondaries) {
             snprintf(buffer, 256, "disk%u", dsn::rand::next_u32(1, total_disks));
             ri.disk_tag = buffer;
             cc.collect_serving_replica(addr, ri);

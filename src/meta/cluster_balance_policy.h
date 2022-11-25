@@ -22,12 +22,10 @@
 namespace dsn {
 namespace replication {
 uint32_t get_partition_count(const node_state &ns, balance_type type, int32_t app_id);
-// TODO(yingchun): ip
-uint32_t get_skew(const std::map<rpc_address, uint32_t> &count_map);
-// TODO(yingchun): ip
-void get_min_max_set(const std::map<rpc_address, uint32_t> &node_count_map,
-                     /*out*/ std::set<rpc_address> &min_set,
-                     /*out*/ std::set<rpc_address> &max_set);
+uint32_t get_skew(const std::map<host_port, uint32_t, host_port_hash> &count_map);
+void get_min_max_set(const std::map<host_port, uint32_t, host_port_hash> &node_count_map,
+                     /*out*/ std::set<host_port> &min_set,
+                     /*out*/ std::set<host_port> &max_set);
 
 class cluster_balance_policy : public load_balance_policy
 {
@@ -76,7 +74,7 @@ private:
                                /*out*/ std::set<app_disk_info> &max_load_disk_set);
     // TODO(yingchun): ip
     std::map<std::string, partition_set> get_disk_partitions_map(
-        const cluster_migration_info &cluster_info, const rpc_address &addr, const int32_t app_id);
+        const cluster_migration_info &cluster_info, const host_port &addr, const int32_t app_id);
     // TODO(yingchun): ip
     bool pick_up_partition(const cluster_migration_info &cluster_info,
                            const rpc_address &min_node_addr,
@@ -93,7 +91,7 @@ private:
         int32_t app_id;
         std::string app_name;
         std::vector<std::map<rpc_address, partition_status::type>> partitions;
-        std::map<rpc_address, uint32_t> replicas_count;
+        std::map<host_port, uint32_t, host_port_hash> replicas_count;  // TODO(yingchun): typedef
         bool operator<(const app_migration_info &another) const
         {
             if (app_id < another.app_id)
@@ -117,7 +115,7 @@ private:
 
     struct node_migration_info
     {
-        rpc_address address;
+        host_port address;
         // key-disk tag, value-partition set
         std::map<std::string, partition_set> partitions;
         partition_set future_partitions;
@@ -136,8 +134,8 @@ private:
         balance_type type;
         std::map<int32_t, uint32_t> apps_skew;
         std::map<int32_t, app_migration_info> apps_info;
-        std::map<rpc_address, node_migration_info> nodes_info;
-        std::map<rpc_address, uint32_t> replicas_count;
+        std::map<host_port, node_migration_info, host_port_hash> nodes_info;
+        std::map<host_port, uint32_t, host_port_hash> replicas_count;
     };
 
     struct app_disk_info
