@@ -176,7 +176,7 @@ void meta_service::set_node_state(const std::vector<host_port> &nodes, bool is_a
     }
 }
 
-void meta_service::get_node_state(/*out*/ std::map<rpc_address, bool> &all_nodes)
+void meta_service::get_node_state(/*out*/ std::map<host_port, bool> &all_nodes)
 {
     zauto_lock l(_failure_detector->_lock);
     for (auto &node : _alive_set)
@@ -488,9 +488,9 @@ void meta_service::register_rpc_handlers()
                                          &meta_service::on_set_max_replica_count);
 }
 
-int meta_service::check_leader(dsn::message_ex *req, dsn::rpc_address *forward_address)
+int meta_service::check_leader(dsn::message_ex *req, dsn::host_port *forward_address)
 {
-    dsn::rpc_address leader;
+    dsn::host_port leader;
     if (!_failure_detector->get_leader(&leader)) {
         if (!req->header->context.u.is_forward_supported) {
             if (forward_address != nullptr)
@@ -499,7 +499,7 @@ int meta_service::check_leader(dsn::message_ex *req, dsn::rpc_address *forward_a
         }
 
         LOG_DEBUG("leader address: %s", leader.to_string());
-        if (!leader.is_invalid()) {
+        if (leader.initialized()) {
             dsn_rpc_forward(req, leader);
             return 0;
         } else {
@@ -633,9 +633,9 @@ void meta_service::on_query_cluster_info(configuration_cluster_info_rpc rpc)
 void meta_service::on_query_configuration_by_index(configuration_query_by_index_rpc rpc)
 {
     configuration_query_by_index_response &response = rpc.response();
-    rpc_address forward_address;
+    host_port forward_address;
     if (!check_status(rpc, &forward_address)) {
-        if (!forward_address.is_invalid()) {
+        if (forward_address.initialized()) {
             partition_configuration config;
             // TODO(yingchun): ip to host
             config.primary = forward_address;

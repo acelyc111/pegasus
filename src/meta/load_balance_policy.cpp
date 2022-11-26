@@ -27,7 +27,7 @@ namespace dsn {
 namespace replication {
 DSN_DECLARE_uint64(min_live_node_count_for_unfreeze);
 
-void dump_disk_load(app_id id, const rpc_address &node, bool only_primary, const disk_load &load)
+void dump_disk_load(app_id id, const host_port &node, bool only_primary, const disk_load &load)
 {
     std::ostringstream load_string;
     load_string << std::endl << "<<<<<<<<<<" << std::endl;
@@ -48,7 +48,7 @@ void dump_disk_load(app_id id, const rpc_address &node, bool only_primary, const
 bool calc_disk_load(node_mapper &nodes,
                     const app_mapper &apps,
                     app_id id,
-                    const rpc_address &node,
+                    const host_port &node,
                     bool only_primary,
                     /*out*/ disk_load &load)
 {
@@ -86,13 +86,13 @@ bool calc_disk_load(node_mapper &nodes,
     }
 }
 
-std::unordered_map<dsn::rpc_address, disk_load>
+std::unordered_map<dsn::host_port, disk_load>
 get_node_loads(const std::shared_ptr<app_state> &app,
                const app_mapper &apps,
                node_mapper &nodes,
                bool only_primary)
 {
-    std::unordered_map<dsn::rpc_address, disk_load> node_loads;
+    std::unordered_map<dsn::host_port, disk_load> node_loads;
     for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
         if (!calc_disk_load(
                 nodes, apps, app->app_id, iter->first, only_primary, node_loads[iter->first])) {
@@ -106,7 +106,7 @@ get_node_loads(const std::shared_ptr<app_state> &app,
     return node_loads;
 }
 
-const std::string &get_disk_tag(const app_mapper &apps, const rpc_address &node, const gpid &pid)
+const std::string &get_disk_tag(const app_mapper &apps, const host_port &node, const gpid &pid)
 {
     const config_context &cc = *get_config_context(apps, pid);
     auto iter = cc.find_from_serving(node);
@@ -150,10 +150,11 @@ generate_balancer_request(const app_mapper &apps,
     case balance_type::COPY_SECONDARY:
         ans = "copy_secondary";
         result.balance_type = balancer_request_type::copy_secondary;
+        // TODO(yingchun): both
         result.action_list.emplace_back(
-            new_proposal_action(pc.primary, to, config_type::CT_ADD_SECONDARY_FOR_LB));
+            new_proposal_action(pc.host_port_primary, to, config_type::CT_ADD_SECONDARY_FOR_LB));
         result.action_list.emplace_back(
-            new_proposal_action(pc.primary, from, config_type::CT_REMOVE));
+            new_proposal_action(pc.host_port_primary, from, config_type::CT_REMOVE));
         break;
     default:
         CHECK(false, "");
@@ -257,8 +258,8 @@ bool load_balance_policy::move_primary(std::unique_ptr<flow_path> path)
 
     int plan_moving = path->_flow.back();
     while (path->_prev[current] != 0) {
-        rpc_address from = address_vec[path->_prev[current]];
-        rpc_address to = address_vec[current];
+        const host_port& from = address_vec[path->_prev[current]];
+        const host_port& to = address_vec[current];
         if (!calc_disk_load(nodes, apps, path->_app->app_id, from, true, *prev_load)) {
             LOG_WARNING_F(
                 "stop move primary as some replica infos aren't collected, node({}), app({})",
@@ -276,8 +277,8 @@ bool load_balance_policy::move_primary(std::unique_ptr<flow_path> path)
 }
 
 void load_balance_policy::start_moving_primary(const std::shared_ptr<app_state> &app,
-                                               const rpc_address &from,
-                                               const rpc_address &to,
+                                               const host_port &from,
+                                               const host_port &to,
                                                int plan_moving,
                                                disk_load *prev_load,
                                                disk_load *current_load)
@@ -308,7 +309,7 @@ void load_balance_policy::start_moving_primary(const std::shared_ptr<app_state> 
 }
 
 std::list<dsn::gpid> load_balance_policy::calc_potential_moving(
-    const std::shared_ptr<app_state> &app, const rpc_address &from, const rpc_address &to)
+    const std::shared_ptr<app_state> &app, const host_port &from, const host_port &to)
 {
     std::list<dsn::gpid> potential_moving;
     const node_state &ns = _global_view->nodes->find(from)->second;
@@ -325,8 +326,8 @@ std::list<dsn::gpid> load_balance_policy::calc_potential_moving(
 dsn::gpid load_balance_policy::select_moving(std::list<dsn::gpid> &potential_moving,
                                              disk_load *prev_load,
                                              disk_load *current_load,
-                                             rpc_address from,
-                                             rpc_address to)
+                                             const host_port &from,
+                                             const host_port &to)
 {
     std::list<dsn::gpid>::iterator selected = potential_moving.end();
     int max = std::numeric_limits<int>::min();
@@ -464,7 +465,7 @@ void load_balance_policy::number_nodes(const node_mapper &nodes)
     address_id.clear();
     address_vec.resize(_alive_nodes + 2);
     for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
-        CHECK(!iter->first.is_invalid() && !iter->second.addr().is_invalid(), "invalid address");
+        CHECK(iter->first.initialized() && iter->second.addr().initialized(), "invalid address");
         CHECK(iter->second.alive(), "dead node");
 
         address_id[iter->first] = current_id;
@@ -475,7 +476,7 @@ void load_balance_policy::number_nodes(const node_mapper &nodes)
 
 ford_fulkerson::ford_fulkerson(const std::shared_ptr<app_state> &app,
                                const node_mapper &nodes,
-                               const std::unordered_map<dsn::rpc_address, int> &address_id,
+                               const std::unordered_map<dsn::host_port, int> &address_id,
                                uint32_t higher_count,
                                uint32_t lower_count,
                                int replicas_low)
@@ -537,7 +538,10 @@ void ford_fulkerson::update_decree(int node_id, const node_state &ns)
 {
     ns.for_each_primary(_app->app_id, [&, this](const gpid &pid) {
         const partition_configuration &pc = _app->partitions[pid.get_partition_index()];
-        for (const auto &secondary : pc.secondaries) {
+        // TODO(yingchun): both
+//        for (const auto &secondary : pc.secondaries) {
+//            auto i = _address_id.find(secondary);
+        for (const auto &secondary : pc.host_port_secondaries) {
             auto i = _address_id.find(secondary);
             CHECK(i != _address_id.end(), "invalid secondary address, address = {}", secondary);
             _network[node_id][i->second]++;
@@ -609,8 +613,8 @@ copy_replica_operation::copy_replica_operation(
     const std::shared_ptr<app_state> app,
     const app_mapper &apps,
     node_mapper &nodes,
-    const std::vector<dsn::rpc_address> &address_vec,
-    const std::unordered_map<dsn::rpc_address, int> &address_id)
+    const std::vector<dsn::host_port> &address_vec,
+    const std::unordered_map<dsn::host_port, int> &address_id)
     : _app(app), _apps(apps), _nodes(nodes), _address_vec(address_vec), _address_id(address_id)
 {
 }
@@ -732,8 +736,8 @@ copy_primary_operation::copy_primary_operation(
     const std::shared_ptr<app_state> app,
     const app_mapper &apps,
     node_mapper &nodes,
-    const std::vector<dsn::rpc_address> &address_vec,
-    const std::unordered_map<dsn::rpc_address, int> &address_id,
+    const std::vector<dsn::host_port> &address_vec,
+    const std::unordered_map<dsn::host_port, int> &address_id,
     bool have_lower_than_average,
     int replicas_low)
     : copy_replica_operation(app, apps, nodes, address_vec, address_id)

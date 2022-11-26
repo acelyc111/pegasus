@@ -141,15 +141,17 @@ public:
     {
         dsn_rpc_reply(response);
     }
-    virtual void send_message(const rpc_address &target, dsn::message_ex *request)
+    virtual void send_message(const host_port &target, dsn::message_ex *request)
     {
-        dsn_rpc_call_one_way(target, request);
+        rpc_address addr; // from target
+        dsn_rpc_call_one_way(addr, request);
     }
     virtual void send_request(dsn::message_ex * /*req*/,
-                              const rpc_address &target,
+                              const host_port &target,
                               const rpc_response_task_ptr &callback)
     {
-        dsn_rpc_call(target, callback);
+        rpc_address addr; // from target
+        dsn_rpc_call(addr, callback);
     }
 
     // these two callbacks are running in fd's thread_pool, and in fd's lock
@@ -254,14 +256,14 @@ private:
     //   0. meta isn't leader, and rpc-msg can forward to others
     //  -1. meta isn't leader, and rpc-msg can't forward to others
     // if return -1 and `forward_address' != nullptr, then return leader by `forward_address'.
-    int check_leader(dsn::message_ex *req, dsn::rpc_address *forward_address);
+    int check_leader(dsn::message_ex *req, dsn::host_port *forward_address);
     template <typename TRpcHolder>
-    int check_leader(TRpcHolder rpc, /*out*/ rpc_address *forward_address);
+    int check_leader(TRpcHolder rpc, /*out*/ host_port *forward_address);
     // ret:
     //    false: check failed
     //    true:  check succeed
     template <typename TRpcHolder>
-    bool check_status(TRpcHolder rpc, /*out*/ rpc_address *forward_address = nullptr);
+    bool check_status(TRpcHolder rpc, /*out*/ host_port *forward_address = nullptr);
     template <typename TRespType>
     bool check_status_with_msg(message_ex *req, TRespType &response_struct);
 
@@ -338,9 +340,10 @@ private:
 };
 
 template <typename TRpcHolder>
-int meta_service::check_leader(TRpcHolder rpc, rpc_address *forward_address)
+int meta_service::check_leader(TRpcHolder rpc, host_port *forward_address)
 {
-    dsn::rpc_address leader;
+    dsn::host_port leader;
+    // TODO(yingchun): refactor if-statements
     if (!_failure_detector->get_leader(&leader)) {
         if (!rpc.dsn_request()->header->context.u.is_forward_supported) {
             if (forward_address != nullptr)
@@ -349,12 +352,13 @@ int meta_service::check_leader(TRpcHolder rpc, rpc_address *forward_address)
         }
 
         LOG_DEBUG("leader address: %s", leader.to_string());
-        if (!leader.is_invalid()) {
+        if (leader.initialized()) {
             rpc.forward(leader);
             return 0;
         } else {
-            if (forward_address != nullptr)
-                forward_address->set_invalid();
+            if (forward_address != nullptr) {
+                forward_address->reset();
+            }
             return -1;
         }
     }
@@ -362,7 +366,7 @@ int meta_service::check_leader(TRpcHolder rpc, rpc_address *forward_address)
 }
 
 template <typename TRpcHolder>
-bool meta_service::check_status(TRpcHolder rpc, rpc_address *forward_address)
+bool meta_service::check_status(TRpcHolder rpc, host_port *forward_address)
 {
     if (!_access_controller->allowed(rpc.dsn_request())) {
         rpc.response().err = ERR_ACL_DENY;

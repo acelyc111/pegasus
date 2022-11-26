@@ -388,6 +388,21 @@ inline bool json_decode(const dsn::json::JsonObject &in, dsn::rpc_address &addre
     return address.from_string_ipv4(rpc_address_string.c_str());
 }
 
+inline void json_encode(JsonWriter &out, const dsn::host_port &hp)
+{
+    json_encode(out, hp.to_string());
+}
+inline bool json_decode(const dsn::json::JsonObject &in, dsn::host_port &hp)
+{
+    std::string rpc_address_string;
+    dverify(json_decode(in, rpc_address_string));
+    if (rpc_address_string == "invalid address") {
+        return true;
+    }
+    // TODO(yingchun): take care
+    return !rpc_address_string.empty();
+}
+
 inline void json_encode(JsonWriter &out, const dsn::partition_configuration &config);
 inline bool json_decode(const JsonObject &in, dsn::partition_configuration &config);
 inline void json_encode(JsonWriter &out, const dsn::app_info &info);

@@ -112,7 +112,7 @@ private:
 public:
     proposal_actions();
     void reset_tracked_current_learner();
-    void track_current_learner(const rpc_address &node, const replica_info &info);
+    void track_current_learner(const host_port &node, const replica_info &info);
     void clear();
 
     // return the action in acts & whether the action is from balancer
@@ -222,22 +222,22 @@ public:
     void check_size();
     void cancel_sync();
 
-    std::vector<dropped_replica>::iterator find_from_dropped(const dsn::rpc_address &node);
-    std::vector<dropped_replica>::const_iterator find_from_dropped(const rpc_address &node) const;
+    std::vector<dropped_replica>::iterator find_from_dropped(const dsn::host_port &node);
+    std::vector<dropped_replica>::const_iterator find_from_dropped(const host_port &node) const;
 
     // return true if remove ok, false if node doesn't in dropped
-    bool remove_from_dropped(const dsn::rpc_address &node);
+    bool remove_from_dropped(const dsn::host_port &node);
 
     // put recently downgraded node to dropped
     // return true if put ok, false if the node has been in dropped
-    bool record_drop_history(const dsn::rpc_address &node);
+    bool record_drop_history(const dsn::host_port &node);
 
     // Notice: please make sure whether node is actually an inactive or a serving replica
     // ret:
     //   1 => node has been in the dropped
     //   0 => insert the info to the dropped
     //  -1 => info is too staled to insert
-    int collect_drop_replica(const dsn::rpc_address &node, const replica_info &info);
+    int collect_drop_replica(const dsn::host_port &node, const replica_info &info);
 
     // check if dropped vector satisfied the order
     bool check_order();
@@ -246,7 +246,7 @@ public:
     std::vector<serving_replica>::const_iterator find_from_serving(const host_port &node) const;
 
     // return true if remove ok, false if node doesn't in serving
-    bool remove_from_serving(const dsn::rpc_address &node);
+    bool remove_from_serving(const dsn::host_port &node);
 
     void collect_serving_replica(const dsn::host_port &node, const replica_info &info);
 
@@ -264,19 +264,25 @@ struct partition_configuration_stateless
 {
     partition_configuration &config;
     partition_configuration_stateless(partition_configuration &pc) : config(pc) {}
-    std::vector<dsn::rpc_address> &workers() { return config.last_drops; }
-    std::vector<dsn::rpc_address> &hosts() { return config.secondaries; }
-    bool is_host(const rpc_address &node) const
+    std::vector<dsn::host_port> &workers() { return config.host_port_last_drops; }  // TODO(yingchun): both
+    std::vector<dsn::host_port> &hosts() { return config.host_port_secondaries; }  // TODO(yingchun): both
+    bool is_host(const host_port &node) const
     {
-        return std::find(config.secondaries.begin(), config.secondaries.end(), node) !=
-               config.secondaries.end();
+        // TODO(yingchun): both
+//        return std::find(config.secondaries.begin(), config.secondaries.end(), node) !=
+//               config.secondaries.end();
+        return std::find(config.host_port_secondaries.begin(), config.host_port_secondaries.end(), node) !=
+               config.host_port_secondaries.end();
     }
-    bool is_worker(const rpc_address &node) const
+    bool is_worker(const host_port &node) const
     {
-        return std::find(config.last_drops.begin(), config.last_drops.end(), node) !=
-               config.last_drops.end();
+        // TODO(yingchun): both
+//        return std::find(config.last_drops.begin(), config.last_drops.end(), node) !=
+//               config.last_drops.end();
+        return std::find(config.host_port_last_drops.begin(), config.host_port_last_drops.end(), node) !=
+               config.host_port_last_drops.end();
     }
-    bool is_member(const rpc_address &node) const { return is_host(node) || is_worker(node); }
+    bool is_member(const host_port &node) const { return is_host(node) || is_worker(node); }
 };
 
 struct restore_state
@@ -426,7 +432,7 @@ public:
     bool for_each_primary(app_id id, const std::function<bool(const dsn::gpid &pid)> &f) const;
 };
 
-typedef std::unordered_map<host_port, node_state, host_port_hash> node_mapper;
+typedef std::unordered_map<host_port, node_state> node_mapper;
 typedef std::map<dsn::gpid, std::shared_ptr<configuration_balancer_request>> migration_list;
 
 struct meta_view
@@ -546,8 +552,8 @@ inline int count_partitions(const app_mapper &apps)
 }
 
 void when_update_replicas(config_type::type t, const std::function<void(bool)> &func);
-void maintain_drops(/*inout*/ std::vector<dsn::rpc_address> &drops,
-                    const dsn::rpc_address &node,
+void maintain_drops(/*inout*/ std::vector<dsn::host_port> &drops,
+                    const dsn::host_port &node,
                     config_type::type t);
 
 // Try to construct a replica-group by current replica-infos of a gpid
@@ -565,7 +571,7 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count);
 // ret:
 //   return true if the replica is accepted as an useful replica. Or-else false.
 //   WARNING: if false is returned, the replica on node may be garbage-collected
-bool collect_replica(meta_view view, const rpc_address &node, const replica_info &info);
+bool collect_replica(meta_view view, const host_port &node, const replica_info &info);
 
 inline bool has_seconds_expired(uint64_t second_ts) { return second_ts * 1000 < dsn_now_ms(); }
 

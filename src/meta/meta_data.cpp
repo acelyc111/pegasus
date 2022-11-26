@@ -108,7 +108,7 @@ void when_update_replicas(config_type::type t, const std::function<void(bool)> &
     }
 }
 
-void maintain_drops(std::vector<rpc_address> &drops, const rpc_address &node, config_type::type t)
+void maintain_drops(std::vector<host_port> &drops, const host_port &node, config_type::type t)
 {
     auto action = [&drops, &node](bool is_adding) {
         auto it = std::find(drops.begin(), drops.end(), node);
@@ -151,7 +151,8 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
                  "the ballot of server must not be invalid_ballot, node = {}",
                  server.node);
     // TODO(yingchun): ip to host
-    pc.primary = server.node;
+//    pc.primary = server.node;
+    pc.host_port_primary = server.node;
     pc.ballot = server.ballot;
     pc.partition_flags = 0;
     pc.max_replica_count = max_replica_count;
@@ -167,26 +168,25 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
 
     drop_list.pop_back();
 
+    // TODO(yingchun): ip to host
     // we put max_replica_count-1 recent replicas to last_drops, in case of the DDD-state when the
     // only primary dead
-    // when add node to pc.last_drops, we don't remove it from our cc.drop_list
-    CHECK(pc.last_drops.empty(),
+    // when add node to pc.host_port_last_drops, we don't remove it from our cc.drop_list
+    CHECK(pc.host_port_last_drops.empty(),
           "last_drops of partition({}.{}) must be empty",
           pid.get_app_id(),
           pid.get_partition_index());
     for (auto iter = drop_list.rbegin(); iter != drop_list.rend(); ++iter) {
-        if (pc.last_drops.size() + 1 >= max_replica_count)
+        if (pc.host_port_last_drops.size() + 1 >= max_replica_count)
             break;
         // similar to cc.drop_list, pc.last_drop is also a stack structure
-        pc.last_drops.insert(pc.last_drops.begin(), iter->node);
-        LOG_INFO("construct for (%d.%d), select %s into last_drops, ballot(%" PRId64
-                 "), committed_decree(%" PRId64 "), prepare_decree(%" PRId64 ")",
-                 pid.get_app_id(),
-                 pid.get_partition_index(),
-                 iter->node.to_string(),
-                 iter->ballot,
-                 iter->last_committed_decree,
-                 iter->last_prepared_decree);
+        pc.host_port_last_drops.insert(pc.host_port_last_drops.begin(), iter->node);
+        LOG_INFO_F("construct for ({}), select {} into last_drops, ballot({}), committed_decree({}), prepare_decree({})",
+                   pid,
+                   iter->node,
+                   iter->ballot,
+                   iter->last_committed_decree,
+                   iter->last_prepared_decree);
     }
 
     cc.prefered_dropped = (int)drop_list.size() - 1;
@@ -227,13 +227,16 @@ void proposal_actions::reset_tracked_current_learner()
     current_learner.last_prepared_decree = invalid_decree;
 }
 
-void proposal_actions::track_current_learner(const dsn::rpc_address &node, const replica_info &info)
+void proposal_actions::track_current_learner(const dsn::host_port &node, const replica_info &info)
 {
-    if (empty())
+    if (empty()) {
         return;
-    configuration_proposal_action &act = acts.front();
-    if (act.node != node)
+    }
+    const configuration_proposal_action &act = acts.front();
+    // TODO(yingchun): both
+    if (act.host_port_node != node) {
         return;
+    }
 
     // currently we only handle add secondary
     // TODO: adjust other proposals according to replica info collected
@@ -354,7 +357,7 @@ void config_context::check_size()
     }
 }
 
-std::vector<dropped_replica>::iterator config_context::find_from_dropped(const rpc_address &node)
+std::vector<dropped_replica>::iterator config_context::find_from_dropped(const host_port &node)
 {
     return std::find_if(dropped.begin(), dropped.end(), [&node](const dropped_replica &r) {
         return r.node == node;
@@ -362,14 +365,14 @@ std::vector<dropped_replica>::iterator config_context::find_from_dropped(const r
 }
 
 std::vector<dropped_replica>::const_iterator
-config_context::find_from_dropped(const rpc_address &node) const
+config_context::find_from_dropped(const host_port &node) const
 {
     return std::find_if(dropped.begin(), dropped.end(), [&node](const dropped_replica &r) {
         return r.node == node;
     });
 }
 
-bool config_context::remove_from_dropped(const rpc_address &node)
+bool config_context::remove_from_dropped(const host_port &node)
 {
     auto iter = find_from_dropped(node);
     if (iter != dropped.end()) {
@@ -380,7 +383,7 @@ bool config_context::remove_from_dropped(const rpc_address &node)
     return false;
 }
 
-bool config_context::record_drop_history(const rpc_address &node)
+bool config_context::record_drop_history(const host_port &node)
 {
     auto iter = find_from_dropped(node);
     if (iter != dropped.end())
@@ -392,7 +395,7 @@ bool config_context::record_drop_history(const rpc_address &node)
     return true;
 }
 
-int config_context::collect_drop_replica(const rpc_address &node, const replica_info &info)
+int config_context::collect_drop_replica(const host_port &node, const replica_info &info)
 {
     bool in_dropped = false;
     auto iter = find_from_dropped(node);
@@ -470,7 +473,7 @@ config_context::find_from_serving(const host_port &node) const
     });
 }
 
-bool config_context::remove_from_serving(const rpc_address &node)
+bool config_context::remove_from_serving(const host_port &node)
 {
     auto iter = find_from_serving(node);
     if (iter != serving.end()) {

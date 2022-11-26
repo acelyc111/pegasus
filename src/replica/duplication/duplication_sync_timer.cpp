@@ -65,7 +65,7 @@ void duplication_sync_timer::run()
 
     duplication_sync_rpc rpc(std::move(req), RPC_CM_DUPLICATION_SYNC, 3_s);
     const host_port_group& meta_servers(_stub->get_meta_servers());
-    LOG_INFO_F("duplication_sync to meta({})", meta_servers.to_string());
+    LOG_INFO_F("duplication_sync to meta({})", meta_servers);
 
     zauto_lock l(_lock);
     // TODO(yingchun): rpc::call support to resolve

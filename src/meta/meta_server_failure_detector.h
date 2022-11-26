@@ -51,7 +51,7 @@ public:
         {
         }
     };
-    typedef std::map<dsn::rpc_address, worker_stability> stability_map;
+    typedef std::map<dsn::host_port, worker_stability> stability_map;
 
 public:
     meta_server_failure_detector(meta_service *svc);
@@ -61,12 +61,12 @@ public:
     // leader: the leader's address. Invalid if no leader selected
     //         if leader==nullptr, then the new leader won't be returned
     // ret true if i'm the current leader; false if not.
-    bool get_leader(/*output*/ dsn::rpc_address *leader);
+    bool get_leader(/*output*/ dsn::host_port *leader);
 
     // return if acquire the leader lock, or-else blocked forever
     void acquire_leader_lock();
 
-    void reset_stability_stat(const dsn::rpc_address &node);
+    void reset_stability_stat(const dsn::host_port &node);
 
     // _fd_opts is initialized in constructor with a fd_suboption stored in meta_service.
     // so usually you don't need to call this.
@@ -131,8 +131,8 @@ private:
 
 public:
     /* these two functions are for test */
-    meta_server_failure_detector(rpc_address leader_address, bool is_myself_leader);
-    void set_leader_for_test(rpc_address leader_address, bool is_myself_leader);
+    meta_server_failure_detector(const host_port& leader_address, bool is_myself_leader);
+    void set_leader_for_test(const host_port& leader_address, bool is_myself_leader);
     stability_map *get_stability_map_for_test();
 };
 }

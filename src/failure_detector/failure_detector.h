@@ -191,11 +191,11 @@ private:
     };
 
 private:
-    typedef std::unordered_map<::dsn::host_port, master_record, host_port_hash> master_map;
-    typedef std::unordered_map<::dsn::host_port, worker_record, host_port_hash> worker_map;
+    typedef std::unordered_map<::dsn::host_port, master_record> master_map;
+    typedef std::unordered_map<::dsn::host_port, worker_record> worker_map;
 
     // allow list are set on machine name (port can vary)
-    typedef std::unordered_set<::dsn::host_port, host_port_hash> allow_list;
+    typedef std::unordered_set<::dsn::host_port> allow_list;
 
     master_map _masters;
     worker_map _workers;

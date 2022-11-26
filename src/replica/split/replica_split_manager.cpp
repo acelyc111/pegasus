@@ -100,7 +100,7 @@ void replica_split_manager::parent_start_split(
 
 // ThreadPool: THREAD_POOL_REPLICATION
 void replica_split_manager::child_init_replica(gpid parent_gpid,
-                                               rpc_address primary_address,
+                                               const host_port& primary_address,
                                                ballot init_ballot) // on child partition
 {
     FAIL_POINT_INJECT_F("replica_child_init_replica", [](dsn::string_view) {});
@@ -703,7 +703,7 @@ void replica_split_manager::update_child_group_partition_count(
         return;
     }
 
-    auto not_replied_addresses = std::make_shared<std::unordered_set<rpc_address>>();
+    auto not_replied_addresses = std::make_shared<std::unordered_set<host_port>>();
     // _primary_states.statuses is a map structure: rpc address -> partition_status
     for (const auto &kv : _replica->_primary_states.statuses) {
         not_replied_addresses->insert(kv.first);
@@ -716,9 +716,9 @@ void replica_split_manager::update_child_group_partition_count(
 
 // ThreadPool: THREAD_POOL_REPLICATION
 void replica_split_manager::parent_send_update_partition_count_request(
-    const rpc_address &address,
+    const host_port &address,
     int32_t new_partition_count,
-    std::shared_ptr<std::unordered_set<rpc_address>> &not_replied_addresses) // on primary parent
+    std::shared_ptr<std::unordered_set<host_port>> &not_replied_addresses) // on primary parent
 {
     FAIL_POINT_INJECT_F("replica_parent_update_partition_count_request", [](dsn::string_view) {});
 
@@ -805,7 +805,7 @@ void replica_split_manager::on_update_child_group_partition_count_reply(
     error_code ec,
     const update_child_group_partition_count_request &request,
     const update_child_group_partition_count_response &response,
-    std::shared_ptr<std::unordered_set<rpc_address>> &not_replied_addresses) // on primary parent
+    std::shared_ptr<std::unordered_set<host_port>> &not_replied_addresses) // on primary parent
 {
     _replica->_checker.only_one_thread_access();
 
@@ -935,7 +935,7 @@ void replica_split_manager::parent_send_register_request(
         request.parent_config.ballot,
         request.child_config.ballot);
 
-    rpc_address meta_address(_stub->_failure_detector->get_servers());
+    const auto& meta_address = _stub->_failure_detector->get_servers();
     std::unique_ptr<register_child_request> req = make_unique<register_child_request>(request);
     register_child_rpc rpc(std::move(req),
                            RPC_CM_REGISTER_CHILD_REPLICA,
@@ -943,8 +943,10 @@ void replica_split_manager::parent_send_register_request(
                            /*partition hash*/ 0,
                            get_gpid().thread_hash());
 
+    // TODO(yingchun): addr
+    rpc_address addr;
     _replica->_primary_states.register_child_task =
-        rpc.call(meta_address, tracker(), [this, rpc](error_code ec) mutable {
+        rpc.call(addr, tracker(), [this, rpc](error_code ec) mutable {
             on_register_child_on_meta_reply(ec, rpc.request(), rpc.response());
         });
 }
@@ -1430,7 +1432,7 @@ void replica_split_manager::parent_send_notify_stop_request(
     split_status::type meta_split_status) // on primary parent
 {
     FAIL_POINT_INJECT_F("replica_parent_send_notify_stop_request", [](dsn::string_view) {});
-    rpc_address meta_address(_stub->_failure_detector->get_servers());
+    const auto& meta_address = _stub->_failure_detector->get_servers();
     std::unique_ptr<notify_stop_split_request> req = make_unique<notify_stop_split_request>();
     req->app_name = _replica->_app_info.app_name;
     req->parent_gpid = get_gpid();
@@ -1439,10 +1441,12 @@ void replica_split_manager::parent_send_notify_stop_request(
 
     LOG_INFO_PREFIX("group {} split succeed, send notify_stop_request to meta server({})",
                     meta_split_status == split_status::PAUSING ? "pause" : "cancel",
-                    meta_address.to_string());
+                    meta_address);
     notify_stop_split_rpc rpc(
         std::move(req), RPC_CM_NOTIFY_STOP_SPLIT, 0_ms, 0, get_gpid().thread_hash());
-    rpc.call(meta_address, tracker(), [this, rpc](error_code ec) mutable {
+    // TODO(yingchun): addr
+    rpc_address addr;
+    rpc.call(addr, tracker(), [this, rpc](error_code ec) mutable {
         error_code err = ec == ERR_OK ? rpc.response().err : ec;
         const std::string type =
             rpc.request().meta_split_status == split_status::PAUSING ? "pause" : "cancel";
@@ -1461,13 +1465,15 @@ void replica_split_manager::query_child_state() // on primary parent
     request->pid = get_gpid();
     request->partition_count = _replica->_app_info.partition_count;
 
-    rpc_address meta_address(_stub->_failure_detector->get_servers());
+    const auto& meta_address = _stub->_failure_detector->get_servers();
     LOG_INFO_PREFIX("send query child partition state request to meta server({})",
-                    meta_address.to_string());
+                    meta_address);
     query_child_state_rpc rpc(
         std::move(request), RPC_CM_QUERY_CHILD_STATE, 0_ms, 0, get_gpid().thread_hash());
+    // TODO(yingchun): addr
+    rpc_address addr;
     _replica->_primary_states.query_child_task =
-        rpc.call(meta_address, tracker(), [this, rpc](error_code ec) mutable {
+        rpc.call(addr, tracker(), [this, rpc](error_code ec) mutable {
             on_query_child_state_reply(ec, rpc.request(), rpc.response());
         });
 }

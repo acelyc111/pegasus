@@ -41,6 +41,11 @@ public:
     // Note that <host> cannot be in IPv6 address notation.
     error_s parse_string(const std::string &str);
 
+    void reset() {
+        _host.clear();
+        _port = 0;
+    }
+
     bool initialized() const { return !_host.empty(); }
 
     const std::string &host() const { return _host; }
@@ -54,6 +59,13 @@ public:
 
     static error_s
     load_servers(const std::string &section, const std::string &key, std::vector<host_port> *hps);
+
+    host_port& operator=(const host_port& other)
+    {
+        _host = other._host;
+        _port = other._port;
+        return *this;
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const host_port &hp)
     {
@@ -90,12 +102,6 @@ inline bool operator!=(const host_port &hp1, const host_port &hp2)
     return !(hp1 == hp2);
 }
 
-struct host_port_hash {
-    size_t operator()(const host_port& hp) const {
-        return std::hash<std::string>()(hp._host) ^ hp._port;
-    }
-};
-
 class host_port_group
 {
 public:
@@ -107,6 +113,13 @@ public:
     void set_leader(const host_port& hp);
     host_port leader() const;
 
+    std::string to_string() const;
+
+    friend std::ostream &operator<<(std::ostream &os, const host_port_group &hpg)
+    {
+        return os << hpg.to_string();
+    }
+
 private:
     mutable utils::rw_lock_nr _lock;
     int _leader_index;
@@ -114,3 +127,13 @@ private:
 };
 
 } // namespace dsn
+
+namespace std {
+template <>
+struct hash<::dsn::host_port>
+{
+    size_t operator()(const ::dsn::host_port& hp) const {
+        return std::hash<std::string>()(hp.host()) ^ hp.port();
+    }
+};
+} // namespace std

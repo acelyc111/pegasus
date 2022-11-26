@@ -22,8 +22,8 @@
 namespace dsn {
 namespace replication {
 uint32_t get_partition_count(const node_state &ns, balance_type type, int32_t app_id);
-uint32_t get_skew(const std::map<host_port, uint32_t, host_port_hash> &count_map);
-void get_min_max_set(const std::map<host_port, uint32_t, host_port_hash> &node_count_map,
+uint32_t get_skew(const std::map<host_port, uint32_t> &count_map);
+void get_min_max_set(const std::map<host_port, uint32_t> &node_count_map,
                      /*out*/ std::set<host_port> &min_set,
                      /*out*/ std::set<host_port> &max_set);
 
@@ -62,22 +62,19 @@ private:
                        /*out*/ move_info &next_move);
     // TODO(yingchun): ip
     bool pick_up_move(const cluster_migration_info &cluster_info,
-                      const std::set<rpc_address> &max_nodes,
-                      const std::set<rpc_address> &min_nodes,
+                      const std::set<host_port> &max_nodes,
+                      const std::set<host_port> &min_nodes,
                       const int32_t app_id,
                       const partition_set &selected_pid,
                       /*out*/ move_info &move_info);
-    // TODO(yingchun): ip
     void get_max_load_disk_set(const cluster_migration_info &cluster_info,
-                               const std::set<rpc_address> &max_nodes,
+                               const std::set<host_port> &max_nodes,
                                const int32_t app_id,
                                /*out*/ std::set<app_disk_info> &max_load_disk_set);
-    // TODO(yingchun): ip
     std::map<std::string, partition_set> get_disk_partitions_map(
         const cluster_migration_info &cluster_info, const host_port &addr, const int32_t app_id);
-    // TODO(yingchun): ip
     bool pick_up_partition(const cluster_migration_info &cluster_info,
-                           const rpc_address &min_node_addr,
+                           const host_port &min_node_addr,
                            const partition_set &max_load_partitions,
                            const partition_set &selected_pid,
                            /*out*/ gpid &picked_pid);
@@ -90,8 +87,8 @@ private:
     {
         int32_t app_id;
         std::string app_name;
-        std::vector<std::map<rpc_address, partition_status::type>> partitions;
-        std::map<host_port, uint32_t, host_port_hash> replicas_count;  // TODO(yingchun): typedef
+        std::vector<std::map<host_port, partition_status::type>> partitions;
+        std::map<host_port, uint32_t> replicas_count;  // TODO(yingchun): typedef
         bool operator<(const app_migration_info &another) const
         {
             if (app_id < another.app_id)
@@ -102,7 +99,7 @@ private:
         {
             return app_id == another.app_id;
         }
-        partition_status::type get_partition_status(int32_t pidx, rpc_address addr)
+        partition_status::type get_partition_status(int32_t pidx, host_port addr)
         {
             for (const auto &kv : partitions[pidx]) {
                 if (kv.first == addr) {
@@ -134,14 +131,15 @@ private:
         balance_type type;
         std::map<int32_t, uint32_t> apps_skew;
         std::map<int32_t, app_migration_info> apps_info;
-        std::map<host_port, node_migration_info, host_port_hash> nodes_info;
-        std::map<host_port, uint32_t, host_port_hash> replicas_count;
+        std::map<host_port, node_migration_info> nodes_info;
+        std::map<host_port, uint32_t> replicas_count;
     };
 
     struct app_disk_info
     {
         int32_t app_id;
-        rpc_address node;
+        // TODO(yingchun): use an unique id for it?
+        host_port node;
         std::string disk_tag;
         partition_set partitions;
         bool operator==(const app_disk_info &another) const
@@ -160,9 +158,10 @@ private:
     struct move_info
     {
         gpid pid;
-        rpc_address source_node;
+        // TODO(yingchun): use an unique id for it?
+        host_port source_node;
         std::string source_disk_tag;
-        rpc_address target_node;
+        host_port target_node;
         balance_type type;
     };
 

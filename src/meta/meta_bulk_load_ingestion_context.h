@@ -38,7 +38,7 @@ private:
     {
         gpid pid;
         // node address -> disk_tag
-        std::unordered_map<rpc_address, std::string> node_disk;
+        std::unordered_map<host_port, std::string> node_disk;
 
         partition_node_info() {}
         partition_node_info(const partition_configuration &config, const config_context &cc)
@@ -50,13 +50,13 @@ private:
 
     struct node_context
     {
-        rpc_address address;
+        host_port address;
         uint32_t node_ingesting_count;
         // disk tag -> ingesting partition count
         std::unordered_map<std::string, int32_t> disk_ingesting_counts;
 
         node_context() {}
-        node_context(const rpc_address &address, const std::string &disk_tag)
+        node_context(const host_port &address, const std::string &disk_tag)
             : address(address), node_ingesting_count(0)
         {
             init_disk(disk_tag);
@@ -70,7 +70,7 @@ private:
     };
 
     bool try_partition_ingestion(const partition_configuration &config, const config_context &cc);
-    bool check_node_ingestion(const rpc_address &node, const std::string &disk_tag);
+    bool check_node_ingestion(const host_port &node, const std::string &disk_tag);
     void add_partition(const partition_node_info &info);
     void remove_partition(const gpid &pid);
     uint32_t get_app_ingesting_count(const uint32_t app_id) const;
@@ -85,7 +85,7 @@ private:
     // ingesting partitions
     std::unordered_map<gpid, partition_node_info> _running_partitions;
     // every node and every disk ingesting partition count
-    std::unordered_map<rpc_address, node_context> _nodes_context;
+    std::unordered_map<host_port, node_context> _nodes_context;
 };
 
 } // namespace replication

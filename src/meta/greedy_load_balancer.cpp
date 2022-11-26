@@ -152,14 +152,11 @@ void greedy_load_balancer::score(meta_view view, double &primary_stddev, double 
 
 bool greedy_load_balancer::all_replica_infos_collected(const node_state &ns)
 {
-    dsn::rpc_address n = ns.addr();
-    return ns.for_each_partition([this, n](const dsn::gpid &pid) {
+    const auto& n = ns.addr();
+    return ns.for_each_partition([this, &n](const dsn::gpid &pid) {
         config_context &cc = *get_config_context(*(t_global_view->apps), pid);
         if (cc.find_from_serving(n) == cc.serving.end()) {
-            LOG_INFO("meta server hasn't collected gpid(%d.%d)'s info of %s",
-                     pid.get_app_id(),
-                     pid.get_partition_index(),
-                     n.to_string());
+            LOG_INFO_F("meta server hasn't collected gpid({})'s info of {}", pid, n);
             return false;
         }
         return true;

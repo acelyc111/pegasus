@@ -109,7 +109,7 @@ void meta_http_service::get_app_handler(const http_request &req, http_response &
         tp_details.add_column("replica_count");
         tp_details.add_column("primary");
         tp_details.add_column("secondaries");
-        std::map<rpc_address, std::pair<int, int>> node_stat;
+        std::map<host_port, std::pair<int, int>> node_stat;
 
         int total_prim_count = 0;
         int total_sec_count = 0;
@@ -118,18 +118,20 @@ void meta_http_service::get_app_handler(const http_request &req, http_response &
         int read_unhealthy = 0;
         for (const auto &p : response.partitions) {
             int replica_count = 0;
-            if (!p.primary.is_invalid()) {
+            // TODO(yingchun): both
+            if (p.host_port_primary.initialized()) {
                 replica_count++;
-                node_stat[p.primary].first++;
+//                node_stat[p.primary].first++;
                 total_prim_count++;
             }
-            replica_count += p.secondaries.size();
-            total_sec_count += p.secondaries.size();
-            if (!p.primary.is_invalid()) {
-                if (replica_count >= p.max_replica_count)
+            replica_count += p.host_port_secondaries.size();
+            total_sec_count += p.host_port_secondaries.size();
+            if (p.host_port_primary.initialized()) {
+                if (replica_count >= p.max_replica_count) {
                     fully_healthy++;
-                else if (replica_count < 2)
+                } else if (replica_count < 2) {
                     write_unhealthy++;
+                }
             } else {
                 write_unhealthy++;
                 read_unhealthy++;
@@ -139,14 +141,15 @@ void meta_http_service::get_app_handler(const http_request &req, http_response &
             std::stringstream oss;
             oss << replica_count << "/" << p.max_replica_count;
             tp_details.append_data(oss.str());
-            tp_details.append_data((p.primary.is_invalid() ? "-" : p.primary.to_std_string()));
+            tp_details.append_data((p.host_port_primary.initialized() ? "-" : p.host_port_primary.to_string()));
             oss.str("");
             oss << "[";
-            for (int j = 0; j < p.secondaries.size(); j++) {
-                if (j != 0)
+            for (int j = 0; j < p.host_port_secondaries.size(); j++) {
+                if (j != 0) {
                     oss << ",";
-                oss << p.secondaries[j].to_std_string();
-                node_stat[p.secondaries[j]].second++;
+                }
+                oss << p.host_port_secondaries[j];
+                node_stat[p.host_port_secondaries[j]].second++;
             }
             oss << "]";
             tp_details.append_data(oss.str());
@@ -159,8 +162,8 @@ void meta_http_service::get_app_handler(const http_request &req, http_response &
         tp_nodes.add_column("primary");
         tp_nodes.add_column("secondary");
         tp_nodes.add_column("total");
-        for (auto &kv : node_stat) {
-            tp_nodes.add_row(kv.first.to_std_string());
+        for (const auto &kv : node_stat) {
+            tp_nodes.add_row(kv.first.to_string());
             tp_nodes.append_data(kv.second.first);
             tp_nodes.append_data(kv.second.second);
             tp_nodes.append_data(kv.second.first + kv.second.second);
@@ -300,11 +303,11 @@ void meta_http_service::list_app_handler(const http_request &req, http_response 
             for (int i = 0; i < response.partitions.size(); i++) {
                 const dsn::partition_configuration &p = response.partitions[i];
                 int replica_count = 0;
-                if (!p.primary.is_invalid()) {
+                if (p.host_port_primary.initialized()) {
                     replica_count++;
                 }
-                replica_count += p.secondaries.size();
-                if (!p.primary.is_invalid()) {
+                replica_count += p.host_port_secondaries.size();
+                if (p.host_port_primary.initialized()) {
                     if (replica_count >= p.max_replica_count)
                         fully_healthy++;
                     else if (replica_count < 2)
@@ -365,12 +368,12 @@ void meta_http_service::list_node_handler(const http_request &req, http_response
     if (!redirect_if_not_primary(req, resp))
         return;
 
-    std::map<dsn::rpc_address, list_nodes_helper> tmp_map;
+    std::map<dsn::host_port, list_nodes_helper> tmp_map;
     for (const auto &node : _service->_alive_set) {
-        tmp_map.emplace(node, list_nodes_helper(node.to_std_string(), "ALIVE"));
+        tmp_map.emplace(node, list_nodes_helper(node.to_string(), "ALIVE"));
     }
     for (const auto &node : _service->_dead_set) {
-        tmp_map.emplace(node, list_nodes_helper(node.to_std_string(), "UNALIVE"));
+        tmp_map.emplace(node, list_nodes_helper(node.to_string(), "UNALIVE"));
     }
     int alive_node_count = (_service->_alive_set).size();
     int unalive_node_count = (_service->_dead_set).size();
@@ -390,14 +393,19 @@ void meta_http_service::list_node_handler(const http_request &req, http_response
 
             for (int i = 0; i < response_app.partitions.size(); i++) {
                 const dsn::partition_configuration &p = response_app.partitions[i];
-                if (!p.primary.is_invalid()) {
-                    auto find = tmp_map.find(p.primary);
+                if (p.host_port_primary.initialized()) {
+                    // TODO(yingchun): both
+//                    auto find = tmp_map.find(p.primary);
+                    auto find = tmp_map.find(p.host_port_primary);
                     if (find != tmp_map.end()) {
                         find->second.primary_count++;
                     }
                 }
-                for (int j = 0; j < p.secondaries.size(); j++) {
-                    auto find = tmp_map.find(p.secondaries[j]);
+                // TODO(yingchun): both
+//                for (int j = 0; j < p.secondaries.size(); j++) {
+//                    auto find = tmp_map.find(p.secondaries[j]);
+                for (int j = 0; j < p.host_port_secondaries.size(); j++) {
+                    auto find = tmp_map.find(p.host_port_secondaries[j]);
                     if (find != tmp_map.end()) {
                         find->second.secondary_count++;
                     }
@@ -447,7 +455,7 @@ void meta_http_service::get_cluster_info_handler(const http_request &req, http_r
     dsn::utils::table_printer tp;
     tp.add_row_name_and_data("meta_servers",
                              fmt::format("{}", fmt::join(_service->_opts.meta_servers1, ",")));
-    tp.add_row_name_and_data("primary_meta_server", dsn_primary_address().to_std_string());
+    tp.add_row_name_and_data("primary_meta_server", dsn_primary_address().to_string());
     std::string zk_hosts =
         dsn_config_get_value_string("zookeeper", "hosts_list", "", "zookeeper_hosts");
     zk_hosts.erase(std::remove_if(zk_hosts.begin(), zk_hosts.end(), ::isspace), zk_hosts.end());
@@ -808,11 +816,11 @@ bool meta_http_service::redirect_if_not_primary(const http_request &req, http_re
 #ifdef DSN_MOCK_TEST
     return true;
 #endif
-    rpc_address leader;
+    host_port leader;
     if (_service->_failure_detector->get_leader(&leader))
         return true;
     // set redirect response
-    resp.location = "http://" + leader.to_std_string() + '/' + req.path;
+    resp.location = "http://" + leader.to_string() + '/' + req.path;
     if (!req.query_args.empty()) {
         resp.location += '?';
         for (const auto &i : req.query_args) {

@@ -1353,9 +1353,11 @@ void replica_stub::query_configuration_by_node()
              (int)req.stored_replicas.size());
 
     // TODO(yingchun): ip
-    rpc_address target(_failure_detector->get_servers());
+    const auto& target = _failure_detector->get_servers();
+    rpc_address addr; // from target
     _config_query_task =
-        rpc::call(target,
+//        rpc::call(target,
+        rpc::call(addr,
                   msg,
                   &_tracker,
                   [this](error_code err, dsn::message_ex *request, dsn::message_ex *resp) {

@@ -74,10 +74,14 @@ public:
         pc_status result;
         if (pc.primary.is_invalid()) {
             if (pc.secondaries.size() > 0) {
-                action.node = pc.secondaries[0];
-                for (unsigned int i = 1; i < pc.secondaries.size(); ++i)
-                    if (pc.secondaries[i] < action.node)
-                        action.node = pc.secondaries[i];
+                // TODO(yingchun): both
+//                action.node = pc.secondaries[0];
+                action.host_port_node = pc.secondaries[0];
+                for (unsigned int i = 1; i < pc.secondaries.size(); ++i) {
+                    if (pc.secondaries[i] < action.host_port_node) {
+                        action.host_port_node = pc.secondaries[i];
+                    }
+                }
                 action.type = config_type::CT_UPGRADE_TO_PRIMARY;
                 result = pc_status::ill;
             }
@@ -87,23 +91,28 @@ public:
                 sort_alive_nodes(*view.nodes,
                                  server_load_balancer::primary_comparator(*view.nodes),
                                  sort_result);
-                action.node = sort_result[0];
+                // TODO(yingchun): both
+//                action.node = sort_result[0];
+                action.host_port_node = sort_result[0];
                 action.type = config_type::CT_ASSIGN_PRIMARY;
                 result = pc_status::ill;
             }
 
             // DDD
             else {
-                action.node = *pc.last_drops.rbegin();
+                // TODO(yingchun): both
+//                action.node = *pc.last_drops.rbegin();
+                action.host_port_node = *pc.last_drops.rbegin();
                 action.type = config_type::CT_ASSIGN_PRIMARY;
-                LOG_ERROR("%d.%d enters DDD state, we are waiting for its last primary node %s to "
+                LOG_ERROR_F("{} enters DDD state, we are waiting for its last primary node {} to "
                           "come back ...",
-                          pc.pid.get_app_id(),
-                          pc.pid.get_partition_index(),
-                          action.node.to_string());
+                          pc.pid,
+                          action.host_port_node);
                 result = pc_status::dead;
             }
-            action.target = action.node;
+            // TODO(yingchun): both
+//            action.target = action.node;
+            action.host_port_target = action.host_port_node;
         }
 
         else if (static_cast<int>(pc.secondaries.size()) + 1 < pc.max_replica_count) {
@@ -113,11 +122,15 @@ public:
 
             for (auto &node : sort_result) {
                 if (!is_member(pc, node)) {
-                    action.node = node;
+                    // TODO(yingchun): both
+//                    action.node = node;
+                    action.host_port_node = node;
                     break;
                 }
             }
-            action.target = pc.primary;
+            // TODO(yingchun): both
+//            action.target = pc.primary;
+            action.host_port_target = pc.primary;
             action.type = config_type::CT_ADD_SECONDARY;
             result = pc_status::ill;
         } else {

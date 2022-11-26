@@ -158,4 +158,10 @@ host_port host_port_group::leader() const
     return _leader_index >= 0 ? _members[_leader_index] : host_port();
 }
 
+std::string host_port_group::to_string() const
+{
+    utils::auto_read_lock l(_lock);
+    return fmt::format("{}", fmt::join(_members, ","));
+}
+
 } // namespace dsn

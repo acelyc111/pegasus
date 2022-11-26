@@ -41,9 +41,12 @@ void ingestion_context::partition_node_info::create(const partition_configuratio
                                                     const config_context &cc)
 {
     pid = config.pid;
-    std::unordered_set<rpc_address> current_nodes;
-    current_nodes.insert(config.primary);
-    for (const auto &secondary : config.secondaries) {
+    std::unordered_set<host_port> current_nodes;
+    // TODO(yingchun): both
+//    current_nodes.insert(config.primary);
+//    for (const auto &secondary : config.secondaries) {
+    current_nodes.insert(config.host_port_primary);
+    for (const auto &secondary : config.host_port_secondaries) {
         current_nodes.insert(secondary);
     }
     for (const auto &node : current_nodes) {
@@ -131,7 +134,7 @@ bool ingestion_context::try_partition_ingestion(const partition_configuration &c
     return true;
 }
 
-bool ingestion_context::check_node_ingestion(const rpc_address &node, const std::string &disk_tag)
+bool ingestion_context::check_node_ingestion(const host_port &node, const std::string &disk_tag)
 {
     if (_nodes_context.find(node) == _nodes_context.end()) {
         _nodes_context[node] = node_context(node, disk_tag);

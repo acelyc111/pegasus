@@ -71,7 +71,7 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
         int total_partitions = iter->second;
         for (int32_t pidx = 0; pidx < total_partitions; ++pidx) {
             update_partition_progress_unlocked(
-                gpid(app_id, pidx), cold_backup_constant::PROGRESS_FINISHED, dsn::rpc_address());
+                gpid(app_id, pidx), cold_backup_constant::PROGRESS_FINISHED, dsn::host_port());
         }
         return;
     }
@@ -375,7 +375,7 @@ void policy_context::write_backup_info_unlocked(const backup_info &b_info,
 
 bool policy_context::update_partition_progress_unlocked(gpid pid,
                                                         int32_t progress,
-                                                        const rpc_address &source)
+                                                        const host_port &source)
 {
     int32_t &local_progress = _progress.partition_progress[pid];
     if (local_progress == cold_backup_constant::PROGRESS_FINISHED) {
@@ -427,7 +427,7 @@ void policy_context::record_partition_checkpoint_size_unlock(const gpid &pid, in
 
 void policy_context::start_backup_partition_unlocked(gpid pid)
 {
-    dsn::rpc_address partition_primary;
+    dsn::host_port partition_primary;
     {
         // check app and partition status
         zauto_read_lock l;
@@ -439,12 +439,12 @@ void policy_context::start_backup_partition_unlocked(gpid pid)
                 "{}: app {} is not available, skip to backup it.", _backup_sig, pid.get_app_id());
             _progress.is_app_skipped[pid.get_app_id()] = true;
             update_partition_progress_unlocked(
-                pid, cold_backup_constant::PROGRESS_FINISHED, dsn::rpc_address());
+                pid, cold_backup_constant::PROGRESS_FINISHED, dsn::host_port());
             return;
         }
-        partition_primary = app->partitions[pid.get_partition_index()].primary;
+        partition_primary = app->partitions[pid.get_partition_index()].host_port_primary; // TODO(yingchun): both
     }
-    if (partition_primary.is_invalid()) {
+    if (!partition_primary.initialized()) {
         LOG_WARNING_F("{}: partition {} doesn't have a primary now, retry to backup it later",
                       _backup_sig,
                       pid.to_string());
@@ -483,7 +483,7 @@ void policy_context::start_backup_partition_unlocked(gpid pid)
 void policy_context::on_backup_reply(error_code err,
                                      backup_response &&response,
                                      gpid pid,
-                                     const rpc_address &primary)
+                                     const host_port &primary)
 {
     LOG_INFO_F("{}: receive backup response for partition {} from server {}.",
                _backup_sig,
