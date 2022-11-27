@@ -640,7 +640,7 @@ void meta_service::on_query_configuration_by_index(configuration_query_by_index_
         if (forward_address.initialized()) {
             partition_configuration config;
             // TODO(yingchun): ip to host
-            config.primary = forward_address;
+            config.host_port_primary = forward_address;
             response.partitions.push_back(std::move(config));
         }
         return;

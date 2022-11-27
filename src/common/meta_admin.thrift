@@ -71,7 +71,7 @@ struct configuration_update_request
     // the `meta_split_status` will be set
     // only used when on_config_sync
     6:optional metadata.split_status    meta_split_status;
-    7:dsn.host_port          host_port_node;
+    7:dsn.host_port            host_port_node;
 }
 
 // meta server (config mgr) => primary | secondary (downgrade) (w/ new config)
@@ -99,6 +99,7 @@ struct configuration_query_by_node_request
     1:dsn.rpc_address  node;
     2:optional list<metadata.replica_info> stored_replicas;
     3:optional replica_server_info info;
+    4:dsn.host_port    host_port_node;
 }
 
 struct configuration_query_by_node_response
@@ -113,6 +114,7 @@ struct configuration_recovery_request
     1:list<dsn.rpc_address> recovery_set;
     2:bool skip_bad_nodes;
     3:bool skip_lost_partitions;
+    4:list<dsn.host_port>   host_port_recovery_set;
 }
 
 struct configuration_recovery_response
@@ -189,6 +191,7 @@ struct configuration_list_apps_response
 struct query_app_info_request
 {
     1:dsn.rpc_address meta_server;
+    2:dsn.host_port   host_port_meta_server;
 }
 
 struct query_app_info_response
@@ -264,6 +267,7 @@ struct node_info
 {
     1:node_status      status = node_status.NS_INVALID;
     2:dsn.rpc_address  address;
+    3:dsn.host_port    host_port_address;
 }
 
 struct configuration_list_nodes_request

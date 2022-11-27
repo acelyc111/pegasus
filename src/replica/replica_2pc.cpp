@@ -239,10 +239,9 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
     // remote prepare
     mu->set_prepare_ts();
     mu->set_left_secondary_ack_count((unsigned int)_primary_states.membership.secondaries.size());
-    for (auto it = _primary_states.membership.secondaries.begin();
-         it != _primary_states.membership.secondaries.end();
-         ++it) {
-        send_prepare_message(*it,
+    // TODO(yingchun): both
+    for (const auto& hp : _primary_states.membership.host_port_secondaries) {
+        send_prepare_message(hp,
                              partition_status::PS_SECONDARY,
                              mu,
                              _options->prepare_timeout_ms_for_secondaries,
@@ -337,8 +336,10 @@ void replica::send_prepare_message(const ::dsn::host_port& addr,
         mu->write_to(writer, msg);
     }
 
+    // TODO(yingchun): convert from addr
+    rpc_address rpc_addr;
     mu->remote_tasks()[addr] =
-        rpc::call(addr,
+        rpc::call(rpc_addr,
                   msg,
                   &_tracker,
                   [=](error_code err, dsn::message_ex *request, dsn::message_ex *reply) {
@@ -346,11 +347,10 @@ void replica::send_prepare_message(const ::dsn::host_port& addr,
                   },
                   get_gpid().thread_hash());
 
-    LOG_DEBUG("%s: mutation %s send_prepare_message to %s as %s",
-              name(),
-              mu->name(),
-              addr.to_string(),
-              enum_to_string(rconfig.status));
+    LOG_DEBUG_PREFIX("mutation {} send_prepare_message to {} as {}",
+                     mu->name(),
+                     addr,
+                     enum_to_string(rconfig.status));
 }
 
 void replica::do_possible_commit_on_primary(mutation_ptr &mu)
@@ -591,7 +591,9 @@ void replica::on_prepare_reply(std::pair<mutation_ptr, partition_status::type> p
 
     CHECK_EQ_MSG(mu->data.header.ballot, get_ballot(), "{}: invalid mutation ballot", mu->name());
 
-    const auto& node = request->to_address;
+    // TODO(yingchun): carefully
+    const auto& addr = request->to_address;
+    host_port node; // from addr
     partition_status::type st = _primary_states.get_node_status(node);
 
     // handle reply

@@ -211,9 +211,8 @@ duplication_info_s_ptr duplication_info::decode_from_blob(dupid_t dup_id,
     if (!json::json_forwarder<json_helper>::decode(json, info)) {
         return nullptr;
     }
-    std::vector<rpc_address> meta_list;
-    if (!dsn::load_meta_servers(
-            meta_list, duplication_constants::kClustersSectionName.c_str(), info.remote.c_str())) {
+    std::vector<host_port> meta_list;
+    if (!host_port::load_servers(duplication_constants::kClustersSectionName, info.remote, &meta_list).is_ok()) {
         return nullptr;
     }
 

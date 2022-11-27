@@ -131,6 +131,7 @@ struct group_bulk_load_request
     5:string                        cluster_name;
     6:bulk_load_status              meta_bulk_load_status;
     7:string                        remote_root_path;
+    8:dsn.host_port                 host_port_target_address;
 }
 
 struct group_bulk_load_response

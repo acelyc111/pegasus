@@ -198,7 +198,7 @@ void replica::init_learn(uint64_t signature)
     request.__set_max_gced_decree(get_max_gced_decree_for_learn());
     request.last_committed_decree_in_app = _app->last_committed_decree();
     request.last_committed_decree_in_prepare_list = _prepare_list->last_committed_decree();
-    request.learner = _stub->_primary_address;
+    request.host_port_learner = _stub->_primary_address;
     request.signature = _potential_secondary_states.learning_version;
     _app->prepare_get_checkpoint(request.app_specific_learn_request);
 
@@ -338,7 +338,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
     // but just set state to partition_status::PS_POTENTIAL_SECONDARY
     _primary_states.get_replica_config(partition_status::PS_POTENTIAL_SECONDARY, response.config);
 
-    auto it = _primary_states.learners.find(request.learner);
+    auto it = _primary_states.learners.find(request.host_port_learner);
     if (it == _primary_states.learners.end()) {
         response.config.status = partition_status::PS_INACTIVE;
         response.err = ERR_OBJECT_NOT_FOUND;
@@ -366,7 +366,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                   ", learn from scratch",
                   name(),
                   request.signature,
-                  request.learner.to_string(),
+                  request.host_port_learner.to_string(),
                   request.last_committed_decree_in_app,
                   local_committed_decree);
 
@@ -383,7 +383,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                   ", commit local soft",
                   name(),
                   request.signature,
-                  request.learner.to_string(),
+                  request.host_port_learner.to_string(),
                   request.last_committed_decree_in_app,
                   local_committed_decree);
 
@@ -398,7 +398,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                       name(),
                       request.signature,
                       local_committed_decree,
-                      request.learner.to_string(),
+                      request.host_port_learner.to_string(),
                       request.last_committed_decree_in_app);
             response.err = ERR_INCONSISTENT_STATE;
             reply(msg, response);
@@ -419,7 +419,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
              ", prepare_list_count = %d, learn_start_decree = %" PRId64,
              name(),
              request.signature,
-             request.learner.to_string(),
+             request.host_port_learner.to_string(),
              request.last_committed_decree_in_prepare_list,
              request.last_committed_decree_in_app,
              local_committed_decree,
@@ -429,7 +429,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
              _prepare_list->count(),
              learn_start_decree);
 
-    response.address = _stub->_primary_address;
+    response.host_port_address = _stub->_primary_address;
     response.prepare_start_decree = invalid_decree;
     response.last_committed_decree = local_committed_decree;
     response.err = ERR_OK;
@@ -448,7 +448,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                      ")",
                      name(),
                      request.signature,
-                     request.learner.to_string(),
+                     request.host_port_learner.to_string(),
                      learn_start_decree,
                      _app->last_durable_decree());
             _private_log->get_learn_state(get_gpid(), learn_start_decree, response.state);
@@ -458,14 +458,14 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                      "because mutation_log::get_learn_state() returns true",
                      name(),
                      request.signature,
-                     request.learner.to_string());
+                     request.host_port_learner.to_string());
             response.type = learn_type::LT_LOG;
         } else if (learn_start_decree < request.last_committed_decree_in_app + 1) {
             LOG_INFO("%s: on_learn[%016" PRIx64 "]: learner = %s, choose to learn private logs, "
                      "because learn_start_decree steps back for duplication",
                      name(),
                      request.signature,
-                     request.learner.to_string());
+                     request.host_port_learner.to_string());
             response.type = learn_type::LT_LOG;
         } else {
             LOG_INFO("%s: on_learn[%016" PRIx64 "]: learner = %s, choose to learn app, "
@@ -474,7 +474,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                      "and mutation_log::get_learn_state() returns false",
                      name(),
                      request.signature,
-                     request.learner.to_string(),
+                     request.host_port_learner.to_string(),
                      learn_start_decree,
                      _app->last_durable_decree());
             response.type = learn_type::LT_APP;
@@ -491,7 +491,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                         "]: learner = %s, learn the same file %s repeatedly, hint to switch file",
                         name(),
                         request.signature,
-                        request.learner.to_string(),
+                        request.host_port_learner.to_string(),
                         last_file.c_str());
                     _private_log->hint_switch_file();
                 } else {
@@ -505,7 +505,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                      "to_decree_included = %" PRId64,
                      name(),
                      request.signature,
-                     request.learner.to_string(),
+                     request.host_port_learner.to_string(),
                      response.state.meta.length(),
                      static_cast<uint32_t>(response.state.files.size()),
                      response.state.to_decree_included);
@@ -519,7 +519,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                           "]: learner = %s, get app checkpoint failed, error = %s",
                           name(),
                           request.signature,
-                          request.learner.to_string(),
+                          request.host_port_learner.to_string(),
                           err.to_string());
             } else {
                 response.base_local_dir = _app->data_dir();
@@ -529,7 +529,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                     "learned_meta_size = %u, learned_file_count = %u, learned_to_decree = %" PRId64,
                     name(),
                     request.signature,
-                    request.learner.to_string(),
+                    request.host_port_learner.to_string(),
                     response.state.meta.length(),
                     static_cast<uint32_t>(response.state.files.size()),
                     response.state.to_decree_included);
@@ -965,7 +965,7 @@ bool replica::prepare_cached_learn_state(const learn_request &request,
                      "]: learner = %s, set prepare_start_decree = %" PRId64,
                      name(),
                      request.signature,
-                     request.learner.to_string(),
+                     request.host_port_learner.to_string(),
                      local_committed_decree + 1);
         }
 
@@ -992,7 +992,7 @@ bool replica::prepare_cached_learn_state(const learn_request &request,
                  "learn_mutation_count = %d, learn_data_size = %d",
                  name(),
                  request.signature,
-                 request.learner.to_string(),
+                 request.host_port_learner.to_string(),
                  learn_start_decree,
                  response.prepare_start_decree,
                  count,
@@ -1267,7 +1267,7 @@ void replica::handle_learning_error(error_code err, bool is_local_error)
         is_local_error ? partition_status::PS_ERROR : partition_status::PS_INACTIVE);
 }
 
-error_code replica::handle_learning_succeeded_on_primary(::dsn::rpc_address node,
+error_code replica::handle_learning_succeeded_on_primary(const ::dsn::host_port& node,
                                                          uint64_t learn_signature)
 {
     auto it = _primary_states.learners.find(node);
@@ -1304,7 +1304,7 @@ void replica::notify_learn_completion()
     report.last_committed_decree_in_prepare_list = last_committed_decree();
     report.learner_signature = _potential_secondary_states.learning_version;
     report.learner_status_ = _potential_secondary_states.learning_status;
-    report.node = _stub->_primary_address;
+    report.host_port_node = _stub->_primary_address;
 
     LOG_INFO("%s: notify_learn_completion[%016" PRIx64 "]: learnee = %s, "
              "learn_duration = %" PRIu64 " ms, local_committed_decree = %" PRId64 ", "
@@ -1345,7 +1345,7 @@ void replica::on_learn_completion_notification(const group_check_response &repor
              "]: learner = %s, learning_status = %s",
              name(),
              report.learner_signature,
-             report.node.to_string(),
+             report.host_port_node.to_string(),
              enum_to_string(report.learner_status_));
 
     if (status() != partition_status::PS_PRIMARY) {
@@ -1356,7 +1356,7 @@ void replica::on_learn_completion_notification(const group_check_response &repor
                   "]: learner = %s, this replica is not primary, but %s, reply %s",
                   name(),
                   report.learner_signature,
-                  report.node.to_string(),
+                  report.host_port_node.to_string(),
                   enum_to_string(status()),
                   response.err.to_string());
     } else if (report.learner_status_ != learner_status::LearningSucceeded) {
@@ -1365,16 +1365,16 @@ void replica::on_learn_completion_notification(const group_check_response &repor
                   "learner_status is not LearningSucceeded, but %s, reply ERR_INVALID_STATE",
                   name(),
                   report.learner_signature,
-                  report.node.to_string(),
+                  report.host_port_node.to_string(),
                   enum_to_string(report.learner_status_));
     } else {
-        response.err = handle_learning_succeeded_on_primary(report.node, report.learner_signature);
+        response.err = handle_learning_succeeded_on_primary(report.host_port_node, report.learner_signature);
         if (response.err != ERR_OK) {
             LOG_ERROR("%s: on_learn_completion_notification[%016" PRIx64 "]: learner = %s, "
                       "handle learning succeeded on primary failed, reply %s",
                       name(),
                       report.learner_signature,
-                      report.node.to_string(),
+                      report.host_port_node.to_string(),
                       response.err.to_string());
         }
     }

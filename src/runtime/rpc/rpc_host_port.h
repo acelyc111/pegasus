@@ -104,11 +104,16 @@ inline bool operator!=(const host_port &hp1, const host_port &hp2)
     return !(hp1 == hp2);
 }
 
+bool remove_node(
+    const host_port& node,
+    /*inout*/ std::vector<host_port> &node_list); // TODO(yingchun): WARN_UNUSED_RESULT
+
 class host_port_group
 {
 public:
     host_port_group() = default;
     void add(const host_port& hp);
+    void add_list(const std::vector<host_port>& hps);
     host_port next(const host_port& hp) const;
 
     void set_rand_leader();

@@ -763,9 +763,9 @@ public:
         state2.__set_download_status(progress_err);
         state2.__set_download_progress(secondary2_progress);
 
-        _resp.group_bulk_load_state[PRIMARY] = state;
-        _resp.group_bulk_load_state[SECONDARY1] = state;
-        _resp.group_bulk_load_state[SECONDARY2] = state2;
+        _resp.host_port_group_bulk_load_state[PRIMARY] = state;
+        _resp.host_port_group_bulk_load_state[SECONDARY1] = state;
+        _resp.host_port_group_bulk_load_state[SECONDARY2] = state2;
         _resp.__set_total_download_progress(total_progress);
     }
 
@@ -794,9 +794,9 @@ public:
         state.__set_ingest_status(ingestion_status::IS_SUCCEED);
         state2.__set_ingest_status(secondary_istatus);
 
-        _resp.group_bulk_load_state[PRIMARY] = state;
-        _resp.group_bulk_load_state[SECONDARY1] = state;
-        _resp.group_bulk_load_state[SECONDARY2] = state2;
+        _resp.host_port_group_bulk_load_state[PRIMARY] = state;
+        _resp.host_port_group_bulk_load_state[SECONDARY1] = state;
+        _resp.host_port_group_bulk_load_state[SECONDARY2] = state2;
         _resp.__set_is_group_ingestion_finished(secondary_istatus == ingestion_status::IS_SUCCEED);
         set_app_ingesting_count(_app_id, ingestion_count);
     }
@@ -807,11 +807,11 @@ public:
 
         partition_bulk_load_state state, state2;
         state.__set_is_cleaned_up(true);
-        _resp.group_bulk_load_state[PRIMARY] = state;
-        _resp.group_bulk_load_state[SECONDARY1] = state;
+        _resp.host_port_group_bulk_load_state[PRIMARY] = state;
+        _resp.host_port_group_bulk_load_state[SECONDARY1] = state;
 
         state2.__set_is_cleaned_up(all_cleaned_up);
-        _resp.group_bulk_load_state[SECONDARY2] = state2;
+        _resp.host_port_group_bulk_load_state[SECONDARY2] = state2;
         _resp.__set_is_group_bulk_load_context_cleaned_up(all_cleaned_up);
     }
 
@@ -823,9 +823,9 @@ public:
         state.__set_is_paused(true);
         state2.__set_is_paused(is_group_paused);
 
-        _resp.group_bulk_load_state[PRIMARY] = state;
-        _resp.group_bulk_load_state[SECONDARY1] = state;
-        _resp.group_bulk_load_state[SECONDARY2] = state2;
+        _resp.host_port_group_bulk_load_state[PRIMARY] = state;
+        _resp.host_port_group_bulk_load_state[SECONDARY1] = state;
+        _resp.host_port_group_bulk_load_state[SECONDARY2] = state2;
         _resp.__set_is_group_bulk_load_paused(is_group_paused);
     }
 

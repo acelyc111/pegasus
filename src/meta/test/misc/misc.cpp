@@ -43,12 +43,13 @@ uint32_t random32(uint32_t min, uint32_t max)
     return res + min;
 }
 
-void generate_node_list(std::vector<dsn::rpc_address> &output_list, int min_count, int max_count)
+void generate_node_list(std::vector<dsn::host_port> &output_list, int min_count, int max_count)
 {
     int count = random32(min_count, max_count);
     output_list.resize(count);
-    for (int i = 0; i < count; ++i)
-        output_list[i].assign_ipv4("127.0.0.1", i + 1);
+    for (int i = 0; i < count; ++i) {
+        output_list[i].parse_string("127.0.0.1", i + 1);
+    }
 }
 
 void verbose_apps(const app_mapper &input_apps)
@@ -58,10 +59,10 @@ void verbose_apps(const app_mapper &input_apps)
         const std::shared_ptr<app_state> &app = apps.second;
         std::cout << apps.first << " " << app->partition_count << std::endl;
         for (int i = 0; i < app->partition_count; ++i) {
-            std::cout << app->partitions[i].secondaries.size() + 1 << " "
-                      << app->partitions[i].primary.to_string();
-            for (int j = 0; j < app->partitions[i].secondaries.size(); ++j) {
-                std::cout << " " << app->partitions[i].secondaries[j].to_string();
+            std::cout << app->partitions[i].host_port_secondaries.size() + 1 << " "
+                      << app->partitions[i].host_port_primary.to_string();
+            for (int j = 0; j < app->partitions[i].host_port_secondaries.size(); ++j) {
+                std::cout << " " << app->partitions[i].host_port_secondaries[j].to_string();
             }
             std::cout << std::endl;
         }
@@ -71,7 +72,7 @@ void verbose_apps(const app_mapper &input_apps)
 void generate_node_mapper(
     /*out*/ node_mapper &output_nodes,
     const app_mapper &input_apps,
-    const std::vector<dsn::rpc_address> &input_node_list)
+    const std::vector<dsn::host_port> &input_node_list)
 {
     output_nodes.clear();
     for (auto &addr : input_node_list) {
@@ -82,11 +83,11 @@ void generate_node_mapper(
         const std::shared_ptr<app_state> &app = kv.second;
         for (const dsn::partition_configuration &pc : app->partitions) {
             node_state *ns;
-            if (!pc.primary.is_invalid()) {
-                ns = get_node_state(output_nodes, pc.primary, true);
+            if (!pc.host_port_primary.is_invalid()) {
+                ns = get_node_state(output_nodes, pc.host_port_primary, true);
                 ns->put_partition(pc.pid, true);
             }
-            for (const dsn::rpc_address &sec : pc.secondaries) {
+            for (const auto &sec : pc.host_port_secondaries) {
                 CHECK(!sec.is_invalid(), "");
                 ns = get_node_state(output_nodes, sec, true);
                 ns->put_partition(pc.pid, false);
@@ -96,7 +97,7 @@ void generate_node_mapper(
 }
 
 void generate_app(/*out*/ std::shared_ptr<app_state> &app,
-                  const std::vector<dsn::rpc_address> &node_list)
+                  const std::vector<dsn::host_port> &node_list)
 {
     for (dsn::partition_configuration &pc : app->partitions) {
         pc.ballot = random32(1, 10000);
@@ -106,16 +107,16 @@ void generate_app(/*out*/ std::shared_ptr<app_state> &app,
         indices[2] = random32(indices[1] + 1, node_list.size() - 1);
 
         int p = random32(0, 2);
-        pc.primary = node_list[indices[p]];
-        pc.secondaries.clear();
+        pc.host_port_primary = node_list[indices[p]];
+        pc.host_port_secondaries.clear();
         for (unsigned int i = 0; i != indices.size(); ++i)
             if (i != p)
-                pc.secondaries.push_back(node_list[indices[i]]);
+                pc.host_port_secondaries.push_back(node_list[indices[i]]);
 
-        CHECK(!pc.primary.is_invalid(), "");
-        CHECK(!is_secondary(pc, pc.primary), "");
-        CHECK_EQ(pc.secondaries.size(), 2);
-        CHECK_NE(pc.secondaries[0], pc.secondaries[1]);
+        CHECK(!pc.host_port_primary.is_invalid(), "");
+        CHECK(!is_secondary(pc, pc.host_port_primary), "");
+        CHECK_EQ(pc.host_port_secondaries.size(), 2);
+        CHECK_NE(pc.host_port_secondaries[0], pc.host_port_secondaries[1]);
     }
 }
 
@@ -130,9 +131,9 @@ void generate_app_serving_replica_info(/*out*/ std::shared_ptr<dsn::replication:
 
         snprintf(buffer, 256, "disk%u", dsn::rand::next_u32(1, total_disks));
         ri.disk_tag = buffer;
-        cc.collect_serving_replica(pc.primary, ri);
+        cc.collect_serving_replica(pc.host_port_primary, ri);
 
-        for (const auto &addr : pc.secondaries) {
+        for (const auto &addr : pc.host_port_secondaries) {
             snprintf(buffer, 256, "disk%u", dsn::rand::next_u32(1, total_disks));
             ri.disk_tag = buffer;
             cc.collect_serving_replica(addr, ri);
@@ -141,7 +142,7 @@ void generate_app_serving_replica_info(/*out*/ std::shared_ptr<dsn::replication:
 }
 
 void generate_apps(/*out*/ dsn::replication::app_mapper &mapper,
-                   const std::vector<dsn::rpc_address> &node_list,
+                   const std::vector<dsn::host_port> &node_list,
                    int apps_count,
                    int disks_per_node,
                    std::pair<uint32_t, uint32_t> partitions_range,
@@ -219,7 +220,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
 
     fs_manager *target_manager = get_fs_manager(manager, act.target);
     CHECK_NOTNULL(target_manager, "");
-    fs_manager *node_manager = get_fs_manager(manager, act.node);
+    fs_manager *node_manager = get_fs_manager(manager, act.host_port_node);
     CHECK_NOTNULL(node_manager, "");
 
     std::string dir;
@@ -235,7 +236,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
     case config_type::CT_ADD_SECONDARY_FOR_LB:
         node_manager->allocate_dir(pid, "test", dir);
         CHECK_EQ(dsn::ERR_OK, node_manager->get_disk_tag(dir, ri.disk_tag));
-        cc->collect_serving_replica(act.node, ri);
+        cc->collect_serving_replica(act.host_port_node, ri);
         break;
 
     case config_type::CT_DOWNGRADE_TO_SECONDARY:
@@ -245,7 +246,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
     case config_type::CT_REMOVE:
     case config_type::CT_DOWNGRADE_TO_INACTIVE:
         node_manager->remove_replica(pid);
-        cc->remove_from_serving(act.node);
+        cc->remove_from_serving(act.host_port_node);
         break;
 
     default:
@@ -266,7 +267,7 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
     ++pc.ballot;
     CHECK_NE(act.type, config_type::CT_INVALID);
     CHECK(!act.target.is_invalid(), "");
-    CHECK(!act.node.is_invalid(), "");
+    CHECK(!act.host_port_node.is_invalid(), "");
 
     if (manager) {
         track_disk_info_check_and_apply(act, pid, apps, nodes, *manager);
@@ -274,56 +275,56 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
 
     switch (act.type) {
     case config_type::CT_ASSIGN_PRIMARY:
-        CHECK_EQ(act.node, act.target);
-        CHECK(pc.primary.is_invalid(), "");
-        CHECK(pc.secondaries.empty(), "");
+        CHECK_EQ(act.host_port_node, act.target);
+        CHECK(pc.host_port_primary.is_invalid(), "");
+        CHECK(pc.host_port_secondaries.empty(), "");
 
-        pc.primary = act.node;
-        ns = &nodes[act.node];
+        pc.host_port_primary = act.host_port_node;
+        ns = &nodes[act.host_port_node];
         CHECK_EQ(ns->served_as(pc.pid), partition_status::PS_INACTIVE);
         ns->put_partition(pc.pid, true);
         break;
 
     case config_type::CT_ADD_SECONDARY:
-        CHECK_EQ(act.target, pc.primary);
-        CHECK(!is_member(pc, act.node), "");
+        CHECK_EQ(act.target, pc.host_port_primary);
+        CHECK(!is_member(pc, act.host_port_node), "");
 
-        pc.secondaries.push_back(act.node);
-        ns = &nodes[act.node];
+        pc.host_port_secondaries.push_back(act.host_port_node);
+        ns = &nodes[act.host_port_node];
         CHECK_EQ(ns->served_as(pc.pid), partition_status::PS_INACTIVE);
         ns->put_partition(pc.pid, false);
 
         break;
 
     case config_type::CT_DOWNGRADE_TO_SECONDARY:
-        CHECK_EQ(act.node, act.target);
-        CHECK_EQ(act.node, pc.primary);
-        CHECK(nodes.find(act.node) != nodes.end(), "");
-        CHECK(!is_secondary(pc, pc.primary), "");
-        nodes[act.node].remove_partition(pc.pid, true);
-        pc.secondaries.push_back(pc.primary);
-        pc.primary.set_invalid();
+        CHECK_EQ(act.host_port_node, act.target);
+        CHECK_EQ(act.host_port_node, pc.host_port_primary);
+        CHECK(nodes.find(act.host_port_node) != nodes.end(), "");
+        CHECK(!is_secondary(pc, pc.host_port_primary), "");
+        nodes[act.host_port_node].remove_partition(pc.pid, true);
+        pc.host_port_secondaries.push_back(pc.host_port_primary);
+        pc.host_port_primary.set_invalid();
         break;
 
     case config_type::CT_UPGRADE_TO_PRIMARY:
-        CHECK(pc.primary.is_invalid(), "");
-        CHECK_EQ(act.node, act.target);
-        CHECK(is_secondary(pc, act.node), "");
-        CHECK(nodes.find(act.node) != nodes.end(), "");
+        CHECK(pc.host_port_primary.is_invalid(), "");
+        CHECK_EQ(act.host_port_node, act.target);
+        CHECK(is_secondary(pc, act.host_port_node), "");
+        CHECK(nodes.find(act.host_port_node) != nodes.end(), "");
 
-        ns = &nodes[act.node];
-        pc.primary = act.node;
-        CHECK(remove_node(act.node, pc.secondaries), "");
+        ns = &nodes[act.host_port_node];
+        pc.host_port_primary = act.host_port_node;
+        CHECK(remove_node(act.host_port_node, pc.host_port_secondaries), "");
         ns->put_partition(pc.pid, true);
         break;
 
     case config_type::CT_ADD_SECONDARY_FOR_LB:
-        CHECK_EQ(act.target, pc.primary);
-        CHECK(!is_member(pc, act.node), "");
-        CHECK(!act.node.is_invalid(), "");
-        pc.secondaries.push_back(act.node);
+        CHECK_EQ(act.target, pc.host_port_primary);
+        CHECK(!is_member(pc, act.host_port_node), "");
+        CHECK(!act.host_port_node.is_invalid(), "");
+        pc.host_port_secondaries.push_back(act.host_port_node);
 
-        ns = &nodes[act.node];
+        ns = &nodes[act.host_port_node];
         ns->put_partition(pc.pid, false);
         CHECK_EQ(ns->served_as(pc.pid), partition_status::PS_SECONDARY);
         break;
@@ -331,13 +332,13 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
     // in balancer, remove primary is not allowed
     case config_type::CT_REMOVE:
     case config_type::CT_DOWNGRADE_TO_INACTIVE:
-        CHECK(!pc.primary.is_invalid(), "");
-        CHECK_EQ(pc.primary, act.target);
-        CHECK(is_secondary(pc, act.node), "");
-        CHECK(nodes.find(act.node) != nodes.end(), "");
-        CHECK(remove_node(act.node, pc.secondaries), "");
+        CHECK(!pc.host_port_primary.is_invalid(), "");
+        CHECK_EQ(pc.host_port_primary, act.target);
+        CHECK(is_secondary(pc, act.host_port_node), "");
+        CHECK(nodes.find(act.host_port_node) != nodes.end(), "");
+        CHECK(remove_node(act.host_port_node, pc.host_port_secondaries), "");
 
-        ns = &nodes[act.node];
+        ns = &nodes[act.host_port_node];
         CHECK_EQ(ns->served_as(pc.pid), partition_status::PS_SECONDARY);
         ns->remove_partition(pc.pid, false);
         break;
@@ -367,19 +368,19 @@ void migration_check_and_apply(app_mapper &apps,
         dsn::partition_configuration &pc =
             the_app->partitions[proposal->gpid.get_partition_index()];
 
-        CHECK(!pc.primary.is_invalid(), "");
-        CHECK_EQ(pc.secondaries.size(), 2);
-        for (auto &addr : pc.secondaries) {
+        CHECK(!pc.host_port_primary.is_invalid(), "");
+        CHECK_EQ(pc.host_port_secondaries.size(), 2);
+        for (auto &addr : pc.host_port_secondaries) {
             CHECK(!addr.is_invalid(), "");
         }
-        CHECK(!is_secondary(pc, pc.primary), "");
+        CHECK(!is_secondary(pc, pc.host_port_primary), "");
 
         for (unsigned int j = 0; j < proposal->action_list.size(); ++j) {
             configuration_proposal_action &act = proposal->action_list[j];
             LOG_DEBUG("the %dth round of action, type: %s, node: %s, target: %s",
                       j,
                       dsn::enum_to_string(act.type),
-                      act.node.to_string(),
+                      act.host_port_node.to_string(),
                       act.target.to_string());
             proposal_action_check_and_apply(act, proposal->gpid, apps, nodes, manager);
         }

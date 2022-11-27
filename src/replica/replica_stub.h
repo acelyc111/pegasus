@@ -351,7 +351,7 @@ private:
 
     mutation_log_ptr _log;
     ::dsn::host_port _primary_address;
-    char _primary_address_str[64];
+    char _primary_address_str[64];  // TODO: length
 
     std::shared_ptr<dsn::dist::slave_failure_detector_with_multimaster> _failure_detector;
     mutable zlock _state_lock;

@@ -470,8 +470,9 @@ void replica_stub::initialize(bool clear /* = false*/)
 
 void replica_stub::initialize(const replication_options &opts, bool clear /* = false*/)
 {
-    _primary_address = dsn_primary_address();
-    strcpy(_primary_address_str, _primary_address.to_string());
+    // TODO: ip or host
+    _primary_address = dsn_primary_host_port();
+    strcpy(_primary_address_str, _primary_address.to_string().c_str());
     LOG_INFO("primary_address = %s", _primary_address_str);
 
     set_options(opts);
@@ -929,7 +930,7 @@ void replica_stub::on_config_proposal(const configuration_update_request &propos
                     proposal.config.pid.to_string(),
                     _primary_address_str,
                     enum_to_string(proposal.type),
-                    proposal.node.to_string());
+                    proposal.host_port_node.to_string());
         return;
     }
 
@@ -937,7 +938,7 @@ void replica_stub::on_config_proposal(const configuration_update_request &propos
              proposal.config.pid.to_string(),
              _primary_address_str,
              enum_to_string(proposal.type),
-             proposal.node.to_string());
+             proposal.host_port_node.to_string());
 
     replica_ptr rep = get_replica(proposal.config.pid);
     if (rep == nullptr) {
@@ -1192,7 +1193,7 @@ void replica_stub::on_group_check(group_check_rpc rpc)
              ", status = %s, last_committed_decree = %" PRId64,
              request.config.pid.to_string(),
              _primary_address_str,
-             request.config.primary.to_string(),
+             request.config.host_port_primary.to_string(),
              request.config.ballot,
              enum_to_string(request.config.status),
              request.last_committed_decree);
@@ -1249,7 +1250,7 @@ void replica_stub::on_add_learner(const group_check_request &request)
         LOG_WARNING("%s@%s: received add learner: not connected, ignore",
                     request.config.pid.to_string(),
                     _primary_address_str,
-                    request.config.primary.to_string());
+                    request.config.host_port_primary.to_string());
         return;
     }
 
@@ -1257,7 +1258,7 @@ void replica_stub::on_add_learner(const group_check_request &request)
              ", status = %s, last_committed_decree = %" PRId64,
              request.config.pid.to_string(),
              _primary_address_str,
-             request.config.primary.to_string(),
+             request.config.host_port_primary.to_string(),
              request.config.ballot,
              enum_to_string(request.config.status),
              request.last_committed_decree);
@@ -1341,7 +1342,7 @@ void replica_stub::query_configuration_by_node()
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_CONFIG_SYNC);
 
     configuration_query_by_node_request req;
-    req.node = _primary_address;
+    req.host_port_node = _primary_address;
 
     // TODO: send stored replicas may cost network, we shouldn't config the frequency
     get_local_replicas(req.stored_replicas);
@@ -1503,7 +1504,7 @@ void replica_stub::on_node_query_reply_scatter(replica_stub_ptr this_,
                                 req.__isset.meta_split_status ? req.meta_split_status
                                                               : split_status::NOT_SPLIT);
     } else {
-        if (req.config.primary == _primary_address) {
+        if (req.config.host_port_primary == _primary_address) {
             LOG_INFO("%s@%s: replica not exists on replica server, which is primary, remove it "
                      "from meta server",
                      req.config.pid.to_string(),
@@ -1547,12 +1548,12 @@ void replica_stub::remove_replica_on_meta_server(const app_info &info,
     request->info = info;
     request->config = config;
     request->config.ballot++;
-    request->node = _primary_address;
+    request->host_port_node = _primary_address;
     request->type = config_type::CT_DOWNGRADE_TO_INACTIVE;
 
-    if (_primary_address == config.primary) {
-        request->config.primary.set_invalid();
-    } else if (remove_node(_primary_address, request->config.secondaries)) {
+    if (_primary_address == config.host_port_primary) {
+        request->config.host_port_primary.reset();
+    } else if (remove_node(_primary_address, request->config.host_port_secondaries)) {
     } else {
         return;
     }
@@ -2112,13 +2113,15 @@ void replica_stub::open_replica(
         _closed_replicas.erase(id);
     }
 
+    // TODO: from _primary_address
+    rpc_address addr;
     if (nullptr != group_check) {
-        rpc::call_one_way_typed(_primary_address,
+        rpc::call_one_way_typed(addr,
                                 RPC_LEARN_ADD_LEARNER,
                                 *group_check,
                                 group_check->config.pid.thread_hash());
     } else if (nullptr != configuration_update) {
-        rpc::call_one_way_typed(_primary_address,
+        rpc::call_one_way_typed(addr,
                                 RPC_CONFIG_PROPOSAL,
                                 *configuration_update,
                                 configuration_update->config.pid.thread_hash());
@@ -2922,7 +2925,7 @@ void replica_stub::on_group_bulk_load(group_bulk_load_rpc rpc)
                "meta_bulk_load_status = {}",
                request.config.pid,
                _primary_address_str,
-               request.config.primary.to_string(),
+               request.config.host_port_primary.to_string(),
                request.config.ballot,
                enum_to_string(request.meta_bulk_load_status));
 

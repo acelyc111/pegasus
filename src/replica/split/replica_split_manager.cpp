@@ -83,13 +83,13 @@ void replica_split_manager::parent_start_split(
                     _child_gpid,
                     _child_init_ballot,
                     enum_to_string(status()),
-                    request.config.primary.to_string());
+                    request.config.host_port_primary.to_string());
 
     tasking::enqueue(LPC_CREATE_CHILD,
                      tracker(),
                      std::bind(&replica_stub::create_child_replica,
                                _stub,
-                               _replica->_config.primary,
+                               _replica->_config.host_port_primary,
                                _replica->_app_info,
                                _child_init_ballot,
                                _child_gpid,
@@ -116,7 +116,7 @@ void replica_split_manager::child_init_replica(gpid parent_gpid,
 
     // update replica config
     _replica->_config.ballot = init_ballot;
-    _replica->_config.primary = primary_address;
+    _replica->_config.host_port_primary = primary_address;
     _replica->_config.status = partition_status::PS_PARTITION_SPLIT;
 
     // initialize split context
@@ -539,15 +539,15 @@ void replica_split_manager::child_notify_catch_up() // on child partition
 {
     FAIL_POINT_INJECT_F("replica_child_notify_catch_up", [](dsn::string_view) {});
 
-    std::unique_ptr<notify_catch_up_request> request = make_unique<notify_catch_up_request>();
+    auto request = dsn::make_unique<notify_catch_up_request>();
     request->parent_gpid = _replica->_split_states.parent_gpid;
     request->child_gpid = get_gpid();
     request->child_ballot = get_ballot();
-    request->child_address = _stub->_primary_address;
+    request->host_port_child_address = _stub->_primary_address;
 
     LOG_INFO_PREFIX("send notification to primary parent[{}@{}], ballot={}",
                     _replica->_split_states.parent_gpid,
-                    _replica->_config.primary.to_string(),
+                    _replica->_config.host_port_primary.to_string(),
                     get_ballot());
 
     notify_catch_up_rpc rpc(std::move(request),
@@ -555,7 +555,9 @@ void replica_split_manager::child_notify_catch_up() // on child partition
                             /*never timeout*/ 0_ms,
                             /*partition_hash*/ 0,
                             _replica->_split_states.parent_gpid.thread_hash());
-    rpc.call(_replica->_config.primary, tracker(), [this, rpc](error_code ec) mutable {
+    // TODO: from _replica->_config.host_port_primary
+    rpc_address addr;
+    rpc.call(addr, tracker(), [this, rpc](error_code ec) mutable {
         auto response = rpc.response();
         if (ec == ERR_TIMEOUT) {
             LOG_WARNING_PREFIX("notify primary catch up timeout, please wait and retry");
@@ -578,7 +580,7 @@ void replica_split_manager::child_notify_catch_up() // on child partition
         }
         LOG_INFO_PREFIX("notify primary parent[{}@{}] catch up succeed",
                         _replica->_split_states.parent_gpid,
-                        _replica->_config.primary.to_string());
+                        _replica->_config.host_port_primary.to_string());
     });
 }
 
@@ -612,10 +614,10 @@ void replica_split_manager::parent_handle_child_catch_up(
     response.err = ERR_OK;
     LOG_INFO_PREFIX("receive catch_up request from {}@{}, current ballot={}",
                     request.child_gpid,
-                    request.child_address.to_string(),
+                    request.host_port_child_address.to_string(),
                     request.child_ballot);
 
-    _replica->_primary_states.caught_up_children.insert(request.child_address);
+    _replica->_primary_states.caught_up_children.insert(request.host_port_child_address);
     // _primary_states.statuses is a map structure: rpc address -> partition_status
     // it stores replica's rpc address and partition_status of this replica group
     for (auto &iter : _replica->_primary_states.statuses) {
@@ -693,11 +695,11 @@ void replica_split_manager::update_child_group_partition_count(
     }
 
     if (!_replica->_primary_states.learners.empty() ||
-        _replica->_primary_states.membership.secondaries.size() + 1 <
+        _replica->_primary_states.membership.host_port_secondaries.size() + 1 <
             _replica->_primary_states.membership.max_replica_count) {
         LOG_ERROR_PREFIX("there are {} learners or not have enough secondaries(count is {})",
                          _replica->_primary_states.learners.size(),
-                         _replica->_primary_states.membership.secondaries.size());
+                         _replica->_primary_states.membership.host_port_secondaries.size());
         parent_handle_split_error(
             "update_child_group_partition_count failed, have learner or lack of secondary", true);
         return;
@@ -726,7 +728,7 @@ void replica_split_manager::parent_send_update_partition_count_request(
 
     auto request = make_unique<update_child_group_partition_count_request>();
     request->new_partition_count = new_partition_count;
-    request->target_address = address;
+    request->host_port_target_address = address;
     request->child_pid = _child_gpid;
     request->ballot = get_ballot();
 
@@ -739,7 +741,9 @@ void replica_split_manager::parent_send_update_partition_count_request(
                                                0_ms,
                                                0,
                                                get_gpid().thread_hash());
-    rpc.call(address, tracker(), [this, rpc, not_replied_addresses](error_code ec) mutable {
+    // TODO: from address
+    rpc_address addr;
+    rpc.call(addr, tracker(), [this, rpc, not_replied_addresses](error_code ec) mutable {
         on_update_child_group_partition_count_reply(
             ec, rpc.request(), rpc.response(), not_replied_addresses);
     });
@@ -832,14 +836,14 @@ void replica_split_manager::on_update_child_group_partition_count_reply(
     if (error == ERR_TIMEOUT) {
         LOG_WARNING_PREFIX(
             "failed to update child node({}) partition_count, error = {}, wait and retry",
-            request.target_address.to_string(),
+            request.host_port_target_address.to_string(),
             error);
         tasking::enqueue(
             LPC_PARTITION_SPLIT,
             tracker(),
             std::bind(&replica_split_manager::parent_send_update_partition_count_request,
                       this,
-                      request.target_address,
+                      request.host_port_target_address,
                       request.new_partition_count,
                       not_replied_addresses),
             get_gpid().thread_hash(),
@@ -849,7 +853,7 @@ void replica_split_manager::on_update_child_group_partition_count_reply(
 
     if (error != ERR_OK) {
         LOG_ERROR_PREFIX("failed to update child node({}) partition_count({}), error = {}",
-                         request.target_address.to_string(),
+                         request.host_port_target_address.to_string(),
                          request.new_partition_count,
                          error);
         parent_handle_split_error("on_update_child_group_partition_count_reply error", true);
@@ -857,12 +861,12 @@ void replica_split_manager::on_update_child_group_partition_count_reply(
     }
 
     LOG_INFO_PREFIX("update node({}) child({}) partition_count({}) succeed",
-                    request.target_address.to_string(),
+                    request.host_port_target_address.to_string(),
                     request.child_pid,
                     request.new_partition_count);
 
     // update group partition_count succeed
-    not_replied_addresses->erase(request.target_address);
+    not_replied_addresses->erase(request.host_port_target_address);
     if (not_replied_addresses->empty()) {
         LOG_INFO_PREFIX("update child({}) group partition_count, new_partition_count = {}",
                         request.child_pid,
@@ -911,7 +915,7 @@ void replica_split_manager::register_child_on_meta(ballot b) // on primary paren
     request.app = _replica->_app_info;
     request.child_config = child_config;
     request.parent_config = _replica->_primary_states.membership;
-    request.primary_address = _stub->_primary_address;
+    request.host_port_primary_address = _stub->_primary_address;
 
     // reject client request
     _replica->update_local_configuration_with_no_ballot_change(partition_status::PS_INACTIVE);
@@ -1138,13 +1142,13 @@ void replica_split_manager::trigger_primary_parent_split(
     _meta_split_status = meta_split_status;
     if (meta_split_status == split_status::SPLITTING) {
         if (!_replica->_primary_states.learners.empty() ||
-            _replica->_primary_states.membership.secondaries.size() + 1 <
+            _replica->_primary_states.membership.host_port_secondaries.size() + 1 <
                 _replica->_primary_states.membership.max_replica_count) {
             LOG_WARNING_PREFIX(
                 "there are {} learners or not have enough secondaries(count is {}), wait for "
                 "next round",
                 _replica->_primary_states.learners.size(),
-                _replica->_primary_states.membership.secondaries.size());
+                _replica->_primary_states.membership.host_port_secondaries.size());
             return;
         }
 
@@ -1411,7 +1415,7 @@ void replica_split_manager::primary_parent_handle_stop_split(
         return;
     }
 
-    _replica->_primary_states.split_stopped_secondary.insert(req->node);
+    _replica->_primary_states.split_stopped_secondary.insert(req->host_port_node);
     auto count = 0;
     for (auto &iter : _replica->_primary_states.statuses) {
         if (iter.second == partition_status::PS_SECONDARY &&

@@ -94,6 +94,17 @@ error_s host_port::load_servers(const string &section, const string &key, vector
     return parse_strings(comma_sep_addrs, hps);
 }
 
+bool remove_node(const host_port& node, /*inout*/ vector<host_port> &node_list)
+{
+    auto it = std::find(node_list.begin(), node_list.end(), node);
+    if (it != node_list.end()) {
+        node_list.erase(it);
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void host_port_group::add(const host_port& hp)
 {
     CHECK(hp.initialized(), "host_port is not initialized");
@@ -103,6 +114,13 @@ void host_port_group::add(const host_port& hp)
         return;
     }
     _members.push_back(hp);
+}
+
+void host_port_group::add_list(const std::vector<host_port>& hps)
+{
+    for (const auto& hp : hps) {
+        add(hp);
+    }
 }
 
 host_port host_port_group::next(const host_port& hp) const

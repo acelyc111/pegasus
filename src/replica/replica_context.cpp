@@ -102,11 +102,11 @@ void primary_context::reset_membership(const partition_configuration &config, bo
 
     membership = config;
 
-    if (membership.primary.is_invalid() == false) {
-        statuses[membership.primary] = partition_status::PS_PRIMARY;
+    if (!membership.host_port_primary.is_invalid()) {
+        statuses[membership.host_port_primary] = partition_status::PS_PRIMARY;
     }
 
-    for (auto it = config.secondaries.begin(); it != config.secondaries.end(); ++it) {
+    for (auto it = config.host_port_secondaries.begin(); it != config.host_port_secondaries.end(); ++it) {
         statuses[*it] = partition_status::PS_SECONDARY;
         learners.erase(*it);
     }
@@ -121,7 +121,7 @@ void primary_context::get_replica_config(partition_status::type st,
                                          uint64_t learner_signature /*= invalid_signature*/)
 {
     config.pid = membership.pid;
-    config.primary = membership.primary;
+    config.host_port_primary = membership.host_port_primary;
     config.ballot = membership.ballot;
     config.status = st;
     config.learner_signature = learner_signature;
@@ -134,8 +134,8 @@ bool primary_context::check_exist(const ::dsn::host_port& node, partition_status
         // TODO(yingchun): both
         return membership.host_port_primary == node;
     case partition_status::PS_SECONDARY:
-        return std::find(membership.secondaries.begin(), membership.secondaries.end(), node) !=
-               membership.secondaries.end();
+        return std::find(membership.host_port_secondaries.begin(), membership.host_port_secondaries.end(), node) !=
+               membership.host_port_secondaries.end();
     case partition_status::PS_POTENTIAL_SECONDARY:
         return learners.find(node) != learners.end();
     default:

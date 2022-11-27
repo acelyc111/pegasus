@@ -24,15 +24,6 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     the meta server's server_state, definition file
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     2016-04-25, Weijie Sun(sunweijie at xiaomi.com), refactor
- */
-
 #pragma once
 
 #include <boost/lexical_cast.hpp>
@@ -213,7 +204,7 @@ private:
     error_code sync_apps_to_remote_storage();
 
     // TODO(yingchun): ip
-    error_code sync_apps_from_replica_nodes(const std::vector<dsn::rpc_address> &node_list,
+    error_code sync_apps_from_replica_nodes(const std::vector<dsn::host_port> &node_list,
                                             bool skip_bad_nodes,
                                             bool skip_lost_partitions,
                                             std::string &hint_message);
@@ -230,12 +221,12 @@ private:
 
     // TODO(yingchun): ip
     error_code construct_apps(const std::vector<query_app_info_response> &query_app_responses,
-                              const std::vector<dsn::rpc_address> &replica_nodes,
+                              const std::vector<dsn::host_port> &replica_nodes,
                               std::string &hint_message);
     // TODO(yingchun): ip
     error_code construct_partitions(
         const std::vector<query_replica_info_response> &query_replica_info_responses,
-        const std::vector<dsn::rpc_address> &replica_nodes,
+        const std::vector<dsn::host_port> &replica_nodes,
         bool skip_lost_partitions,
         std::string &hint_message);
 
@@ -265,18 +256,14 @@ private:
     // TODO(yingchun): ip
     void downgrade_secondary_to_inactive(std::shared_ptr<app_state> &app,
                                          int pidx,
-                                         const rpc_address &node);
-    // TODO(yingchun): ip
+                                         const host_port &node);
     void downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
                                    int pidx,
                                    const host_port &address);
-
-    // TODO(yingchun): ip
     void on_partition_node_dead(std::shared_ptr<app_state> &app,
                                 int pidx,
                                 const dsn::host_port &node);
-    // TODO(yingchun): ip
-    void send_proposal(rpc_address target, const configuration_update_request &proposal);
+    void send_proposal(const host_port& target, const configuration_update_request &proposal);
     void send_proposal(const configuration_proposal_action &action,
                        const partition_configuration &pc,
                        const app_state &app);

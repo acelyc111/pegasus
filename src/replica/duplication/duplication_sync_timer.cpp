@@ -49,8 +49,9 @@ void duplication_sync_timer::run()
         }
     }
 
-    auto req = make_unique<duplication_sync_request>();
-    req->node = _stub->primary_address();
+    auto req = dsn::make_unique<duplication_sync_request>();
+    // TODO: comp
+    req->host_port_node = _stub->primary_address();
 
     // collects confirm points from all primaries on this server
     uint64_t pending_muts_cnt = 0;

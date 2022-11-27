@@ -747,7 +747,8 @@ partition_guardian::ctrl_assign_secondary_black_list(const std::vector<std::stri
     std::set<dsn::host_port> addr_list;
     for (const std::string &s : ip_ports) {
         dsn::host_port addr;
-        if (!addr.from_string_ipv4(s.c_str())) {
+        if (!addr.parse_string(s).is_ok()) {
+//        if (!addr.from_string_ipv4(s.c_str())) {
             return invalid_arguments;
         }
         addr_list.insert(addr);

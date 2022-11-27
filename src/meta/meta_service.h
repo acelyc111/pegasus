@@ -353,7 +353,9 @@ int meta_service::check_leader(TRpcHolder rpc, host_port *forward_address)
 
         LOG_DEBUG("leader address: %s", leader.to_string());
         if (leader.initialized()) {
-            rpc.forward(leader);
+            // TODO: from leader
+            rpc_address addr;
+            rpc.forward(addr);
             return 0;
         } else {
             if (forward_address != nullptr) {
