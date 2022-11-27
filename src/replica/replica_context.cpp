@@ -24,15 +24,6 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     context for replica with different roles
- *
- * Revision history:
- *     Mar., 2015, @imzhenyu (Zhenyu Guo), first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #include "utils/filesystem.h"
 #include "utils/utils.h"
 
@@ -136,11 +127,12 @@ void primary_context::get_replica_config(partition_status::type st,
     config.learner_signature = learner_signature;
 }
 
-bool primary_context::check_exist(::dsn::rpc_address node, partition_status::type st)
+bool primary_context::check_exist(const ::dsn::host_port& node, partition_status::type st)
 {
     switch (st) {
     case partition_status::PS_PRIMARY:
-        return membership.primary == node;
+        // TODO(yingchun): both
+        return membership.host_port_primary == node;
     case partition_status::PS_SECONDARY:
         return std::find(membership.secondaries.begin(), membership.secondaries.end(), node) !=
                membership.secondaries.end();
@@ -152,7 +144,7 @@ bool primary_context::check_exist(::dsn::rpc_address node, partition_status::typ
     }
 }
 
-void primary_context::reset_node_bulk_load_states(const rpc_address &node)
+void primary_context::reset_node_bulk_load_states(const host_port &node)
 {
     secondary_bulk_load_states[node].__set_download_progress(0);
     secondary_bulk_load_states[node].__set_download_status(ERR_OK);

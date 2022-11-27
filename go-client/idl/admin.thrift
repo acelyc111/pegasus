@@ -214,6 +214,7 @@ struct node_info
 {
     1:node_status status = node_status.NS_INVALID;
     2:base.rpc_address address;
+    3:base.host_port host_port_address;
 }
 
 struct list_nodes_request

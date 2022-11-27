@@ -47,6 +47,8 @@ public:
     }
 
     bool initialized() const { return !_host.empty(); }
+    // TODO(yingchun): change
+    bool is_invalid() const { return !initialized(); }
 
     const std::string &host() const { return _host; }
     uint16_t port() const { return _port; }

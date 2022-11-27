@@ -96,7 +96,7 @@ void replica::broadcast_group_check()
         if (it->first == _stub->_primary_address)
             continue;
 
-        ::dsn::rpc_address addr = it->first;
+        ::dsn::host_port addr = it->first;
         std::shared_ptr<group_check_request> request(new group_check_request);
 
         request->app = _app_info;

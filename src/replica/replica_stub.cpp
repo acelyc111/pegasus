@@ -2761,7 +2761,7 @@ uint64_t replica_stub::gc_tcmalloc_memory(bool release_all)
 //
 // partition split
 //
-void replica_stub::create_child_replica(rpc_address primary_address,
+void replica_stub::create_child_replica(const host_port& primary_address,
                                         app_info app,
                                         ballot init_ballot,
                                         gpid child_gpid,

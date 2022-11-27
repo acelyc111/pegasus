@@ -498,13 +498,15 @@ int meta_service::check_leader(dsn::message_ex *req, dsn::host_port *forward_add
             return -1;
         }
 
-        LOG_DEBUG("leader address: %s", leader.to_string());
+        LOG_DEBUG_F("leader address: {}", leader);
         if (leader.initialized()) {
-            dsn_rpc_forward(req, leader);
+            // TODO(yingchun): resolve
+            rpc_address addr; // from leader
+            dsn_rpc_forward(req, addr);
             return 0;
         } else {
             if (forward_address != nullptr)
-                forward_address->set_invalid();
+                forward_address->reset();
             return -1;
         }
     }
@@ -577,7 +579,7 @@ void meta_service::on_list_nodes(configuration_list_nodes_rpc rpc)
         if (request.status == node_status::NS_INVALID || request.status == node_status::NS_ALIVE) {
             info.status = node_status::NS_ALIVE;
             for (auto &node : _alive_set) {
-                info.address = node;
+                info.host_port_address = node;
                 response.infos.push_back(info);
             }
         }
@@ -585,7 +587,7 @@ void meta_service::on_list_nodes(configuration_list_nodes_rpc rpc)
             request.status == node_status::NS_UNALIVE) {
             info.status = node_status::NS_UNALIVE;
             for (auto &node : _dead_set) {
-                info.address = node;
+                info.host_port_address = node;
                 response.infos.push_back(info);
             }
         }

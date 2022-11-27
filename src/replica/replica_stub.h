@@ -74,7 +74,7 @@ class replica_split_manager;
 
 typedef std::unordered_map<gpid, replica_ptr> replicas;
 typedef std::function<void(
-    ::dsn::rpc_address /*from*/, const replica_configuration & /*new_config*/, bool /*is_closing*/)>
+    ::dsn::host_port /*from*/, const replica_configuration & /*new_config*/, bool /*is_closing*/)>
     replica_state_subscriber;
 
 class replica_stub;
@@ -160,7 +160,7 @@ public:
     const replication_options &options() const { return _options; }
     bool is_connected() const { return NS_Connected == _state; }
     const host_port_group& get_meta_servers() const { return _failure_detector->get_servers(); }
-    rpc_address primary_address() const { return _primary_address; }
+    host_port primary_address() const { return _primary_address; }
 
     std::string get_replica_dir(const char *app_type, gpid id, bool create_new = true);
 
@@ -187,7 +187,7 @@ public:
 
     // TODO(yingchun): ip
     // called by parent partition, executed by child partition
-    void create_child_replica(dsn::rpc_address primary_address,
+    void create_child_replica(const host_port& primary_address,
                               app_info app,
                               ballot init_ballot,
                               gpid child_gpid,
@@ -350,8 +350,7 @@ private:
     closed_replicas _closed_replicas;
 
     mutation_log_ptr _log;
-    // TODO(yingchun): ip
-    ::dsn::rpc_address _primary_address;
+    ::dsn::host_port _primary_address;
     char _primary_address_str[64];
 
     std::shared_ptr<dsn::dist::slave_failure_detector_with_multimaster> _failure_detector;

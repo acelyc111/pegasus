@@ -311,7 +311,7 @@ ErrOut:
     return;
 }
 
-void replica::send_prepare_message(::dsn::rpc_address addr,
+void replica::send_prepare_message(const ::dsn::host_port& addr,
                                    partition_status::type status,
                                    const mutation_ptr &mu,
                                    int timeout_milliseconds,
@@ -591,7 +591,7 @@ void replica::on_prepare_reply(std::pair<mutation_ptr, partition_status::type> p
 
     CHECK_EQ_MSG(mu->data.header.ballot, get_ballot(), "{}: invalid mutation ballot", mu->name());
 
-    ::dsn::rpc_address node = request->to_address;
+    const auto& node = request->to_address;
     partition_status::type st = _primary_states.get_node_status(node);
 
     // handle reply

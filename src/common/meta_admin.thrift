@@ -364,6 +364,7 @@ struct ddd_node_info
     5:i64             ballot; // collected && ballot == -1 means replica not exist on this node
     6:i64             last_committed_decree;
     7:i64             last_prepared_decree;
+    8:dsn.host_port   host_port_node;
 }
 
 struct ddd_partition_info

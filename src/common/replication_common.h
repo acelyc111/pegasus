@@ -48,8 +48,8 @@
 namespace dsn {
 namespace replication {
 
-typedef std::unordered_map<::dsn::rpc_address, partition_status::type> node_statuses;
-typedef std::unordered_map<::dsn::rpc_address, dsn::task_ptr> node_tasks;
+typedef std::unordered_map<::dsn::host_port, partition_status::type> node_statuses;
+typedef std::unordered_map<::dsn::host_port, dsn::task_ptr> node_tasks;
 
 typedef rpc_holder<configuration_update_app_env_request, configuration_update_app_env_response>
     update_app_env_rpc;
