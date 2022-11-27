@@ -103,7 +103,7 @@ public:
     }
 
     duplication_sync_response
-    duplication_sync(const rpc_address &node,
+    duplication_sync(const host_port &node,
                      std::map<gpid, std::vector<duplication_confirm_entry>> confirm_list)
     {
         auto req = make_unique<duplication_sync_request>();
@@ -157,7 +157,7 @@ public:
         int last_dup = 0;
         for (int i = 0; i < 1000; i++) {
             auto dup = dup_svc().new_dup_from_init(
-                remote_cluster_address, std::vector<rpc_address>(), app);
+                remote_cluster_address, std::vector<host_port>(), app);
 
             ASSERT_GT(dup->id, 0);
             ASSERT_FALSE(dup->is_altering());
@@ -514,8 +514,8 @@ TEST_F(meta_duplication_service_test, remove_dup)
 
 TEST_F(meta_duplication_service_test, duplication_sync)
 {
-    std::vector<rpc_address> server_nodes = ensure_enough_alive_nodes(3);
-    rpc_address node = server_nodes[0];
+    std::vector<host_port> server_nodes = ensure_enough_alive_nodes(3);
+    host_port node = server_nodes[0];
 
     std::string test_app = "test_app_0";
     create_app(test_app);
@@ -749,8 +749,8 @@ TEST_F(meta_duplication_service_test, fail_mode)
     ASSERT_EQ(dup->status(), duplication_status::DS_PAUSE);
 
     // ensure dup_sync will synchronize fail_mode
-    std::vector<rpc_address> server_nodes = generate_node_list(3);
-    rpc_address node = server_nodes[0];
+    std::vector<host_port> server_nodes = generate_node_list(3);
+    host_port node = server_nodes[0];
     for (partition_configuration &pc : app->partitions) {
         pc.primary = server_nodes[0];
     }

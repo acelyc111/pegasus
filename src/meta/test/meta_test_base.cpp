@@ -98,9 +98,9 @@ void meta_test_base::set_node_live_percentage_threshold_for_update(uint64_t perc
     _ms->_node_live_percentage_threshold_for_update = percentage_threshold;
 }
 
-std::vector<rpc_address> meta_test_base::get_alive_nodes() const
+std::vector<host_port> meta_test_base::get_alive_nodes() const
 {
-    std::vector<dsn::rpc_address> nodes;
+    std::vector<dsn::host_port> nodes;
 
     zauto_read_lock l(_ss->_lock);
 
@@ -113,13 +113,13 @@ std::vector<rpc_address> meta_test_base::get_alive_nodes() const
     return nodes;
 }
 
-std::vector<rpc_address> meta_test_base::ensure_enough_alive_nodes(int min_node_count)
+std::vector<host_port> meta_test_base::ensure_enough_alive_nodes(int min_node_count)
 {
     if (min_node_count < 1) {
-        return std::vector<dsn::rpc_address>();
+        return std::vector<dsn::host_port>();
     }
 
-    std::vector<dsn::rpc_address> nodes(get_alive_nodes());
+    std::vector<dsn::host_port> nodes(get_alive_nodes());
     if (!nodes.empty()) {
         auto node_count = static_cast<int>(nodes.size());
         CHECK_GE_MSG(node_count,
@@ -143,7 +143,7 @@ std::vector<rpc_address> meta_test_base::ensure_enough_alive_nodes(int min_node_
 
     while (true) {
         {
-            std::vector<dsn::rpc_address> alive_nodes(get_alive_nodes());
+            std::vector<dsn::host_port> alive_nodes(get_alive_nodes());
             if (static_cast<int>(alive_nodes.size()) >= min_node_count) {
                 break;
             }
@@ -219,7 +219,7 @@ meta_test_base::update_app_envs(const std::string &app_name,
     return rpc.response();
 }
 
-void meta_test_base::mock_node_state(const rpc_address &addr, const node_state &node)
+void meta_test_base::mock_node_state(const host_port &addr, const node_state &node)
 {
     _ss->_nodes[addr] = node;
 }

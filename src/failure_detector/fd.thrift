@@ -53,4 +53,5 @@ struct config_master_message
 {
     1: dsn.rpc_address master;
     2: bool is_register;
+    3: dsn.host_port host_port_master;
 }

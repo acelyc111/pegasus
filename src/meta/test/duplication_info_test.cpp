@@ -42,14 +42,13 @@ public:
 
     static void test_alter_progress()
     {
-
         duplication_info dup(1,
                              1,
                              "temp",
                              2,
                              0,
                              "dsn://slave-cluster/temp",
-                             std::vector<rpc_address>(),
+                             std::vector<host_port>(),
                              "/meta_test/101/duplication/1");
         duplication_confirm_entry entry;
         ASSERT_FALSE(dup.alter_progress(0, entry));
@@ -102,7 +101,7 @@ public:
                              4,
                              0,
                              "dsn://slave-cluster/temp",
-                             std::vector<rpc_address>(),
+                             std::vector<host_port>(),
                              "/meta_test/101/duplication/1");
         ASSERT_FALSE(dup.is_altering());
         ASSERT_EQ(dup._status, duplication_status::DS_INIT);
@@ -132,7 +131,7 @@ public:
                              4,
                              0,
                              "dsn://slave-cluster/temp",
-                             std::vector<rpc_address>(),
+                             std::vector<host_port>(),
                              "/meta_test/101/duplication/1");
         dup.start();
 
@@ -151,7 +150,7 @@ public:
                              4,
                              0,
                              "slave-cluster",
-                             std::vector<rpc_address>(),
+                             std::vector<host_port>(),
                              "/meta_test/101/duplication/1");
         dup.start();
         dup.persist_status();
@@ -185,7 +184,7 @@ TEST_F(duplication_info_test, alter_status_when_busy)
                          4,
                          0,
                          "dsn://slave-cluster/temp",
-                         std::vector<rpc_address>(),
+                         std::vector<host_port>(),
                          "/meta_test/101/duplication/1");
     dup.start();
 
@@ -257,7 +256,7 @@ TEST_F(duplication_info_test, alter_status)
                              4,
                              0,
                              "dsn://slave-cluster/temp",
-                             std::vector<rpc_address>(),
+                             std::vector<host_port>(),
                              "/meta_test/101/duplication/1");
         for (const auto from : tt.from_list) {
             force_update_status(dup, from);
@@ -287,7 +286,7 @@ TEST_F(duplication_info_test, is_valid)
                          4,
                          0,
                          "dsn://slave-cluster/temp",
-                         std::vector<rpc_address>(),
+                         std::vector<host_port>(),
                          "/meta_test/101/duplication/1");
     ASSERT_TRUE(dup.is_invalid_status());
 

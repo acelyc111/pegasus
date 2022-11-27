@@ -34,6 +34,9 @@ public:
     host_port() = default;
     host_port(std::string host, uint16_t port);
 
+    // TODO: for test
+    host_port(int ip, uint16_t port) {}
+
     host_port(const host_port &other);
 
     // Parse a <host>:<port> pair into this object.

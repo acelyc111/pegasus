@@ -68,8 +68,9 @@ inline std::vector<dsn::host_port> generate_node_list(size_t size, int start_por
 {
     std::vector<dsn::host_port> result;
     result.resize(size);
-    for (int i = 0; i < size; ++i)
-        result[i].assign_ipv4("127.0.0.1", static_cast<uint16_t>(start_port + i + 1));
+    for (int i = 0; i < size; ++i) {
+        result[i] = dsn::host_port("127.0.0.1", static_cast<uint16_t>(start_port + i + 1));
+    }
     return result;
 }
 

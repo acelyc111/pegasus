@@ -377,7 +377,7 @@ TEST_F(meta_app_operation_test, create_app)
 
     // keep the number of all nodes greater than that of alive nodes
     const int total_node_count = 10;
-    std::vector<rpc_address> nodes = ensure_enough_alive_nodes(total_node_count);
+    std::vector<host_port> nodes = ensure_enough_alive_nodes(total_node_count);
 
     // the meta function level will become freezed once
     // alive_nodes * 100 < total_nodes * node_live_percentage_threshold_for_update
