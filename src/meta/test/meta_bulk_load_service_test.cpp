@@ -144,9 +144,9 @@ public:
         config.pid = gpid(app->app_id, 0);
         config.max_replica_count = 3;
         config.ballot = BALLOT;
-        config.primary = PRIMARY;
-        config.secondaries.emplace_back(SECONDARY1);
-        config.secondaries.emplace_back(SECONDARY2);
+        config.host_port_primary = PRIMARY;
+        config.host_port_secondaries.emplace_back(SECONDARY1);
+        config.host_port_secondaries.emplace_back(SECONDARY2);
         app->partitions.clear();
         app->partitions.emplace_back(config);
         mock_meta_bulk_load_context(app->app_id, app->partition_count, status);
@@ -161,10 +161,10 @@ public:
     {
         std::shared_ptr<app_state> app = find_app(name);
         if (mock_primary_invalid) {
-            app->partitions[pid.get_partition_index()].primary.set_invalid();
+            app->partitions[pid.get_partition_index()].host_port_primary.reset();
         }
         if (mock_lack_secondary) {
-            app->partitions[pid.get_partition_index()].secondaries.clear();
+            app->partitions[pid.get_partition_index()].host_port_secondaries.clear();
         }
         partition_configuration pconfig;
         bool flag = bulk_svc().check_partition_status(
@@ -202,17 +202,17 @@ public:
         set_partition_bulk_load_info(pid, ever_ingest_succeed);
         partition_configuration config;
         config.pid = pid;
-        config.primary = PRIMARY;
+        config.host_port_primary = PRIMARY;
         if (same) {
-            config.secondaries.emplace_back(SECONDARY1);
-            config.secondaries.emplace_back(SECONDARY2);
+            config.host_port_secondaries.emplace_back(SECONDARY1);
+            config.host_port_secondaries.emplace_back(SECONDARY2);
         } else {
-            config.secondaries.emplace_back(SECONDARY1);
+            config.host_port_secondaries.emplace_back(SECONDARY1);
             if (secondary_count == 2) {
-                config.secondaries.emplace_back(SECONDARY3);
+                config.host_port_secondaries.emplace_back(SECONDARY3);
             } else if (secondary_count >= 3) {
-                config.secondaries.emplace_back(SECONDARY2);
-                config.secondaries.emplace_back(SECONDARY3);
+                config.host_port_secondaries.emplace_back(SECONDARY2);
+                config.host_port_secondaries.emplace_back(SECONDARY3);
             }
         }
         auto flag = bulk_svc().check_ever_ingestion_succeed(config, APP_NAME, pid);
@@ -472,10 +472,10 @@ public:
     std::string PROVIDER = "local_service";
     std::string ROOT_PATH = "bulk_load_root";
     int64_t BALLOT = 4;
-    const rpc_address PRIMARY = rpc_address("127.0.0.1", 10086);
-    const rpc_address SECONDARY1 = rpc_address("127.0.0.1", 10085);
-    const rpc_address SECONDARY2 = rpc_address("127.0.0.1", 10087);
-    const rpc_address SECONDARY3 = rpc_address("127.0.0.1", 10080);
+    const host_port PRIMARY = host_port("127.0.0.1", 10086);
+    const host_port SECONDARY1 = host_port("127.0.0.1", 10085);
+    const host_port SECONDARY2 = host_port("127.0.0.1", 10087);
+    const host_port SECONDARY3 = host_port("127.0.0.1", 10080);
 };
 
 /// start bulk load unit tests
@@ -739,7 +739,7 @@ public:
         _req.ballot = BALLOT;
         _req.cluster_name = CLUSTER;
         _req.pid = gpid(_app_id, _pidx);
-        _req.primary_addr = PRIMARY;
+        _req.host_port_primary_addr = PRIMARY;
         _req.meta_bulk_load_status = status;
     }
 

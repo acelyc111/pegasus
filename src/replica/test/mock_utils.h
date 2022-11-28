@@ -177,11 +177,11 @@ public:
     {
         _primary_states.membership = pconfig;
     }
-    partition_bulk_load_state get_secondary_bulk_load_state(const rpc_address &node)
+    partition_bulk_load_state get_secondary_bulk_load_state(const host_port &node)
     {
         return _primary_states.secondary_bulk_load_states[node];
     }
-    void set_secondary_bulk_load_state(const rpc_address &node,
+    void set_secondary_bulk_load_state(const host_port &node,
                                        const partition_bulk_load_state &state)
     {
         _primary_states.secondary_bulk_load_states[node] = state;
@@ -351,7 +351,7 @@ public:
         _bulk_load_downloading_count.store(count);
     }
 
-    void set_rpc_address(const rpc_address &address) { _primary_address = address; }
+    void set_rpc_address(const host_port &address) { _primary_address = address; }
 };
 
 class mock_log_file : public log_file

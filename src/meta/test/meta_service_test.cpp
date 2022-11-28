@@ -35,13 +35,13 @@ public:
         /** can't forward to others */
         RPC_MOCKING(app_env_rpc)
         {
-            rpc_address leader;
+            host_port leader;
             auto rpc = create_fake_rpc();
             rpc.dsn_request()->header->context.u.is_forward_supported = false;
             bool res = _ms->check_status(rpc, &leader);
             ASSERT_EQ(false, res);
             ASSERT_EQ(ERR_FORWARD_TO_OTHERS, rpc.response().err);
-            ASSERT_EQ(leader.to_std_string(), "1.2.3.4:10086");
+            ASSERT_EQ(leader.to_string(), "1.2.3.4:10086");
             ASSERT_EQ(app_env_rpc::forward_mail_box().size(), 0);
         }
 
@@ -66,7 +66,7 @@ public:
 
         RPC_MOCKING(app_env_rpc)
         {
-            rpc_address leader;
+            host_port leader;
             auto rpc = create_fake_rpc();
             auto res = _ms->check_status(rpc, &leader);
             ASSERT_EQ(true, res);

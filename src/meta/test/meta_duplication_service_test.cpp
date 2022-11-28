@@ -107,7 +107,7 @@ public:
                      std::map<gpid, std::vector<duplication_confirm_entry>> confirm_list)
     {
         auto req = make_unique<duplication_sync_request>();
-        req->node = node;
+        req->host_port_node = node;
         req->confirm_list = confirm_list;
 
         duplication_sync_rpc rpc(std::move(req), RPC_CM_DUPLICATION_SYNC);
@@ -524,9 +524,9 @@ TEST_F(meta_duplication_service_test, duplication_sync)
     // generate all primaries on node[0]
     for (partition_configuration &pc : app->partitions) {
         pc.ballot = random32(1, 10000);
-        pc.primary = server_nodes[0];
-        pc.secondaries.push_back(server_nodes[1]);
-        pc.secondaries.push_back(server_nodes[2]);
+        pc.host_port_primary = server_nodes[0];
+        pc.host_port_secondaries.push_back(server_nodes[1]);
+        pc.host_port_secondaries.push_back(server_nodes[2]);
     }
 
     initialize_node_state();
@@ -752,7 +752,7 @@ TEST_F(meta_duplication_service_test, fail_mode)
     std::vector<host_port> server_nodes = generate_node_list(3);
     host_port node = server_nodes[0];
     for (partition_configuration &pc : app->partitions) {
-        pc.primary = server_nodes[0];
+        pc.host_port_primary = server_nodes[0];
     }
     initialize_node_state();
     duplication_sync_response sync_resp = duplication_sync(node, {});

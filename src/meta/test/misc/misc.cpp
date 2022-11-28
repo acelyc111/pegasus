@@ -48,7 +48,7 @@ void generate_node_list(std::vector<dsn::host_port> &output_list, int min_count,
     int count = random32(min_count, max_count);
     output_list.resize(count);
     for (int i = 0; i < count; ++i) {
-        output_list[i].parse_string("127.0.0.1", i + 1);
+        output_list[i] = dsn::host_port("127.0.0.1", i + 1);
     }
 }
 
@@ -218,7 +218,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
     config_context *cc = get_config_context(apps, pid);
     CHECK_NOTNULL(cc, "");
 
-    fs_manager *target_manager = get_fs_manager(manager, act.target);
+    fs_manager *target_manager = get_fs_manager(manager, act.host_port_target);
     CHECK_NOTNULL(target_manager, "");
     fs_manager *node_manager = get_fs_manager(manager, act.host_port_node);
     CHECK_NOTNULL(node_manager, "");
@@ -229,7 +229,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
     case config_type::CT_ASSIGN_PRIMARY:
         target_manager->allocate_dir(pid, "test", dir);
         CHECK_EQ(dsn::ERR_OK, target_manager->get_disk_tag(dir, ri.disk_tag));
-        cc->collect_serving_replica(act.target, ri);
+        cc->collect_serving_replica(act.host_port_target, ri);
         break;
 
     case config_type::CT_ADD_SECONDARY:
@@ -266,7 +266,7 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
 
     ++pc.ballot;
     CHECK_NE(act.type, config_type::CT_INVALID);
-    CHECK(!act.target.is_invalid(), "");
+    CHECK(!act.host_port_target.is_invalid(), "");
     CHECK(!act.host_port_node.is_invalid(), "");
 
     if (manager) {
@@ -275,7 +275,7 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
 
     switch (act.type) {
     case config_type::CT_ASSIGN_PRIMARY:
-        CHECK_EQ(act.host_port_node, act.target);
+        CHECK_EQ(act.host_port_node, act.host_port_target);
         CHECK(pc.host_port_primary.is_invalid(), "");
         CHECK(pc.host_port_secondaries.empty(), "");
 
@@ -286,7 +286,7 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         break;
 
     case config_type::CT_ADD_SECONDARY:
-        CHECK_EQ(act.target, pc.host_port_primary);
+        CHECK_EQ(act.host_port_target, pc.host_port_primary);
         CHECK(!is_member(pc, act.host_port_node), "");
 
         pc.host_port_secondaries.push_back(act.host_port_node);
@@ -297,18 +297,18 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         break;
 
     case config_type::CT_DOWNGRADE_TO_SECONDARY:
-        CHECK_EQ(act.host_port_node, act.target);
+        CHECK_EQ(act.host_port_node, act.host_port_target);
         CHECK_EQ(act.host_port_node, pc.host_port_primary);
         CHECK(nodes.find(act.host_port_node) != nodes.end(), "");
         CHECK(!is_secondary(pc, pc.host_port_primary), "");
         nodes[act.host_port_node].remove_partition(pc.pid, true);
         pc.host_port_secondaries.push_back(pc.host_port_primary);
-        pc.host_port_primary.set_invalid();
+        pc.host_port_primary.reset();
         break;
 
     case config_type::CT_UPGRADE_TO_PRIMARY:
         CHECK(pc.host_port_primary.is_invalid(), "");
-        CHECK_EQ(act.host_port_node, act.target);
+        CHECK_EQ(act.host_port_node, act.host_port_target);
         CHECK(is_secondary(pc, act.host_port_node), "");
         CHECK(nodes.find(act.host_port_node) != nodes.end(), "");
 
@@ -319,7 +319,7 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         break;
 
     case config_type::CT_ADD_SECONDARY_FOR_LB:
-        CHECK_EQ(act.target, pc.host_port_primary);
+        CHECK_EQ(act.host_port_target, pc.host_port_primary);
         CHECK(!is_member(pc, act.host_port_node), "");
         CHECK(!act.host_port_node.is_invalid(), "");
         pc.host_port_secondaries.push_back(act.host_port_node);
@@ -333,7 +333,7 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
     case config_type::CT_REMOVE:
     case config_type::CT_DOWNGRADE_TO_INACTIVE:
         CHECK(!pc.host_port_primary.is_invalid(), "");
-        CHECK_EQ(pc.host_port_primary, act.target);
+        CHECK_EQ(pc.host_port_primary, act.host_port_target);
         CHECK(is_secondary(pc, act.host_port_node), "");
         CHECK(nodes.find(act.host_port_node) != nodes.end(), "");
         CHECK(remove_node(act.host_port_node, pc.host_port_secondaries), "");
@@ -381,7 +381,7 @@ void migration_check_and_apply(app_mapper &apps,
                       j,
                       dsn::enum_to_string(act.type),
                       act.host_port_node.to_string(),
-                      act.target.to_string());
+                      act.host_port_target.to_string());
             proposal_action_check_and_apply(act, proposal->gpid, apps, nodes, manager);
         }
     }

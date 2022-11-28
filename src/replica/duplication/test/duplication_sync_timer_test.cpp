@@ -99,7 +99,7 @@ public:
             ASSERT_EQ(duplication_sync_rpc::mail_box().size(), 1);
 
             auto &req = duplication_sync_rpc::mail_box().back().request();
-            ASSERT_EQ(req.node, stub->primary_address());
+            ASSERT_EQ(req.host_port_node, stub->primary_address());
 
             // ensure confirm list is empty when no progress
             ASSERT_EQ(req.confirm_list.size(), 0);
@@ -122,7 +122,7 @@ public:
             ASSERT_EQ(duplication_sync_rpc::mail_box().size(), 1);
 
             auto &req = *duplication_sync_rpc::mail_box().back().mutable_request();
-            ASSERT_EQ(req.node, stub->primary_address());
+            ASSERT_EQ(req.host_port_node, stub->primary_address());
             ASSERT_EQ(req.confirm_list.size(), total_app_num);
 
             for (int appid = 1; appid <= total_app_num; appid++) {

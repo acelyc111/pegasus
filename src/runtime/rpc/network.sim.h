@@ -72,6 +72,7 @@ private:
     rpc_session_ptr _client;
 };
 
+// TODO: use host port
 class sim_network_provider : public connection_oriented_network
 {
 public:

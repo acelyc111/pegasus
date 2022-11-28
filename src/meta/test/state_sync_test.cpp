@@ -55,12 +55,12 @@ namespace dsn {
 namespace replication {
 
 static void random_assign_partition_config(std::shared_ptr<app_state> &app,
-                                           const std::vector<dsn::rpc_address> &server_list,
+                                           const std::vector<dsn::host_port> &server_list,
                                            int max_replica_count)
 {
     auto get_server = [&server_list](int indice) {
         if (indice % 2 != 0)
-            return dsn::rpc_address();
+            return dsn::host_port();
         return server_list[indice / 2];
     };
 
@@ -72,13 +72,13 @@ static void random_assign_partition_config(std::shared_ptr<app_state> &app,
             indices.push_back(random32(start, max_servers));
             start = indices.back() + 1;
         }
-        pc.primary = get_server(indices[0]);
+        pc.host_port_primary = get_server(indices[0]);
         for (int i = 1; i < indices.size(); ++i) {
-            dsn::rpc_address addr = get_server(indices[i]);
+            dsn::host_port addr = get_server(indices[i]);
             if (!addr.is_invalid())
-                pc.secondaries.push_back(addr);
+                pc.host_port_secondaries.push_back(addr);
         }
-        pc.last_drops = {server_list.back()};
+        pc.host_port_last_drops = {server_list.back()};
     }
 }
 
@@ -113,11 +113,11 @@ void meta_service_test_app::state_sync_test()
 {
     int apps_count = 15;
     int drop_ratio = 5;
-    std::vector<dsn::rpc_address> server_list;
+    std::vector<dsn::host_port> server_list;
     std::vector<int> drop_set;
     generate_node_list(server_list, 10, 10);
 
-    std::shared_ptr<meta_service> meta_svc = std::make_shared<meta_service>();
+    auto meta_svc = std::make_shared<meta_service>();
     meta_service *svc = meta_svc.get();
     meta_options &opt = svc->_meta_opts;
     opt.cluster_root = "/meta_test";
@@ -372,7 +372,7 @@ void meta_service_test_app::construct_apps_test()
 
     std::shared_ptr<meta_service> svc(new meta_service());
 
-    std::vector<dsn::rpc_address> nodes;
+    std::vector<dsn::host_port> nodes;
     std::string hint_message;
     generate_node_list(nodes, 1, 1);
     svc->_state->construct_apps({resp}, nodes, hint_message);
