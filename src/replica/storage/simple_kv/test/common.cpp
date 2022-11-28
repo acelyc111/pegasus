@@ -329,8 +329,8 @@ void parti_config::convert_from(const partition_configuration &c)
 {
     pid = c.pid;
     ballot = c.ballot;
-    primary = address_to_node(c.primary);
-    for (auto &s : c.secondaries)
+    primary = address_to_node(c.host_port_primary);
+    for (auto &s : c.host_port_secondaries)
         secondaries.push_back(address_to_node(s));
     std::sort(secondaries.begin(), secondaries.end());
 }

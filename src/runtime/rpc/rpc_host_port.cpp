@@ -105,6 +105,13 @@ bool remove_node(const host_port& node, /*inout*/ vector<host_port> &node_list)
     }
 }
 
+host_port_group::host_port_group(const host_port_group& other)
+{
+    utils::auto_read_lock l(other._lock);
+    _members = other._members;
+    _leader_index = other._leader_index;
+}
+
 void host_port_group::add(const host_port& hp)
 {
     CHECK(hp.initialized(), "host_port is not initialized");

@@ -35,9 +35,8 @@ class rrdb_client
 {
 public:
     rrdb_client() {}
-    // TODO(yingchun): ip
     explicit rrdb_client(const char *cluster_name,
-                         const std::vector<dsn::rpc_address> &meta_list,
+                         const host_port_group &meta_list,
                          const char *app_name)
     {
         _resolver =

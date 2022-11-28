@@ -31,7 +31,6 @@
 
 using dsn::partition_configuration;
 using dsn::replication::replication_ddl_client;
-using dsn::rpc_address;
 using std::vector;
 
 namespace pegasus {
@@ -47,11 +46,12 @@ void test_util::SetUpTestCase() { ASSERT_TRUE(pegasus_client_factory::initialize
 
 void test_util::SetUp()
 {
+    std::vector<dsn::host_port> meta_servers;
     ASSERT_TRUE(
-        load_meta_servers(meta_list_, PEGASUS_CLUSTER_SECTION_NAME.c_str(), cluster_name_.c_str()));
-    ASSERT_FALSE(meta_list_.empty());
+        dsn::host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name_, &meta_servers).is_ok());
+    ASSERT_FALSE(meta_servers.empty());
 
-    ddl_client_ = std::make_shared<replication_ddl_client>(meta_list_);
+    ddl_client_ = std::make_shared<replication_ddl_client>(meta_servers);
     ASSERT_TRUE(ddl_client_ != nullptr);
 
     dsn::error_code ret =

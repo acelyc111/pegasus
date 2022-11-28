@@ -27,7 +27,7 @@
 #include "utils/fmt_logging.h"
 
 namespace dsn {
-class rpc_address;
+class host_port;
 }
 struct shell_context;
 
@@ -64,9 +64,10 @@ inline bool validate_cmd(const argh::parser &cmd,
 
 bool validate_ip(shell_context *sc,
                  const std::string &ip_str,
-                 /*out*/ dsn::rpc_address &target_address,
+                 /*out*/ dsn::host_port &target_address,
                  /*out*/ std::string &err_info);
 
+// TODO refactor
 #define verify_logged(exp, ...)                                                                    \
     do {                                                                                           \
         if (!(exp)) {                                                                              \

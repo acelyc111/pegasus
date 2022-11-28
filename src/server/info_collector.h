@@ -222,8 +222,7 @@ public:
 
 private:
     dsn::task_tracker _tracker;
-    // TODO(yingchun): ip
-    ::dsn::rpc_address _meta_servers;
+//    ::dsn::host_port _meta_servers;
     std::string _cluster_name;
     std::shared_ptr<shell_context> _shell_context;
     uint32_t _app_stat_interval_seconds;

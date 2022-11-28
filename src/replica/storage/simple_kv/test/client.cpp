@@ -60,12 +60,11 @@ simple_kv_client_app::~simple_kv_client_app() { stop(); }
         return ::dsn::ERR_INVALID_PARAMETERS;
 
     std::vector<host_port> meta_servers;
-    load_meta_servers(meta_servers);
-    _meta_server_group.assign_group("meta_servers");
-    _meta_server_group.group_address()->add_list(meta_servers);
+    CHECK(host_port::load_servers(std::string("meta_server"), std::string("server_list"), &meta_servers).is_ok(), "");
+    _meta_server_group.add_list(meta_servers);
 
     _simple_kv_client.reset(
-        new application::simple_kv_client("mycluster", meta_servers, "simple_kv.instance0"));
+        new application::simple_kv_client("mycluster", _meta_server_group, "simple_kv.instance0"));
 
     dsn::tasking::enqueue(
         LPC_SIMPLE_KV_TEST, &_tracker, std::bind(&simple_kv_client_app::run, this));
@@ -148,15 +147,17 @@ void simple_kv_client_app::send_config_to_meta(const host_port &receiver,
     request.gpid = g_default_gpid;
 
     configuration_proposal_action act;
-    act.__set_target(receiver);
-    act.__set_node(node);
+    act.__set_host_port_target(receiver);
+    act.__set_host_port_node(node);
     act.__set_type(type);
     request.action_list.emplace_back(std::move(act));
     request.__set_force(true);
 
     dsn::marshall(req, request);
 
-    dsn_rpc_call_one_way(_meta_server_group, req);
+    // TODO from _meta_server_group
+    dsn::rpc_address addr;
+    dsn_rpc_call_one_way(addr, req);
 }
 
 struct read_context

@@ -34,7 +34,7 @@ namespace dsn {
 namespace replication {
 /*static*/
 partition_resolver_ptr partition_resolver::get_resolver(const char *cluster_name,
-                                                        const std::vector<rpc_address> &meta_list,
+                                                        const host_port_group &meta_list,
                                                         const char *app_name)
 {
     return partition_resolver_manager::instance().find_or_create(cluster_name, meta_list, app_name);
@@ -119,7 +119,9 @@ void partition_resolver::call_task(const rpc_response_task_ptr &t)
                     }
                     hdr.gpid = result.pid;
                 }
-                dsn_rpc_call(result.address, t.get());
+                // TODO: from result.address
+                rpc_address addr;
+                dsn_rpc_call(addr, t.get());
             },
             hdr.client.timeout_ms);
 }

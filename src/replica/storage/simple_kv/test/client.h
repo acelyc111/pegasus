@@ -59,7 +59,7 @@ public:
 
 private:
     std::unique_ptr<application::simple_kv_client> _simple_kv_client;
-    host_port _meta_server_group;
+    host_port_group _meta_server_group;
     host_port _service_addr;
     dsn::task_tracker _tracker;
 };

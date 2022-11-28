@@ -39,7 +39,7 @@ class simple_kv_client
 {
 public:
     simple_kv_client(const char *cluster_name,
-                     const std::vector<dsn::rpc_address> &meta_list,
+                     const host_port_group &meta_list,
                      const char *app_name)
     {
         _resolver = partition_resolver::get_resolver(cluster_name, meta_list, app_name);

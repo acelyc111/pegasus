@@ -57,7 +57,7 @@ namespace replication {
 class replication_ddl_client
 {
 public:
-    replication_ddl_client(const std::vector<dsn::rpc_address> &meta_servers);
+    replication_ddl_client(const std::vector<dsn::host_port> &meta_servers);
     ~replication_ddl_client();
 
     dsn::error_code create_app(const std::string &app_name,
@@ -88,7 +88,7 @@ public:
 
     dsn::error_code
     list_nodes(const dsn::replication::node_status::type status,
-               std::map<dsn::rpc_address, dsn::replication::node_status::type> &nodes);
+               std::map<dsn::host_port, dsn::replication::node_status::type> &nodes);
 
     dsn::error_code cluster_name(int64_t timeout_ms, std::string &cluster_name);
 
@@ -113,7 +113,7 @@ public:
     dsn::error_code
     wait_app_ready(const std::string &app_name, int partition_count, int max_replica_count);
 
-    dsn::error_code do_recovery(const std::vector<dsn::rpc_address> &replica_nodes,
+    dsn::error_code do_recovery(const std::vector<dsn::host_port> &replica_nodes,
                                 int wait_seconds,
                                 bool skip_bad_nodes,
                                 bool skip_lost_partitions,
@@ -186,9 +186,9 @@ public:
     dsn::error_code ddd_diagnose(gpid pid, std::vector<ddd_partition_info> &ddd_partitions);
 
     void query_disk_info(
-        const std::vector<dsn::rpc_address> &targets,
+        const std::vector<dsn::host_port> &targets,
         const std::string &app_name,
-        /*out*/ std::map<dsn::rpc_address, error_with<query_disk_info_response>> &resps);
+        /*out*/ std::map<dsn::host_port, error_with<query_disk_info_response>> &resps);
 
     error_with<start_bulk_load_response> start_bulk_load(const std::string &app_name,
                                                          const std::string &cluster_name,
@@ -203,7 +203,7 @@ public:
 
     error_with<clear_bulk_load_state_response> clear_bulk_load(const std::string &app_name);
 
-    error_code detect_hotkey(const dsn::rpc_address &target,
+    error_code detect_hotkey(const dsn::host_port &target,
                              detect_hotkey_request &req,
                              detect_hotkey_response &resp);
 
@@ -224,7 +224,7 @@ public:
 
     error_with<query_split_response> query_partition_split(const std::string &app_name);
 
-    error_with<add_new_disk_response> add_new_disk(const rpc_address &target_node,
+    error_with<add_new_disk_response> add_new_disk(const host_port &target_node,
                                                    const std::string &disk_str);
 
     error_with<start_app_manual_compact_response>
@@ -262,7 +262,9 @@ private:
 
         rpc_response_task_ptr task = ::dsn::rpc::create_rpc_response_task(
             msg, nullptr, empty_rpc_handler, reply_thread_hash);
-        rpc::call(_meta_server,
+        // TODO from _meta_server
+        rpc_address addr;
+        rpc::call(addr,
                   msg,
                   &_tracker,
                   [this, task](
@@ -280,7 +282,9 @@ private:
         static constexpr int MAX_RETRY = 2;
         error_code err = ERR_UNKNOWN;
         for (int retry = 0; retry < MAX_RETRY; retry++) {
-            task_ptr task = rpc.call(_meta_server,
+            // TODO from _meta_server
+            rpc_address addr;
+            task_ptr task = rpc.call(addr,
                                      &_tracker,
                                      [&err](error_code code) { err = code; },
                                      reply_thread_hash);
@@ -297,16 +301,18 @@ private:
 
     /// Send request to multi replica server synchronously.
     template <typename TRpcHolder, typename TResponse = typename TRpcHolder::response_type>
-    void call_rpcs_sync(std::map<dsn::rpc_address, TRpcHolder> &rpcs,
-                        std::map<dsn::rpc_address, error_with<TResponse>> &resps,
+    void call_rpcs_sync(std::map<dsn::host_port, TRpcHolder> &rpcs,
+                        std::map<dsn::host_port, error_with<TResponse>> &resps,
                         int reply_thread_hash = 0,
                         bool enable_retry = true)
     {
         dsn::task_tracker tracker;
         error_code err = ERR_UNKNOWN;
         for (auto &rpc : rpcs) {
+            // TODO: from rpc.first
+            rpc_address addr;
             rpc.second.call(
-                rpc.first, &tracker, [&err, &resps, &rpcs, &rpc](error_code code) mutable {
+                addr, &tracker, [&err, &resps, &rpcs, &rpc](error_code code) mutable {
                     err = code;
                     if (err == dsn::ERR_OK) {
                         resps.emplace(rpc.first, std::move(rpc.second.response()));
@@ -321,7 +327,7 @@ private:
         tracker.wait_outstanding_tasks();
 
         if (enable_retry && rpcs.size() > 0) {
-            std::map<dsn::rpc_address, dsn::error_with<TResponse>> retry_resps;
+            std::map<dsn::host_port, dsn::error_with<TResponse>> retry_resps;
             call_rpcs_sync(rpcs, retry_resps, reply_thread_hash, false);
             for (auto &resp : retry_resps) {
                 resps.emplace(resp.first, std::move(resp.second));
@@ -330,7 +336,7 @@ private:
     }
 
 private:
-    dsn::rpc_address _meta_server;
+    dsn::host_port_group _meta_server;
     dsn::task_tracker _tracker;
 
     typedef rpc_holder<detect_hotkey_request, detect_hotkey_response> detect_hotkey_rpc;

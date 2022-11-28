@@ -47,9 +47,8 @@ public:
                      dsn::utils::filesystem::path_combine(cluster_name, policy_name);
         backup_dir = "onebox/" + provider_dir + '/' + cluster_name;
 
-        std::vector<dsn::rpc_address> meta_list;
-        ASSERT_TRUE(load_meta_servers(
-            meta_list, PEGASUS_CLUSTER_SECTION_NAME.c_str(), cluster_name.c_str()));
+        std::vector<dsn::host_port> meta_list;
+        ASSERT_TRUE(dsn::host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &meta_list).is_ok());
         ASSERT_FALSE(meta_list.empty());
         ddl_client = std::make_shared<replication_ddl_client>(meta_list);
         ASSERT_TRUE(ddl_client != nullptr);

@@ -115,6 +115,7 @@ class host_port_group
 {
 public:
     host_port_group() = default;
+    host_port_group(const host_port_group& other);
     void add(const host_port& hp);
     void add_list(const std::vector<host_port>& hps);
     host_port next(const host_port& hp) const;
@@ -124,6 +125,19 @@ public:
     host_port leader() const;
 
     std::string to_string() const;
+
+    inline bool operator==(const host_port_group &other) const
+    {
+        // TODO: optimize
+        std::set<host_port> hps1(_members.begin(), _members.end());
+        std::set<host_port> hps2(other._members.begin(), other._members.end());
+        return hps1 == hps2;
+    }
+
+    inline bool operator!=(const host_port_group &other) const
+    {
+        return !(*this == other);
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const host_port_group &hpg)
     {

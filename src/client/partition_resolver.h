@@ -41,7 +41,7 @@ class partition_resolver : public ref_counter
 public:
     static dsn::ref_ptr<partition_resolver>
     get_resolver(const char *cluster_name,
-                 const std::vector<dsn::rpc_address> &meta_list,
+                 const host_port_group &meta_list,
                  const char *app_name);
 
     template <typename TReq, typename TCallback>
@@ -71,10 +71,10 @@ public:
 
     std::string get_app_name() const { return _app_name; }
 
-    dsn::rpc_address get_meta_server() const { return _meta_server; }
+    const dsn::host_port_group& get_meta_server() const { return _meta_server; }
 
 protected:
-    partition_resolver(rpc_address meta_server, const char *app_name)
+    partition_resolver(host_port_group meta_server, const char *app_name)
         : _app_name(app_name), _meta_server(meta_server)
     {
     }
@@ -89,7 +89,7 @@ protected:
         ///< should call resolve_async in this case
         error_code err;
         ///< IPv4 of the target to send request to
-        rpc_address address;
+        host_port address;
         ///< global partition indentity
         dsn::gpid pid;
     };
@@ -130,7 +130,7 @@ protected:
 
     std::string _cluster_name;
     std::string _app_name;
-    rpc_address _meta_server;
+    host_port_group _meta_server;
 };
 
 typedef ref_ptr<partition_resolver> partition_resolver_ptr;

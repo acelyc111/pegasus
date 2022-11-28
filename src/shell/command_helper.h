@@ -603,9 +603,8 @@ inline void scan_data_next(scan_data_context *context)
 struct node_desc
 {
     std::string desc;
-    // TODO(yingchun): ip
-    dsn::rpc_address address;
-    node_desc(const std::string &s, const dsn::rpc_address &n) : desc(s), address(n) {}
+    dsn::host_port address;
+    node_desc(const std::string &s, const dsn::host_port &n) : desc(s), address(n) {}
 };
 // type: all | replica-server | meta-server
 inline bool fill_nodes(shell_context *sc, const std::string &type, std::vector<node_desc> &nodes)
@@ -617,8 +616,7 @@ inline bool fill_nodes(shell_context *sc, const std::string &type, std::vector<n
     }
 
     if (type == "all" || type == "replica-server") {
-        // TODO(yingchun): ip
-        std::map<dsn::rpc_address, dsn::replication::node_status::type> rs_nodes;
+        std::map<dsn::host_port, dsn::replication::node_status::type> rs_nodes;
         ::dsn::error_code err =
             sc->ddl_client->list_nodes(dsn::replication::node_status::NS_ALIVE, rs_nodes);
         if (err != ::dsn::ERR_OK) {
@@ -653,8 +651,10 @@ call_remote_command(shell_context *sc,
                 results[i].second = err.to_string();
             }
         };
+        // TODO from nodes[i].address
+        dsn::rpc_address addr;
         tasks[i] = dsn::dist::cmd::async_call_remote(
-            nodes[i].address, cmd, arguments, callback, std::chrono::milliseconds(5000));
+            addr, cmd, arguments, callback, std::chrono::milliseconds(5000));
     }
     for (int i = 0; i < nodes.size(); ++i) {
         tasks[i]->wait();
@@ -1022,7 +1022,7 @@ get_app_partitions(shell_context *sc,
     return true;
 }
 
-inline bool decode_node_perf_counter_info(const dsn::rpc_address &node_addr,
+inline bool decode_node_perf_counter_info(const dsn::host_port &node_addr,
                                           const std::pair<bool, std::string> &result,
                                           dsn::perf_counter_info &info)
 {
@@ -1094,7 +1094,7 @@ inline bool get_app_partition_stat(shell_context *sc,
                 // only primary partition will be counted
                 auto find = app_partitions.find(app_id_x);
                 if (find != app_partitions.end() &&
-                    find->second[partition_index_x].primary == nodes[i].address) {
+                    find->second[partition_index_x].host_port_primary == nodes[i].address) {
                     row_data &row = rows[app_id_name[app_id_x]][partition_index_x];
                     row.row_name = std::to_string(partition_index_x);
                     row.app_id = app_id_x;
@@ -1166,7 +1166,7 @@ get_app_stat(shell_context *sc, const std::string &app_name, std::vector<row_dat
         }
 
         for (int i = 0; i < nodes.size(); ++i) {
-            dsn::rpc_address node_addr = nodes[i].address;
+            dsn::host_port node_addr = nodes[i].address;
             dsn::perf_counter_info info;
             if (!decode_node_perf_counter_info(node_addr, results[i], info))
                 return false;
@@ -1181,7 +1181,7 @@ get_app_stat(shell_context *sc, const std::string &app_name, std::vector<row_dat
                 if (find == app_partitions.end())
                     continue;
                 dsn::partition_configuration &pc = find->second[partition_index_x];
-                if (pc.primary != node_addr)
+                if (pc.host_port_primary != node_addr)
                     continue;
                 update_app_pegasus_perf_counter(rows[app_row_idx[app_id_x]], counter_name, m.value);
             }
@@ -1203,7 +1203,7 @@ get_app_stat(shell_context *sc, const std::string &app_name, std::vector<row_dat
         CHECK_EQ(partition_count, app_info->partition_count);
 
         for (int i = 0; i < nodes.size(); ++i) {
-            dsn::rpc_address node_addr = nodes[i].address;
+            dsn::host_port node_addr = nodes[i].address;
             dsn::perf_counter_info info;
             if (!decode_node_perf_counter_info(node_addr, results[i], info))
                 return false;
@@ -1215,7 +1215,7 @@ get_app_stat(shell_context *sc, const std::string &app_name, std::vector<row_dat
                 CHECK(parse_ret, "name = {}", m.name);
                 CHECK_EQ_MSG(app_id_x, app_id, "name = {}", m.name);
                 CHECK_LT_MSG(partition_index_x, partition_count, "name = {}", m.name);
-                if (partitions[partition_index_x].primary != node_addr)
+                if (partitions[partition_index_x].host_port_primary != node_addr)
                     continue;
                 update_app_pegasus_perf_counter(rows[partition_index_x], counter_name, m.value);
             }
@@ -1262,7 +1262,7 @@ inline bool get_capacity_unit_stat(shell_context *sc,
 
     nodes_stat.resize(nodes.size());
     for (int i = 0; i < nodes.size(); ++i) {
-        dsn::rpc_address node_addr = nodes[i].address;
+        dsn::host_port node_addr = nodes[i].address;
         dsn::perf_counter_info info;
         if (!decode_node_perf_counter_info(node_addr, results[i], info)) {
             LOG_WARNING("decode perf counter from node(%s) failed, just ignore it",
@@ -1330,7 +1330,7 @@ inline bool get_storage_size_stat(shell_context *sc, app_storage_size_stat &st_s
         sc, nodes, "perf-counters-by-prefix", {"replica*app.pegasus*disk.storage.sst(MB)"});
 
     for (int i = 0; i < nodes.size(); ++i) {
-        dsn::rpc_address node_addr = nodes[i].address;
+        dsn::host_port node_addr = nodes[i].address;
         dsn::perf_counter_info info;
         if (!decode_node_perf_counter_info(node_addr, results[i], info)) {
             LOG_WARNING("decode perf counter from node(%s) failed, just ignore it",
@@ -1349,7 +1349,7 @@ inline bool get_storage_size_stat(shell_context *sc, app_storage_size_stat &st_s
             if (find == app_partitions.end()) // app id not found
                 continue;
             dsn::partition_configuration &pc = find->second[partition_index_x];
-            if (pc.primary != node_addr) // not primary replica
+            if (pc.host_port_primary != node_addr) // not primary replica
                 continue;
             if (pc.partition_flags != 0) // already calculated
                 continue;
@@ -1369,13 +1369,13 @@ inline bool get_storage_size_stat(shell_context *sc, app_storage_size_stat &st_s
     return true;
 }
 
-inline configuration_proposal_action new_proposal_action(const dsn::rpc_address &target,
-                                                         const dsn::rpc_address &node,
+inline configuration_proposal_action new_proposal_action(const dsn::host_port &target,
+                                                         const dsn::host_port &node,
                                                          config_type::type type)
 {
     configuration_proposal_action act;
-    act.__set_target(target);
-    act.__set_node(node);
+    act.__set_host_port_target(target);
+    act.__set_host_port_node(node);
     act.__set_type(type);
     return act;
 }

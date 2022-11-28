@@ -41,7 +41,7 @@ namespace replication {
 class partition_resolver_simple : public partition_resolver
 {
 public:
-    partition_resolver_simple(rpc_address meta_server, const char *app_name);
+    partition_resolver_simple(const host_port_group& meta_server, const char *app_name);
 
     virtual ~partition_resolver_simple();
 
@@ -101,8 +101,8 @@ private:
 
 private:
     // local routines
-    rpc_address get_address(const partition_configuration &config) const;
-    error_code get_address(int partition_index, /*out*/ rpc_address &addr);
+    host_port get_address(const partition_configuration &config) const;
+    error_code get_address(int partition_index, /*out*/ host_port &addr);
     void handle_pending_requests(std::deque<request_context_ptr> &reqs, error_code err);
     void clear_all_pending_requests();
 
@@ -112,7 +112,7 @@ private:
     // request_context_ptr rc);
     void end_request(request_context_ptr &&request,
                      error_code err,
-                     rpc_address addr,
+                     const host_port& addr,
                      bool called_by_timer = false) const;
     void on_timeout(request_context_ptr &&rc) const;
 

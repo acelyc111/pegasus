@@ -67,7 +67,7 @@ bool propose(command_executor *e, shell_context *sc, arguments args)
     dverify(args.argc >= 9);
     dsn::replication::configuration_balancer_request request;
     request.gpid.set_app_id(-1);
-    dsn::rpc_address target, node;
+    dsn::host_port target, node;
     std::string proposal_type = "CT_";
     request.force = false;
     bool ans;
@@ -92,10 +92,10 @@ bool propose(command_executor *e, shell_context *sc, arguments args)
             break;
         case 't':
             verify_logged(
-                target.from_string_ipv4(optarg), "parse %s as target_address failed\n", optarg);
+                target.parse_string(optarg).is_ok(), "parse %s as target_address failed\n", optarg);
             break;
         case 'n':
-            verify_logged(node.from_string_ipv4(optarg), "parse %s as node failed\n", optarg);
+            verify_logged(node.parse_string(optarg).is_ok(), "parse %s as node failed\n", optarg);
             break;
         default:
             return false;
@@ -130,7 +130,7 @@ bool balance(command_executor *e, shell_context *sc, arguments args)
     dsn::replication::configuration_balancer_request request;
     request.gpid.set_app_id(-1);
     std::string balance_type;
-    dsn::rpc_address from, to;
+    dsn::host_port from, to;
     bool ans;
 
     optind = 0;
@@ -152,13 +152,13 @@ bool balance(command_executor *e, shell_context *sc, arguments args)
             balance_type = optarg;
             break;
         case 'f':
-            if (!from.from_string_ipv4(optarg)) {
+            if (!from.parse_string(optarg).is_ok()) {
                 fprintf(stderr, "parse %s as from_address failed\n", optarg);
                 return false;
             }
             break;
         case 't':
-            if (!to.from_string_ipv4(optarg)) {
+            if (!to.parse_string(optarg).is_ok()) {
                 fprintf(stderr, "parse %s as target_address failed\n", optarg);
                 return false;
             }
@@ -181,9 +181,9 @@ bool balance(command_executor *e, shell_context *sc, arguments args)
         actions.emplace_back(new_proposal_action(to, to, config_type::CT_UPGRADE_TO_PRIMARY));
     } else if (balance_type == "copy_sec") {
         actions.emplace_back(
-            new_proposal_action(dsn::rpc_address(), to, config_type::CT_ADD_SECONDARY_FOR_LB));
+            new_proposal_action(dsn::host_port(), to, config_type::CT_ADD_SECONDARY_FOR_LB));
         actions.emplace_back(
-            new_proposal_action(dsn::rpc_address(), from, config_type::CT_DOWNGRADE_TO_INACTIVE));
+            new_proposal_action(dsn::host_port(), from, config_type::CT_DOWNGRADE_TO_INACTIVE));
     } else {
         fprintf(stderr, "parse %s as a balance type failed\n", balance_type.c_str());
         return false;
