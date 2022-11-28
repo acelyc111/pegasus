@@ -33,23 +33,6 @@
 namespace dsn {
 namespace replication {
 
-// TODO remove
-// template <typename T>
-// bool vector_equal(const std::vector<T> &a, const std::vector<T> &b)
-//{
-//    if (a.size() != b.size())
-//        return false;
-//    for (const T &item : a) {
-//        if (std::find(b.begin(), b.end(), item) == b.end())
-//            return false;
-//    }
-//    for (const T &item : b) {
-//        if (std::find(a.begin(), a.end(), item) == a.end())
-//            return false;
-//    }
-//    return true;
-//}
-
 partition_resolver_ptr partition_resolver_manager::find_or_create(const char *cluster_name,
                                                                   const host_port_group &meta_list,
                                                                   const char *app_name)

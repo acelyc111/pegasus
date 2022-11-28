@@ -54,11 +54,10 @@ pegasus_client_impl::pegasus_client_impl(const char *cluster_name, const char *a
         "invalid config in {}.{}",
         PEGASUS_CLUSTER_SECTION_NAME,
         cluster_name);
-    _meta_server.assign_group("meta-servers");
 
-    // TODO(yingchun): need update
-    //_meta_server.group_address()->add_list(meta_servers);
-    //_client = new ::dsn::apps::rrdb_client(cluster_name, meta_servers, app_name);
+//    _meta_server.assign_group("meta-servers");
+    _meta_server.add_list(meta_servers);
+    _client = new ::dsn::apps::rrdb_client(cluster_name, _meta_server, app_name);
 }
 
 pegasus_client_impl::~pegasus_client_impl() { delete _client; }
@@ -1242,7 +1241,9 @@ void pegasus_client_impl::async_get_unordered_scanners(
 
     configuration_query_by_index_request req;
     req.app_name = _app_name;
-    ::dsn::rpc::call(_meta_server,
+    // TODO from _meta_server
+    rpc_address addr;
+    ::dsn::rpc::call(addr,
                      RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX,
                      req,
                      nullptr,
