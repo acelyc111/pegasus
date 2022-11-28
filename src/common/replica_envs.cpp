@@ -20,7 +20,9 @@
 using std::string;
 
 namespace dsn {
+namespace replication {
 
+// TODO: commit in another patch
 const string replica_envs::DENY_CLIENT_REQUEST("replica.deny_client_request");
 const string replica_envs::WRITE_QPS_THROTTLING("replica.write_throttling");
 const string replica_envs::WRITE_SIZE_THROTTLING("replica.write_throttling_by_size");
@@ -64,4 +66,5 @@ const string replica_envs::BACKUP_REQUEST_QPS_THROTTLING("replica.backup_request
 const string replica_envs::ROCKSDB_ALLOW_INGEST_BEHIND("rocksdb.allow_ingest_behind");
 const string replica_envs::UPDATE_MAX_REPLICA_COUNT("max_replica_count.update");
 
+} // namespace replication
 } // namespace dsn
