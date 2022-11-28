@@ -26,7 +26,6 @@
 
 #include "runtime/rpc/rpc_address.h"
 
-#include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -141,6 +140,14 @@ uint32_t rpc_address::ipv4_from_network_interface(const char *network_interface)
 rpc_address::~rpc_address() { set_invalid(); }
 
 rpc_address::rpc_address(const rpc_address &another) { *this = another; }
+
+rpc_address::rpc_address(const struct sockaddr_in &addr)
+{
+    set_invalid();
+    _addr.v4.type = HOST_TYPE_IPV4;
+    _addr.v4.ip = static_cast<uint32_t>(ntohl(addr.sin_addr.s_addr));
+    _addr.v4.port = ntohs(addr.sin_port);
+}
 
 rpc_address &rpc_address::operator=(const rpc_address &another)
 {

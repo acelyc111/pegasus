@@ -76,6 +76,7 @@
 namespace dsn {
 namespace utils {
 
+// TODO(yingchun): unify these functions
 bool hostname_from_ip(uint32_t ip, std::string *hostname_result)
 {
     struct sockaddr_in addr_in;

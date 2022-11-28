@@ -63,7 +63,7 @@ private:
     std::function<void(const std::vector<host_port> &)> _disconnected_cb;
 
 protected:
-    virtual void send_beacon(const ::dsn::host_port &node, uint64_t time) override
+    void send_beacon(const ::dsn::host_port &node, uint64_t time) final
     {
         if (_send_ping_switch)
             failure_detector::send_beacon(node, time);

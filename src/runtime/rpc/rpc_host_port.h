@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "runtime/rpc/rpc_address.h"
 #include "utils/errors.h"
 #include "utils/synchronize.h"
 
@@ -53,6 +54,8 @@ public:
     bool initialized() const { return !_host.empty(); }
     // TODO(yingchun): change
     bool is_invalid() const { return !initialized(); }
+
+    error_s resolve_addresses(std::vector<rpc_address> *addresses) const;
 
     const std::string &host() const { return _host; }
     uint16_t port() const { return _port; }

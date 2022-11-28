@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <arpa/inet.h>
+
 #include <sstream>
 #include <string>
 #include <vector>
@@ -75,6 +77,8 @@ public:
     }
 
     rpc_address(const char *host, uint16_t port) { assign_ipv4(host, port); }
+
+    explicit rpc_address(const struct sockaddr_in &addr);
 
     void assign_ipv4(uint32_t ip, uint16_t port)
     {

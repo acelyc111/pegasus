@@ -116,11 +116,10 @@ void failure_detector::stop()
 void failure_detector::register_master(const ::dsn::host_port &target)
 {
     bool setup_timer = false;
-
-    zauto_lock l(_lock);
-
     master_record record(target, dsn_now_ms());
 
+    zauto_lock l(_lock);
+    // TODO: refactor if-statement
     auto ret = _masters.insert(std::make_pair(target, record));
     if (ret.second) {
         LOG_INFO_F("register master[{}] successfully", target);

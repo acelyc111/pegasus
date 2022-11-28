@@ -338,7 +338,7 @@ void meta_duplication_service::create_follower_app_for_duplication(
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_CREATE_APP);
     dsn::marshall(msg, request);
-    // TODO(yingchun): from meta_servers
+    // TODO(ip): from meta_servers
     rpc_address addrs;
     rpc::call(
         addrs,
@@ -388,7 +388,7 @@ void meta_duplication_service::check_follower_app_if_create_completed(
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX);
     dsn::marshall(msg, meta_config_request);
-    // TODO(yingchun): from meta_servers
+    // TODO(ip): from meta_servers
     rpc_address addrs;
     rpc::call(addrs,
               msg,

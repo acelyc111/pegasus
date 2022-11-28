@@ -17,22 +17,34 @@
 
 #include "runtime/rpc/rpc_host_port.h"
 
-#include <boost/algorithm/string/trim.hpp>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <functional>
 #include <set>
+#include <unordered_set>
+
+#include <boost/algorithm/string/trim.hpp>
 
 #include "utils/config_api.h"
 #include "utils/fmt_logging.h"
 #include "utils/rand.h"
+#include "utils/safe_strerror_posix.h"
 #include "utils/string_conv.h"
 #include "utils/strings.h"
 
+using std::function;
 using std::set;
 using std::string;
+using std::unique_ptr;
+using std::unordered_set;
 using std::vector;
 
 namespace dsn {
 
 namespace {
+
 // Parse a comma separated list of "host:port" pairs into a vector host_port objects.
 error_s parse_strings(const string &comma_sep_addrs, vector<host_port> *hps)
 {
@@ -58,6 +70,27 @@ error_s parse_strings(const string &comma_sep_addrs, vector<host_port> *hps)
     }
 
     return error_s::ok();
+}
+
+using AddrInfo = unique_ptr<addrinfo, function<void(addrinfo *)>>;
+
+// TODO: test, copy from Kudu
+error_s GetAddrInfo(const string &hostname, const addrinfo &hints, AddrInfo *info)
+{
+    addrinfo *res = nullptr;
+    const int rc = getaddrinfo(hostname.c_str(), nullptr, &hints, &res);
+    const int err = errno; // preserving the errno from the getaddrinfo() call
+    AddrInfo result(res, ::freeaddrinfo);
+    if (rc == 0) {
+        if (info != nullptr) {
+            info->swap(result);
+        }
+        return error_s::ok();
+    }
+    if (rc == EAI_SYSTEM) {
+        return error_s::make(ERR_NETWORK_FAILURE, utils::safe_strerror(err));
+    }
+    return error_s::make(ERR_NETWORK_FAILURE, gai_strerror(rc));
 }
 
 } // anonymous namespace
@@ -87,6 +120,37 @@ error_s host_port::parse_string(const string &str)
 
     _host.swap(hostname_port[0]);
     _port = port;
+    return error_s::ok();
+}
+
+error_s host_port::resolve_addresses(vector<rpc_address> *addresses) const
+{
+    // TODO: trace latency
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    AddrInfo result;
+    RETURN_NOT_OK(GetAddrInfo(_host, hints, &result));
+
+    // DNS may return the same host multiple times. We want to return only the unique
+    // addresses, but in the same order as DNS returned them. To do so, we keep track
+    // of the already-inserted elements in a set.
+    unordered_set<rpc_address> inserted;
+    vector<rpc_address> result_addresses;
+    for (const addrinfo *ai = result.get(); ai != nullptr; ai = ai->ai_next) {
+        CHECK_EQ(AF_INET, ai->ai_family);
+        sockaddr_in *addr = reinterpret_cast<sockaddr_in *>(ai->ai_addr);
+        addr->sin_port = htons(_port);
+        rpc_address sockaddr(*addr);
+        LOG_DEBUG_F("resolved address {} for host/port {}", sockaddr, to_string());
+        if (!inserted.insert(sockaddr).second) {
+            result_addresses.emplace_back(sockaddr);
+        }
+    }
+    if (addresses) {
+        *addresses = std::move(result_addresses);
+    }
     return error_s::ok();
 }
 
