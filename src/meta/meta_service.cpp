@@ -603,7 +603,7 @@ void meta_service::on_query_cluster_info(configuration_cluster_info_rpc rpc)
 
     configuration_cluster_info_response &response = rpc.response();
     response.keys.push_back("meta_servers");
-    response.values.push_back(fmt::format("{}", fmt::join(_opts.meta_servers1, ",")));
+    response.values.push_back(_opts.meta_servers1.to_string());
     response.keys.push_back("primary_meta_server");
     response.values.push_back(dsn_primary_address().to_std_string());
     std::string zk_hosts =

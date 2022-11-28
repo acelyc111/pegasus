@@ -57,7 +57,7 @@ namespace replication {
 class replication_ddl_client
 {
 public:
-    replication_ddl_client(const std::vector<dsn::host_port> &meta_servers);
+    replication_ddl_client(const dsn::host_port_group &meta_servers);
     ~replication_ddl_client();
 
     dsn::error_code create_app(const std::string &app_name,

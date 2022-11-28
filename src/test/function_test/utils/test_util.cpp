@@ -46,12 +46,10 @@ void test_util::SetUpTestCase() { ASSERT_TRUE(pegasus_client_factory::initialize
 
 void test_util::SetUp()
 {
-    std::vector<dsn::host_port> meta_servers;
-    ASSERT_TRUE(
-        dsn::host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name_, &meta_servers)
-            .is_ok());
-    ASSERT_FALSE(meta_servers.empty());
-
+    dsn::host_port_group meta_servers;
+    ASSERT_TRUE(dsn::host_port_group::load_servers(
+                    PEGASUS_CLUSTER_SECTION_NAME, cluster_name_, &meta_servers)
+                    .is_ok());
     ddl_client_ = std::make_shared<replication_ddl_client>(meta_servers);
     ASSERT_TRUE(ddl_client_ != nullptr);
 

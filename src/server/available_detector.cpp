@@ -60,8 +60,8 @@ available_detector::available_detector()
         "available_detect_alert_email_address",
         "",
         "available detect alert email address, empty means not send email");
-    CHECK(dsn::host_port::load_servers("meta_server", "server_list", &_meta_list).is_ok(), "");
-    CHECK(!_meta_list.empty(), "");
+    CHECK(dsn::host_port_group::load_servers("meta_server", "server_list", &_meta_list).is_ok(),
+          "");
 
     _detect_interval_seconds =
         (uint32_t)dsn_config_get_value_uint64("pegasus.collector",

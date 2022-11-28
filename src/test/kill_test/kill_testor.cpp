@@ -62,11 +62,10 @@ kill_testor::kill_testor(const char *config_file)
     }
 
     // load meta_list
-    std::vector<dsn::host_port> meta_list;
-    if (!dsn::host_port::load_servers(
+    dsn::host_port_group meta_list;
+    if (!dsn::host_port_group::load_servers(
              PEGASUS_CLUSTER_SECTION_NAME, pegasus_cluster_name, &meta_list)
-             .is_ok() ||
-        meta_list.empty()) {
+             .is_ok()) {
         LOG_ERROR("Should config the meta address for killer");
         exit(-1);
     }

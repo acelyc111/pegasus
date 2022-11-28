@@ -169,11 +169,6 @@ public:
     void unlock_meta_op_status();
     meta_op_status get_op_status() const { return _meta_op_status.load(); }
 
-    std::string get_meta_list_string() const
-    {
-        return fmt::format("{}", fmt::join(_opts.meta_servers1, ","));
-    }
-
 private:
     void register_rpc_handlers();
     void register_ctrl_commands();

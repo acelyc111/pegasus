@@ -423,7 +423,8 @@ host_port partition_resolver_simple::get_address(const partition_configuration &
         if (config.last_drops.size() == 0) {
             return host_port();
         } else {
-            return config.host_port_last_drops[rand::next_u32(0, config.host_port_last_drops.size() - 1)];
+            return config
+                .host_port_last_drops[rand::next_u32(0, config.host_port_last_drops.size() - 1)];
         }
     }
 }

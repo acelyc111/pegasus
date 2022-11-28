@@ -59,13 +59,8 @@ simple_kv_client_app::~simple_kv_client_app() { stop(); }
     if (args.size() < 2)
         return ::dsn::ERR_INVALID_PARAMETERS;
 
-    std::vector<host_port> meta_servers;
-    CHECK(host_port::load_servers(
-              std::string("meta_server"), std::string("server_list"), &meta_servers)
-              .is_ok(),
+    CHECK(host_port_group::load_servers("meta_server", "server_list", &_meta_server_group).is_ok(),
           "");
-    _meta_server_group.add_list(meta_servers);
-
     _simple_kv_client.reset(
         new application::simple_kv_client("mycluster", _meta_server_group, "simple_kv.instance0"));
 

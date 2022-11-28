@@ -153,8 +153,8 @@ void meta_duplication_service::add_duplication(duplication_add_rpc rpc)
         return;
     }
 
-    std::vector<host_port> meta_list;
-    if (!host_port::load_servers(
+    host_port_group meta_list;
+    if (!host_port_group::load_servers(
              duplication_constants::kClustersSectionName, request.remote_cluster_name, &meta_list)
              .is_ok()) {
         response.err = ERR_INVALID_PARAMETERS;
@@ -332,11 +332,9 @@ void meta_duplication_service::create_follower_app_for_duplication(
     request.options.envs.emplace(duplication_constants::kDuplicationEnvMasterClusterKey,
                                  get_current_cluster_name());
     request.options.envs.emplace(duplication_constants::kDuplicationEnvMasterMetasKey,
-                                 _meta_svc->get_meta_list_string());
+                                 _meta_svc->get_options().meta_servers1.to_string());
 
-    host_port_group meta_servers;
-    //    meta_servers.assign_group(dup->follower_cluster_name.c_str());
-    meta_servers.add_list(dup->follower_cluster_metas);
+    host_port_group meta_servers = dup->follower_cluster_metas;
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_CREATE_APP);
     dsn::marshall(msg, request);
@@ -383,9 +381,7 @@ void meta_duplication_service::create_follower_app_for_duplication(
 void meta_duplication_service::check_follower_app_if_create_completed(
     const std::shared_ptr<duplication_info> &dup)
 {
-    host_port_group meta_servers;
-    //    meta_servers.assign_group(dup->follower_cluster_name.c_str());
-    meta_servers.add_list(dup->follower_cluster_metas);
+    host_port_group meta_servers = dup->follower_cluster_metas;
 
     configuration_query_by_index_request meta_config_request;
     meta_config_request.app_name = dup->app_name;
@@ -501,7 +497,7 @@ void meta_duplication_service::do_update_partition_confirmed(
 
 std::shared_ptr<duplication_info>
 meta_duplication_service::new_dup_from_init(const std::string &follower_cluster_name,
-                                            std::vector<host_port> &&follower_cluster_metas,
+                                            host_port_group &&follower_cluster_metas,
                                             std::shared_ptr<app_state> &app) const
 {
     duplication_info_s_ptr dup;

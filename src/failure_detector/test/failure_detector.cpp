@@ -85,7 +85,7 @@ protected:
     }
 
 public:
-    worker_fd_test(replication::replica_stub *stub, std::vector<dsn::host_port> &meta_servers)
+    worker_fd_test(replication::replica_stub *stub, const dsn::host_port_group &meta_servers)
         : slave_failure_detector_with_multimaster(meta_servers,
                                                   [=]() { stub->on_meta_server_disconnected(); },
                                                   [=]() { stub->on_meta_server_connected(); })
@@ -170,10 +170,10 @@ public:
 
     error_code start(const std::vector<std::string> &args) override
     {
-        std::vector<host_port> master_group;
-        // TODO(yingchun): need update
-        //        for (int i = 0; i < 3; ++i)
-        //            master_group.push_back(host_port("localhost", MPORT_START + i));
+        host_port_group master_group;
+        for (int i = 0; i < 3; ++i) {
+            master_group.add(host_port("localhost", static_cast<uint16_t>(MPORT_START + i)));
+        }
         _worker_fd = new worker_fd_test(nullptr, master_group);
         _worker_fd->start(1, 1, 9, 10);
         ++started_apps;

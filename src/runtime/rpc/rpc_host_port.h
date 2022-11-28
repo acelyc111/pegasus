@@ -59,13 +59,6 @@ public:
 
     std::string to_string() const { return fmt::format("{}:{}", _host, _port); }
 
-    // Parse a comma separated list of "host:port" pairs into a vector
-    // host_port objects.
-    static error_s parse_strings(const std::string &comma_sep_addrs, std::vector<host_port> *res);
-
-    static error_s
-    load_servers(const std::string &section, const std::string &key, std::vector<host_port> *hps);
-
     host_port &operator=(const host_port &other)
     {
         _host = other._host;
@@ -113,19 +106,35 @@ class host_port_group
 public:
     host_port_group() = default;
     host_port_group(const host_port_group &other);
+
     void add(const host_port &hp);
     void add_list(const std::vector<host_port> &hps);
     host_port next(const host_port &hp) const;
-
     void set_rand_leader();
     void set_leader(const host_port &hp);
     host_port leader() const;
+    void clear();
+    bool empty() const;
+    const std::vector<host_port> &members() const;
 
     std::string to_string() const;
+
+    static error_s
+    load_servers(const std::string &section, const std::string &key, host_port_group *hpg);
+
+    inline host_port_group &operator=(const host_port_group &other)
+    {
+        utils::auto_write_lock l(_lock);
+        _leader_index = other._leader_index;
+        _members = other._members;
+        return *this;
+    }
 
     inline bool operator==(const host_port_group &other) const
     {
         // TODO: optimize
+        utils::auto_read_lock l(_lock);
+        utils::auto_read_lock r(other._lock);
         std::set<host_port> hps1(_members.begin(), _members.end());
         std::set<host_port> hps2(other._members.begin(), other._members.end());
         return hps1 == hps2;

@@ -408,7 +408,7 @@ void replication_options::initialize()
 
     max_concurrent_bulk_load_downloading_count = FLAGS_max_concurrent_bulk_load_downloading_count;
 
-    CHECK(host_port::load_servers("meta_server", "server_list", &meta_servers1).is_ok(),
+    CHECK(host_port_group::load_servers("meta_server", "server_list", &meta_servers1).is_ok(),
           "invalid config in meta_server.server_list");
 
     sanity_check();

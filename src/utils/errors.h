@@ -40,7 +40,7 @@ namespace dsn {
 //
 //   error_s err = open_file("");
 //   if (!err.is_ok()) {
-//       std::cerr << s.description() << std::endl;
+//       std::cerr << err.description() << std::endl;
 //       // print: "ERR_INVALID_PARAMETERS: file name should not be empty"
 //   }
 //

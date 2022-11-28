@@ -32,6 +32,36 @@ using std::vector;
 
 namespace dsn {
 
+namespace {
+// Parse a comma separated list of "host:port" pairs into a vector host_port objects.
+error_s parse_strings(const string &comma_sep_addrs, vector<host_port> *hps)
+{
+    CHECK_NOTNULL(hps, "");
+    hps->clear();
+
+    vector<string> addrs;
+    utils::split_args(comma_sep_addrs.c_str(), addrs, ',');
+
+    // TODO(yingchun): simply use to_string() for host_port set, we can override more operators if
+    // needed in the future.
+    set<string> hp_set;
+    hps->reserve(addrs.size());
+    for (const string &addr : addrs) {
+        host_port hp;
+        RETURN_NOT_OK(hp.parse_string(addr));
+        if (hp_set.count(hp.to_string()) != 0) {
+            LOG_WARNING_F("duplicate host:port '{}'", addr);
+            continue;
+        }
+        hp_set.emplace(std::move(hp.to_string()));
+        hps->emplace_back(std::move(hp));
+    }
+
+    return error_s::ok();
+}
+
+} // anonymous namespace
+
 host_port::host_port(string host, uint16_t port) : _host(std::move(host)), _port(port) {}
 
 host_port::host_port(const host_port &other) : _host(other._host), _port(other._port) {}
@@ -58,40 +88,6 @@ error_s host_port::parse_string(const string &str)
     _host.swap(hostname_port[0]);
     _port = port;
     return error_s::ok();
-}
-
-error_s host_port::parse_strings(const string &comma_sep_addrs, vector<host_port> *hps)
-{
-    CHECK_NOTNULL(hps, "");
-    hps->clear();
-
-    vector<string> addrs;
-    utils::split_args(comma_sep_addrs.c_str(), addrs, ',');
-
-    // TODO(yingchun): simply use to_string() for host_port set, we can override more operators if
-    // needed in the future.
-    set<string> hp_set;
-    hps->reserve(addrs.size());
-    for (const string &addr : addrs) {
-        host_port hp;
-        RETURN_NOT_OK(hp.parse_string(addr));
-        if (hp_set.count(hp.to_string()) != 0) {
-            LOG_WARNING_F("duplicate host:port '{}'", addr);
-            continue;
-        }
-        hp_set.emplace(std::move(hp.to_string()));
-        hps->emplace_back(std::move(hp));
-    }
-    return error_s::ok();
-}
-
-error_s host_port::load_servers(const string &section, const string &key, vector<host_port> *hps)
-{
-    CHECK_NOTNULL(hps, "");
-    hps->clear();
-
-    string comma_sep_addrs = dsn_config_get_value_string(section.c_str(), key.c_str(), "", "");
-    return parse_strings(comma_sep_addrs, hps);
 }
 
 bool remove_node(const host_port &node, /*inout*/ vector<host_port> &node_list)
@@ -183,10 +179,48 @@ host_port host_port_group::leader() const
     return _leader_index >= 0 ? _members[_leader_index] : host_port();
 }
 
+void host_port_group::clear()
+{
+    utils::auto_write_lock l(_lock);
+    _leader_index = -1;
+    _members.clear();
+}
+
+bool host_port_group::empty() const
+{
+    utils::auto_read_lock l(_lock);
+    return _members.empty();
+}
+const std::vector<host_port> &host_port_group::members() const
+{
+    utils::auto_read_lock l(_lock);
+    return _members;
+}
+
 std::string host_port_group::to_string() const
 {
     utils::auto_read_lock l(_lock);
     return fmt::format("{}", fmt::join(_members, ","));
+}
+
+error_s
+host_port_group::load_servers(const string &section, const string &key, host_port_group *hpg)
+{
+    CHECK_NOTNULL(hpg, "");
+    hpg->clear();
+
+    string comma_sep_addrs = dsn_config_get_value_string(section.c_str(), key.c_str(), "", "");
+
+    vector<host_port> hps;
+    RETURN_NOT_OK(parse_strings(comma_sep_addrs, &hps));
+
+    hpg->add_list(hps);
+    if (hpg->empty()) {
+        return error_s::make(ERR_INVALID_PARAMETERS,
+                             fmt::format("config {}.{} should not be empty", section, key));
+    }
+
+    return error_s::ok();
 }
 
 } // namespace dsn

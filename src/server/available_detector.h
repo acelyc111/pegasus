@@ -60,7 +60,7 @@ private:
     // client to access server.
     pegasus_client *_client;
     std::shared_ptr<replication_ddl_client> _ddl_client;
-    std::vector<dsn::host_port> _meta_list;
+    dsn::host_port_group _meta_list;
     uint32_t _detect_interval_seconds;
     int32_t _alert_fail_count;
     ::dsn::utils::ex_lock_nr _alert_lock;

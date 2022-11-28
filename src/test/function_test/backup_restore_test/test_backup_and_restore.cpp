@@ -55,12 +55,11 @@ public:
     void SetUp() override
     {
         // initialize ddl_client
-        std::vector<host_port> meta_list;
-        ASSERT_TRUE(host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, _cluster_name, &meta_list)
-                        .is_ok());
-
-        // TODO(yingchun): need update
-        //_ddl_client = std::make_shared<replication_ddl_client>(meta_list);
+        host_port_group meta_list;
+        ASSERT_TRUE(
+            host_port_group::load_servers(PEGASUS_CLUSTER_SECTION_NAME, _cluster_name, &meta_list)
+                .is_ok());
+        _ddl_client = std::make_shared<replication_ddl_client>(meta_list);
         ASSERT_TRUE(_ddl_client != nullptr);
     }
 

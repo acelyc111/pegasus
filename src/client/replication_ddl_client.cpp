@@ -55,10 +55,9 @@ namespace replication {
 
 using tp_output_format = ::dsn::utils::table_printer::output_format;
 
-replication_ddl_client::replication_ddl_client(const std::vector<dsn::host_port> &meta_servers)
+replication_ddl_client::replication_ddl_client(const host_port_group &meta_servers)
+    : _meta_server(meta_servers)
 {
-    //    _meta_server.assign_group("meta-servers");
-    _meta_server.add_list(meta_servers);
 }
 
 replication_ddl_client::~replication_ddl_client() { _tracker.cancel_outstanding_tasks(); }

@@ -610,7 +610,7 @@ struct node_desc
 inline bool fill_nodes(shell_context *sc, const std::string &type, std::vector<node_desc> &nodes)
 {
     if (type == "all" || type == "meta-server") {
-        for (auto &addr : sc->meta_list) {
+        for (auto &addr : sc->meta_list.members()) {
             nodes.emplace_back("meta-server", addr);
         }
     }

@@ -47,11 +47,9 @@ DEFINE_TASK_CODE(LPC_PEGASUS_STORAGE_SIZE_STAT_TIMER,
 
 info_collector::info_collector()
 {
-    std::vector<::dsn::host_port> meta_servers;
-    CHECK(dsn::host_port::load_servers("meta_server", "server_list", &meta_servers).is_ok(), "");
-    CHECK(!meta_servers.empty(), "");
-    //    _meta_servers.assign_group("meta-servers");
-    //    _meta_servers.add_list(meta_servers);
+    ::dsn::host_port_group meta_servers;
+    CHECK(dsn::host_port_group::load_servers("meta_server", "server_list", &meta_servers).is_ok(),
+          "");
 
     _cluster_name = dsn::get_current_cluster_name();
 

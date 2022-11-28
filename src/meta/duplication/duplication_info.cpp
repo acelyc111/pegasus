@@ -211,8 +211,8 @@ duplication_info_s_ptr duplication_info::decode_from_blob(dupid_t dup_id,
     if (!json::json_forwarder<json_helper>::decode(json, info)) {
         return nullptr;
     }
-    std::vector<host_port> meta_list;
-    if (!host_port::load_servers(
+    host_port_group meta_list;
+    if (!host_port_group::load_servers(
              duplication_constants::kClustersSectionName, info.remote, &meta_list)
              .is_ok()) {
         return nullptr;

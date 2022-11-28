@@ -79,16 +79,14 @@ redis_parser::redis_parser(proxy_stub *op, dsn::message_ex *first_msg)
 {
     ::dsn::apps::rrdb_client *r;
     if (op) {
-        // TODO(yingchun): ip
-        std::vector<dsn::host_port> meta_list;
-        CHECK(dsn::host_port::load_servers(
+        dsn::host_port_group meta_list;
+        CHECK(dsn::host_port_group::load_servers(
                   PEGASUS_CLUSTER_SECTION_NAME, op->get_cluster(), &meta_list)
                   .is_ok(),
               "invalid config in {}.{}",
               PEGASUS_CLUSTER_SECTION_NAME,
               op->get_cluster());
-        // TODO(yingchun): need update
-        //  r = new ::dsn::apps::rrdb_client(op->get_cluster(), meta_list, op->get_app());
+        r = new ::dsn::apps::rrdb_client(op->get_cluster(), meta_list, op->get_app());
         if (!dsn::utils::is_empty(op->get_geo_app())) {
             _geo_client = dsn::make_unique<geo::geo_client>(
                 "config.ini", op->get_cluster(), op->get_app(), op->get_geo_app());

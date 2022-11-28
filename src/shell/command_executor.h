@@ -32,7 +32,7 @@ struct shell_context
 {
     std::string current_cluster_name;
     std::string current_app_name;
-    std::vector<dsn::host_port> meta_list;
+    dsn::host_port_group meta_list;
     std::unique_ptr<dsn::replication::replication_ddl_client> ddl_client;
     pegasus::pegasus_client *pg_client;
     bool escape_all;

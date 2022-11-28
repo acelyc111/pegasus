@@ -103,10 +103,9 @@ private:
 
     // Create a new duplication from INIT state.
     // Thread-Safe
-    std::shared_ptr<duplication_info>
-    new_dup_from_init(const std::string &follower_cluster_name,
-                      std::vector<host_port> &&follower_cluster_metas,
-                      std::shared_ptr<app_state> &app) const;
+    std::shared_ptr<duplication_info> new_dup_from_init(const std::string &follower_cluster_name,
+                                                        host_port_group &&follower_cluster_metas,
+                                                        std::shared_ptr<app_state> &app) const;
 
     // get lock to protect access of app table
     zrwlock_nr &app_lock() const { return _state->_lock; }

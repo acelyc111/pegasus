@@ -59,7 +59,7 @@ typedef rpc_holder<query_replica_info_request, query_replica_info_response> quer
 class replication_options
 {
 public:
-    std::vector<::dsn::host_port> meta_servers1;
+    ::dsn::host_port_group meta_servers1;
 
     std::string app_name;
     std::string app_dir;

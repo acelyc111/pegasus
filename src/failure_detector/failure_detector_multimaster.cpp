@@ -35,15 +35,12 @@ namespace dsn {
 namespace dist {
 
 slave_failure_detector_with_multimaster::slave_failure_detector_with_multimaster(
-    std::vector<::dsn::host_port> &meta_servers,
+    const ::dsn::host_port_group &meta_servers,
     std::function<void()> &&master_disconnected_callback,
     std::function<void()> &&master_connected_callback)
+    : _meta_servers(meta_servers)
 {
-    for (const auto &hp : meta_servers) {
-        _meta_servers.add(hp);
-    }
     _meta_servers.set_rand_leader();
-
     _master_disconnected_callback = std::move(master_disconnected_callback);
     _master_connected_callback = std::move(master_connected_callback);
 }

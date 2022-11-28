@@ -454,8 +454,7 @@ void meta_http_service::get_cluster_info_handler(const http_request &req, http_r
         return;
 
     dsn::utils::table_printer tp;
-    tp.add_row_name_and_data("meta_servers",
-                             fmt::format("{}", fmt::join(_service->_opts.meta_servers1, ",")));
+    tp.add_row_name_and_data("meta_servers", _service->_opts.meta_servers1.to_string());
     tp.add_row_name_and_data("primary_meta_server", dsn_primary_address().to_string());
     std::string zk_hosts =
         dsn_config_get_value_string("zookeeper", "hosts_list", "", "zookeeper_hosts");

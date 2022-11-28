@@ -48,15 +48,11 @@ std::unordered_map<int, int> pegasus_client_impl::_server_error_to_client;
 pegasus_client_impl::pegasus_client_impl(const char *cluster_name, const char *app_name)
     : _cluster_name(cluster_name), _app_name(app_name)
 {
-    std::vector<dsn::host_port> meta_servers;
-    CHECK(
-        host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &meta_servers).is_ok(),
-        "invalid config in {}.{}",
-        PEGASUS_CLUSTER_SECTION_NAME,
-        cluster_name);
-
-//    _meta_server.assign_group("meta-servers");
-    _meta_server.add_list(meta_servers);
+    CHECK(host_port_group::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &_meta_server)
+              .is_ok(),
+          "invalid config in {}.{}",
+          PEGASUS_CLUSTER_SECTION_NAME,
+          cluster_name);
     _client = new ::dsn::apps::rrdb_client(cluster_name, _meta_server, app_name);
 }
 
