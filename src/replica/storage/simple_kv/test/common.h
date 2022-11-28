@@ -67,10 +67,10 @@ partition_status::type partition_status_from_short_string(const std::string &str
 // transfer primary_address to node_name
 // return "-" if addr.is_invalid()
 // return "node@port" if not found
-std::string address_to_node(rpc_address addr);
+std::string address_to_node(host_port addr);
 // transfer node_name to primary_address
 // return invalid addr if not found
-rpc_address node_to_address(const std::string &name);
+host_port node_to_address(const std::string &name);
 
 std::string gpid_to_string(gpid gpid);
 bool gpid_from_string(const std::string &str, gpid &gpid);

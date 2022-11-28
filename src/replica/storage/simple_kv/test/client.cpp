@@ -59,7 +59,7 @@ simple_kv_client_app::~simple_kv_client_app() { stop(); }
     if (args.size() < 2)
         return ::dsn::ERR_INVALID_PARAMETERS;
 
-    std::vector<rpc_address> meta_servers;
+    std::vector<host_port> meta_servers;
     load_meta_servers(meta_servers);
     _meta_server_group.assign_group("meta_servers");
     _meta_server_group.group_address()->add_list(meta_servers);
@@ -87,9 +87,9 @@ void simple_kv_client_app::run()
     std::string value;
     int timeout_ms;
 
-    rpc_address receiver;
+    host_port receiver;
     dsn::replication::config_type::type type;
-    rpc_address node;
+    host_port node;
 
     while (!g_done) {
         if (test_case::instance().check_client_write(id, key, value, timeout_ms)) {
@@ -138,9 +138,9 @@ void simple_kv_client_app::begin_write(int id,
                              std::chrono::milliseconds(timeout_ms));
 }
 
-void simple_kv_client_app::send_config_to_meta(const rpc_address &receiver,
+void simple_kv_client_app::send_config_to_meta(const host_port &receiver,
                                                dsn::replication::config_type::type type,
-                                               const rpc_address &node)
+                                               const host_port &node)
 {
     dsn::message_ex *req = dsn::message_ex::create_request(RPC_CM_PROPOSE_BALANCER, 30000);
 

@@ -89,7 +89,7 @@ partition_status::type partition_status_from_short_string(const std::string &str
     return partition_status::PS_INVALID;
 }
 
-std::string address_to_node(rpc_address addr)
+std::string address_to_node(host_port addr)
 {
     if (addr.is_invalid())
         return "-";
@@ -97,10 +97,10 @@ std::string address_to_node(rpc_address addr)
     return test_checker::instance().address_to_node_name(addr);
 }
 
-rpc_address node_to_address(const std::string &name)
+host_port node_to_address(const std::string &name)
 {
     if (name == "-")
-        return rpc_address();
+        return host_port();
     CHECK(test_checker::s_inited, "");
     return test_checker::instance().node_name_to_address(name);
 }

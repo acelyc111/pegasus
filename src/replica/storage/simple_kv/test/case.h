@@ -24,15 +24,6 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     Replication testing framework.
- *
- * Revision history:
- *     Nov., 2015, @qinzuoyan (Zuoyan Qin), first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #pragma once
 
 #include "common.h"
@@ -400,9 +391,9 @@ public:
     bool parse_type_name(const std::string &name);
     void get_write_params(int &id, std::string &key, std::string &value, int &timeout_ms) const;
     void get_read_params(int &id, std::string &key, int &timeout_ms) const;
-    void get_replica_config_params(rpc_address &receiver,
+    void get_replica_config_params(host_port &receiver,
                                    dsn::replication::config_type::type &type,
-                                   rpc_address &node) const;
+                                   host_port &node) const;
     bool check_write_result(int id, ::dsn::error_code err, int32_t resp);
     bool check_read_result(int id, ::dsn::error_code err, const std::string &resp);
 
@@ -419,9 +410,9 @@ private:
     int _write_resp;
     std::string _read_resp;
 
-    rpc_address _config_receiver;
+    host_port _config_receiver;
     dsn::replication::config_type::type _config_type;
-    rpc_address _config_node;
+    host_port _config_node;
 };
 
 class test_case : public dsn::utils::singleton<test_case>
@@ -449,9 +440,9 @@ public:
     void wait_check_client();
     void notify_check_client();
     bool check_client_write(int &id, std::string &key, std::string &value, int &timeout_ms);
-    bool check_replica_config(rpc_address &receiver,
+    bool check_replica_config(host_port &receiver,
                               dsn::replication::config_type::type &type,
-                              rpc_address &node);
+                              host_port &node);
     bool check_client_read(int &id, std::string &key, int &timeout_ms);
     void on_end_write(int id, ::dsn::error_code err, int32_t resp);
     void on_end_read(int id, ::dsn::error_code err, const std::string &resp);
