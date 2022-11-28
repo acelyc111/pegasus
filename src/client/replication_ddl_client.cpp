@@ -1422,7 +1422,7 @@ void replication_ddl_client::end_meta_request(const rpc_response_task_ptr &callb
                                               dsn::message_ex *resp)
 {
     if (err != dsn::ERR_OK && retry_times < 2) {
-        // from _meta_server
+        // TODO(ip): from _meta_server
         rpc_address addr;
         rpc::call(addr,
                   request,

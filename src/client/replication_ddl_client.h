@@ -262,7 +262,7 @@ private:
 
         rpc_response_task_ptr task = ::dsn::rpc::create_rpc_response_task(
             msg, nullptr, empty_rpc_handler, reply_thread_hash);
-        // TODO from _meta_server
+        // TODO(ip): from _meta_server
         rpc_address addr;
         rpc::call(addr,
                   msg,
@@ -282,7 +282,7 @@ private:
         static constexpr int MAX_RETRY = 2;
         error_code err = ERR_UNKNOWN;
         for (int retry = 0; retry < MAX_RETRY; retry++) {
-            // TODO from _meta_server
+            // TODO(ip): from _meta_server
             rpc_address addr;
             task_ptr task = rpc.call(
                 addr, &_tracker, [&err](error_code code) { err = code; }, reply_thread_hash);
@@ -307,7 +307,7 @@ private:
         dsn::task_tracker tracker;
         error_code err = ERR_UNKNOWN;
         for (auto &rpc : rpcs) {
-            // TODO: from rpc.first
+            // TODO(ip): from rpc.first
             rpc_address addr;
             rpc.second.call(addr, &tracker, [&err, &resps, &rpcs, &rpc](error_code code) mutable {
                 err = code;

@@ -119,7 +119,7 @@ void partition_resolver::call_task(const rpc_response_task_ptr &t)
                     }
                     hdr.gpid = result.pid;
                 }
-                // TODO: from result.address
+                // TODO(ip): from result.address
                 rpc_address addr;
                 dsn_rpc_call(addr, t.get());
             },

@@ -394,13 +394,9 @@ inline void json_encode(JsonWriter &out, const dsn::host_port &hp)
 }
 inline bool json_decode(const dsn::json::JsonObject &in, dsn::host_port &hp)
 {
-    std::string rpc_address_string;
-    dverify(json_decode(in, rpc_address_string));
-    if (rpc_address_string == "invalid address") {
-        return true;
-    }
-    // TODO(yingchun): take care
-    return !rpc_address_string.empty();
+    std::string host_port_str;
+    dverify(json_decode(in, host_port_str));
+    return hp.parse_string(host_port_str).is_ok();
 }
 
 inline void json_encode(JsonWriter &out, const dsn::partition_configuration &config);

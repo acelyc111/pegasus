@@ -72,7 +72,7 @@ public:
     const dsn::host_port_group &get_meta_server() const { return _meta_server; }
 
 protected:
-    partition_resolver(const host_port_group& meta_server, const char *app_name)
+    partition_resolver(const host_port_group &meta_server, const char *app_name)
         : _app_name(app_name), _meta_server(meta_server)
     {
     }

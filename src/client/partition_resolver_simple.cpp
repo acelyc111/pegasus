@@ -248,7 +248,7 @@ task_ptr partition_resolver_simple::query_config(int partition_index, int timeou
     }
     marshall(msg, req);
 
-    // TODO: from _meta_server
+    // TODO(ip): from _meta_server
     rpc_address addr;
     return rpc::call(
         addr,

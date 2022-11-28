@@ -1237,7 +1237,7 @@ void pegasus_client_impl::async_get_unordered_scanners(
 
     configuration_query_by_index_request req;
     req.app_name = _app_name;
-    // TODO from _meta_server
+    // TODO(ip): from _meta_server
     rpc_address addr;
     ::dsn::rpc::call(addr,
                      RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX,
