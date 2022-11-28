@@ -572,16 +572,16 @@ void failure_detector::send_beacon(const ::dsn::host_port &target, uint64_t time
     beacon.time = time;
     beacon.from_addr = dsn_primary_address();
     // TODO(yingchun): use FQDN
-    beacon.from_host_port = host_port();
+    beacon.host_port_from = dsn_primary_host_port();
     // TODO(yingchun): use rpc_address
     //    beacon.to_addr = target;
-    beacon.to_host_port = target;
+    beacon.host_port_to = target;
     beacon.__set_start_time(static_cast<int64_t>(dsn::utils::process_start_millis()));
 
     LOG_INFO_F(
         "send ping message, from[{}], to[{}], time[{}]", beacon.from_addr, beacon.to_addr, time);
 
-    // TODO(yingchun): resolve to rpc_address
+    // TODO(ip): resolve to rpc_address
     ::dsn::rpc_address addr; // from target
     ::dsn::rpc::call(addr,
                      RPC_FD_FAILURE_DETECTOR_PING,

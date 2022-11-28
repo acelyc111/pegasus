@@ -54,14 +54,17 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
                                                        const fd::beacon_ack &ack,
                                                        void *)
 {
-    // TODO(yingchun): 1. this_node_host_port and primary_node_host_port not print. 2. add
+    // TODO(yingchun): 1. host_port_this_node and host_port_primary_node not print. 2. add
     // to_string() for beacon_ack.
     LOG_INFO_F("end ping result, error[{}], time[{}], ack.this_node[{}], ack.primary_node[{}], "
-               "ack.is_master[{}], ack.allowed[{}]",
+               "ack.host_port_this_node[{}], ack.host_port_primary_node[{}], ack.is_master[{}], "
+               "ack.allowed[{}]",
                err,
                ack.time,
                ack.this_node,
                ack.primary_node,
+               ack.host_port_this_node,
+               ack.host_port_primary_node,
                ack.is_master ? "true" : "false",
                ack.allowed ? "true" : "false");
 

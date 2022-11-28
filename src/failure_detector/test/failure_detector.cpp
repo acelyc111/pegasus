@@ -123,8 +123,8 @@ public:
         else {
             LOG_DEBUG("ignore on ping, beacon msg, time[%" PRId64 "], from[%s], to[%s]",
                       beacon.time,
-                      beacon.from_host_port.to_string(),
-                      beacon.to_host_port.to_string());
+                      beacon.host_port_from.to_string(),
+                      beacon.host_port_to.to_string());
         }
     }
 
@@ -635,8 +635,8 @@ TEST(fd, update_stability)
 
     dsn::rpc_replier<beacon_ack> r(create_fake_rpc_response());
     beacon_msg msg;
-    msg.from_host_port = host_port("localhost", 123);
-    msg.to_host_port = host_port("localhost", MPORT_START);
+    msg.host_port_from = host_port("localhost", 123);
+    msg.host_port_to = host_port("localhost", MPORT_START);
     msg.time = dsn_now_ms();
     msg.__isset.start_time = true;
     msg.start_time = 1000;
@@ -644,10 +644,10 @@ TEST(fd, update_stability)
     // first on ping
     fd->on_ping(msg, r);
     ASSERT_EQ(1, smap->size());
-    ASSERT_NE(smap->end(), smap->find(msg.from_host_port));
+    ASSERT_NE(smap->end(), smap->find(msg.host_port_from));
 
     replication::meta_server_failure_detector::worker_stability &ws =
-        smap->find(msg.from_host_port)->second;
+        smap->find(msg.host_port_from)->second;
     ASSERT_EQ(0, ws.unstable_restart_count);
     ASSERT_EQ(msg.start_time, ws.last_start_time_ms);
     ASSERT_TRUE(r.is_empty());
@@ -715,7 +715,7 @@ TEST(fd, update_stability)
     ASSERT_FALSE(r.is_empty());
 
     // reset stat
-    fd->reset_stability_stat(msg.from_host_port);
+    fd->reset_stability_stat(msg.host_port_from);
     ASSERT_EQ(msg.start_time, ws.last_start_time_ms);
     ASSERT_EQ(0, ws.unstable_restart_count);
 }

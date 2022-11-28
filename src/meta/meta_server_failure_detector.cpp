@@ -203,11 +203,11 @@ bool meta_server_failure_detector::update_stability_stat(const fd::beacon_msg &b
 {
     zauto_lock l(_map_lock);
     // TODO(yingchun): both
-    auto iter = _stablity.find(beacon.from_host_port);
+    auto iter = _stablity.find(beacon.host_port_from);
     //    auto iter = _stablity.find(beacon.from_addr);
     // TODO(yingchun): refactor if-statements
     if (iter == _stablity.end()) {
-        _stablity.emplace(beacon.from_host_port, worker_stability{beacon.start_time, 0});
+        _stablity.emplace(beacon.host_port_from, worker_stability{beacon.start_time, 0});
         return true;
     } else {
         worker_stability &w = iter->second;
@@ -260,7 +260,7 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
     fd::beacon_ack ack;
     ack.time = beacon.time;
     //    ack.this_node = beacon.to_addr;
-    ack.this_node_host_port = beacon.to_host_port;
+    ack.host_port_this_node = beacon.host_port_to;
     ack.allowed = true;
 
     if (beacon.__isset.start_time && !update_stability_stat(beacon)) {
@@ -271,11 +271,11 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
     dsn::host_port leader;
     if (!get_leader(&leader)) {
         ack.is_master = false;
-        ack.primary_node_host_port = leader;
+        ack.host_port_primary_node = leader;
         //        ack.primary_node = leader;
     } else {
         ack.is_master = true;
-        ack.primary_node_host_port = beacon.to_host_port;
+        ack.host_port_primary_node = beacon.host_port_to;
         //        ack.primary_node = beacon.to_addr;
         failure_detector::on_ping_internal(beacon, ack);
     }
@@ -284,9 +284,9 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
                "primary_node({})",
                ack.time,
                ack.is_master ? "true" : "false",
-               beacon.from_host_port,
-               ack.this_node_host_port,
-               ack.primary_node_host_port);
+               beacon.host_port_from,
+               ack.host_port_this_node,
+               ack.host_port_primary_node);
 
     reply(ack);
 }
