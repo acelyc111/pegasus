@@ -1344,7 +1344,8 @@ void server_state::list_apps(const configuration_list_apps_request &request,
     response.err = dsn::ERR_OK;
 }
 
-void server_state::send_proposal(const host_port& target, const configuration_update_request &proposal)
+void server_state::send_proposal(const host_port &target,
+                                 const configuration_update_request &proposal)
 {
     LOG_INFO("send proposal %s for gpid(%d.%d), ballot = %" PRId64 ", target = %s, node = %s",
              ::dsn::enum_to_string(proposal.type),
@@ -1379,33 +1380,38 @@ void server_state::request_check(const partition_configuration &old,
     switch (request.type) {
     case config_type::CT_ASSIGN_PRIMARY:
         CHECK_NE(old.host_port_primary, request.host_port_node);
-        CHECK(std::find(old.host_port_secondaries.begin(), old.host_port_secondaries.end(), request.host_port_node) ==
-                  old.host_port_secondaries.end(),
+        CHECK(std::find(old.host_port_secondaries.begin(),
+                        old.host_port_secondaries.end(),
+                        request.host_port_node) == old.host_port_secondaries.end(),
               "");
         break;
     case config_type::CT_UPGRADE_TO_PRIMARY:
         CHECK_NE(old.host_port_primary, request.host_port_node);
-        CHECK(std::find(old.host_port_secondaries.begin(), old.host_port_secondaries.end(), request.host_port_node) !=
-                  old.host_port_secondaries.end(),
+        CHECK(std::find(old.host_port_secondaries.begin(),
+                        old.host_port_secondaries.end(),
+                        request.host_port_node) != old.host_port_secondaries.end(),
               "");
         break;
     case config_type::CT_DOWNGRADE_TO_SECONDARY:
         CHECK_EQ(old.host_port_primary, request.host_port_node);
-        CHECK(std::find(old.host_port_secondaries.begin(), old.host_port_secondaries.end(), request.host_port_node) ==
-                  old.host_port_secondaries.end(),
+        CHECK(std::find(old.host_port_secondaries.begin(),
+                        old.host_port_secondaries.end(),
+                        request.host_port_node) == old.host_port_secondaries.end(),
               "");
         break;
     case config_type::CT_DOWNGRADE_TO_INACTIVE:
     case config_type::CT_REMOVE:
         CHECK(old.host_port_primary == request.host_port_node ||
-                  std::find(old.host_port_secondaries.begin(), old.host_port_secondaries.end(), request.host_port_node) !=
-                      old.host_port_secondaries.end(),
+                  std::find(old.host_port_secondaries.begin(),
+                            old.host_port_secondaries.end(),
+                            request.host_port_node) != old.host_port_secondaries.end(),
               "");
         break;
     case config_type::CT_UPGRADE_TO_SECONDARY:
         CHECK_NE(old.host_port_primary, request.host_port_node);
-        CHECK(std::find(old.host_port_secondaries.begin(), old.host_port_secondaries.end(), request.host_port_node) ==
-                  old.host_port_secondaries.end(),
+        CHECK(std::find(old.host_port_secondaries.begin(),
+                        old.host_port_secondaries.end(),
+                        request.host_port_node) == old.host_port_secondaries.end(),
               "");
         break;
     case config_type::CT_PRIMARY_FORCE_UPDATE_BALLOT:
@@ -1502,12 +1508,15 @@ void server_state::update_configuration_locally(
                 std::remove(pcs.hosts().begin(), pcs.hosts().end(), config_request->host_port_node);
             pcs.hosts().erase(it);
 
-            it = std::remove(pcs.workers().begin(), pcs.workers().end(), config_request->host_port_node);
+            it = std::remove(
+                pcs.workers().begin(), pcs.workers().end(), config_request->host_port_node);
             pcs.workers().erase(it);
         }
 
         auto it = _nodes.find(config_request->host_port_node);
-        CHECK(it != _nodes.end(), "invalid node address, address = {}", config_request->host_port_node);
+        CHECK(it != _nodes.end(),
+              "invalid node address, address = {}",
+              config_request->host_port_node);
         if (config_type::CT_REMOVE == config_request->type) {
             it->second.remove_partition(gpid, false);
         } else {
@@ -1792,7 +1801,7 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
     auto req = std::make_shared<configuration_update_request>();
     req->info = *app;
     req->type = config_type::CT_REMOVE;
-//    req->host_node = node;   // TODO(yingchun): make sure nobody use it
+    //    req->host_node = node;   // TODO(yingchun): make sure nobody use it
     req->config = app->partitions[pidx];
 
     config_context &cc = app->helpers->contexts[pidx];
@@ -1885,7 +1894,9 @@ void server_state::on_update_configuration(
         msg->release_ref();
         return;
     } else {
-        maintain_drops(cfg_request->config.host_port_last_drops, cfg_request->host_port_node, cfg_request->type);
+        maintain_drops(cfg_request->config.host_port_last_drops,
+                       cfg_request->host_port_node,
+                       cfg_request->type);
     }
 
     if (response.err != ERR_IO_PENDING) {
@@ -1915,11 +1926,10 @@ void server_state::on_partition_node_dead(std::shared_ptr<app_state> &app,
             if (!pc.host_port_primary.is_invalid()) {
                 downgrade_secondary_to_inactive(app, pidx, node);
             } else if (is_secondary(pc, node)) {
-                LOG_INFO_F(
-                    "gpid({}): secondary({}) is down, ignored it due to no primary for this "
-                    "partition available",
-                    pc.pid,
-                    node);
+                LOG_INFO_F("gpid({}): secondary({}) is down, ignored it due to no primary for this "
+                           "partition available",
+                           pc.pid,
+                           node);
             } else {
                 CHECK(false, "no primary/secondary on this node, node = {}", node);
             }
@@ -1929,7 +1939,7 @@ void server_state::on_partition_node_dead(std::shared_ptr<app_state> &app,
     }
 }
 
-void server_state::on_change_node_state(const host_port& node, bool is_alive)
+void server_state::on_change_node_state(const host_port &node, bool is_alive)
 {
     LOG_DEBUG_F("change node({}) state to {}", node, is_alive ? "alive" : "dead");
     zauto_write_lock l(_lock);
@@ -2297,8 +2307,10 @@ void server_state::on_start_recovery(const configuration_recovery_request &req,
              req.skip_bad_nodes ? "true" : "false",
              req.skip_lost_partitions ? "true" : "false");
 
-    resp.err = sync_apps_from_replica_nodes(
-        req.host_port_recovery_set, req.skip_bad_nodes, req.skip_lost_partitions, resp.hint_message);
+    resp.err = sync_apps_from_replica_nodes(req.host_port_recovery_set,
+                                            req.skip_bad_nodes,
+                                            req.skip_lost_partitions,
+                                            resp.hint_message);
     if (resp.err != dsn::ERR_OK) {
         LOG_ERROR("sync apps from replica nodes failed when do recovery, err = %s",
                   resp.err.to_string());
@@ -2451,7 +2463,8 @@ bool server_state::check_all_partitions()
         if (!add_secondary_proposed[i] && pc.host_port_secondaries.empty()) {
             configuration_proposal_action &action = add_secondary_actions[i];
             if (_add_secondary_enable_flow_control &&
-                add_secondary_running_nodes[action.host_port_node] >= _add_secondary_max_count_for_one_node) {
+                add_secondary_running_nodes[action.host_port_node] >=
+                    _add_secondary_max_count_for_one_node) {
                 // ignore
                 continue;
             }
@@ -2470,7 +2483,8 @@ bool server_state::check_all_partitions()
             gpid pid = add_secondary_gpids[i];
             partition_configuration &pc = *get_config(_all_apps, pid);
             if (_add_secondary_enable_flow_control &&
-                add_secondary_running_nodes[action.host_port_node] >= _add_secondary_max_count_for_one_node) {
+                add_secondary_running_nodes[action.host_port_node] >=
+                    _add_secondary_max_count_for_one_node) {
                 LOG_INFO(
                     "do not send %s proposal for gpid(%d.%d) for flow control reason, target = "
                     "%s, node = %s",
@@ -2573,10 +2587,13 @@ void server_state::check_consistency(const dsn::gpid &gpid)
     if (app.is_stateful) {
         if (config.host_port_primary.is_invalid() == false) {
             auto it = _nodes.find(config.host_port_primary);
-            CHECK(it != _nodes.end(), "invalid primary address, address = {}", config.host_port_primary);
+            CHECK(it != _nodes.end(),
+                  "invalid primary address, address = {}",
+                  config.host_port_primary);
             CHECK_EQ(it->second.served_as(gpid), partition_status::PS_PRIMARY);
-            CHECK(std::find(config.host_port_last_drops.begin(), config.host_port_last_drops.end(), config.host_port_primary) ==
-                      config.host_port_last_drops.end(),
+            CHECK(std::find(config.host_port_last_drops.begin(),
+                            config.host_port_last_drops.end(),
+                            config.host_port_primary) == config.host_port_last_drops.end(),
                   "primary shouldn't appear in last_drops, address = {}",
                   config.host_port_primary);
         }
@@ -2585,8 +2602,9 @@ void server_state::check_consistency(const dsn::gpid &gpid)
             auto it = _nodes.find(ep);
             CHECK(it != _nodes.end(), "invalid secondary address, address = {}", ep);
             CHECK_EQ(it->second.served_as(gpid), partition_status::PS_SECONDARY);
-            CHECK(std::find(config.host_port_last_drops.begin(), config.host_port_last_drops.end(), ep) ==
-                      config.host_port_last_drops.end(),
+            CHECK(std::find(config.host_port_last_drops.begin(),
+                            config.host_port_last_drops.end(),
+                            ep) == config.host_port_last_drops.end(),
                   "secondary shouldn't appear in last_drops, address = {}",
                   ep);
         }

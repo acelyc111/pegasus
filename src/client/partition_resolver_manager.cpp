@@ -34,8 +34,8 @@ namespace dsn {
 namespace replication {
 
 // TODO remove
-//template <typename T>
-//bool vector_equal(const std::vector<T> &a, const std::vector<T> &b)
+// template <typename T>
+// bool vector_equal(const std::vector<T> &a, const std::vector<T> &b)
 //{
 //    if (a.size() != b.size())
 //        return false;
@@ -50,8 +50,9 @@ namespace replication {
 //    return true;
 //}
 
-partition_resolver_ptr partition_resolver_manager::find_or_create(
-    const char *cluster_name, const host_port_group &meta_list, const char *app_name)
+partition_resolver_ptr partition_resolver_manager::find_or_create(const char *cluster_name,
+                                                                  const host_port_group &meta_list,
+                                                                  const char *app_name)
 {
     dsn::zauto_lock l(_lock);
     std::map<std::string, partition_resolver_ptr> &app_map = _resolvers[cluster_name];

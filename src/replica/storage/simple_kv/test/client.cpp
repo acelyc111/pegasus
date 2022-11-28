@@ -60,7 +60,10 @@ simple_kv_client_app::~simple_kv_client_app() { stop(); }
         return ::dsn::ERR_INVALID_PARAMETERS;
 
     std::vector<host_port> meta_servers;
-    CHECK(host_port::load_servers(std::string("meta_server"), std::string("server_list"), &meta_servers).is_ok(), "");
+    CHECK(host_port::load_servers(
+              std::string("meta_server"), std::string("server_list"), &meta_servers)
+              .is_ok(),
+          "");
     _meta_server_group.add_list(meta_servers);
 
     _simple_kv_client.reset(

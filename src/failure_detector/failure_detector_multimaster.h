@@ -49,22 +49,22 @@ public:
 
     // client side
     void on_master_disconnected(const std::vector<::dsn::host_port> &nodes) override;
-    void on_master_connected(const ::dsn::host_port& node) override;
+    void on_master_connected(const ::dsn::host_port &node) override;
 
     // server side
     void on_worker_disconnected(const std::vector<::dsn::host_port> &nodes) override
     {
         CHECK(false, "invalid execution flow");
     }
-    void on_worker_connected(const ::dsn::host_port& node) override
+    void on_worker_connected(const ::dsn::host_port &node) override
     {
         CHECK(false, "invalid execution flow");
     }
 
     ::dsn::host_port current_server_contact() const;
-    const dsn::host_port_group& get_servers() const { return _meta_servers; }
+    const dsn::host_port_group &get_servers() const { return _meta_servers; }
 
-    void set_leader_for_test(const dsn::host_port& hp);
+    void set_leader_for_test(const dsn::host_port &hp);
 
 private:
     dsn::host_port_group _meta_servers;

@@ -142,7 +142,8 @@ bool partition_guardian::from_proposals(meta_view &view,
         goto invalid_action;
     }
     if (!is_node_alive(*(view.nodes), action.host_port_target)) {
-        sprintf(reason, "action target(%s) is not alive", action.host_port_target.to_string().c_str());
+        sprintf(
+            reason, "action target(%s) is not alive", action.host_port_target.to_string().c_str());
         goto invalid_action;
     }
     if (!is_node_alive(*(view.nodes), action.host_port_node)) {
@@ -156,24 +157,29 @@ bool partition_guardian::from_proposals(meta_view &view,
 
     switch (action.type) {
     case config_type::CT_ASSIGN_PRIMARY:
-        is_action_valid = (action.host_port_node == action.host_port_target && pc.host_port_primary.is_invalid() &&
-                           !is_secondary(pc, action.host_port_node));
+        is_action_valid =
+            (action.host_port_node == action.host_port_target &&
+             pc.host_port_primary.is_invalid() && !is_secondary(pc, action.host_port_node));
         break;
     case config_type::CT_UPGRADE_TO_PRIMARY:
-        is_action_valid = (action.host_port_node == action.host_port_target && pc.host_port_primary.is_invalid() &&
-                           is_secondary(pc, action.host_port_node));
+        is_action_valid =
+            (action.host_port_node == action.host_port_target &&
+             pc.host_port_primary.is_invalid() && is_secondary(pc, action.host_port_node));
         break;
     case config_type::CT_ADD_SECONDARY:
     case config_type::CT_ADD_SECONDARY_FOR_LB:
-        is_action_valid = (is_primary(pc, action.host_port_target) && !is_secondary(pc, action.host_port_node));
+        is_action_valid =
+            (is_primary(pc, action.host_port_target) && !is_secondary(pc, action.host_port_node));
         is_action_valid = (is_action_valid && is_node_alive(*(view.nodes), action.host_port_node));
         break;
     case config_type::CT_DOWNGRADE_TO_INACTIVE:
     case config_type::CT_REMOVE:
-        is_action_valid = (is_primary(pc, action.host_port_target) && is_member(pc, action.host_port_node));
+        is_action_valid =
+            (is_primary(pc, action.host_port_target) && is_member(pc, action.host_port_node));
         break;
     case config_type::CT_DOWNGRADE_TO_SECONDARY:
-        is_action_valid = (action.host_port_target == action.host_port_node && is_primary(pc, action.host_port_target));
+        is_action_valid = (action.host_port_target == action.host_port_node &&
+                           is_primary(pc, action.host_port_target));
         break;
     default:
         is_action_valid = false;
@@ -224,8 +230,9 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
 
         for (int i = 0; i < pc.host_port_secondaries.size(); ++i) {
             node_state *ns = get_node_state(*(view.nodes), pc.host_port_secondaries[i], false);
-            CHECK_NOTNULL(
-                ns, "invalid secondary address, address = {}", pc.host_port_secondaries[i].to_string());
+            CHECK_NOTNULL(ns,
+                          "invalid secondary address, address = {}",
+                          pc.host_port_secondaries[i].to_string());
             if (!ns->alive())
                 continue;
 
@@ -329,7 +336,8 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
                           pc.host_port_last_drops.back());
             action.host_port_node = pc.host_port_last_drops.back();
         } else {
-            std::vector<dsn::host_port> nodes(pc.host_port_last_drops.end() - 2, pc.host_port_last_drops.end());
+            std::vector<dsn::host_port> nodes(pc.host_port_last_drops.end() - 2,
+                                              pc.host_port_last_drops.end());
             std::vector<dropped_replica> collected_info(2);
             bool ready = true;
 
@@ -342,8 +350,8 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
                 node_state *ns = get_node_state(*view.nodes, nodes[i], false);
                 if (ns == nullptr || !ns->alive()) {
                     ready = false;
-                    reason = "the last dropped node(" + nodes[i].to_string() +
-                             ") haven't come back yet";
+                    reason =
+                        "the last dropped node(" + nodes[i].to_string() + ") haven't come back yet";
                     LOG_WARNING("%s: don't select primary: %s", gpid_name, reason.c_str());
                 } else {
                     std::vector<dropped_replica>::iterator it = cc.find_from_dropped(nodes[i]);
@@ -394,19 +402,22 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
                     if (larger_pd >= pc.last_committed_decree && larger_pd >= larger_cd) {
                         if (gap1 != 0) {
                             // 1. choose node with larger ballot
-                            action.host_port_node = gap1 < 0 ? recent_dead.node : previous_dead.node;
+                            action.host_port_node =
+                                gap1 < 0 ? recent_dead.node : previous_dead.node;
                         } else if (gap2 != 0) {
                             // 2. choose node with larger last_committed_decree
-                            action.host_port_node = gap2 < 0 ? recent_dead.node : previous_dead.node;
+                            action.host_port_node =
+                                gap2 < 0 ? recent_dead.node : previous_dead.node;
                         } else {
                             // 3. choose node with larger last_prepared_decree
                             action.host_port_node = previous_dead.last_prepared_decree >
-                                                  recent_dead.last_prepared_decree
-                                              ? previous_dead.node
-                                              : recent_dead.node;
+                                                            recent_dead.last_prepared_decree
+                                                        ? previous_dead.node
+                                                        : recent_dead.node;
                         }
-                        LOG_INFO(
-                            "%s: select %s as a new primary", gpid_name, action.host_port_node.to_string());
+                        LOG_INFO("%s: select %s as a new primary",
+                                 gpid_name,
+                                 action.host_port_node.to_string());
                     } else {
                         char buf[1000];
                         sprintf(buf,
@@ -748,7 +759,7 @@ partition_guardian::ctrl_assign_secondary_black_list(const std::vector<std::stri
     for (const std::string &s : ip_ports) {
         dsn::host_port addr;
         if (!addr.parse_string(s).is_ok()) {
-//        if (!addr.from_string_ipv4(s.c_str())) {
+            //        if (!addr.from_string_ipv4(s.c_str())) {
             return invalid_arguments;
         }
         addr_list.insert(addr);

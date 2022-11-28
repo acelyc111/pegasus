@@ -1354,10 +1354,10 @@ void replica_stub::query_configuration_by_node()
              (int)req.stored_replicas.size());
 
     // TODO(yingchun): ip
-    const auto& target = _failure_detector->get_servers();
+    const auto &target = _failure_detector->get_servers();
     rpc_address addr; // from target
     _config_query_task =
-//        rpc::call(target,
+        //        rpc::call(target,
         rpc::call(addr,
                   msg,
                   &_tracker,
@@ -1561,10 +1561,10 @@ void replica_stub::remove_replica_on_meta_server(const app_info &info,
     ::dsn::marshall(msg, *request);
 
     // TODO(yingchun): rpc::call support to resolve
-//    rpc::call(_failure_detector->get_servers(),
-//              msg,
-//              &_tracker,
-//              [](error_code err, dsn::message_ex *, dsn::message_ex *) {});
+    //    rpc::call(_failure_detector->get_servers(),
+    //              msg,
+    //              &_tracker,
+    //              [](error_code err, dsn::message_ex *, dsn::message_ex *) {});
 }
 
 void replica_stub::on_meta_server_disconnected()
@@ -1592,7 +1592,8 @@ void replica_stub::on_meta_server_disconnected()
     }
 }
 
-// TODO(yingchun): replica_stub::close will wait all tasks to be finished, the following comment seems outdated?
+// TODO(yingchun): replica_stub::close will wait all tasks to be finished, the following comment
+// seems outdated?
 // this_ is used to hold a ref to replica_stub so we don't need to cancel the task on
 // replica_stub::close
 void replica_stub::on_meta_server_disconnected_scatter(replica_stub_ptr this_, gpid id)
@@ -2116,10 +2117,8 @@ void replica_stub::open_replica(
     // TODO: from _primary_address
     rpc_address addr;
     if (nullptr != group_check) {
-        rpc::call_one_way_typed(addr,
-                                RPC_LEARN_ADD_LEARNER,
-                                *group_check,
-                                group_check->config.pid.thread_hash());
+        rpc::call_one_way_typed(
+            addr, RPC_LEARN_ADD_LEARNER, *group_check, group_check->config.pid.thread_hash());
     } else if (nullptr != configuration_update) {
         rpc::call_one_way_typed(addr,
                                 RPC_CONFIG_PROPOSAL,
@@ -2764,7 +2763,7 @@ uint64_t replica_stub::gc_tcmalloc_memory(bool release_all)
 //
 // partition split
 //
-void replica_stub::create_child_replica(const host_port& primary_address,
+void replica_stub::create_child_replica(const host_port &primary_address,
                                         app_info app,
                                         ballot init_ballot,
                                         gpid child_gpid,

@@ -149,12 +149,13 @@ dsn::host_port diagnose_recommend(const ddd_partition_info &pinfo)
         return dsn::host_port();
 
     std::vector<dsn::host_port> last_two_nodes(pinfo.config.host_port_last_drops.end() - 2,
-                                                 pinfo.config.host_port_last_drops.end());
+                                               pinfo.config.host_port_last_drops.end());
     std::vector<ddd_node_info> last_dropped;
     for (auto &node : last_two_nodes) {
-        auto it = std::find_if(pinfo.dropped.begin(),
-                               pinfo.dropped.end(),
-                               [&node](const ddd_node_info &r) { return r.host_port_node == node; });
+        auto it =
+            std::find_if(pinfo.dropped.begin(),
+                         pinfo.dropped.end(),
+                         [&node](const ddd_node_info &r) { return r.host_port_node == node; });
         if (it->is_alive && it->is_collected)
             last_dropped.push_back(*it);
     }
@@ -173,7 +174,8 @@ dsn::host_port diagnose_recommend(const ddd_partition_info &pinfo)
 
         if (latest.last_committed_decree == secondary.last_committed_decree &&
             latest.last_committed_decree >= pinfo.config.last_committed_decree)
-            return latest.ballot >= secondary.ballot ? latest.host_port_node : secondary.host_port_node;
+            return latest.ballot >= secondary.ballot ? latest.host_port_node
+                                                     : secondary.host_port_node;
 
         if (latest.last_committed_decree > secondary.last_committed_decree &&
             latest.last_committed_decree >= pinfo.config.last_committed_decree)
@@ -267,9 +269,11 @@ bool ddd_diagnose(command_executor *e, shell_context *sc, arguments args)
         out << "    ----" << std::endl;
         dsn::host_port latest_dropped, secondary_latest_dropped;
         if (pinfo.config.host_port_last_drops.size() > 0)
-            latest_dropped = pinfo.config.host_port_last_drops[pinfo.config.host_port_last_drops.size() - 1];
+            latest_dropped =
+                pinfo.config.host_port_last_drops[pinfo.config.host_port_last_drops.size() - 1];
         if (pinfo.config.host_port_last_drops.size() > 1)
-            secondary_latest_dropped = pinfo.config.host_port_last_drops[pinfo.config.host_port_last_drops.size() - 2];
+            secondary_latest_dropped =
+                pinfo.config.host_port_last_drops[pinfo.config.host_port_last_drops.size() - 2];
         int j = 0;
         for (const ddd_node_info &n : pinfo.dropped) {
             char time_buf[30];

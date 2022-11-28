@@ -264,23 +264,31 @@ struct partition_configuration_stateless
 {
     partition_configuration &config;
     partition_configuration_stateless(partition_configuration &pc) : config(pc) {}
-    std::vector<dsn::host_port> &workers() { return config.host_port_last_drops; }  // TODO(yingchun): both
-    std::vector<dsn::host_port> &hosts() { return config.host_port_secondaries; }  // TODO(yingchun): both
+    std::vector<dsn::host_port> &workers()
+    {
+        return config.host_port_last_drops;
+    } // TODO(yingchun): both
+    std::vector<dsn::host_port> &hosts()
+    {
+        return config.host_port_secondaries;
+    } // TODO(yingchun): both
     bool is_host(const host_port &node) const
     {
         // TODO(yingchun): both
-//        return std::find(config.secondaries.begin(), config.secondaries.end(), node) !=
-//               config.secondaries.end();
-        return std::find(config.host_port_secondaries.begin(), config.host_port_secondaries.end(), node) !=
-               config.host_port_secondaries.end();
+        //        return std::find(config.secondaries.begin(), config.secondaries.end(), node) !=
+        //               config.secondaries.end();
+        return std::find(config.host_port_secondaries.begin(),
+                         config.host_port_secondaries.end(),
+                         node) != config.host_port_secondaries.end();
     }
     bool is_worker(const host_port &node) const
     {
         // TODO(yingchun): both
-//        return std::find(config.last_drops.begin(), config.last_drops.end(), node) !=
-//               config.last_drops.end();
-        return std::find(config.host_port_last_drops.begin(), config.host_port_last_drops.end(), node) !=
-               config.host_port_last_drops.end();
+        //        return std::find(config.last_drops.begin(), config.last_drops.end(), node) !=
+        //               config.last_drops.end();
+        return std::find(config.host_port_last_drops.begin(),
+                         config.host_port_last_drops.end(),
+                         node) != config.host_port_last_drops.end();
     }
     bool is_member(const host_port &node) const { return is_host(node) || is_worker(node); }
 };
@@ -441,7 +449,7 @@ struct meta_view
     node_mapper *nodes;
 };
 
-inline node_state *get_node_state(node_mapper &nodes, const host_port& addr, bool create_new)
+inline node_state *get_node_state(node_mapper &nodes, const host_port &addr, bool create_new)
 {
     node_state *ns = nullptr;
     if (nodes.find(addr) == nodes.end()) {
@@ -454,7 +462,7 @@ inline node_state *get_node_state(node_mapper &nodes, const host_port& addr, boo
     return ns;
 }
 
-inline bool is_node_alive(const node_mapper &nodes, const host_port& addr)
+inline bool is_node_alive(const node_mapper &nodes, const host_port &addr)
 {
     auto iter = nodes.find(addr);
     if (iter == nodes.end())

@@ -45,7 +45,7 @@ private:
     void parent_start_split(const group_check_request &request);
 
     // child replica initialize config and state info
-    void child_init_replica(gpid parent_gpid, const host_port& primary_address, ballot init_ballot);
+    void child_init_replica(gpid parent_gpid, const host_port &primary_address, ballot init_ballot);
 
     void parent_prepare_states(const std::string &dir);
 

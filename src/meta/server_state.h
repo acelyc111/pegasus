@@ -154,7 +154,7 @@ public:
     error_code restore_from_local_storage(const char *local_path);
 
     // TODO(yingchun): ip
-    void on_change_node_state(const host_port& node, bool is_alive);
+    void on_change_node_state(const host_port &node, bool is_alive);
     void on_propose_balancer(const configuration_balancer_request &request,
                              configuration_balancer_response &response);
     void on_start_recovery(const configuration_recovery_request &request,
@@ -257,13 +257,11 @@ private:
     void downgrade_secondary_to_inactive(std::shared_ptr<app_state> &app,
                                          int pidx,
                                          const host_port &node);
-    void downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
-                                   int pidx,
-                                   const host_port &address);
-    void on_partition_node_dead(std::shared_ptr<app_state> &app,
-                                int pidx,
-                                const dsn::host_port &node);
-    void send_proposal(const host_port& target, const configuration_update_request &proposal);
+    void
+    downgrade_stateless_nodes(std::shared_ptr<app_state> &app, int pidx, const host_port &address);
+    void
+    on_partition_node_dead(std::shared_ptr<app_state> &app, int pidx, const dsn::host_port &node);
+    void send_proposal(const host_port &target, const configuration_update_request &proposal);
     void send_proposal(const configuration_proposal_action &action,
                        const partition_configuration &pc,
                        const app_state &app);

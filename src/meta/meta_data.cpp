@@ -151,7 +151,7 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
                  "the ballot of server must not be invalid_ballot, node = {}",
                  server.node);
     // TODO(yingchun): ip to host
-//    pc.primary = server.node;
+    //    pc.primary = server.node;
     pc.host_port_primary = server.node;
     pc.ballot = server.ballot;
     pc.partition_flags = 0;
@@ -181,7 +181,8 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
             break;
         // similar to cc.drop_list, pc.last_drop is also a stack structure
         pc.host_port_last_drops.insert(pc.host_port_last_drops.begin(), iter->node);
-        LOG_INFO_F("construct for ({}), select {} into last_drops, ballot({}), committed_decree({}), prepare_decree({})",
+        LOG_INFO_F("construct for ({}), select {} into last_drops, ballot({}), "
+                   "committed_decree({}), prepare_decree({})",
                    pid,
                    iter->node,
                    iter->ballot,

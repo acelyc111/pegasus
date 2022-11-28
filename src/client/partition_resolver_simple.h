@@ -41,7 +41,7 @@ namespace replication {
 class partition_resolver_simple : public partition_resolver
 {
 public:
-    partition_resolver_simple(const host_port_group& meta_server, const char *app_name);
+    partition_resolver_simple(const host_port_group &meta_server, const char *app_name);
 
     virtual ~partition_resolver_simple();
 
@@ -112,7 +112,7 @@ private:
     // request_context_ptr rc);
     void end_request(request_context_ptr &&request,
                      error_code err,
-                     const host_port& addr,
+                     const host_port &addr,
                      bool called_by_timer = false) const;
     void on_timeout(request_context_ptr &&rc) const;
 

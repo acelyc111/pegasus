@@ -94,7 +94,7 @@ error_s host_port::load_servers(const string &section, const string &key, vector
     return parse_strings(comma_sep_addrs, hps);
 }
 
-bool remove_node(const host_port& node, /*inout*/ vector<host_port> &node_list)
+bool remove_node(const host_port &node, /*inout*/ vector<host_port> &node_list)
 {
     auto it = std::find(node_list.begin(), node_list.end(), node);
     if (it != node_list.end()) {
@@ -105,14 +105,14 @@ bool remove_node(const host_port& node, /*inout*/ vector<host_port> &node_list)
     }
 }
 
-host_port_group::host_port_group(const host_port_group& other)
+host_port_group::host_port_group(const host_port_group &other)
 {
     utils::auto_read_lock l(other._lock);
     _members = other._members;
     _leader_index = other._leader_index;
 }
 
-void host_port_group::add(const host_port& hp)
+void host_port_group::add(const host_port &hp)
 {
     CHECK(hp.initialized(), "host_port is not initialized");
     utils::auto_write_lock l(_lock);
@@ -123,14 +123,14 @@ void host_port_group::add(const host_port& hp)
     _members.push_back(hp);
 }
 
-void host_port_group::add_list(const std::vector<host_port>& hps)
+void host_port_group::add_list(const std::vector<host_port> &hps)
 {
-    for (const auto& hp : hps) {
+    for (const auto &hp : hps) {
         add(hp);
     }
 }
 
-host_port host_port_group::next(const host_port& hp) const
+host_port host_port_group::next(const host_port &hp) const
 {
     utils::auto_read_lock l(_lock);
     if (_members.empty()) {
@@ -151,7 +151,7 @@ host_port host_port_group::next(const host_port& hp) const
     return it == _members.end() ? _members[0] : *it;
 }
 
-void host_port_group::set_leader(const host_port& hp)
+void host_port_group::set_leader(const host_port &hp)
 {
     utils::auto_write_lock l(_lock);
     if (!hp.initialized()) {

@@ -240,7 +240,7 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
     mu->set_prepare_ts();
     mu->set_left_secondary_ack_count((unsigned int)_primary_states.membership.secondaries.size());
     // TODO(yingchun): both
-    for (const auto& hp : _primary_states.membership.host_port_secondaries) {
+    for (const auto &hp : _primary_states.membership.host_port_secondaries) {
         send_prepare_message(hp,
                              partition_status::PS_SECONDARY,
                              mu,
@@ -310,7 +310,7 @@ ErrOut:
     return;
 }
 
-void replica::send_prepare_message(const ::dsn::host_port& addr,
+void replica::send_prepare_message(const ::dsn::host_port &addr,
                                    partition_status::type status,
                                    const mutation_ptr &mu,
                                    int timeout_milliseconds,
@@ -592,7 +592,7 @@ void replica::on_prepare_reply(std::pair<mutation_ptr, partition_status::type> p
     CHECK_EQ_MSG(mu->data.header.ballot, get_ballot(), "{}: invalid mutation ballot", mu->name());
 
     // TODO(yingchun): carefully
-    const auto& addr = request->to_address;
+    const auto &addr = request->to_address;
     host_port node; // from addr
     partition_status::type st = _primary_states.get_node_status(node);
 

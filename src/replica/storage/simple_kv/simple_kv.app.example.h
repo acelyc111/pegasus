@@ -58,7 +58,8 @@ public:
         CHECK(meta.parse_string(args[2]).is_ok(), "");
         host_port_group meta_server_group;
         meta_server_group.add(meta);
-        _simple_kv_client.reset(new simple_kv_client(args[1].c_str(), meta_server_group, args[3].c_str()));
+        _simple_kv_client.reset(
+            new simple_kv_client(args[1].c_str(), meta_server_group, args[3].c_str()));
 
         _timer = ::dsn::tasking::enqueue_timer(LPC_SIMPLE_KV_TEST_TIMER,
                                                &_tracker,

@@ -79,14 +79,14 @@ public:
     {
         CHECK(false, "unsupported method");
     }
-    void on_master_connected(const host_port&) override { CHECK(false, "unsupported method"); }
+    void on_master_connected(const host_port &) override { CHECK(false, "unsupported method"); }
 
     // server side
     // it is in the protection of failure_detector::_lock
     void on_worker_disconnected(const std::vector<host_port> &nodes) override;
     // it is in the protection of failure_detector::_lock
-    void on_worker_connected(const ::dsn::host_port& node) override;
-    bool is_worker_connected(const ::dsn::host_port& node) const override
+    void on_worker_connected(const ::dsn::host_port &node) override;
+    bool is_worker_connected(const ::dsn::host_port &node) const override
     {
         // we treat all nodes not in the worker list alive in the first grace period.
         // For the reason, please consider this situation:
@@ -131,8 +131,8 @@ private:
 
 public:
     /* these two functions are for test */
-    meta_server_failure_detector(const host_port& leader_address, bool is_myself_leader);
-    void set_leader_for_test(const host_port& leader_address, bool is_myself_leader);
+    meta_server_failure_detector(const host_port &leader_address, bool is_myself_leader);
+    void set_leader_for_test(const host_port &leader_address, bool is_myself_leader);
     stability_map *get_stability_map_for_test();
 };
 }

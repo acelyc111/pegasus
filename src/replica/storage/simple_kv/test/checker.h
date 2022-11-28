@@ -63,10 +63,10 @@ public:
 
     bool check_replica_state(int primary_count, int secondary_count, int inactive_count);
 
-    std::string address_to_node_name(const host_port& addr);
+    std::string address_to_node_name(const host_port &addr);
     host_port node_name_to_address(const std::string &name);
 
-    void on_replica_state_change(const host_port& from,
+    void on_replica_state_change(const host_port &from,
                                  const replica_configuration &new_config,
                                  bool is_closing);
     void on_config_change(const app_mapper &new_config);
@@ -83,7 +83,7 @@ private:
     state_snapshot _last_states;
 
     std::map<std::string, dsn::host_port> _node_to_address; // address is primary_address()
-    std::map<int, std::string> _address_to_node;              // port is enough for key
+    std::map<int, std::string> _address_to_node;            // port is enough for key
 };
 
 class wrap_checker : public dsn::tools::checker

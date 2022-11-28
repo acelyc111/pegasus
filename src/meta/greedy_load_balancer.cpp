@@ -152,7 +152,7 @@ void greedy_load_balancer::score(meta_view view, double &primary_stddev, double 
 
 bool greedy_load_balancer::all_replica_infos_collected(const node_state &ns)
 {
-    const auto& n = ns.addr();
+    const auto &n = ns.addr();
     return ns.for_each_partition([this, &n](const dsn::gpid &pid) {
         config_context &cc = *get_config_context(*(t_global_view->apps), pid);
         if (cc.find_from_serving(n) == cc.serving.end()) {

@@ -121,7 +121,7 @@ void meta_http_service::get_app_handler(const http_request &req, http_response &
             // TODO(yingchun): both
             if (p.host_port_primary.initialized()) {
                 replica_count++;
-//                node_stat[p.primary].first++;
+                //                node_stat[p.primary].first++;
                 total_prim_count++;
             }
             replica_count += p.host_port_secondaries.size();
@@ -141,7 +141,8 @@ void meta_http_service::get_app_handler(const http_request &req, http_response &
             std::stringstream oss;
             oss << replica_count << "/" << p.max_replica_count;
             tp_details.append_data(oss.str());
-            tp_details.append_data((p.host_port_primary.initialized() ? "-" : p.host_port_primary.to_string()));
+            tp_details.append_data(
+                (p.host_port_primary.initialized() ? "-" : p.host_port_primary.to_string()));
             oss.str("");
             oss << "[";
             for (int j = 0; j < p.host_port_secondaries.size(); j++) {
@@ -395,15 +396,15 @@ void meta_http_service::list_node_handler(const http_request &req, http_response
                 const dsn::partition_configuration &p = response_app.partitions[i];
                 if (p.host_port_primary.initialized()) {
                     // TODO(yingchun): both
-//                    auto find = tmp_map.find(p.primary);
+                    //                    auto find = tmp_map.find(p.primary);
                     auto find = tmp_map.find(p.host_port_primary);
                     if (find != tmp_map.end()) {
                         find->second.primary_count++;
                     }
                 }
                 // TODO(yingchun): both
-//                for (int j = 0; j < p.secondaries.size(); j++) {
-//                    auto find = tmp_map.find(p.secondaries[j]);
+                //                for (int j = 0; j < p.secondaries.size(); j++) {
+                //                    auto find = tmp_map.find(p.secondaries[j]);
                 for (int j = 0; j < p.host_port_secondaries.size(); j++) {
                     auto find = tmp_map.find(p.host_port_secondaries[j]);
                     if (find != tmp_map.end()) {

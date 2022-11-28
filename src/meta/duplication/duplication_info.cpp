@@ -212,7 +212,9 @@ duplication_info_s_ptr duplication_info::decode_from_blob(dupid_t dup_id,
         return nullptr;
     }
     std::vector<host_port> meta_list;
-    if (!host_port::load_servers(duplication_constants::kClustersSectionName, info.remote, &meta_list).is_ok()) {
+    if (!host_port::load_servers(
+             duplication_constants::kClustersSectionName, info.remote, &meta_list)
+             .is_ok()) {
         return nullptr;
     }
 

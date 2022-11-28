@@ -243,8 +243,9 @@ void meta_service_test_app::update_configuration_test()
     state_validator validator1 = [pc0](const app_mapper &apps) {
         const dsn::partition_configuration *pc = get_config(apps, pc0.pid);
         return pc->ballot == pc0.ballot + 2 && pc->host_port_secondaries.size() == 1 &&
-               std::find(pc0.host_port_secondaries.begin(), pc0.host_port_secondaries.end(), pc->host_port_primary) !=
-                   pc0.host_port_secondaries.end();
+               std::find(pc0.host_port_secondaries.begin(),
+                         pc0.host_port_secondaries.end(),
+                         pc->host_port_primary) != pc0.host_port_secondaries.end();
     };
 
     // test kickoff secondary

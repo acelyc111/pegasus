@@ -33,7 +33,8 @@
 namespace dsn {
 namespace replication {
 
-partition_resolver_simple::partition_resolver_simple(const host_port_group& meta_server, const char *app_name)
+partition_resolver_simple::partition_resolver_simple(const host_port_group &meta_server,
+                                                     const char *app_name)
     : partition_resolver(meta_server, app_name),
       _app_id(-1),
       _app_partition_count(-1),
@@ -127,7 +128,7 @@ void partition_resolver_simple::on_timeout(request_context_ptr &&rc) const
 
 void partition_resolver_simple::end_request(request_context_ptr &&request,
                                             error_code err,
-                                            const host_port& addr,
+                                            const host_port &addr,
                                             bool called_by_timer) const
 {
     zauto_lock l(request->lock);

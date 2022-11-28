@@ -244,7 +244,7 @@ protected:
     const std::shared_ptr<app_state> _app;
     const app_mapper &_apps;
     node_mapper &_nodes;
-    const std::vector<dsn::host_port> &_address_vec;  // TODO(yingchun): rename
+    const std::vector<dsn::host_port> &_address_vec; // TODO(yingchun): rename
     const std::unordered_map<dsn::host_port, int> &_address_id;
     std::unordered_map<dsn::host_port, disk_load> _node_loads;
     std::vector<int> _partition_counts;

@@ -170,15 +170,13 @@ private:
     // if app is still in bulk load, resend bulk_load_request to primary after interval seconds
     void try_resend_bulk_load_request(const std::string &app_name, const gpid &pid);
 
-    void handle_app_downloading(const bulk_load_response &response,
-                                const host_port &primary_addr);
+    void handle_app_downloading(const bulk_load_response &response, const host_port &primary_addr);
 
     void handle_app_ingestion(const bulk_load_response &response, const host_port &primary_addr);
 
     // when app status is `succeed, `failed`, `canceled`, meta and replica should cleanup bulk load
     // states
-    void handle_bulk_load_finish(const bulk_load_response &response,
-                                 const host_port &primary_addr);
+    void handle_bulk_load_finish(const bulk_load_response &response, const host_port &primary_addr);
 
     void handle_app_pausing(const bulk_load_response &response, const host_port &primary_addr);
 

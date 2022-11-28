@@ -1267,7 +1267,7 @@ void replica::handle_learning_error(error_code err, bool is_local_error)
         is_local_error ? partition_status::PS_ERROR : partition_status::PS_INACTIVE);
 }
 
-error_code replica::handle_learning_succeeded_on_primary(const ::dsn::host_port& node,
+error_code replica::handle_learning_succeeded_on_primary(const ::dsn::host_port &node,
                                                          uint64_t learn_signature)
 {
     auto it = _primary_states.learners.find(node);
@@ -1368,7 +1368,8 @@ void replica::on_learn_completion_notification(const group_check_response &repor
                   report.host_port_node.to_string(),
                   enum_to_string(report.learner_status_));
     } else {
-        response.err = handle_learning_succeeded_on_primary(report.host_port_node, report.learner_signature);
+        response.err =
+            handle_learning_succeeded_on_primary(report.host_port_node, report.learner_signature);
         if (response.err != ERR_OK) {
             LOG_ERROR("%s: on_learn_completion_notification[%016" PRIx64 "]: learner = %s, "
                       "handle learning succeeded on primary failed, reply %s",

@@ -106,7 +106,8 @@ void primary_context::reset_membership(const partition_configuration &config, bo
         statuses[membership.host_port_primary] = partition_status::PS_PRIMARY;
     }
 
-    for (auto it = config.host_port_secondaries.begin(); it != config.host_port_secondaries.end(); ++it) {
+    for (auto it = config.host_port_secondaries.begin(); it != config.host_port_secondaries.end();
+         ++it) {
         statuses[*it] = partition_status::PS_SECONDARY;
         learners.erase(*it);
     }
@@ -127,15 +128,16 @@ void primary_context::get_replica_config(partition_status::type st,
     config.learner_signature = learner_signature;
 }
 
-bool primary_context::check_exist(const ::dsn::host_port& node, partition_status::type st)
+bool primary_context::check_exist(const ::dsn::host_port &node, partition_status::type st)
 {
     switch (st) {
     case partition_status::PS_PRIMARY:
         // TODO(yingchun): both
         return membership.host_port_primary == node;
     case partition_status::PS_SECONDARY:
-        return std::find(membership.host_port_secondaries.begin(), membership.host_port_secondaries.end(), node) !=
-               membership.host_port_secondaries.end();
+        return std::find(membership.host_port_secondaries.begin(),
+                         membership.host_port_secondaries.end(),
+                         node) != membership.host_port_secondaries.end();
     case partition_status::PS_POTENTIAL_SECONDARY:
         return learners.find(node) != learners.end();
     default:

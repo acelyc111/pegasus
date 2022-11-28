@@ -442,7 +442,8 @@ void policy_context::start_backup_partition_unlocked(gpid pid)
                 pid, cold_backup_constant::PROGRESS_FINISHED, dsn::host_port());
             return;
         }
-        partition_primary = app->partitions[pid.get_partition_index()].host_port_primary; // TODO(yingchun): both
+        partition_primary =
+            app->partitions[pid.get_partition_index()].host_port_primary; // TODO(yingchun): both
     }
     if (!partition_primary.initialized()) {
         LOG_WARNING_F("{}: partition {} doesn't have a primary now, retry to backup it later",

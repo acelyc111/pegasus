@@ -263,7 +263,7 @@ void meta_service::start_service()
 
     _alive_nodes_count->set(_alive_set.size());
 
-    for (const ::dsn::host_port& node : _alive_set) {
+    for (const ::dsn::host_port &node : _alive_set) {
         // sync alive set and the failure_detector
         _failure_detector->unregister_worker(node);
         _failure_detector->register_worker(node, true);

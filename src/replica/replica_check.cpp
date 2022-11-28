@@ -96,7 +96,7 @@ void replica::broadcast_group_check()
         if (it->first == _stub->_primary_address)
             continue;
 
-        const auto& addr = it->first;
+        const auto &addr = it->first;
         auto request = std::make_shared<group_check_request>();
 
         request->app = _app_info;

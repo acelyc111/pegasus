@@ -88,7 +88,7 @@ private:
         int32_t app_id;
         std::string app_name;
         std::vector<std::map<host_port, partition_status::type>> partitions;
-        std::map<host_port, uint32_t> replicas_count;  // TODO(yingchun): typedef
+        std::map<host_port, uint32_t> replicas_count; // TODO(yingchun): typedef
         bool operator<(const app_migration_info &another) const
         {
             if (app_id < another.app_id)

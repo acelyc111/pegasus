@@ -65,15 +65,15 @@ void duplication_sync_timer::run()
     _stub->_counter_dup_pending_mutations_count->set(pending_muts_cnt);
 
     duplication_sync_rpc rpc(std::move(req), RPC_CM_DUPLICATION_SYNC, 3_s);
-    const host_port_group& meta_servers(_stub->get_meta_servers());
+    const host_port_group &meta_servers(_stub->get_meta_servers());
     LOG_INFO_F("duplication_sync to meta({})", meta_servers);
 
     zauto_lock l(_lock);
     // TODO(yingchun): rpc::call support to resolve
-//    _rpc_task =
-//        rpc.call(meta_servers, &_stub->_tracker, [this, rpc](error_code err) mutable {
-//            on_duplication_sync_reply(err, rpc.response());
-//        });
+    //    _rpc_task =
+    //        rpc.call(meta_servers, &_stub->_tracker, [this, rpc](error_code err) mutable {
+    //            on_duplication_sync_reply(err, rpc.response());
+    //        });
 }
 
 void duplication_sync_timer::on_duplication_sync_reply(error_code err,

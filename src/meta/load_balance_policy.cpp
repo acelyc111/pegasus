@@ -86,11 +86,10 @@ bool calc_disk_load(node_mapper &nodes,
     }
 }
 
-std::unordered_map<dsn::host_port, disk_load>
-get_node_loads(const std::shared_ptr<app_state> &app,
-               const app_mapper &apps,
-               node_mapper &nodes,
-               bool only_primary)
+std::unordered_map<dsn::host_port, disk_load> get_node_loads(const std::shared_ptr<app_state> &app,
+                                                             const app_mapper &apps,
+                                                             node_mapper &nodes,
+                                                             bool only_primary)
 {
     std::unordered_map<dsn::host_port, disk_load> node_loads;
     for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
@@ -258,8 +257,8 @@ bool load_balance_policy::move_primary(std::unique_ptr<flow_path> path)
 
     int plan_moving = path->_flow.back();
     while (path->_prev[current] != 0) {
-        const host_port& from = address_vec[path->_prev[current]];
-        const host_port& to = address_vec[current];
+        const host_port &from = address_vec[path->_prev[current]];
+        const host_port &to = address_vec[current];
         if (!calc_disk_load(nodes, apps, path->_app->app_id, from, true, *prev_load)) {
             LOG_WARNING_F(
                 "stop move primary as some replica infos aren't collected, node({}), app({})",
@@ -539,8 +538,8 @@ void ford_fulkerson::update_decree(int node_id, const node_state &ns)
     ns.for_each_primary(_app->app_id, [&, this](const gpid &pid) {
         const partition_configuration &pc = _app->partitions[pid.get_partition_index()];
         // TODO(yingchun): both
-//        for (const auto &secondary : pc.secondaries) {
-//            auto i = _address_id.find(secondary);
+        //        for (const auto &secondary : pc.secondaries) {
+        //            auto i = _address_id.find(secondary);
         for (const auto &secondary : pc.host_port_secondaries) {
             auto i = _address_id.find(secondary);
             CHECK(i != _address_id.end(), "invalid secondary address, address = {}", secondary);
@@ -676,8 +675,8 @@ gpid copy_replica_operation::select_max_load_gpid(const partition_set *partition
 
 void copy_replica_operation::copy_once(gpid selected_pid, migration_list *result)
 {
-    const auto& from = _address_vec[*_ordered_address_ids.rbegin()];
-    const auto& to = _address_vec[*_ordered_address_ids.begin()];
+    const auto &from = _address_vec[*_ordered_address_ids.rbegin()];
+    const auto &to = _address_vec[*_ordered_address_ids.begin()];
 
     auto pc = _app->partitions[selected_pid.get_partition_index()];
     auto request = generate_balancer_request(_apps, pc, get_balance_type(), from, to);

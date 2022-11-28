@@ -314,7 +314,8 @@ void meta_partition_guardian_test::cure_test()
                               server_state::sStateHash);
     t->wait();
     PROPOSAL_FLAG_CHECK;
-    CONDITION_CHECK([&] { return !pc.host_port_primary.is_invalid() && pc.host_port_primary != last_addr; });
+    CONDITION_CHECK(
+        [&] { return !pc.host_port_primary.is_invalid() && pc.host_port_primary != last_addr; });
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     std::cerr << "Case: add secondary, and the message lost" << std::endl;
@@ -373,7 +374,8 @@ void meta_partition_guardian_test::cure_test()
                               server_state::sStateHash);
     t->wait();
     PROPOSAL_FLAG_CHECK;
-    CONDITION_CHECK([&] { return pc.host_port_secondaries.size() == 2 && is_secondary(pc, last_addr); });
+    CONDITION_CHECK(
+        [&] { return pc.host_port_secondaries.size() == 2 && is_secondary(pc, last_addr); });
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     std::cerr << "Case: add secondary, but the primary is removing another" << std::endl;
@@ -476,7 +478,8 @@ void meta_partition_guardian_test::cure_test()
                               server_state::sStateHash);
     t->wait();
     PROPOSAL_FLAG_CHECK;
-    CONDITION_CHECK([&] { return pc.host_port_secondaries.size() == 2 && is_secondary(pc, last_addr); });
+    CONDITION_CHECK(
+        [&] { return pc.host_port_secondaries.size() == 2 && is_secondary(pc, last_addr); });
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     std::cerr << "Case: add secondary, and the primary is dead" << std::endl;
@@ -800,7 +803,7 @@ void meta_partition_guardian_test::cure()
                 fake_request.config = the_app->partitions[i];
                 fake_request.type = action.type;
                 fake_request.host_port_node = action.host_port_node;
-//                fake_request.host_node = action.host_port_node;
+                //                fake_request.host_node = action.host_port_node;
 
                 guardian.reconfig({&app, &nodes}, fake_request);
                 check_nodes_loads(nodes);
@@ -848,15 +851,13 @@ void meta_partition_guardian_test::from_proposal_test()
     ASSERT_EQ(config_type::CT_INVALID, cpa.type);
 
     std::cerr << "Case 2: test invalid proposal: invalid target" << std::endl;
-    cpa2 =
-        new_proposal_action(dsn::host_port(), node_list[0], config_type::CT_UPGRADE_TO_PRIMARY);
+    cpa2 = new_proposal_action(dsn::host_port(), node_list[0], config_type::CT_UPGRADE_TO_PRIMARY);
     cc.lb_actions.assign_balancer_proposals({cpa2});
     ASSERT_FALSE(guardian.from_proposals(mv, p, cpa));
     ASSERT_EQ(config_type::CT_INVALID, cpa.type);
 
     std::cerr << "Case 3: test invalid proposal: invalid node" << std::endl;
-    cpa2 =
-        new_proposal_action(node_list[0], dsn::host_port(), config_type::CT_UPGRADE_TO_PRIMARY);
+    cpa2 = new_proposal_action(node_list[0], dsn::host_port(), config_type::CT_UPGRADE_TO_PRIMARY);
     cc.lb_actions.assign_balancer_proposals({cpa2});
     ASSERT_FALSE(guardian.from_proposals(mv, p, cpa));
     ASSERT_EQ(config_type::CT_INVALID, cpa.type);

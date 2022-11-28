@@ -394,14 +394,14 @@ void bulk_load_service::partition_bulk_load(const std::string &app_name, const g
     }
 
     // TODO(yingchun): both
-    const auto& primary_addr = pconfig.host_port_primary;
+    const auto &primary_addr = pconfig.host_port_primary;
     auto req = make_unique<bulk_load_request>();
     {
         zauto_read_lock l(_lock);
         const app_bulk_load_info &ainfo = _app_bulk_load_info[pid.get_app_id()];
         req->pid = pid;
         req->app_name = app_name;
-//        req->primary_addr = primary_addr;
+        //        req->primary_addr = primary_addr;
         req->host_port_primary_addr = primary_addr;
         req->remote_provider_name = ainfo.file_provider_type;
         req->cluster_name = ainfo.cluster_name;
@@ -435,7 +435,7 @@ void bulk_load_service::on_partition_bulk_load_reply(error_code err,
 {
     const std::string &app_name = request.app_name;
     const gpid &pid = request.pid;
-//    const rpc_address &primary_addr = request.primary_addr;
+    //    const rpc_address &primary_addr = request.primary_addr;
     const auto &primary_addr = request.host_port_primary_addr;
 
     if (err != ERR_OK) {
@@ -1241,7 +1241,7 @@ void bulk_load_service::partition_ingestion(const std::string &app_name, const g
         return;
     }
 
-    const auto& primary_addr = pconfig.host_port_primary;
+    const auto &primary_addr = pconfig.host_port_primary;
     ballot meta_ballot = pconfig.ballot;
     tasking::enqueue(LPC_BULK_LOAD_INGESTION,
                      _meta_svc->tracker(),
@@ -1285,10 +1285,8 @@ void bulk_load_service::send_ingestion_request(const std::string &app_name,
             on_partition_ingestion_reply(err, std::move(resp), app_name, pid, primary_addr);
         });
     _meta_svc->send_request(msg, primary_addr, rpc_callback);
-    LOG_INFO_F("send ingest_request to node({}), app({}) partition({})",
-               primary_addr,
-               app_name,
-               pid);
+    LOG_INFO_F(
+        "send ingest_request to node({}), app({}) partition({})", primary_addr, app_name, pid);
 }
 
 // ThreadPool: THREAD_POOL_DEFAULT

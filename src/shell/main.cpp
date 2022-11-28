@@ -640,7 +640,10 @@ static void freeHintsCallback(void *ptr) { sdsfree((sds)ptr); }
                                     "",
                                     "");
 
-    CHECK(dsn::host_port::load_servers(pegasus::PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &s_global_context.meta_list).is_ok(), "");
+    CHECK(dsn::host_port::load_servers(
+              pegasus::PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &s_global_context.meta_list)
+              .is_ok(),
+          "");
     CHECK(!s_global_context.meta_list.empty(), "");
     s_global_context.ddl_client =
         dsn::make_unique<dsn::replication::replication_ddl_client>(s_global_context.meta_list);

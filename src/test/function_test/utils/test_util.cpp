@@ -48,7 +48,8 @@ void test_util::SetUp()
 {
     std::vector<dsn::host_port> meta_servers;
     ASSERT_TRUE(
-        dsn::host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name_, &meta_servers).is_ok());
+        dsn::host_port::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name_, &meta_servers)
+            .is_ok());
     ASSERT_FALSE(meta_servers.empty());
 
     ddl_client_ = std::make_shared<replication_ddl_client>(meta_servers);

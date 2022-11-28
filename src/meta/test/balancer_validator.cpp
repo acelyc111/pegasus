@@ -114,7 +114,8 @@ static void check_cure(app_mapper &apps, node_mapper &nodes, ::dsn::partition_co
 
     ns = &nodes[act.host_port_node];
     pc.host_port_primary = act.host_port_node;
-    std::remove(pc.host_port_secondaries.begin(), pc.host_port_secondaries.end(), pc.host_port_primary);
+    std::remove(
+        pc.host_port_secondaries.begin(), pc.host_port_secondaries.end(), pc.host_port_primary);
 
     CHECK_EQ(ns->served_as(pc.pid), partition_status::PS_SECONDARY);
     ns->put_partition(pc.pid, true);
@@ -283,7 +284,7 @@ dsn::host_port get_rpc_address(const std::string &ip_port)
 {
     int splitter = ip_port.find_first_of(':');
     return host_port(ip_port.substr(0, splitter).c_str(),
-                       boost::lexical_cast<int>(ip_port.substr(splitter + 1)));
+                     boost::lexical_cast<int>(ip_port.substr(splitter + 1)));
 }
 
 static void load_apps_and_nodes(const char *file, app_mapper &apps, node_mapper &nodes)

@@ -44,7 +44,8 @@ public:
     // Note that <host> cannot be in IPv6 address notation.
     error_s parse_string(const std::string &str);
 
-    void reset() {
+    void reset()
+    {
         _host.clear();
         _port = 0;
     }
@@ -65,7 +66,7 @@ public:
     static error_s
     load_servers(const std::string &section, const std::string &key, std::vector<host_port> *hps);
 
-    host_port& operator=(const host_port& other)
+    host_port &operator=(const host_port &other)
     {
         _host = other._host;
         _port = other._port;
@@ -102,26 +103,22 @@ inline bool operator==(const host_port &hp1, const host_port &hp2)
     return hp1.port() == hp2.port() && hp1.host() == hp2.host();
 }
 
-inline bool operator!=(const host_port &hp1, const host_port &hp2)
-{
-    return !(hp1 == hp2);
-}
+inline bool operator!=(const host_port &hp1, const host_port &hp2) { return !(hp1 == hp2); }
 
-bool remove_node(
-    const host_port& node,
-    /*inout*/ std::vector<host_port> &node_list); // TODO(yingchun): WARN_UNUSED_RESULT
+bool remove_node(const host_port &node,
+                 /*inout*/ std::vector<host_port> &node_list); // TODO(yingchun): WARN_UNUSED_RESULT
 
 class host_port_group
 {
 public:
     host_port_group() = default;
-    host_port_group(const host_port_group& other);
-    void add(const host_port& hp);
-    void add_list(const std::vector<host_port>& hps);
-    host_port next(const host_port& hp) const;
+    host_port_group(const host_port_group &other);
+    void add(const host_port &hp);
+    void add_list(const std::vector<host_port> &hps);
+    host_port next(const host_port &hp) const;
 
     void set_rand_leader();
-    void set_leader(const host_port& hp);
+    void set_leader(const host_port &hp);
     host_port leader() const;
 
     std::string to_string() const;
@@ -134,10 +131,7 @@ public:
         return hps1 == hps2;
     }
 
-    inline bool operator!=(const host_port_group &other) const
-    {
-        return !(*this == other);
-    }
+    inline bool operator!=(const host_port_group &other) const { return !(*this == other); }
 
     friend std::ostream &operator<<(std::ostream &os, const host_port_group &hpg)
     {
@@ -156,7 +150,8 @@ namespace std {
 template <>
 struct hash<::dsn::host_port>
 {
-    size_t operator()(const ::dsn::host_port& hp) const {
+    size_t operator()(const ::dsn::host_port &hp) const
+    {
         return std::hash<std::string>()(hp.host()) ^ hp.port();
     }
 };

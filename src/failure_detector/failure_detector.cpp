@@ -113,7 +113,7 @@ void failure_detector::stop()
     _workers.clear();
 }
 
-void failure_detector::register_master(const ::dsn::host_port& target)
+void failure_detector::register_master(const ::dsn::host_port &target)
 {
     bool setup_timer = false;
 
@@ -156,9 +156,8 @@ bool failure_detector::switch_master(const ::dsn::host_port &from,
     auto it = _masters.find(from);
     if (it != _masters.end()) {
         if (_masters.find(to) != _masters.end()) {
-            LOG_WARNING_F("switch master failed as both are already registered, from[{}] to[{}]",
-                          from,
-                          to);
+            LOG_WARNING_F(
+                "switch master failed as both are already registered, from[{}] to[{}]", from, to);
             return false;
         }
 
@@ -180,8 +179,8 @@ bool failure_detector::switch_master(const ::dsn::host_port &from,
     } else {
         // TODO(yingchun): refactor to return early
         LOG_WARNING_F("switch master failed as from node is not registered yet, from[{}] to[{}]",
-                    from.to_string(),
-                    to.to_string());
+                      from.to_string(),
+                      to.to_string());
         return false;
     }
     return true;
@@ -189,12 +188,10 @@ bool failure_detector::switch_master(const ::dsn::host_port &from,
 
 bool failure_detector::is_time_greater_than(uint64_t ts, uint64_t base) { return ts > base; }
 
-void failure_detector::report(const ::dsn::host_port& node, bool is_master, bool is_connected)
+void failure_detector::report(const ::dsn::host_port &node, bool is_master, bool is_connected)
 {
-    LOG_INFO_F("{} {}connected: {}",
-               is_master ? "master" : "worker",
-               is_connected ? "" : "dis",
-               node);
+    LOG_INFO_F(
+        "{} {}connected: {}", is_master ? "master" : "worker", is_connected ? "" : "dis", node);
 }
 
 /*
@@ -301,13 +298,13 @@ void failure_detector::check_all_records()
     }
 }
 
-void failure_detector::add_allow_list(const ::dsn::host_port& node)
+void failure_detector::add_allow_list(const ::dsn::host_port &node)
 {
     zauto_lock l(_lock);
     _allow_list.insert(node);
 }
 
-bool failure_detector::remove_from_allow_list(const ::dsn::host_port& node)
+bool failure_detector::remove_from_allow_list(const ::dsn::host_port &node)
 {
     zauto_lock l(_lock);
     return _allow_list.erase(node) > 0;
@@ -315,7 +312,8 @@ bool failure_detector::remove_from_allow_list(const ::dsn::host_port& node)
 
 void failure_detector::set_allow_list(const std::vector<std::string> &replica_addrs)
 {
-    CHECK(!_is_started, "failure_detector is already started, the allow list should really not be modified");
+    CHECK(!_is_started,
+          "failure_detector is already started, the allow list should really not be modified");
 
     std::vector<host_port> nodes;
     for (auto &addr : replica_addrs) {
@@ -393,9 +391,7 @@ void failure_detector::on_ping_internal(const beacon_msg &beacon, /*out*/ beacon
             on_worker_connected(node);
         }
     } else {
-        LOG_INFO_F("now[{}] <= last_recv_time[{}]",
-                   now,
-                   itr->second.last_beacon_recv_time);
+        LOG_INFO_F("now[{}] <= last_recv_time[{}]", now, itr->second.last_beacon_recv_time);
     }
 }
 
@@ -428,7 +424,7 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
         _recent_beacon_fail_count->increment();
     }
 
-    const auto& itr = _masters.find(node);
+    const auto &itr = _masters.find(node);
     if (itr == _masters.end()) {
         LOG_WARNING_F("received beacon ack without corresponding master, ignore it, "
                       "remote_master[{}], local_worker[{}]",
@@ -465,9 +461,8 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
     if (!ack.is_master) {
         // TODO(yingchun): ip -> host:port
         const host_port primary_node; // from ack.primary_node
-        LOG_WARNING_F("node[{}] is not master, ack.primary_node[{}] is real master",
-                      node,
-                      primary_node);
+        LOG_WARNING_F(
+            "node[{}] is not master, ack.primary_node[{}] is real master", node, primary_node);
         return true;
     }
 
@@ -492,7 +487,7 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
     return true;
 }
 
-bool failure_detector::unregister_master(const ::dsn::host_port& node)
+bool failure_detector::unregister_master(const ::dsn::host_port &node)
 {
     zauto_lock l(_lock);
     auto it = _masters.find(node);
@@ -507,7 +502,7 @@ bool failure_detector::unregister_master(const ::dsn::host_port& node)
     }
 }
 
-bool failure_detector::is_master_connected(const ::dsn::host_port& node) const
+bool failure_detector::is_master_connected(const ::dsn::host_port &node) const
 {
     zauto_lock l(_lock);
     auto it = _masters.find(node);
@@ -517,7 +512,7 @@ bool failure_detector::is_master_connected(const ::dsn::host_port& node) const
         return false;
 }
 
-void failure_detector::register_worker(const ::dsn::host_port& target, bool is_connected)
+void failure_detector::register_worker(const ::dsn::host_port &target, bool is_connected)
 {
     /*
      * callers should use the fd::_lock necessarily
@@ -533,7 +528,7 @@ void failure_detector::register_worker(const ::dsn::host_port& target, bool is_c
     }
 }
 
-bool failure_detector::unregister_worker(const ::dsn::host_port& node)
+bool failure_detector::unregister_worker(const ::dsn::host_port &node)
 {
     /*
      * callers should use the fd::_lock necessarily
@@ -561,7 +556,7 @@ void failure_detector::clear_workers()
     _workers.clear();
 }
 
-bool failure_detector::is_worker_connected(const ::dsn::host_port& node) const
+bool failure_detector::is_worker_connected(const ::dsn::host_port &node) const
 {
     zauto_lock l(_lock);
     auto it = _workers.find(node);
@@ -571,7 +566,7 @@ bool failure_detector::is_worker_connected(const ::dsn::host_port& node) const
         return false;
 }
 
-void failure_detector::send_beacon(const ::dsn::host_port& target, uint64_t time)
+void failure_detector::send_beacon(const ::dsn::host_port &target, uint64_t time)
 {
     beacon_msg beacon;
     beacon.time = time;
@@ -579,17 +574,15 @@ void failure_detector::send_beacon(const ::dsn::host_port& target, uint64_t time
     // TODO(yingchun): use FQDN
     beacon.from_host_port = host_port();
     // TODO(yingchun): use rpc_address
-//    beacon.to_addr = target;
+    //    beacon.to_addr = target;
     beacon.to_host_port = target;
     beacon.__set_start_time(static_cast<int64_t>(dsn::utils::process_start_millis()));
 
-    LOG_INFO_F("send ping message, from[{}], to[{}], time[{}]",
-               beacon.from_addr,
-               beacon.to_addr,
-               time);
+    LOG_INFO_F(
+        "send ping message, from[{}], to[{}], time[{}]", beacon.from_addr, beacon.to_addr, time);
 
     // TODO(yingchun): resolve to rpc_address
-    ::dsn::rpc_address addr;  // from target
+    ::dsn::rpc_address addr; // from target
     ::dsn::rpc::call(addr,
                      RPC_FD_FAILURE_DETECTOR_PING,
                      beacon,

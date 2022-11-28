@@ -159,7 +159,7 @@ public:
     replication_options &options() { return _options; }
     const replication_options &options() const { return _options; }
     bool is_connected() const { return NS_Connected == _state; }
-    const host_port_group& get_meta_servers() const { return _failure_detector->get_servers(); }
+    const host_port_group &get_meta_servers() const { return _failure_detector->get_servers(); }
     host_port primary_address() const { return _primary_address; }
 
     std::string get_replica_dir(const char *app_type, gpid id, bool create_new = true);
@@ -187,7 +187,7 @@ public:
 
     // TODO(yingchun): ip
     // called by parent partition, executed by child partition
-    void create_child_replica(const host_port& primary_address,
+    void create_child_replica(const host_port &primary_address,
                               app_info app,
                               ballot init_ballot,
                               gpid child_gpid,
@@ -351,7 +351,7 @@ private:
 
     mutation_log_ptr _log;
     ::dsn::host_port _primary_address;
-    char _primary_address_str[64];  // TODO: length
+    char _primary_address_str[64]; // TODO: length
 
     std::shared_ptr<dsn::dist::slave_failure_detector_with_multimaster> _failure_detector;
     mutable zlock _state_lock;

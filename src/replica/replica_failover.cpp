@@ -56,7 +56,7 @@ void replica::handle_local_failure(error_code error)
 }
 
 void replica::handle_remote_failure(partition_status::type st,
-                                    const ::dsn::host_port& node,
+                                    const ::dsn::host_port &node,
                                     error_code error,
                                     const std::string &caused_by)
 {

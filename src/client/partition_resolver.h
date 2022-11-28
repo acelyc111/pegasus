@@ -40,9 +40,7 @@ class partition_resolver : public ref_counter
 {
 public:
     static dsn::ref_ptr<partition_resolver>
-    get_resolver(const char *cluster_name,
-                 const host_port_group &meta_list,
-                 const char *app_name);
+    get_resolver(const char *cluster_name, const host_port_group &meta_list, const char *app_name);
 
     template <typename TReq, typename TCallback>
     dsn::rpc_response_task_ptr call_op(dsn::task_code code,
@@ -71,7 +69,7 @@ public:
 
     std::string get_app_name() const { return _app_name; }
 
-    const dsn::host_port_group& get_meta_server() const { return _meta_server; }
+    const dsn::host_port_group &get_meta_server() const { return _meta_server; }
 
 protected:
     partition_resolver(host_port_group meta_server, const char *app_name)

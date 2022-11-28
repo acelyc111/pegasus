@@ -75,7 +75,7 @@ public:
         if (pc.host_port_primary.is_invalid()) {
             if (pc.host_port_secondaries.size() > 0) {
                 // TODO(yingchun): both
-//                action.node = pc.secondaries[0];
+                //                action.node = pc.secondaries[0];
                 action.host_port_node = pc.host_port_secondaries[0];
                 for (unsigned int i = 1; i < pc.host_port_secondaries.size(); ++i) {
                     if (pc.host_port_secondaries[i] < action.host_port_node) {
@@ -92,7 +92,7 @@ public:
                                  server_load_balancer::primary_comparator(*view.nodes),
                                  sort_result);
                 // TODO(yingchun): both
-//                action.node = sort_result[0];
+                //                action.node = sort_result[0];
                 action.host_port_node = sort_result[0];
                 action.type = config_type::CT_ASSIGN_PRIMARY;
                 result = pc_status::ill;
@@ -101,17 +101,17 @@ public:
             // DDD
             else {
                 // TODO(yingchun): both
-//                action.node = *pc.last_drops.rbegin();
+                //                action.node = *pc.last_drops.rbegin();
                 action.host_port_node = *pc.host_port_last_drops.rbegin();
                 action.type = config_type::CT_ASSIGN_PRIMARY;
                 LOG_ERROR_F("{} enters DDD state, we are waiting for its last primary node {} to "
-                          "come back ...",
-                          pc.pid,
-                          action.host_port_node);
+                            "come back ...",
+                            pc.pid,
+                            action.host_port_node);
                 result = pc_status::dead;
             }
             // TODO(yingchun): both
-//            action.target = action.node;
+            //            action.target = action.node;
             action.host_port_target = action.host_port_node;
         }
 
@@ -123,13 +123,13 @@ public:
             for (auto &node : sort_result) {
                 if (!is_member(pc, node)) {
                     // TODO(yingchun): both
-//                    action.node = node;
+                    //                    action.node = node;
                     action.host_port_node = node;
                     break;
                 }
             }
             // TODO(yingchun): both
-//            action.target = pc.primary;
+            //            action.target = pc.primary;
             action.host_port_target = pc.host_port_primary;
             action.type = config_type::CT_ADD_SECONDARY;
             result = pc_status::ill;
@@ -270,7 +270,7 @@ void test_checker::check()
     }
 }
 
-void test_checker::on_replica_state_change(const host_port& from,
+void test_checker::on_replica_state_change(const host_port &from,
                                            const replica_configuration &new_config,
                                            bool is_closing)
 {
@@ -379,7 +379,7 @@ bool test_checker::check_replica_state(int primary_count, int secondary_count, i
     return p == primary_count && s == secondary_count && i == inactive_count;
 }
 
-std::string test_checker::address_to_node_name(const host_port& addr)
+std::string test_checker::address_to_node_name(const host_port &addr)
 {
     auto find = _address_to_node.find(addr.port());
     if (find != _address_to_node.end())

@@ -154,9 +154,9 @@ void meta_duplication_service::add_duplication(duplication_add_rpc rpc)
     }
 
     std::vector<host_port> meta_list;
-    if (!host_port::load_servers(duplication_constants::kClustersSectionName,
-                                 request.remote_cluster_name,
-                                 &meta_list).is_ok()) {
+    if (!host_port::load_servers(
+             duplication_constants::kClustersSectionName, request.remote_cluster_name, &meta_list)
+             .is_ok()) {
         response.err = ERR_INVALID_PARAMETERS;
         response.__set_hint(fmt::format("failed to find cluster[{}] address in config [{}]",
                                         request.remote_cluster_name,
@@ -335,7 +335,7 @@ void meta_duplication_service::create_follower_app_for_duplication(
                                  _meta_svc->get_meta_list_string());
 
     host_port_group meta_servers;
-//    meta_servers.assign_group(dup->follower_cluster_name.c_str());
+    //    meta_servers.assign_group(dup->follower_cluster_name.c_str());
     meta_servers.add_list(dup->follower_cluster_metas);
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_CREATE_APP);
@@ -384,7 +384,7 @@ void meta_duplication_service::check_follower_app_if_create_completed(
     const std::shared_ptr<duplication_info> &dup)
 {
     host_port_group meta_servers;
-//    meta_servers.assign_group(dup->follower_cluster_name.c_str());
+    //    meta_servers.assign_group(dup->follower_cluster_name.c_str());
     meta_servers.add_list(dup->follower_cluster_metas);
 
     configuration_query_by_index_request meta_config_request;

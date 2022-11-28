@@ -185,10 +185,10 @@ public:
 
     dsn::error_code ddd_diagnose(gpid pid, std::vector<ddd_partition_info> &ddd_partitions);
 
-    void query_disk_info(
-        const std::vector<dsn::host_port> &targets,
-        const std::string &app_name,
-        /*out*/ std::map<dsn::host_port, error_with<query_disk_info_response>> &resps);
+    void
+    query_disk_info(const std::vector<dsn::host_port> &targets,
+                    const std::string &app_name,
+                    /*out*/ std::map<dsn::host_port, error_with<query_disk_info_response>> &resps);
 
     error_with<start_bulk_load_response> start_bulk_load(const std::string &app_name,
                                                          const std::string &cluster_name,
@@ -284,10 +284,8 @@ private:
         for (int retry = 0; retry < MAX_RETRY; retry++) {
             // TODO from _meta_server
             rpc_address addr;
-            task_ptr task = rpc.call(addr,
-                                     &_tracker,
-                                     [&err](error_code code) { err = code; },
-                                     reply_thread_hash);
+            task_ptr task = rpc.call(
+                addr, &_tracker, [&err](error_code code) { err = code; }, reply_thread_hash);
             task->wait();
             if (err == ERR_OK) {
                 break;
@@ -311,18 +309,16 @@ private:
         for (auto &rpc : rpcs) {
             // TODO: from rpc.first
             rpc_address addr;
-            rpc.second.call(
-                addr, &tracker, [&err, &resps, &rpcs, &rpc](error_code code) mutable {
-                    err = code;
-                    if (err == dsn::ERR_OK) {
-                        resps.emplace(rpc.first, std::move(rpc.second.response()));
-                        rpcs.erase(rpc.first);
-                    } else {
-                        resps.emplace(
-                            rpc.first,
-                            std::move(error_s::make(err, "unable to send rpc to server")));
-                    }
-                });
+            rpc.second.call(addr, &tracker, [&err, &resps, &rpcs, &rpc](error_code code) mutable {
+                err = code;
+                if (err == dsn::ERR_OK) {
+                    resps.emplace(rpc.first, std::move(rpc.second.response()));
+                    rpcs.erase(rpc.first);
+                } else {
+                    resps.emplace(rpc.first,
+                                  std::move(error_s::make(err, "unable to send rpc to server")));
+                }
+            });
         }
         tracker.wait_outstanding_tasks();
 

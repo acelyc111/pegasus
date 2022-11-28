@@ -57,7 +57,7 @@ using tp_output_format = ::dsn::utils::table_printer::output_format;
 
 replication_ddl_client::replication_ddl_client(const std::vector<dsn::host_port> &meta_servers)
 {
-//    _meta_server.assign_group("meta-servers");
+    //    _meta_server.assign_group("meta-servers");
     _meta_server.add_list(meta_servers);
 }
 
@@ -102,7 +102,8 @@ dsn::error_code replication_ddl_client::wait_app_ready(const std::string &app_na
         int ready_count = 0;
         for (int i = 0; i < partition_count; i++) {
             const partition_configuration &pc = query_resp.partitions[i];
-            if (!pc.host_port_primary.is_invalid() && (pc.host_port_secondaries.size() + 1 >= max_replica_count)) {
+            if (!pc.host_port_primary.is_invalid() &&
+                (pc.host_port_secondaries.size() + 1 >= max_replica_count)) {
                 ready_count++;
             }
         }
@@ -749,8 +750,9 @@ dsn::error_code replication_ddl_client::list_app(const std::string &app_name,
             oss << replica_count << "/" << p.max_replica_count;
             tp_details.append_data(oss.str());
             tp_details.append_data(
-                (p.host_port_primary.is_invalid() ? "-" : host_name_resolve(resolve_ip,
-                                                                  p.host_port_primary.to_string())));
+                (p.host_port_primary.is_invalid()
+                     ? "-"
+                     : host_name_resolve(resolve_ip, p.host_port_primary.to_string())));
             oss.str("");
             oss << "[";
             // TODO (yingchun) join
@@ -885,8 +887,9 @@ dsn::error_code replication_ddl_client::do_recovery(const std::vector<host_port>
     auto req = std::make_shared<configuration_recovery_request>();
     req->host_port_recovery_set.clear();
     for (const dsn::host_port &node : replica_nodes) {
-        if (std::find(req->host_port_recovery_set.begin(), req->host_port_recovery_set.end(), node) !=
-            req->host_port_recovery_set.end()) {
+        if (std::find(req->host_port_recovery_set.begin(),
+                      req->host_port_recovery_set.end(),
+                      node) != req->host_port_recovery_set.end()) {
             out << "duplicate replica node " << node.to_string() << ", just ingore it" << std::endl;
         } else {
             req->host_port_recovery_set.push_back(node);
@@ -1680,8 +1683,8 @@ replication_ddl_client::query_partition_split(const std::string &app_name)
     return call_rpc_sync(query_split_rpc(std::move(req), RPC_CM_QUERY_PARTITION_SPLIT));
 }
 
-error_with<add_new_disk_response>
-replication_ddl_client::add_new_disk(const host_port &target_node, const std::string &disk_str)
+error_with<add_new_disk_response> replication_ddl_client::add_new_disk(const host_port &target_node,
+                                                                       const std::string &disk_str)
 {
     auto req = make_unique<add_new_disk_request>();
     req->disk_str = disk_str;

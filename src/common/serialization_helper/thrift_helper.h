@@ -459,15 +459,9 @@ inline uint32_t error_code::read(apache::thrift::protocol::TProtocol *iprot)
     return xfer;
 }
 
-inline uint32_t host_port::read(apache::thrift::protocol::TProtocol *iprot)
-{
-    return 0;
-}
+inline uint32_t host_port::read(apache::thrift::protocol::TProtocol *iprot) { return 0; }
 
-inline uint32_t host_port::write(apache::thrift::protocol::TProtocol *oprot) const
-{
-    return 0;
-}
+inline uint32_t host_port::write(apache::thrift::protocol::TProtocol *oprot) const { return 0; }
 
 inline uint32_t error_code::write(apache::thrift::protocol::TProtocol *oprot) const
 {

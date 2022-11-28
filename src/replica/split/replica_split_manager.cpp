@@ -100,7 +100,7 @@ void replica_split_manager::parent_start_split(
 
 // ThreadPool: THREAD_POOL_REPLICATION
 void replica_split_manager::child_init_replica(gpid parent_gpid,
-                                               const host_port& primary_address,
+                                               const host_port &primary_address,
                                                ballot init_ballot) // on child partition
 {
     FAIL_POINT_INJECT_F("replica_child_init_replica", [](dsn::string_view) {});
@@ -939,7 +939,7 @@ void replica_split_manager::parent_send_register_request(
         request.parent_config.ballot,
         request.child_config.ballot);
 
-    const auto& meta_address = _stub->_failure_detector->get_servers();
+    const auto &meta_address = _stub->_failure_detector->get_servers();
     std::unique_ptr<register_child_request> req = make_unique<register_child_request>(request);
     register_child_rpc rpc(std::move(req),
                            RPC_CM_REGISTER_CHILD_REPLICA,
@@ -1436,7 +1436,7 @@ void replica_split_manager::parent_send_notify_stop_request(
     split_status::type meta_split_status) // on primary parent
 {
     FAIL_POINT_INJECT_F("replica_parent_send_notify_stop_request", [](dsn::string_view) {});
-    const auto& meta_address = _stub->_failure_detector->get_servers();
+    const auto &meta_address = _stub->_failure_detector->get_servers();
     std::unique_ptr<notify_stop_split_request> req = make_unique<notify_stop_split_request>();
     req->app_name = _replica->_app_info.app_name;
     req->parent_gpid = get_gpid();
@@ -1469,9 +1469,8 @@ void replica_split_manager::query_child_state() // on primary parent
     request->pid = get_gpid();
     request->partition_count = _replica->_app_info.partition_count;
 
-    const auto& meta_address = _stub->_failure_detector->get_servers();
-    LOG_INFO_PREFIX("send query child partition state request to meta server({})",
-                    meta_address);
+    const auto &meta_address = _stub->_failure_detector->get_servers();
+    LOG_INFO_PREFIX("send query child partition state request to meta server({})", meta_address);
     query_child_state_rpc rpc(
         std::move(request), RPC_CM_QUERY_CHILD_STATE, 0_ms, 0, get_gpid().thread_hash());
     // TODO(yingchun): addr

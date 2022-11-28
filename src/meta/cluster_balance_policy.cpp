@@ -212,14 +212,16 @@ bool cluster_balance_policy::get_app_migration_info(std::shared_ptr<app_state> a
     for (auto i = 0; i < app->partitions.size(); ++i) {
         std::map<host_port, partition_status::type> pstatus_map;
         // TODO(yingchun): both
-//        pstatus_map[app->partitions[i].primary] = partition_status::PS_PRIMARY;
+        //        pstatus_map[app->partitions[i].primary] = partition_status::PS_PRIMARY;
         pstatus_map[app->partitions[i].host_port_primary] = partition_status::PS_PRIMARY;
-//        if (app->partitions[i].secondaries.size() != app->partitions[i].max_replica_count - 1) {
-        if (app->partitions[i].host_port_secondaries.size() != app->partitions[i].max_replica_count - 1) {
+        //        if (app->partitions[i].secondaries.size() != app->partitions[i].max_replica_count
+        //        - 1) {
+        if (app->partitions[i].host_port_secondaries.size() !=
+            app->partitions[i].max_replica_count - 1) {
             // partition is unhealthy
             return false;
         }
-//        for (const auto &addr : app->partitions[i].secondaries) {
+        //        for (const auto &addr : app->partitions[i].secondaries) {
         for (const auto &addr : app->partitions[i].host_port_secondaries) {
             pstatus_map[addr] = partition_status::PS_SECONDARY;
         }
@@ -486,8 +488,8 @@ bool cluster_balance_policy::apply_move(const move_info &move,
                                         /*out*/ cluster_migration_info &cluster_info)
 {
     int32_t app_id = move.pid.get_app_id();
-    const auto& source = move.source_node;
-    const auto& target = move.target_node;
+    const auto &source = move.source_node;
+    const auto &target = move.target_node;
     if (cluster_info.apps_skew.find(app_id) == cluster_info.apps_skew.end() ||
         cluster_info.replicas_count.find(source) == cluster_info.replicas_count.end() ||
         cluster_info.replicas_count.find(target) == cluster_info.replicas_count.end() ||
@@ -538,7 +540,7 @@ bool cluster_balance_policy::apply_move(const move_info &move,
     partition_configuration pc;
     pc.pid = move.pid;
     // TODO(yingchun): both
-//    pc.primary = primary_addr;
+    //    pc.primary = primary_addr;
     pc.host_port_primary = primary_addr;
     list[move.pid] = generate_balancer_request(*_global_view->apps, pc, move.type, source, target);
     _migration_result->emplace(

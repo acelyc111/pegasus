@@ -125,9 +125,9 @@ TEST(meta_data, collect_replica)
 
 #define CLEAR_REPLICA                                                                              \
     do {                                                                                           \
-        pc.host_port_primary.reset();                                                                  \
-        pc.host_port_secondaries.clear();                                                                    \
-        pc.host_port_last_drops.clear();                                                                     \
+        pc.host_port_primary.reset();                                                              \
+        pc.host_port_secondaries.clear();                                                          \
+        pc.host_port_last_drops.clear();                                                           \
     } while (false)
 
 #define CLEAR_DROP_LIST                                                                            \
@@ -368,9 +368,9 @@ TEST(meta_data, construct_replica)
 
 #define CLEAR_REPLICA                                                                              \
     do {                                                                                           \
-        pc.host_port_primary.reset();                                                                  \
-        pc.host_port_secondaries.clear();                                                                    \
-        pc.host_port_last_drops.clear();                                                                     \
+        pc.host_port_primary.reset();                                                              \
+        pc.host_port_secondaries.clear();                                                          \
+        pc.host_port_last_drops.clear();                                                           \
     } while (false)
 
 #define CLEAR_DROP_LIST                                                                            \

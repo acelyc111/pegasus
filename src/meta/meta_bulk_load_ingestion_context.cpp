@@ -43,8 +43,8 @@ void ingestion_context::partition_node_info::create(const partition_configuratio
     pid = config.pid;
     std::unordered_set<host_port> current_nodes;
     // TODO(yingchun): both
-//    current_nodes.insert(config.primary);
-//    for (const auto &secondary : config.secondaries) {
+    //    current_nodes.insert(config.primary);
+    //    for (const auto &secondary : config.secondaries) {
     current_nodes.insert(config.host_port_primary);
     for (const auto &secondary : config.host_port_secondaries) {
         current_nodes.insert(secondary);
