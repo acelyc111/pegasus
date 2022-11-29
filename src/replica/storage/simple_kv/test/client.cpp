@@ -48,7 +48,7 @@ using namespace dsn::replication::application;
 DEFINE_TASK_CODE(LPC_SIMPLE_KV_TEST, TASK_PRIORITY_COMMON, dsn::THREAD_POOL_DEFAULT)
 
 simple_kv_client_app::simple_kv_client_app(const service_app_info *info)
-    : ::dsn::service_app(info), _simple_kv_client(nullptr)
+    : ::dsn::service_app(info), _resolver(new dns_resolver()), _simple_kv_client(nullptr)
 {
 }
 
@@ -61,6 +61,8 @@ simple_kv_client_app::~simple_kv_client_app() { stop(); }
 
     CHECK(host_port_group::load_servers("meta_server", "server_list", &_meta_server_group).is_ok(),
           "");
+    _meta_server_group.set_rand_leader();
+
     _simple_kv_client.reset(
         new application::simple_kv_client("mycluster", _meta_server_group, "simple_kv.instance0"));
 
@@ -153,9 +155,7 @@ void simple_kv_client_app::send_config_to_meta(const host_port &receiver,
 
     dsn::marshall(req, request);
 
-    // TODO from _meta_server_group
-    dsn::rpc_address addr;
-    dsn_rpc_call_one_way(addr, req);
+    dsn_rpc_call_one_way(_resolver->resolve_address(_meta_server_group.leader()), req);
 }
 
 struct read_context

@@ -55,6 +55,7 @@ public:
 
         printf("%s %s %s\n", args[1].c_str(), args[2].c_str(), args[3].c_str());
         dsn::host_port meta;
+        // TODO: also support input IP
         CHECK(meta.parse_string(args[2]).is_ok(), "");
         host_port_group meta_server_group;
         meta_server_group.add(meta);
@@ -124,7 +125,6 @@ public:
 
 private:
     ::dsn::task_ptr _timer;
-    ::dsn::host_port _server;
     std::unique_ptr<simple_kv_client> _simple_kv_client;
     dsn::task_tracker _tracker;
 };

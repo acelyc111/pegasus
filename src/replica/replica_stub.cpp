@@ -104,7 +104,6 @@ replica_stub::replica_stub(replica_state_subscriber subscriber /*= nullptr*/,
     _failure_detector = nullptr;
     _state = NS_Disconnected;
     _log = nullptr;
-    _primary_address_str[0] = '\0';
     install_perf_counters();
 
     _max_allowed_write_size = dsn_config_get_value_uint64("replication",
@@ -474,8 +473,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
 {
     // TODO: ip or host
     _primary_address = dsn_primary_host_port();
-    strcpy(_primary_address_str, _primary_address.to_string().c_str());
-    LOG_INFO("primary_address = %s", _primary_address_str);
+    LOG_INFO_F("primary_address = {}", _primary_address);
 
     set_options(opts);
     LOG_INFO_F("meta_servers = {}", _options.meta_servers1);
@@ -891,7 +889,7 @@ void replica_stub::on_client_write(gpid id, dsn::message_ex *request)
     if (_verbose_client_log && request) {
         LOG_INFO("%s@%s: client = %s, code = %s, timeout = %d",
                  id.to_string(),
-                 _primary_address_str,
+                 _primary_address.to_string(),
                  request->header->from_address.to_string(),
                  request->header->rpc_name,
                  request->header->client.timeout_ms);
@@ -913,7 +911,7 @@ void replica_stub::on_client_read(gpid id, dsn::message_ex *request)
     if (_verbose_client_log && request) {
         LOG_INFO("%s@%s: client = %s, code = %s, timeout = %d",
                  id.to_string(),
-                 _primary_address_str,
+                 _primary_address.to_string(),
                  request->header->from_address.to_string(),
                  request->header->rpc_name,
                  request->header->client.timeout_ms);
@@ -931,7 +929,7 @@ void replica_stub::on_config_proposal(const configuration_update_request &propos
     if (!is_connected()) {
         LOG_WARNING("%s@%s: received config proposal %s for %s: not connected, ignore",
                     proposal.config.pid.to_string(),
-                    _primary_address_str,
+                    _primary_address.to_string(),
                     enum_to_string(proposal.type),
                     proposal.host_port_node.to_string());
         return;
@@ -939,7 +937,7 @@ void replica_stub::on_config_proposal(const configuration_update_request &propos
 
     LOG_INFO("%s@%s: received config proposal %s for %s",
              proposal.config.pid.to_string(),
-             _primary_address_str,
+             _primary_address.to_string(),
              enum_to_string(proposal.type),
              proposal.host_port_node.to_string());
 
@@ -1188,14 +1186,14 @@ void replica_stub::on_group_check(group_check_rpc rpc)
     if (!is_connected()) {
         LOG_WARNING("%s@%s: received group check: not connected, ignore",
                     request.config.pid.to_string(),
-                    _primary_address_str);
+                    _primary_address.to_string());
         return;
     }
 
     LOG_INFO("%s@%s: received group check, primary = %s, ballot = %" PRId64
              ", status = %s, last_committed_decree = %" PRId64,
              request.config.pid.to_string(),
-             _primary_address_str,
+             _primary_address.to_string(),
              request.config.host_port_primary.to_string(),
              request.config.ballot,
              enum_to_string(request.config.status),
@@ -1252,7 +1250,7 @@ void replica_stub::on_add_learner(const group_check_request &request)
     if (!is_connected()) {
         LOG_WARNING("%s@%s: received add learner: not connected, ignore",
                     request.config.pid.to_string(),
-                    _primary_address_str,
+                    _primary_address.to_string(),
                     request.config.host_port_primary.to_string());
         return;
     }
@@ -1260,7 +1258,7 @@ void replica_stub::on_add_learner(const group_check_request &request)
     LOG_INFO("%s@%s: received add learner, primary = %s, ballot = %" PRId64
              ", status = %s, last_committed_decree = %" PRId64,
              request.config.pid.to_string(),
-             _primary_address_str,
+             _primary_address.to_string(),
              request.config.host_port_primary.to_string(),
              request.config.ballot,
              enum_to_string(request.config.status),
@@ -1511,13 +1509,13 @@ void replica_stub::on_node_query_reply_scatter(replica_stub_ptr this_,
             LOG_INFO("%s@%s: replica not exists on replica server, which is primary, remove it "
                      "from meta server",
                      req.config.pid.to_string(),
-                     _primary_address_str);
+                     _primary_address.to_string());
             remove_replica_on_meta_server(req.info, req.config);
         } else {
             LOG_INFO(
                 "%s@%s: replica not exists on replica server, which is not primary, just ignore",
                 req.config.pid.to_string(),
-                _primary_address_str);
+                _primary_address.to_string());
         }
     }
 }
@@ -1631,7 +1629,7 @@ void replica_stub::response_client(gpid id,
             _counter_recent_write_fail_count->increment();
         LOG_ERROR("%s@%s: %s fail: client = %s, code = %s, timeout = %d, status = %s, error = %s",
                   id.to_string(),
-                  _primary_address_str,
+                  _primary_address.to_string(),
                   is_read ? "read" : "write",
                   request == nullptr ? "null" : request->header->from_address.to_string(),
                   request == nullptr ? "null" : request->header->rpc_name,
@@ -2007,7 +2005,7 @@ void replica_stub::open_replica(
         // process below
         LOG_INFO("%s@%s: start to load replica %s group check, dir = %s",
                  id.to_string(),
-                 _primary_address_str,
+                 _primary_address.to_string(),
                  group_check ? "with" : "without",
                  dir.c_str());
         rep = replica::load(this, dir.c_str());
@@ -2050,7 +2048,7 @@ void replica_stub::open_replica(
                   "{}@{}: cannot load replica({}.{}), ballot = {}, "
                   "last_committed_decree = {}, but it does not existed!",
                   id.to_string(),
-                  _primary_address_str,
+                  _primary_address.to_string(),
                   id.to_string(),
                   app.app_type.c_str(),
                   configuration_update->config.ballot,
@@ -2090,7 +2088,7 @@ void replica_stub::open_replica(
     if (rep == nullptr) {
         LOG_INFO("%s@%s: open replica failed, erase from opening replicas",
                  id.to_string(),
-                 _primary_address_str);
+                 _primary_address.to_string());
         zauto_write_lock l(_replicas_lock);
         CHECK_GT_MSG(_opening_replicas.erase(id),
                      0,
@@ -2573,7 +2571,7 @@ replica_stub::exec_command_on_replica(const std::vector<std::string> &args,
     std::stringstream query_state;
     query_state << processed << " processed, " << not_found << " not found";
     for (auto &kv : results) {
-        query_state << "\n    " << kv.first.to_string() << "@" << _primary_address_str;
+        query_state << "\n    " << kv.first.to_string() << "@" << _primary_address.to_string();
         if (kv.second.first != partition_status::PS_INVALID)
             query_state << "@" << (kv.second.first == partition_status::PS_PRIMARY ? "P" : "S");
         query_state << " : " << kv.second.second;
@@ -2908,7 +2906,7 @@ void replica_stub::on_bulk_load(bulk_load_rpc rpc)
     const bulk_load_request &request = rpc.request();
     bulk_load_response &response = rpc.response();
 
-    LOG_INFO_F("[{}@{}]: receive bulk load request", request.pid, _primary_address_str);
+    LOG_INFO_F("[{}@{}]: receive bulk load request", request.pid, _primary_address.to_string());
     replica_ptr rep = get_replica(request.pid);
     if (rep != nullptr) {
         rep->get_bulk_loader()->on_bulk_load(request, response);
@@ -2926,7 +2924,7 @@ void replica_stub::on_group_bulk_load(group_bulk_load_rpc rpc)
     LOG_INFO_F("[{}@{}]: received group bulk load request, primary = {}, ballot = {}, "
                "meta_bulk_load_status = {}",
                request.config.pid,
-               _primary_address_str,
+               _primary_address.to_string(),
                request.config.host_port_primary.to_string(),
                request.config.ballot,
                enum_to_string(request.meta_bulk_load_status));
@@ -2947,7 +2945,7 @@ void replica_stub::on_detect_hotkey(detect_hotkey_rpc rpc)
 
     LOG_INFO_F("[{}@{}]: received detect hotkey request, hotkey_type = {}, detect_action = {}",
                request.pid,
-               _primary_address_str,
+               _primary_address.to_string(),
                enum_to_string(request.type),
                enum_to_string(request.action));
 

@@ -47,6 +47,7 @@
 namespace dsn {
 
 class dns_resolver;
+class host_port;
 
 namespace replication {
 
@@ -77,7 +78,7 @@ class replica_split_manager;
 
 typedef std::unordered_map<gpid, replica_ptr> replicas;
 typedef std::function<void(
-    ::dsn::host_port /*from*/, const replica_configuration & /*new_config*/, bool /*is_closing*/)>
+    host_port /*from*/, const replica_configuration & /*new_config*/, bool /*is_closing*/)>
     replica_state_subscriber;
 
 class replica_stub;
@@ -353,8 +354,7 @@ private:
     closed_replicas _closed_replicas;
 
     mutation_log_ptr _log;
-    ::dsn::host_port _primary_address;
-    char _primary_address_str[64]; // TODO: length
+    host_port _primary_address;
 
     std::shared_ptr<dsn::dist::slave_failure_detector_with_multimaster> _failure_detector;
     mutable zlock _state_lock;

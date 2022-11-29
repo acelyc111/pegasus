@@ -35,8 +35,10 @@
 #include "consensus_types.h"
 #include "replica_admin_types.h"
 #include "replica/storage/simple_kv/simple_kv.client.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
+class dns_resolver;
 namespace replication {
 namespace test {
 
@@ -58,6 +60,7 @@ public:
                              const host_port &node);
 
 private:
+    std::unique_ptr<dns_resolver> _resolver;
     std::unique_ptr<application::simple_kv_client> _simple_kv_client;
     host_port_group _meta_server_group;
     host_port _service_addr;

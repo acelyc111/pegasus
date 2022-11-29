@@ -357,7 +357,7 @@ error_code replica_bulk_loader::start_download(const std::string &remote_dir,
     if (_stub->_bulk_load_downloading_count.load() >=
         _stub->_max_concurrent_bulk_load_downloading_count) {
         LOG_WARNING_PREFIX("node[{}] already has {} replica downloading, wait for next round",
-                           _stub->_primary_address_str,
+                           _stub->primary_address().to_string(),
                            _stub->_bulk_load_downloading_count.load());
         return ERR_BUSY;
     }
@@ -376,7 +376,7 @@ error_code replica_bulk_loader::start_download(const std::string &remote_dir,
     _status = bulk_load_status::BLS_DOWNLOADING;
     ++_stub->_bulk_load_downloading_count;
     LOG_INFO_PREFIX("node[{}] has {} replica executing downloading",
-                    _stub->_primary_address_str,
+                    _stub->primary_address().to_string(),
                     _stub->_bulk_load_downloading_count.load());
     _bulk_load_start_time_ms = dsn_now_ms();
     _stub->_counter_bulk_load_downloading_count->increment();
@@ -594,7 +594,7 @@ void replica_bulk_loader::try_decrease_bulk_load_download_count()
     --_stub->_bulk_load_downloading_count;
     _is_downloading.store(false);
     LOG_INFO_PREFIX("node[{}] has {} replica executing downloading",
-                    _stub->_primary_address_str,
+                    _stub->primary_address().to_string(),
                     _stub->_bulk_load_downloading_count.load());
 }
 
