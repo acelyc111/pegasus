@@ -49,17 +49,14 @@ typedef int64_t decree;
 #define invalid_offset (-1LL)
 #define invalid_signature 0
 
+// TODO: make sure now only operate on host_port
 inline bool is_primary(const partition_configuration &pc, const host_port &node)
 {
-    //    return node.initialized() && pc.primary == node;
     return node.initialized() && pc.host_port_primary == node;
 }
 
 inline bool is_secondary(const partition_configuration &pc, const host_port &node)
 {
-    //    return node.initialized() &&
-    //           std::find(pc.secondaries.begin(), pc.secondaries.end(), node) !=
-    //           pc.secondaries.end();
     return node.initialized() &&
            std::find(pc.host_port_secondaries.begin(), pc.host_port_secondaries.end(), node) !=
                pc.host_port_secondaries.end();
@@ -74,17 +71,12 @@ inline bool is_partition_config_equal(const partition_configuration &pc1,
                                       const partition_configuration &pc2)
 {
     // secondaries no need to be same order
-    //    for (const auto &node : pc1.secondaries) {
     for (const auto &node : pc1.host_port_secondaries) {
         if (!is_secondary(pc2, node)) {
             return false;
         }
     }
     // last_drops is not considered into equality check
-    //    return pc1.ballot == pc2.ballot && pc1.pid == pc2.pid &&
-    //           pc1.max_replica_count == pc2.max_replica_count && pc1.primary == pc2.primary &&
-    //           pc1.secondaries.size() == pc2.secondaries.size() &&
-    //           pc1.last_committed_decree == pc2.last_committed_decree;
     return pc1.ballot == pc2.ballot && pc1.pid == pc2.pid &&
            pc1.max_replica_count == pc2.max_replica_count &&
            pc1.host_port_primary == pc2.host_port_primary &&

@@ -265,8 +265,10 @@ public:
 
 struct partition_configuration_stateless
 {
+    // TODO: convert rpc_address to host_port
     partition_configuration &config;
     partition_configuration_stateless(partition_configuration &pc) : config(pc) {}
+    // TODO: make sure now only operate on host_port
     std::vector<host_port> &workers() { return config.host_port_last_drops; }
     std::vector<host_port> &hosts() { return config.host_port_secondaries; }
     bool is_host(const host_port &node) const
