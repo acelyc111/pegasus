@@ -32,6 +32,7 @@
 #include "meta/meta_service.h"
 #include "meta/meta_options.h"
 #include "meta/server_state.h"
+#include "runtime/rpc/dns_resolver.h"
 #include "utils/factory_store.h"
 #include "utils/fail_point.h"
 #include "utils/fmt_logging.h"
@@ -73,21 +74,22 @@ void meta_server_failure_detector::on_worker_disconnected(const std::vector<host
     _svc->set_node_state(nodes, false);
 }
 
-void meta_server_failure_detector::on_worker_connected(const ::dsn::host_port &node)
+void meta_server_failure_detector::on_worker_connected(const host_port &node)
 {
     _svc->set_node_state(std::vector<host_port>{node}, true);
 }
 
 bool meta_server_failure_detector::get_leader(host_port *leader)
 {
+    // TODO: use parameters instead of stream
     FAIL_POINT_INJECT_F("meta_server_failure_detector_get_leader", [leader](dsn::string_view str) {
-        /// the format of str is : true#{ip}:{port} or false#{ip}:{port}
+        /// the format of str is : true#{host}:{port} or false#{host}:{port}
         auto pos = str.find("#");
         // get leader addr
-        const auto &addr_part = str.substr(pos + 1, str.length() - pos - 1);
-        CHECK(leader->parse_string(addr_part.data()).is_ok(),
+        const auto &host_part = str.substr(pos + 1, str.length() - pos - 1);
+        CHECK(leader->parse_string(host_part.data()).is_ok(),
               "parse {} to host_port failed",
-              addr_part);
+              host_part);
 
         // get the return value which implies whether the current node is primary or not
         bool is_leader = true;
@@ -96,31 +98,32 @@ bool meta_server_failure_detector::get_leader(host_port *leader)
         return is_leader;
     });
 
-    dsn::host_port holder;
+    host_port holder;
     if (leader == nullptr) {
         leader = &holder;
     }
 
+    // TODO: refactor if-statements
     if (_is_leader.load()) {
         *leader = dsn_primary_host_port();
         return true;
-    } else if (_lock_svc == nullptr) {
+    }
+
+    if (_lock_svc == nullptr) {
         leader->reset();
         return false;
-    } else {
-        std::string lock_owner;
-        uint64_t version;
-        error_code err = _lock_svc->query_cache(_primary_lock_id, lock_owner, version);
-        if (err == dsn::ERR_OK && leader->parse_string(lock_owner).is_ok()) {
-            //        if (err == dsn::ERR_OK && leader->from_string_ipv4(lock_owner.c_str())) {
-            //            return (*leader) == dsn_primary_address();
-            return (*leader) == dsn_primary_host_port();
-        } else {
-            LOG_WARNING_F("query leader from cache got error({})", err);
-            leader->reset();
-            return false;
-        }
     }
+
+    std::string lock_owner;
+    uint64_t version;
+    error_code err = _lock_svc->query_cache(_primary_lock_id, lock_owner, version);
+    if (err == dsn::ERR_OK && leader->parse_string(lock_owner).is_ok()) {
+        return (*leader) == dsn_primary_host_port();
+    }
+
+    LOG_WARNING_F("query leader from cache got error({}), or bad format({})", err, lock_owner);
+    leader->reset();
+    return false;
 }
 
 DEFINE_TASK_CODE(LPC_META_SERVER_LEADER_LOCK_CALLBACK, TASK_PRIORITY_COMMON, fd::THREAD_POOL_FD)
@@ -203,10 +206,16 @@ void meta_server_failure_detector::leader_initialize(const std::string &lock_ser
 
 bool meta_server_failure_detector::update_stability_stat(const fd::beacon_msg &beacon)
 {
+    host_port from;
+    if (beacon.__isset.host_port_from) {
+        from = beacon.host_port_from;
+    } else {
+        CHECK(beacon.__isset.from_addr, "");
+        from = host_port(beacon.from_addr);
+    }
+
     zauto_lock l(_map_lock);
-    // TODO(yingchun): both
-    auto iter = _stablity.find(beacon.host_port_from);
-    //    auto iter = _stablity.find(beacon.from_addr);
+    auto iter = _stablity.find(from);
     // TODO(yingchun): refactor if-statements
     if (iter == _stablity.end()) {
         _stablity.emplace(beacon.host_port_from, worker_stability{beacon.start_time, 0});
@@ -257,12 +266,28 @@ bool meta_server_failure_detector::update_stability_stat(const fd::beacon_msg &b
 void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
                                            rpc_replier<fd::beacon_ack> &reply)
 {
-    // TODO(yingchuj): both
+    // TODO: should check beacon.host_port_to is current node?
+    host_port this_node_hp;
+    if (beacon.__isset.host_port_to) {
+        this_node_hp = beacon.host_port_to;
+    } else {
+        CHECK(beacon.__isset.to_addr, "");
+        // TODO: reverse resolve
+        this_node_hp = host_port(beacon.to_addr);
+    }
+
+    rpc_address this_node_addr;
+    if (beacon.__isset.to_addr) {
+        this_node_addr = beacon.to_addr;
+    } else {
+        CHECK(beacon.__isset.host_port_to, "");
+        this_node_addr = _dns_resolver->resolve_address(beacon.host_port_to);
+    }
 
     fd::beacon_ack ack;
     ack.time = beacon.time;
-    //    ack.this_node = beacon.to_addr;
-    ack.host_port_this_node = beacon.host_port_to;
+    ack.this_node = this_node_addr;
+    ack.host_port_this_node = this_node_hp;
     ack.allowed = true;
 
     if (beacon.__isset.start_time && !update_stability_stat(beacon)) {
@@ -270,25 +295,29 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
         return;
     }
 
-    dsn::host_port leader;
+    host_port leader;
     if (!get_leader(&leader)) {
         ack.is_master = false;
         ack.host_port_primary_node = leader;
-        //        ack.primary_node = leader;
+        ack.primary_node = _dns_resolver->resolve_address(leader);
     } else {
         ack.is_master = true;
-        ack.host_port_primary_node = beacon.host_port_to;
-        //        ack.primary_node = beacon.to_addr;
+        ack.host_port_primary_node = this_node_hp;
+        ack.primary_node = this_node_addr;
         failure_detector::on_ping_internal(beacon, ack);
     }
 
-    LOG_INFO_F("on_ping, beacon send time[{}], is_master({}), from_node({}), this_node({}), "
-               "primary_node({})",
-               ack.time,
-               ack.is_master ? "true" : "false",
-               beacon.host_port_from,
-               ack.host_port_this_node,
-               ack.host_port_primary_node);
+    LOG_INFO_F(
+        "on_ping, beacon send time[{}], is_master({}), from_node({}({})), this_node({}({})), "
+        "primary_node({}({}))",
+        ack.time,
+        ack.is_master ? "true" : "false",
+        beacon.host_port_from,
+        beacon.from_addr,
+        ack.host_port_this_node,
+        ack.this_node,
+        ack.host_port_primary_node,
+        ack.primary_node);
 
     reply(ack);
 }

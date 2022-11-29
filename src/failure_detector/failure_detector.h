@@ -193,6 +193,9 @@ private:
         }
     };
 
+protected:
+    std::shared_ptr<dns_resolver> _dns_resolver;
+
 private:
     typedef std::unordered_map<host_port, master_record> master_map;
     typedef std::unordered_map<host_port, worker_record> worker_map;
@@ -217,7 +220,6 @@ private:
     perf_counter_wrapper _recent_beacon_fail_count;
 
     std::unique_ptr<command_deregister> _get_allow_list;
-    std::shared_ptr<dns_resolver> _dns_resolver;
 
 protected:
     mutable zlock _lock;

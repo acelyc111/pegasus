@@ -30,7 +30,7 @@ public:
     void check_status_failure()
     {
         fail::setup();
-        fail::cfg("meta_server_failure_detector_get_leader", "return(false#1.2.3.4:10086)");
+        fail::cfg("meta_server_failure_detector_get_leader", "return(false#host1:10086)");
 
         /** can't forward to others */
         RPC_MOCKING(app_env_rpc)
@@ -41,7 +41,7 @@ public:
             bool res = _ms->check_status(rpc, &leader);
             ASSERT_EQ(false, res);
             ASSERT_EQ(ERR_FORWARD_TO_OTHERS, rpc.response().err);
-            ASSERT_EQ(leader.to_string(), "1.2.3.4:10086");
+            ASSERT_EQ(leader.to_string(), "host1:10086");
             ASSERT_EQ(app_env_rpc::forward_mail_box().size(), 0);
         }
 
@@ -53,7 +53,7 @@ public:
             ASSERT_EQ(false, res);
             ASSERT_EQ(app_env_rpc::forward_mail_box().size(), 1);
             ASSERT_EQ(app_env_rpc::forward_mail_box()[0].remote_address().to_std_string(),
-                      "1.2.3.4:10086");
+                      "host1:10086");
         }
 
         fail::teardown();
@@ -62,7 +62,7 @@ public:
     void check_status_success()
     {
         fail::setup();
-        fail::cfg("meta_server_failure_detector_get_leader", "return(true#1.2.3.4:10086)");
+        fail::cfg("meta_server_failure_detector_get_leader", "return(true#host1:10086)");
 
         RPC_MOCKING(app_env_rpc)
         {

@@ -33,6 +33,9 @@
 #include "utils/fmt_logging.h"
 
 namespace dsn {
+
+class host_port;
+
 namespace replication {
 
 class meta_service;
@@ -51,7 +54,7 @@ public:
         {
         }
     };
-    typedef std::map<dsn::host_port, worker_stability> stability_map;
+    typedef std::map<host_port, worker_stability> stability_map;
 
 public:
     meta_server_failure_detector(const std::shared_ptr<dns_resolver> &dns_resolver,
@@ -62,12 +65,12 @@ public:
     // leader: the leader's address. Invalid if no leader selected
     //         if leader==nullptr, then the new leader won't be returned
     // ret true if i'm the current leader; false if not.
-    bool get_leader(/*output*/ dsn::host_port *leader);
+    bool get_leader(/*output*/ host_port *leader);
 
     // return if acquire the leader lock, or-else blocked forever
     void acquire_leader_lock();
 
-    void reset_stability_stat(const dsn::host_port &node);
+    void reset_stability_stat(const host_port &node);
 
     // _fd_opts is initialized in constructor with a fd_suboption stored in meta_service.
     // so usually you don't need to call this.
@@ -86,8 +89,8 @@ public:
     // it is in the protection of failure_detector::_lock
     void on_worker_disconnected(const std::vector<host_port> &nodes) override;
     // it is in the protection of failure_detector::_lock
-    void on_worker_connected(const ::dsn::host_port &node) override;
-    bool is_worker_connected(const ::dsn::host_port &node) const override
+    void on_worker_connected(const host_port &node) override;
+    bool is_worker_connected(const host_port &node) const override
     {
         // we treat all nodes not in the worker list alive in the first grace period.
         // For the reason, please consider this situation:
