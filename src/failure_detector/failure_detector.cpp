@@ -37,8 +37,8 @@
 namespace dsn {
 namespace fd {
 
-failure_detector::failure_detector(const std::shared_ptr<dns_resolver> &dns_resolver)
-    : _dns_resolver(dns_resolver)
+failure_detector::failure_detector(const std::shared_ptr<dns_resolver> &resolver)
+    : _dns_resolver(resolver)
 {
     dsn::threadpool_code pool = task_spec::get(LPC_BEACON_CHECK.code())->pool_code;
     task_spec::get(RPC_FD_FAILURE_DETECTOR_PING.code())->pool_code = pool;

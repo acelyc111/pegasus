@@ -86,10 +86,10 @@ protected:
     }
 
 public:
-    worker_fd_test(const std::shared_ptr<dns_resolver> &dns_resolver,
+    worker_fd_test(const std::shared_ptr<dns_resolver> &resolver,
                    replication::replica_stub *stub,
                    const dsn::host_port_group &meta_servers)
-        : slave_failure_detector_with_multimaster(dns_resolver,
+        : slave_failure_detector_with_multimaster(resolver,
                                                   meta_servers,
                                                   [=]() { stub->on_meta_server_disconnected(); },
                                                   [=]() { stub->on_meta_server_connected(); })
@@ -142,8 +142,8 @@ public:
         if (_connected_cb)
             _connected_cb(node);
     }
-    master_fd_test(const std::shared_ptr<dns_resolver> &dns_resolver)
-        : meta_server_failure_detector(dns_resolver, host_port(), false)
+    master_fd_test(const std::shared_ptr<dns_resolver> &resolver)
+        : meta_server_failure_detector(resolver, host_port(), false)
     {
         _response_ping_switch = true;
     }

@@ -36,11 +36,11 @@ namespace dsn {
 namespace dist {
 
 slave_failure_detector_with_multimaster::slave_failure_detector_with_multimaster(
-    const std::shared_ptr<dns_resolver> &dns_resolver,
+    const std::shared_ptr<dns_resolver> &resolver,
     const host_port_group &meta_servers,
     std::function<void()> &&master_disconnected_callback,
     std::function<void()> &&master_connected_callback)
-    : dsn::fd::failure_detector(dns_resolver), _meta_servers(meta_servers)
+    : dsn::fd::failure_detector(resolver), _meta_servers(meta_servers)
 {
     _meta_servers.set_rand_leader();
     _master_disconnected_callback = std::move(master_disconnected_callback);

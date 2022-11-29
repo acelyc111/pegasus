@@ -85,7 +85,7 @@ class failure_detector : public failure_detector_service,
                          public failure_detector_callback
 {
 public:
-    failure_detector(const std::shared_ptr<dns_resolver> &dns_resolver);
+    failure_detector(const std::shared_ptr<dns_resolver> &resolver);
     virtual ~failure_detector();
 
     virtual void on_ping(const beacon_msg &beacon, ::dsn::rpc_replier<beacon_ack> &reply);

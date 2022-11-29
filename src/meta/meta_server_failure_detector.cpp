@@ -42,8 +42,8 @@ namespace dsn {
 namespace replication {
 
 meta_server_failure_detector::meta_server_failure_detector(
-    const std::shared_ptr<dns_resolver> &dns_resolver, meta_service *svc)
-    : dsn::fd::failure_detector(dns_resolver),
+    const std::shared_ptr<dns_resolver> &resolver, meta_service *svc)
+    : dsn::fd::failure_detector(resolver),
       _svc(svc),
       _lock_svc(nullptr),
       _primary_lock_id("dsn.meta.server.leader"),
@@ -324,10 +324,10 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
 
 /*the following functions are only for test*/
 meta_server_failure_detector::meta_server_failure_detector(
-    const std::shared_ptr<dns_resolver> &dns_resolver,
+    const std::shared_ptr<dns_resolver> &resolver,
     const host_port &leader_address,
     bool is_myself_leader)
-    : dsn::fd::failure_detector(dns_resolver)
+    : dsn::fd::failure_detector(resolver)
 {
     LOG_INFO("set %s as leader", leader_address.to_string());
     _lock_svc = nullptr;

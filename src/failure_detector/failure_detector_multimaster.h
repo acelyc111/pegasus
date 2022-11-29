@@ -43,7 +43,7 @@ namespace dist {
 class slave_failure_detector_with_multimaster : public dsn::fd::failure_detector
 {
 public:
-    slave_failure_detector_with_multimaster(const std::shared_ptr<dns_resolver> &dns_resolver,
+    slave_failure_detector_with_multimaster(const std::shared_ptr<dns_resolver> &resolver,
                                             const host_port_group &meta_servers,
                                             std::function<void()> &&master_disconnected_callback,
                                             std::function<void()> &&master_connected_callback);
