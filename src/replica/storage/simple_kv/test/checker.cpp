@@ -208,9 +208,8 @@ bool test_checker::init(const std::string &name, const std::vector<service_app *
         int id = node.second->id();
         std::string name = node.second->full_name();
         rpc_address paddr = node.second->rpc()->primary_address();
-        host_port hp;
         int port = paddr.port();
-        _node_to_address[name] = hp; // TODO: from paddr
+        _node_to_address[name] = host_port(paddr);
         LOG_INFO("=== node_to_address[%s]=%s", name.c_str(), paddr.to_string());
         _address_to_node[port] = name;
         LOG_INFO("=== address_to_node[%u]=%s", port, name.c_str());
@@ -384,7 +383,7 @@ std::string test_checker::address_to_node_name(const host_port &addr)
     auto find = _address_to_node.find(addr.port());
     if (find != _address_to_node.end())
         return find->second;
-    return "node@" + boost::lexical_cast<std::string>(addr.port());
+    return "node@" + std::to_string(addr.port());
 }
 
 host_port test_checker::node_name_to_address(const std::string &name)

@@ -614,6 +614,7 @@ void rpc_engine::call(message_ex *request, const rpc_response_task_ptr &call)
     hdr.trace_id = rand::next_u64(std::numeric_limits<decltype(hdr.trace_id)>::min(),
                                   std::numeric_limits<decltype(hdr.trace_id)>::max());
 
+    // TODO: real addres will be used
     call_address(request->server_address, request, call);
 }
 

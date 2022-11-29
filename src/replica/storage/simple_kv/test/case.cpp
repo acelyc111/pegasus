@@ -541,8 +541,8 @@ void event_on_rpc::init(message_ex *msg, task *tsk)
         _trace_id = fmt::sprintf("%016llx", msg->header->trace_id);
         _rpc_name = msg->header->rpc_name;
         // TODO: fixme
-        // _from = address_to_node(msg->header->from_address);
-        // _to = address_to_node(msg->to_address);
+        _from = address_to_node(host_port(msg->header->from_address));
+        _to = address_to_node(host_port(msg->to_address));
     }
 }
 

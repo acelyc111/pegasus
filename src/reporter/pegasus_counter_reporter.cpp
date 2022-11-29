@@ -95,7 +95,7 @@ static void libevent_log(int severity, const char *msg)
 }
 
 pegasus_counter_reporter::pegasus_counter_reporter()
-    : _local_port(0), _last_report_time_ms(0), _perf_counter_sink(perf_counter_sink_t::INVALID)
+    : _last_report_time_ms(0), _perf_counter_sink(perf_counter_sink_t::INVALID)
 {
 }
 
@@ -113,10 +113,10 @@ void pegasus_counter_reporter::prometheus_initialize()
 
 void pegasus_counter_reporter::falcon_initialize()
 {
-    _falcon_metric.endpoint = _local_host;
+    _falcon_metric.endpoint = _host_port.host();
     _falcon_metric.step = FLAGS_perf_counter_update_interval_seconds;
     _falcon_metric.tags = fmt::format(
-        "service=pegasus,cluster={},job={},port={}", _cluster_name, _app_name, _local_port);
+        "service=pegasus,cluster={},job={},port={}", _cluster_name, _app_name, _host_port.port());
 
     LOG_INFO("falcon initialize: endpoint(%s), tag(%s)",
              _falcon_metric.endpoint.c_str(),
@@ -129,12 +129,7 @@ void pegasus_counter_reporter::start()
     if (_report_timer != nullptr)
         return;
 
-    // TODO(yingchun): ip
-    rpc_address addr(dsn_primary_address());
-    char buf[1000];
-    pegasus::utils::addr2host(addr, buf, 1000);
-    _local_host = buf;
-    _local_port = addr.port();
+    _host_port = dsn_primary_host_port();
 
     _app_name = dsn::service_app::current_service_app_info().full_name;
 
@@ -280,7 +275,7 @@ void pegasus_counter_reporter::update()
                                                       {"host_name", hostname},
                                                       {"cluster", _cluster_name},
                                                       {"pegasus_job", _app_name},
-                                                      {"port", std::to_string(_local_port)}})
+                                                      {"port", std::to_string(_host_port.port())}})
                                              .Register(*_registry);
                 it = _gauge_family_map
                          .insert(std::pair<std::string, prometheus::Family<prometheus::Gauge> *>(
