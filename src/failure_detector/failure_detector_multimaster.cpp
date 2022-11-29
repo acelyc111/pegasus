@@ -29,6 +29,7 @@
 #include "failure_detector/failure_detector_multimaster.h"
 #include "runtime/rpc/group_address.h"
 #include "runtime/rpc/rpc_address.h"
+#include "runtime/rpc/rpc_host_port.h"
 #include "utils/rand.h"
 
 namespace dsn {
@@ -55,17 +56,14 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
                                                        const fd::beacon_ack &ack,
                                                        void *)
 {
-    // TODO(yingchun): 1. host_port_this_node and host_port_primary_node not print. 2. add
-    // to_string() for beacon_ack.
-    LOG_INFO_F("end ping result, error[{}], time[{}], ack.this_node[{}], ack.primary_node[{}], "
-               "ack.host_port_this_node[{}], ack.host_port_primary_node[{}], ack.is_master[{}], "
-               "ack.allowed[{}]",
+    LOG_INFO_F("end ping result, error[{}], time[{}], ack.this_node[{}({})], "
+               "ack.primary_node[{}({})], ack.is_master[{}], ack.allowed[{}]",
                err,
                ack.time,
-               ack.this_node,
-               ack.primary_node,
                ack.host_port_this_node,
+               ack.this_node,
                ack.host_port_primary_node,
+               ack.primary_node,
                ack.is_master ? "true" : "false",
                ack.allowed ? "true" : "false");
 
@@ -74,18 +72,23 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
         return;
     }
 
-    // TODO(yingchun): ip -> host:port
-    const host_port this_node_hp; // from ack.this_node
-    CHECK_EQ(this_node_hp, _meta_servers.leader());
+    host_port node;
+    if (ack.__isset.host_port_this_node) {
+        node = ack.host_port_this_node;
+    } else {
+        CHECK(ack.__isset.this_node, "");
+        node = host_port(ack.this_node);
+    }
+    CHECK_EQ(node, _meta_servers.leader());
 
     // TODO(yingchun): refactor the if-else statements
     // Try to send beacon to the next master when current master return error.
     if (ERR_OK != err) {
-        host_port next = _meta_servers.next(this_node_hp);
-        if (next != this_node_hp) {
+        host_port next = _meta_servers.next(node);
+        if (next != node) {
             _meta_servers.set_leader(next);
             // Do not start next send_beacon() immediately to avoid send rpc too frequently
-            switch_master(this_node_hp, next, 1000);
+            switch_master(node, next, 1000);
         }
         return;
     }
@@ -99,11 +102,11 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
     const host_port primary_node; // from ack.primary_node
     // Try to send beacon to the next master when master changed and the hint master is invalid
     if (!primary_node.initialized()) {
-        host_port next = _meta_servers.next(this_node_hp);
-        if (next != this_node_hp) {
+        host_port next = _meta_servers.next(node);
+        if (next != node) {
             _meta_servers.set_leader(next);
             // do not start next send_beacon() immediately to avoid send rpc too frequently
-            switch_master(this_node_hp, next, 1000);
+            switch_master(node, next, 1000);
         }
         return;
     }
@@ -111,12 +114,12 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
     // Try to send beacon to the hint master when master changed and give a valid hint master
     _meta_servers.set_leader(primary_node);
     // start next send_beacon() immediately because the leader is possibly right.
-    switch_master(this_node_hp, primary_node, 0);
+    switch_master(node, primary_node, 0);
 }
 
 // client side
 void slave_failure_detector_with_multimaster::on_master_disconnected(
-    const std::vector<::dsn::host_port> &nodes)
+    const std::vector<host_port> &nodes)
 {
     bool primary_disconnected = false;
     host_port leader = _meta_servers.leader();
@@ -132,7 +135,7 @@ void slave_failure_detector_with_multimaster::on_master_disconnected(
     }
 }
 
-void slave_failure_detector_with_multimaster::on_master_connected(const ::dsn::host_port &node)
+void slave_failure_detector_with_multimaster::on_master_connected(const host_port &node)
 {
     /*
     * well, this is called in on_ping_internal, which is called by rep::end_ping.

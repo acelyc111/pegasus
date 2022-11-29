@@ -30,18 +30,21 @@
 
 #include "failure_detector/failure_detector.h"
 #include "runtime/rpc/group_address.h"
-#include "runtime/rpc/rpc_host_port.h"
 #include "utils/fmt_logging.h"
 #include "utils/zlocks.h"
 
 namespace dsn {
+
+class host_port;
+class host_port_group;
+
 namespace dist {
 
 class slave_failure_detector_with_multimaster : public dsn::fd::failure_detector
 {
 public:
     slave_failure_detector_with_multimaster(const std::shared_ptr<dns_resolver> &dns_resolver,
-                                            const ::dsn::host_port_group &meta_servers,
+                                            const host_port_group &meta_servers,
                                             std::function<void()> &&master_disconnected_callback,
                                             std::function<void()> &&master_connected_callback);
     virtual ~slave_failure_detector_with_multimaster() {}
@@ -49,20 +52,20 @@ public:
     void end_ping(::dsn::error_code err, const fd::beacon_ack &ack, void *context) override;
 
     // client side
-    void on_master_disconnected(const std::vector<::dsn::host_port> &nodes) override;
-    void on_master_connected(const ::dsn::host_port &node) override;
+    void on_master_disconnected(const std::vector<host_port> &nodes) override;
+    void on_master_connected(const host_port &node) override;
 
     // server side
-    void on_worker_disconnected(const std::vector<::dsn::host_port> &nodes) override
+    void on_worker_disconnected(const std::vector<host_port> &nodes) override
     {
         CHECK(false, "invalid execution flow");
     }
-    void on_worker_connected(const ::dsn::host_port &node) override
+    void on_worker_connected(const host_port &node) override
     {
         CHECK(false, "invalid execution flow");
     }
 
-    ::dsn::host_port current_server_contact() const;
+    host_port current_server_contact() const;
     const dsn::host_port_group &get_servers() const { return _meta_servers; }
 
     void set_leader_for_test(const dsn::host_port &hp);
@@ -74,7 +77,7 @@ private:
 };
 
 //------------------ inline implementation --------------------------------
-inline ::dsn::host_port slave_failure_detector_with_multimaster::current_server_contact() const
+inline host_port slave_failure_detector_with_multimaster::current_server_contact() const
 {
     zauto_lock l(failure_detector::_lock);
     return _meta_servers.leader();
