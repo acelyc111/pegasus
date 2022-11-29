@@ -262,7 +262,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
     // if nothing in the last_drops, it means that this is a newly created partition, so let's
     // just find a node and assign primary for it.
     else if (pc.host_port_last_drops.empty()) {
-        dsn::host_port min_primary_server;
+        host_port min_primary_server;
         newly_partitions *min_primary_server_np = nullptr;
 
         for (auto &pairs : *view.nodes) {
@@ -336,8 +336,8 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
                           pc.host_port_last_drops.back());
             action.host_port_node = pc.host_port_last_drops.back();
         } else {
-            std::vector<dsn::host_port> nodes(pc.host_port_last_drops.end() - 2,
-                                              pc.host_port_last_drops.end());
+            std::vector<host_port> nodes(pc.host_port_last_drops.end() - 2,
+                                         pc.host_port_last_drops.end());
             std::vector<dropped_replica> collected_info(2);
             bool ready = true;
 
@@ -755,9 +755,9 @@ partition_guardian::ctrl_assign_secondary_black_list(const std::vector<std::stri
         return invalid_arguments;
     }
 
-    std::set<dsn::host_port> addr_list;
+    std::set<host_port> addr_list;
     for (const std::string &s : ip_ports) {
-        dsn::host_port addr;
+        host_port addr;
         if (!addr.parse_string(s).is_ok()) {
             //        if (!addr.from_string_ipv4(s.c_str())) {
             return invalid_arguments;

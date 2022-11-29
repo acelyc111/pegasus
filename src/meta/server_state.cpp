@@ -224,14 +224,15 @@ bool server_state::spin_wait_staging(int timeout_seconds)
     return false;
 }
 
-int server_state::count_staging_app()
+int server_state::count_staging_app() const
 {
     int ans = 0;
     for (const auto &app_kv : _all_apps) {
         if (app_kv.second->status == app_status::AS_CREATING ||
             app_kv.second->status == app_status::AS_DROPPING ||
-            app_kv.second->status == app_status::AS_RECALLING)
+            app_kv.second->status == app_status::AS_RECALLING) {
             ++ans;
+        }
     }
     return ans;
 }
@@ -324,7 +325,6 @@ error_code server_state::dump_app_states(const char *local_path,
 error_code server_state::dump_from_remote_storage(const char *local_path, bool sync_immediately)
 {
     error_code ec;
-
     if (sync_immediately) {
         ec = sync_apps_from_remote_storage();
         if (ec == ERR_OBJECT_NOT_FOUND) {
@@ -584,8 +584,11 @@ dsn::error_code server_state::sync_apps_from_remote_storage()
                     {
                         zauto_write_lock l(_lock);
                         app->partitions[partition_id] = pc;
+                        for (const auto &addr : pc.last_drops) {
+                            host_port hp(addr);
+                            app->helpers->contexts[partition_id].record_drop_history(hp);
+                        }
                         for (const auto &addr : pc.host_port_last_drops) {
-                            // TODO(yingchun): ip
                             app->helpers->contexts[partition_id].record_drop_history(addr);
                         }
 
@@ -725,18 +728,31 @@ dsn::error_code server_state::sync_apps_from_remote_storage()
 void server_state::initialize_node_state()
 {
     zauto_write_lock l(_lock);
-    for (auto &app_pair : _all_apps) {
-        app_state &app = *(app_pair.second);
-        for (partition_configuration &pc : app.partitions) {
-            if (!pc.host_port_primary.is_invalid()) {
-                // TODO(yingchun): ip to host
-                node_state *ns = get_node_state(_nodes, pc.host_port_primary, true);
+    for (const auto &app_pair : _all_apps) {
+        const app_state &app = *(app_pair.second);
+        for (const partition_configuration &pc : app.partitions) {
+            // primary
+            host_port primary;
+            if (pc.__isset.host_port_primary) {
+                primary = pc.host_port_primary;
+            } else {
+                CHECK(pc.__isset.primary, "");
+                primary = host_port(pc.primary);
+            }
+            if (primary.initialized()) {
+                node_state *ns = get_node_state(_nodes, primary, true);
                 ns->put_partition(pc.pid, true);
             }
-            for (auto &ep : pc.host_port_secondaries) {
-                // TODO(yingchun): ip to host
-                CHECK(!ep.is_invalid(), "invalid secondary address, addr = {}", ep);
-                node_state *ns = get_node_state(_nodes, ep, true);
+
+            // secondaries
+            for (const auto &secondary : pc.secondaries) {
+                CHECK(!secondary.is_invalid(), "invalid secondary address({})", secondary);
+                node_state *ns = get_node_state(_nodes, host_port(secondary), true);
+                ns->put_partition(pc.pid, false);
+            }
+            for (const auto &secondary : pc.host_port_secondaries) {
+                CHECK(!secondary.is_invalid(), "invalid secondary host:port({})", secondary);
+                node_state *ns = get_node_state(_nodes, secondary, true);
                 ns->put_partition(pc.pid, false);
             }
         }
@@ -745,7 +761,7 @@ void server_state::initialize_node_state()
         node.second.set_alive(true);
     }
     for (auto &app_pair : _all_apps) {
-        app_state &app = *(app_pair.second);
+        const app_state &app = *(app_pair.second);
         for (const partition_configuration &pc : app.partitions) {
             check_consistency(pc.pid);
         }
@@ -797,17 +813,26 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
 
     bool reject_this_request = false;
     response.__isset.gc_replicas = false;
-    LOG_INFO("got config sync request from %s, stored_replicas_count(%d)",
-             request.host_port_node.to_string(),
-             (int)request.stored_replicas.size());
+
+    host_port node;
+    if (request.__isset.host_port_node) {
+        node = request.host_port_node;
+    } else {
+        CHECK(request.__isset.node, "");
+        node = host_port(request.node);
+    }
+    LOG_INFO_F("got config sync request from {}, stored_replicas_count({})",
+               node,
+               request.stored_replicas.size());
 
     {
         zauto_read_lock l(_lock);
 
+        // TODO: refactor if-statements
         // sync the partitions to the replica server
-        node_state *ns = get_node_state(_nodes, request.host_port_node, false);
+        node_state *ns = get_node_state(_nodes, node, false);
         if (ns == nullptr) {
-            LOG_INFO("node(%s) not found in meta server", request.host_port_node.to_string());
+            LOG_INFO("node(%s) not found in meta server", node.to_string());
             response.err = ERR_OBJECT_NOT_FOUND;
         } else {
             response.err = ERR_OK;
@@ -816,23 +841,26 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
             ns->for_each_partition([&, this](const gpid &pid) {
                 std::shared_ptr<app_state> app = get_app(pid.get_app_id());
                 CHECK(app, "invalid app_id, app_id = {}", pid.get_app_id());
-                config_context &cc = app->helpers->contexts[pid.get_partition_index()];
+                const config_context &cc = app->helpers->contexts[pid.get_partition_index()];
 
                 // config sync need the newest data to keep the perfect FD,
                 // so if the syncing config is related to the node, we may need to reject this
                 // request
                 if (cc.stage == config_status::pending_remote_sync) {
+                    // TODO(yingchun): why use raw pointer?
                     configuration_update_request *req = cc.pending_sync_request.get();
                     // when register child partition, stage is config_status::pending_remote_sync,
                     // but cc.pending_sync_request is not set, see more in function
                     // 'register_child_on_meta'
-                    if (req == nullptr || req->host_port_node == request.host_port_node)
+                    if (req == nullptr || req->host_port_node == node || host_port(req->node) == node) {
                         return false;
+                    }
                 }
 
                 response.partitions[i].info = *app;
                 response.partitions[i].config = app->partitions[pid.get_partition_index()];
-                response.partitions[i].host_port_node = request.host_port_node;
+                response.partitions[i].node = _meta_svc->get_dns_resolver()->resolve_address(node);
+                response.partitions[i].host_port_node = node;
                 // set meta_split_status
                 const split_state &app_split_states = app->helpers->split_states;
                 if (app->splitting()) {
@@ -862,7 +890,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
             // if the app is deleted and expired, we need to gc it
             for (const replica_info &rep : replicas) {
                 LOG_DEBUG("receive stored replica from %s, pid(%d.%d)",
-                          request.host_port_node.to_string(),
+                          node.to_string(),
                           rep.pid.get_app_id(),
                           rep.pid.get_partition_index());
                 std::shared_ptr<app_state> app = get_app(rep.pid.get_app_id());
@@ -876,7 +904,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
                         LOG_WARNING_F(
                             "notify node({}) to gc replica({}) because it is useless partition "
                             "which is caused by cancel split",
-                            request.host_port_node.to_string(),
+                            node.to_string(),
                             rep.pid);
                     } else {
                         // app is not recognized or partition is not recognized
@@ -884,7 +912,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
                               "gpid({}) on node({}) is not exist on meta server, administrator "
                               "should check consistency of meta data",
                               rep.pid,
-                              request.host_port_node);
+                              node);
                     }
                 } else if (app->status == app_status::AS_DROPPED) {
                     if (app->expire_second == 0) {
@@ -893,7 +921,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
                             "not specified, do not delete it for safety reason",
                             rep.pid.get_app_id(),
                             rep.pid.get_partition_index(),
-                            request.host_port_node.to_string());
+                            node.to_string());
                     } else if (has_seconds_expired(app->expire_second)) {
                         // can delete replica only when expire second is explicitely specified and
                         // expired.
@@ -903,21 +931,21 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
                                      "reason",
                                      rep.pid.get_app_id(),
                                      rep.pid.get_partition_index(),
-                                     request.host_port_node.to_string(),
+                                     node.to_string(),
                                      _meta_function_level_VALUES_TO_NAMES.find(level)->second);
                         } else {
                             response.gc_replicas.push_back(rep);
                             LOG_WARNING(
                                 "notify node(%s) to gc replica(%d.%d) coz the app is dropped and "
                                 "expired",
-                                request.host_port_node.to_string(),
+                                node.to_string(),
                                 rep.pid.get_app_id(),
                                 rep.pid.get_partition_index());
                         }
                     }
                 } else if (app->status == app_status::AS_AVAILABLE) {
                     bool is_useful_replica =
-                        collect_replica({&_all_apps, &_nodes}, request.host_port_node, rep);
+                        collect_replica({&_all_apps, &_nodes}, node, rep);
                     if (!is_useful_replica) {
                         if (level <= meta_function_level::fl_steady) {
                             LOG_INFO(
@@ -925,12 +953,12 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
                                 "is %s, do not delete it for safety reason",
                                 rep.pid.get_app_id(),
                                 rep.pid.get_partition_index(),
-                                request.host_port_node.to_string(),
+                                node.to_string(),
                                 _meta_function_level_VALUES_TO_NAMES.find(level)->second);
                         } else {
                             response.gc_replicas.push_back(rep);
                             LOG_WARNING("notify node(%s) to gc replica(%d.%d) coz it is useless",
-                                        request.host_port_node.to_string(),
+                                        node.to_string(),
                                         rep.pid.get_app_id(),
                                         rep.pid.get_partition_index());
                         }
@@ -950,7 +978,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
     }
     LOG_INFO_F("send config sync response to {}, err({}), partitions_count({}), "
                "gc_replicas_count({})",
-               request.host_port_node.to_string(),
+               node.to_string(),
                response.err,
                response.partitions.size(),
                response.gc_replicas.size());
@@ -2600,15 +2628,15 @@ void server_state::check_consistency(const dsn::gpid &gpid)
                   config.host_port_primary);
         }
 
-        for (auto &ep : config.host_port_secondaries) {
-            auto it = _nodes.find(ep);
-            CHECK(it != _nodes.end(), "invalid secondary address, address = {}", ep);
+        for (auto &secondary : config.host_port_secondaries) {
+            auto it = _nodes.find(secondary);
+            CHECK(it != _nodes.end(), "invalid secondary address, address = {}", secondary);
             CHECK_EQ(it->second.served_as(gpid), partition_status::PS_SECONDARY);
             CHECK(std::find(config.host_port_last_drops.begin(),
                             config.host_port_last_drops.end(),
-                            ep) == config.host_port_last_drops.end(),
+                            secondary) == config.host_port_last_drops.end(),
                   "secondary shouldn't appear in last_drops, address = {}",
-                  ep);
+                  secondary);
         }
     } else {
         partition_configuration_stateless pcs(config);

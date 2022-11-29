@@ -153,7 +153,6 @@ public:
     error_code dump_from_remote_storage(const char *local_path, bool sync_immediately);
     error_code restore_from_local_storage(const char *local_path);
 
-    // TODO(yingchun): ip
     void on_change_node_state(const host_port &node, bool is_alive);
     void on_propose_balancer(const configuration_balancer_request &request,
                              configuration_balancer_response &response);
@@ -177,7 +176,7 @@ public:
     void get_cluster_balance_score(double &primary_stddev /*out*/, double &total_stddev /*out*/);
     void clear_proposals();
 
-    int count_staging_app();
+    int count_staging_app() const;
     // for test
     void set_config_change_subscriber_for_test(config_change_subscriber subscriber);
     void set_replica_migration_subscriber_for_test(replica_migration_subscriber subscriber);
@@ -203,7 +202,6 @@ private:
     // else indicate error that remote storage responses
     error_code sync_apps_to_remote_storage();
 
-    // TODO(yingchun): ip
     error_code sync_apps_from_replica_nodes(const std::vector<dsn::host_port> &node_list,
                                             bool skip_bad_nodes,
                                             bool skip_lost_partitions,
@@ -219,11 +217,10 @@ private:
 
     void check_consistency(const dsn::gpid &gpid);
 
-    // TODO(yingchun): ip
     error_code construct_apps(const std::vector<query_app_info_response> &query_app_responses,
                               const std::vector<dsn::host_port> &replica_nodes,
                               std::string &hint_message);
-    // TODO(yingchun): ip
+
     error_code construct_partitions(
         const std::vector<query_replica_info_response> &query_replica_info_responses,
         const std::vector<dsn::host_port> &replica_nodes,

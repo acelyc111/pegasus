@@ -444,8 +444,9 @@ inline node_state *get_node_state(node_mapper &nodes, const host_port &addr, boo
 {
     node_state *ns = nullptr;
     if (nodes.find(addr) == nodes.end()) {
-        if (!create_new)
+        if (!create_new) {
             return nullptr;
+        }
         ns = &nodes[addr];
         ns->set_addr(addr);
     }

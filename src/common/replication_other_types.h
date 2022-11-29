@@ -43,6 +43,7 @@ typedef int32_t app_id;
 typedef int64_t ballot;
 typedef int64_t decree;
 
+// TODO: refactor: renaming
 #define invalid_ballot ((::dsn::replication::ballot)-1LL)
 #define invalid_decree ((::dsn::replication::decree)-1LL)
 #define invalid_offset (-1LL)
