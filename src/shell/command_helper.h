@@ -651,10 +651,13 @@ call_remote_command(shell_context *sc,
                 results[i].second = err.to_string();
             }
         };
-        // TODO from nodes[i].address
         dsn::rpc_address addr;
-        tasks[i] = dsn::dist::cmd::async_call_remote(
-            addr, cmd, arguments, callback, std::chrono::milliseconds(5000));
+        tasks[i] =
+            dsn::dist::cmd::async_call_remote(sc->resolver->resolve_address(nodes[i].address),
+                                              cmd,
+                                              arguments,
+                                              callback,
+                                              std::chrono::milliseconds(5000));
     }
     for (int i = 0; i < nodes.size(); ++i) {
         tasks[i]->wait();
@@ -1373,6 +1376,7 @@ inline configuration_proposal_action new_proposal_action(const dsn::host_port &t
                                                          const dsn::host_port &node,
                                                          config_type::type type)
 {
+    // TODO: make sure it will not cause server crash
     configuration_proposal_action act;
     act.__set_host_port_target(target);
     act.__set_host_port_node(node);

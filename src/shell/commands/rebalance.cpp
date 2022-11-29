@@ -91,6 +91,7 @@ bool propose(command_executor *e, shell_context *sc, arguments args)
             proposal_type += optarg;
             break;
         case 't':
+            // TODO: support both IP and host
             verify_logged(
                 target.parse_string(optarg).is_ok(), "parse %s as target_address failed\n", optarg);
             break;

@@ -95,6 +95,7 @@ bool recover(command_executor *e, shell_context *sc, arguments args)
 
         for (std::string &token : tokens) {
             dsn::host_port node;
+            // TODO: support both IP and host
             if (!node.parse_string(token).is_ok()) {
                 fprintf(stderr, "parse %s as a ip:port node failed\n", token.c_str());
                 return true;
