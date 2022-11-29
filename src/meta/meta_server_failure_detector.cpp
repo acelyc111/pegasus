@@ -230,7 +230,7 @@ bool meta_server_failure_detector::update_stability_stat(const fd::beacon_msg &b
     auto iter = _stablity.find(from);
     // TODO(yingchun): refactor if-statements
     if (iter == _stablity.end()) {
-        _stablity.emplace(beacon.host_port_from, worker_stability{beacon.start_time, 0});
+        _stablity.emplace(from, worker_stability{beacon.start_time, 0});
         return true;
     } else {
         worker_stability &w = iter->second;
@@ -313,6 +313,7 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
         ack.host_port_primary_node = leader;
         ack.primary_node = _dns_resolver->resolve_address(leader);
     } else {
+        // TODO(yingchun): check 'this_node_hp' equals to 'leader'
         ack.is_master = true;
         ack.host_port_primary_node = this_node_hp;
         ack.primary_node = this_node_addr;
