@@ -72,23 +72,23 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
         return;
     }
 
-    host_port node;
+    host_port this_node;
     if (ack.__isset.host_port_this_node) {
-        node = ack.host_port_this_node;
+        this_node = ack.host_port_this_node;
     } else {
         CHECK(ack.__isset.this_node, "");
-        node = host_port(ack.this_node);
+        this_node = host_port(ack.this_node);
     }
-    CHECK_EQ(node, _meta_servers.leader());
+    CHECK_EQ(this_node, _meta_servers.leader());
 
     // TODO(yingchun): refactor the if-else statements
     // Try to send beacon to the next master when current master return error.
     if (ERR_OK != err) {
-        host_port next = _meta_servers.next(node);
-        if (next != node) {
+        host_port next = _meta_servers.next(this_node);
+        if (next != this_node) {
             _meta_servers.set_leader(next);
             // Do not start next send_beacon() immediately to avoid send rpc too frequently
-            switch_master(node, next, 1000);
+            switch_master(this_node, next, 1000);
         }
         return;
     }
@@ -98,15 +98,21 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
         return;
     }
 
-    // TODO(yingchun): ip -> host:port
-    const host_port primary_node; // from ack.primary_node
+    host_port primary_node;
+    if (ack.__isset.host_port_primary_node) {
+        this_node = ack.host_port_primary_node;
+    } else {
+        CHECK(ack.__isset.primary_node, "");
+        this_node = host_port(ack.primary_node);
+    }
+
     // Try to send beacon to the next master when master changed and the hint master is invalid
     if (!primary_node.initialized()) {
-        host_port next = _meta_servers.next(node);
-        if (next != node) {
+        host_port next = _meta_servers.next(this_node);
+        if (next != this_node) {
             _meta_servers.set_leader(next);
             // do not start next send_beacon() immediately to avoid send rpc too frequently
-            switch_master(node, next, 1000);
+            switch_master(this_node, next, 1000);
         }
         return;
     }
@@ -114,7 +120,7 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
     // Try to send beacon to the hint master when master changed and give a valid hint master
     _meta_servers.set_leader(primary_node);
     // start next send_beacon() immediately because the leader is possibly right.
-    switch_master(node, primary_node, 0);
+    switch_master(this_node, primary_node, 0);
 }
 
 // client side
