@@ -103,6 +103,7 @@ void dsn_coredump()
 // rpc calls
 dsn::rpc_address dsn_primary_address() { return ::dsn::task::get_current_rpc()->primary_address(); }
 
+// TODO: fixme
 dsn::host_port dsn_primary_host_port() { return ::dsn::host_port(); }
 
 bool dsn_rpc_register_handler(dsn::task_code code,

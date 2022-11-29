@@ -23,7 +23,9 @@
 #include "utils/flags.h"
 #include "utils/error_code.h"
 #include "utils/fail_point.h"
-#include "common//duplication_common.h"
+#include "common/duplication_common.h"
+
+using dsn::host_port;
 
 namespace pegasus {
 namespace server {
@@ -207,7 +209,14 @@ void hotspot_partition_calculator::send_detect_hotkey_request(
     std::vector<dsn::partition_configuration> partitions;
     _shell_context->ddl_client->list_app(app_name, app_id, partition_count, partitions);
 
-    auto target_address = partitions[partition_index].host_port_primary;
+    host_port target_address;
+    if (partitions[partition_index].__isset.host_port_primary) {
+        target_address = partitions[partition_index].host_port_primary;
+    } else {
+        CHECK(partitions[partition_index].__isset.primary, "");
+        target_address = host_port(partitions[partition_index].primary);
+    }
+
     dsn::replication::detect_hotkey_response resp;
     dsn::replication::detect_hotkey_request req;
     req.type = hotkey_type;
