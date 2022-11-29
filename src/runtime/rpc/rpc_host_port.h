@@ -26,14 +26,15 @@
 
 namespace dsn {
 
-struct host_port_hash;
-
+class rpc_address;
 // TODO(yingchun): unit tests
 class host_port
 {
 public:
     host_port() = default;
     host_port(std::string host, uint16_t port);
+    // TODO: implemant me
+    host_port(rpc_address) {}
 
     // TODO: for test
     host_port(int ip, uint16_t port) {}
@@ -79,8 +80,6 @@ public:
     uint32_t write(::apache::thrift::protocol::TProtocol *oprot) const;
 
 private:
-    friend struct host_port_hash;
-
     std::string _host;
     uint16_t _port = 0;
 };

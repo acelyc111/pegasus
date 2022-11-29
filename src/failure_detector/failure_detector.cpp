@@ -351,16 +351,22 @@ std::string failure_detector::get_allow_list(const std::vector<std::string> &arg
 
 void failure_detector::on_ping_internal(const beacon_msg &beacon, /*out*/ beacon_ack &ack)
 {
+    uint64_t now = dsn_now_ms();
     ack.time = beacon.time;
     ack.this_node = beacon.to_addr;
     ack.primary_node = dsn_primary_address();
     ack.is_master = true;
     ack.allowed = true;
 
-    zauto_lock l(_lock);
+    host_port node;
+    if (beacon.__isset.host_port_from) {
+        node = beacon.host_port_from;
+    } else {
+        CHECK(beacon.__isset.from_addr, "");
+        node = host_port(beacon.from_addr);
+    }
 
-    uint64_t now = dsn_now_ms();
-    const host_port node = beacon.host_port_from;
+    zauto_lock l(_lock);
     worker_map::iterator itr = _workers.find(node);
     if (itr == _workers.end()) {
         // if is a new worker, check allow list first if need
@@ -414,9 +420,13 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
      * the caller of the end_ping_internal should lock necessarily!!!
      */
     uint64_t beacon_send_time = ack.time;
-    // TODO(yingchun): ip -> host:port
-    const host_port node; // from ack.this_node
-
+    host_port node;
+    if (beacon.__isset.host_port_this_node) {
+        node = ack.host_port_this_node;
+    } else {
+        CHECK(beacon.__isset.this_node, "");
+        node = host_port(ack.this_node);
+    }
     if (err != ERR_OK) {
         LOG_WARNING_F("ping master({}) failed, timeout_ms = {}, err = {}",
                       node,
@@ -460,10 +470,10 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
 
     // if ack is not from master meta, worker should not update its last send time
     if (!ack.is_master) {
-        // TODO(yingchun): ip -> host:port
-        const host_port primary_node; // from ack.primary_node
-        LOG_WARNING_F(
-            "node[{}] is not master, ack.primary_node[{}] is real master", node, primary_node);
+        LOG_WARNING_F("node[{}] is not master, ack.primary_node[{}({})] is real master",
+                      node,
+                      ack.host_port_primary_node,
+                      ack.primary_node);
         return true;
     }
 
