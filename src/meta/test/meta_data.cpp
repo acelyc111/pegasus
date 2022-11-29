@@ -25,8 +25,10 @@
  */
 
 #include <gtest/gtest.h>
-#include "misc/misc.h"
+
 #include "meta/meta_data.h"
+#include "misc/misc.h"
+#include "runtime/rpc/dns_resolver.h"
 
 using namespace dsn::replication;
 
@@ -382,10 +384,12 @@ TEST(meta_data, construct_replica)
     CLEAR_REPLICA;                                                                                 \
     CLEAR_DROP_LIST
 
+    auto resolver = std::make_shared<dsn::dns_resolver>();
+
     // drop_list is empty, can't construct replica
     {
         CLEAR_ALL;
-        ASSERT_FALSE(construct_replica(view, rep.pid, 3));
+        ASSERT_FALSE(construct_replica(view, resolver, rep.pid, 3));
         ASSERT_EQ(0, replica_count(pc));
     }
 
@@ -393,7 +397,7 @@ TEST(meta_data, construct_replica)
     {
         CLEAR_ALL;
         cc.dropped = {dropped_replica{node_list[0], dropped_replica::INVALID_TIMESTAMP, 5, 10, 12}};
-        ASSERT_TRUE(construct_replica(view, rep.pid, 3));
+        ASSERT_TRUE(construct_replica(view, resolver, rep.pid, 3));
         ASSERT_EQ(node_list[0], pc.host_port_primary);
         ASSERT_TRUE(pc.host_port_secondaries.empty());
         ASSERT_TRUE(cc.dropped.empty());
@@ -407,7 +411,7 @@ TEST(meta_data, construct_replica)
                       dropped_replica{node_list[2], dropped_replica::INVALID_TIMESTAMP, 7, 10, 12},
                       dropped_replica{node_list[3], dropped_replica::INVALID_TIMESTAMP, 8, 10, 12},
                       dropped_replica{node_list[4], dropped_replica::INVALID_TIMESTAMP, 9, 11, 12}};
-        ASSERT_TRUE(construct_replica(view, rep.pid, 3));
+        ASSERT_TRUE(construct_replica(view, resolver, rep.pid, 3));
         ASSERT_EQ(node_list[4], pc.host_port_primary);
         ASSERT_TRUE(pc.host_port_secondaries.empty());
 
@@ -424,7 +428,7 @@ TEST(meta_data, construct_replica)
                       dropped_replica{node_list[1], dropped_replica::INVALID_TIMESTAMP, 7, 11, 12},
                       dropped_replica{node_list[2], dropped_replica::INVALID_TIMESTAMP, 7, 12, 12}};
 
-        ASSERT_TRUE(construct_replica(view, rep.pid, 3));
+        ASSERT_TRUE(construct_replica(view, resolver, rep.pid, 3));
         ASSERT_EQ(node_list[2], pc.host_port_primary);
         ASSERT_TRUE(pc.host_port_secondaries.empty());
 
@@ -442,7 +446,7 @@ TEST(meta_data, construct_replica)
                       dropped_replica{node_list[2], dropped_replica::INVALID_TIMESTAMP, 7, 13, 14},
                       dropped_replica{node_list[3], dropped_replica::INVALID_TIMESTAMP, 7, 14, 14}};
 
-        ASSERT_TRUE(construct_replica(view, rep.pid, 3));
+        ASSERT_TRUE(construct_replica(view, resolver, rep.pid, 3));
         ASSERT_EQ(node_list[3], pc.host_port_primary);
         ASSERT_TRUE(pc.host_port_secondaries.empty());
 

@@ -168,6 +168,8 @@ public:
     void unlock_meta_op_status();
     meta_op_status get_op_status() const { return _meta_op_status.load(); }
 
+    std::shared_ptr<dns_resolver> get_dns_resolver() { return _dns_resolver; }
+
 private:
     void register_rpc_handlers();
     void register_ctrl_commands();

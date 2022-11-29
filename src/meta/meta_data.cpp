@@ -24,14 +24,8 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     the meta server's date structure, impl file
- *
- * Revision history:
- *     2016-04-25, Weijie Sun(sunweijie at xiaomi.com), first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
+#include "meta_data.h"
+
 #include <boost/lexical_cast.hpp>
 
 #include "utils/fmt_logging.h"
@@ -49,8 +43,7 @@
 #include "runtime/service_app.h"
 #include "runtime/rpc/rpc_address.h"
 #include "utils/flags.h"
-
-#include "meta_data.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -128,7 +121,10 @@ void maintain_drops(std::vector<host_port> &drops, const host_port &node, config
     when_update_replicas(t, action);
 }
 
-bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
+bool construct_replica(meta_view view,
+                       const std::shared_ptr<dns_resolver> &resolver,
+                       const gpid &pid,
+                       int max_replica_count)
 {
     partition_configuration &pc = *get_config(*view.apps, pid);
     config_context &cc = *get_config_context(*view.apps, pid);
@@ -136,7 +132,7 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
     CHECK_EQ_MSG(replica_count(pc), 0, "replica count of gpid({}) must be 0", pid);
     CHECK_GT(max_replica_count, 0);
 
-    std::vector<dropped_replica> &drop_list = cc.dropped;
+    auto &drop_list = cc.dropped;
     if (drop_list.empty()) {
         LOG_WARNING("construct for (%d.%d) failed, coz no replicas collected",
                     pid.get_app_id(),
@@ -150,8 +146,7 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
                  invalid_ballot,
                  "the ballot of server must not be invalid_ballot, node = {}",
                  server.node);
-    // TODO(yingchun): ip to host
-    //    pc.primary = server.node;
+    pc.primary = resolver->resolve_address(server.node);
     pc.host_port_primary = server.node;
     pc.ballot = server.ballot;
     pc.partition_flags = 0;
@@ -179,7 +174,8 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
     for (auto iter = drop_list.rbegin(); iter != drop_list.rend(); ++iter) {
         if (pc.host_port_last_drops.size() + 1 >= max_replica_count)
             break;
-        // similar to cc.drop_list, pc.last_drop is also a stack structure
+        // similar to cc.drop_list, pc.last_drop/host_port_last_drops is also a stack structure
+        pc.last_drops.insert(pc.last_drops.begin(), resolver->resolve_address(iter->node));
         pc.host_port_last_drops.insert(pc.host_port_last_drops.begin(), iter->node);
         LOG_INFO_F("construct for ({}), select {} into last_drops, ballot({}), "
                    "committed_decree({}), prepare_decree({})",
@@ -228,13 +224,12 @@ void proposal_actions::reset_tracked_current_learner()
     current_learner.last_prepared_decree = invalid_decree;
 }
 
-void proposal_actions::track_current_learner(const dsn::host_port &node, const replica_info &info)
+void proposal_actions::track_current_learner(const host_port &node, const replica_info &info)
 {
     if (empty()) {
         return;
     }
     const configuration_proposal_action &act = acts.front();
-    // TODO(yingchun): both
     if (act.host_port_node != node) {
         return;
     }
