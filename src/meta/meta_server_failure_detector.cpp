@@ -117,11 +117,24 @@ bool meta_server_failure_detector::get_leader(host_port *leader)
     std::string lock_owner;
     uint64_t version;
     error_code err = _lock_svc->query_cache(_primary_lock_id, lock_owner, version);
-    if (err == dsn::ERR_OK && leader->parse_string(lock_owner).is_ok()) {
+    if (err != dsn::ERR_OK) {
+        LOG_WARNING_F("query leader from cache got error({})", err);
+        leader->reset();
+        return false;
+    }
+
+    if (leader->parse_string(lock_owner).is_ok()) {
         return (*leader) == dsn_primary_host_port();
     }
 
-    LOG_WARNING_F("query leader from cache got error({}), or bad format({})", err, lock_owner);
+    // Fallback to IP address.
+    rpc_address leader_addr;
+    if (leader_addr.from_string_ipv4(lock_owner.c_str())) {
+        (*leader) = host_port(leader_addr);
+        return (*leader) == dsn_primary_host_port();
+    }
+
+    LOG_WARNING_F("query leader from cache got bad lock content format({})", lock_owner);
     leader->reset();
     return false;
 }
@@ -137,28 +150,28 @@ void meta_server_failure_detector::acquire_leader_lock()
         error_code err;
         auto tasks = _lock_svc->lock(
             _primary_lock_id,
-            dsn_primary_address().to_std_string(),
-            // lock granted
+            dsn_primary_host_port().to_string(),
+            // 1. lock granted
             LPC_META_SERVER_LEADER_LOCK_CALLBACK,
             [this, &err](error_code ec, const std::string &owner, uint64_t version) {
-                LOG_INFO("leader lock granted callback: err(%s), owner(%s), version(%llu)",
-                         ec.to_string(),
-                         owner.c_str(),
-                         version);
+                LOG_INFO_F("leader lock granted callback: err({}), owner({}), version({})",
+                           ec,
+                           owner,
+                           version);
                 err = ec;
                 if (err == dsn::ERR_OK) {
                     leader_initialize(owner);
                 }
             },
 
-            // lease expire
+            // 2. lease expire
             LPC_META_SERVER_LEADER_LOCK_CALLBACK,
             [](error_code ec, const std::string &owner, uint64_t version) {
-                LOG_ERROR("leader lock expired callback: err(%s), owner(%s), version(%llu)",
-                          ec.to_string(),
-                          owner.c_str(),
-                          version);
-                // let's take the easy way right now
+                LOG_ERROR_F("leader lock expired callback: err({}), owner({}), version({})",
+                            ec,
+                            owner,
+                            version);
+                // TODO: let's take the easy way right now
                 dsn_exit(0);
             },
             opt);
@@ -194,12 +207,11 @@ void meta_server_failure_detector::reset_stability_stat(const host_port &node)
 
 void meta_server_failure_detector::leader_initialize(const std::string &lock_service_owner)
 {
-    // TODO(yingchun): should be well dealt with
-    dsn::rpc_address addr;
-    CHECK(addr.from_string_ipv4(lock_service_owner.c_str()),
-          "parse {} to rpc_address failed",
+    host_port hp;
+    CHECK(hp.parse_string(lock_service_owner).is_ok(),
+          "parse {} to host_port failed",
           lock_service_owner);
-    CHECK_EQ_MSG(addr, dsn_primary_address(), "acquire leader return success, but owner not match");
+    CHECK_EQ_MSG(hp, dsn_primary_address(), "acquire leader return success, but owner not match");
     _is_leader.store(true);
     _election_moment.store(dsn_now_ms());
 }

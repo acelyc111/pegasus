@@ -113,13 +113,14 @@ error_s host_port::parse_string(const string &str)
 
     // Parse the port.
     uint32_t port;
-    if (!buf2uint32(hostname_port[1], port) || port > UINT16_MAX) {
-        return error_s::make(ERR_INVALID_PARAMETERS,
-                             fmt::format("invalid port: {}", hostname_port[1]));
+    if (hostname_port[0].empty() || !buf2uint32(hostname_port[1], port) || port > UINT16_MAX) {
+        return error_s::make(
+            ERR_INVALID_PARAMETERS,
+            fmt::format("invalid host:port({}:{})", hostname_port[0], hostname_port[1]));
     }
 
     _host.swap(hostname_port[0]);
-    _port = port;
+    _port = static_cast<uint16_t>(port);
     return error_s::ok();
 }
 
