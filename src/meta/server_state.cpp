@@ -1915,7 +1915,7 @@ void server_state::on_update_configuration(
 
 void server_state::on_partition_node_dead(std::shared_ptr<app_state> &app,
                                           int pidx,
-                                          const dsn::host_port &node)
+                                          const host_port &node)
 {
     partition_configuration &pc = app->partitions[pidx];
     // TODO(yingchun): refactor if-statements
@@ -1990,7 +1990,7 @@ void server_state::on_propose_balancer(const configuration_balancer_request &req
 
 error_code
 server_state::construct_apps(const std::vector<query_app_info_response> &query_app_responses,
-                             const std::vector<dsn::host_port> &replica_nodes,
+                             const std::vector<host_port> &replica_nodes,
                              std::string &hint_message)
 {
     int max_app_id = 0;
@@ -2084,7 +2084,7 @@ server_state::construct_apps(const std::vector<query_app_info_response> &query_a
 
 error_code server_state::construct_partitions(
     const std::vector<query_replica_info_response> &query_replica_responses,
-    const std::vector<dsn::host_port> &replica_nodes,
+    const std::vector<host_port> &replica_nodes,
     bool skip_lost_partitions,
     std::string &hint_message)
 {
@@ -2174,7 +2174,7 @@ error_code server_state::construct_partitions(
 }
 
 dsn::error_code
-server_state::sync_apps_from_replica_nodes(const std::vector<dsn::host_port> &replica_nodes,
+server_state::sync_apps_from_replica_nodes(const std::vector<host_port> &replica_nodes,
                                            bool skip_bad_nodes,
                                            bool skip_lost_partitions,
                                            std::string &hint_message)

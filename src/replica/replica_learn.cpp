@@ -429,7 +429,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
              _prepare_list->count(),
              learn_start_decree);
 
-    response.host_port_address = _stub->_primary_address;
+    response.host_port = _stub->_primary_address;
     response.prepare_start_decree = invalid_decree;
     response.last_committed_decree = local_committed_decree;
     response.err = ERR_OK;

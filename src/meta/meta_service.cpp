@@ -46,7 +46,6 @@
 #include "meta/duplication/meta_duplication_service.h"
 #include "meta_split_service.h"
 #include "meta_bulk_load_service.h"
-#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -268,7 +267,7 @@ void meta_service::start_service()
 
     _alive_nodes_count->set(_alive_set.size());
 
-    for (const ::dsn::host_port &node : _alive_set) {
+    for (const auto &node : _alive_set) {
         // sync alive set and the failure_detector
         _failure_detector->unregister_worker(node);
         _failure_detector->register_worker(node, true);
@@ -493,9 +492,10 @@ void meta_service::register_rpc_handlers()
                                          &meta_service::on_set_max_replica_count);
 }
 
-int meta_service::check_leader(dsn::message_ex *req, dsn::host_port *forward_address)
+int meta_service::check_leader(dsn::message_ex *req, host_port *forward_address)
 {
-    dsn::host_port leader;
+    host_port leader;
+    // TODO: refactor if-statements
     if (!_failure_detector->get_leader(&leader)) {
         if (!req->header->context.u.is_forward_supported) {
             if (forward_address != nullptr)
@@ -505,9 +505,7 @@ int meta_service::check_leader(dsn::message_ex *req, dsn::host_port *forward_add
 
         LOG_DEBUG_F("leader address: {}", leader);
         if (leader.initialized()) {
-            // TODO(yingchun): resolve
-            rpc_address addr; // from leader
-            dsn_rpc_forward(req, addr);
+            dsn_rpc_forward(req, _dns_resolver->resolve_address(leader));
             return 0;
         } else {
             if (forward_address != nullptr)
@@ -584,7 +582,8 @@ void meta_service::on_list_nodes(configuration_list_nodes_rpc rpc)
         if (request.status == node_status::NS_INVALID || request.status == node_status::NS_ALIVE) {
             info.status = node_status::NS_ALIVE;
             for (auto &node : _alive_set) {
-                info.host_port_address = node;
+                info.address = _dns_resolver->resolve_address(node);
+                info.host_port = node;
                 response.infos.push_back(info);
             }
         }
@@ -592,7 +591,8 @@ void meta_service::on_list_nodes(configuration_list_nodes_rpc rpc)
             request.status == node_status::NS_UNALIVE) {
             info.status = node_status::NS_UNALIVE;
             for (auto &node : _dead_set) {
-                info.host_port_address = node;
+                info.address = _dns_resolver->resolve_address(node);
+                info.host_port = node;
                 response.infos.push_back(info);
             }
         }
@@ -644,7 +644,7 @@ void meta_service::on_query_configuration_by_index(configuration_query_by_index_
     if (!check_status(rpc, &forward_address)) {
         if (forward_address.initialized()) {
             partition_configuration config;
-            // TODO(yingchun): ip to host
+            config.primary = _dns_resolver->resolve_address(forward_address);
             config.host_port_primary = forward_address;
             response.partitions.push_back(std::move(config));
         }

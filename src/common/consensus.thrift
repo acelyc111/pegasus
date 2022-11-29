@@ -157,7 +157,7 @@ struct learn_response
     7:dsn.rpc_address       address; // learnee's address
     8:string                base_local_dir; // base dir of files on learnee
     9:optional string replica_disk_tag; // the disk tag of learnee located
-    10:dsn.host_port        host_port_address; // learnee's address
+    10:dsn.host_port        host_port; // learnee's address
 }
 
 struct learn_notify_response

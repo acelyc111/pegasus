@@ -266,7 +266,7 @@ struct node_info
 {
     1:node_status      status = node_status.NS_INVALID;
     2:dsn.rpc_address  address;
-    3:dsn.host_port    host_port_address;
+    3:dsn.host_port    host_port;
 }
 
 struct configuration_list_nodes_request

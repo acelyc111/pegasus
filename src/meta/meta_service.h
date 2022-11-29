@@ -53,6 +53,7 @@
 #include "partition_guardian.h"
 #include "meta_server_failure_detector.h"
 #include "runtime/security/access_controller.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace security {
@@ -143,15 +144,13 @@ public:
     }
     virtual void send_message(const host_port &target, dsn::message_ex *request)
     {
-        rpc_address addr; // from target
-        dsn_rpc_call_one_way(addr, request);
+        dsn_rpc_call_one_way(_dns_resolver->resolve_address(target), request);
     }
     virtual void send_request(dsn::message_ex * /*req*/,
                               const host_port &target,
                               const rpc_response_task_ptr &callback)
     {
-        rpc_address addr; // from target
-        dsn_rpc_call(addr, callback);
+        dsn_rpc_call(_dns_resolver->resolve_address(target), callback);
     }
 
     // these two callbacks are running in fd's thread_pool, and in fd's lock
@@ -251,7 +250,7 @@ private:
     //   0. meta isn't leader, and rpc-msg can forward to others
     //  -1. meta isn't leader, and rpc-msg can't forward to others
     // if return -1 and `forward_address' != nullptr, then return leader by `forward_address'.
-    int check_leader(dsn::message_ex *req, dsn::host_port *forward_address);
+    int check_leader(dsn::message_ex *req, host_port *forward_address);
     template <typename TRpcHolder>
     int check_leader(TRpcHolder rpc, /*out*/ host_port *forward_address);
     // ret:
@@ -339,7 +338,7 @@ private:
 template <typename TRpcHolder>
 int meta_service::check_leader(TRpcHolder rpc, host_port *forward_address)
 {
-    dsn::host_port leader;
+    host_port leader;
     // TODO(yingchun): refactor if-statements
     if (!_failure_detector->get_leader(&leader)) {
         if (!rpc.dsn_request()->header->context.u.is_forward_supported) {
@@ -350,9 +349,7 @@ int meta_service::check_leader(TRpcHolder rpc, host_port *forward_address)
 
         LOG_DEBUG("leader address: %s", leader.to_string());
         if (leader.initialized()) {
-            // TODO: from leader
-            rpc_address addr;
-            rpc.forward(addr);
+            rpc.forward(_dns_resolver->resolve_address(leader));
             return 0;
         } else {
             if (forward_address != nullptr) {

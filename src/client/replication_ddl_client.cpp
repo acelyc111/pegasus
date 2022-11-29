@@ -460,7 +460,7 @@ dsn::error_code replication_ddl_client::list_nodes(
     }
 
     for (const dsn::replication::node_info &n : resp.infos) {
-        nodes[n.host_port_address] = n.status;
+        nodes[n.host_port] = n.status;
     }
 
     return dsn::ERR_OK;
