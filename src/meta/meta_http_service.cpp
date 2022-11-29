@@ -118,10 +118,9 @@ void meta_http_service::get_app_handler(const http_request &req, http_response &
         int read_unhealthy = 0;
         for (const auto &p : response.partitions) {
             int replica_count = 0;
-            // TODO(yingchun): both
             if (p.host_port_primary.initialized()) {
                 replica_count++;
-                //                node_stat[p.primary].first++;
+                node_stat[p.host_port_primary].first++;
                 total_prim_count++;
             }
             replica_count += p.host_port_secondaries.size();
@@ -395,16 +394,11 @@ void meta_http_service::list_node_handler(const http_request &req, http_response
             for (int i = 0; i < response_app.partitions.size(); i++) {
                 const dsn::partition_configuration &p = response_app.partitions[i];
                 if (p.host_port_primary.initialized()) {
-                    // TODO(yingchun): both
-                    //                    auto find = tmp_map.find(p.primary);
                     auto find = tmp_map.find(p.host_port_primary);
                     if (find != tmp_map.end()) {
                         find->second.primary_count++;
                     }
                 }
-                // TODO(yingchun): both
-                //                for (int j = 0; j < p.secondaries.size(); j++) {
-                //                    auto find = tmp_map.find(p.secondaries[j]);
                 for (int j = 0; j < p.host_port_secondaries.size(); j++) {
                     auto find = tmp_map.find(p.host_port_secondaries[j]);
                     if (find != tmp_map.end()) {

@@ -368,6 +368,7 @@ public:
 public:
     const char *get_logname() const { return log_name.c_str(); }
     std::shared_ptr<app_state_helper> helpers;
+    // TODO: make sure all infos are stored in host_port_* to keep compatibility
     std::vector<partition_configuration> partitions;
     std::map<dupid_t, duplication_info_s_ptr> duplications;
 
@@ -464,6 +465,7 @@ inline bool is_node_alive(const node_mapper &nodes, const host_port &addr)
     return iter->second.alive();
 }
 
+// TODO(yingchun): should refactor these functions
 inline const partition_configuration *get_config(const app_mapper &apps, const dsn::gpid &gpid)
 {
     auto iter = apps.find(gpid.get_app_id());

@@ -202,7 +202,7 @@ private:
     // else indicate error that remote storage responses
     error_code sync_apps_to_remote_storage();
 
-    error_code sync_apps_from_replica_nodes(const std::vector<dsn::host_port> &node_list,
+    error_code sync_apps_from_replica_nodes(const std::vector<host_port> &node_list,
                                             bool skip_bad_nodes,
                                             bool skip_lost_partitions,
                                             std::string &hint_message);
@@ -218,12 +218,12 @@ private:
     void check_consistency(const dsn::gpid &gpid);
 
     error_code construct_apps(const std::vector<query_app_info_response> &query_app_responses,
-                              const std::vector<dsn::host_port> &replica_nodes,
+                              const std::vector<host_port> &replica_nodes,
                               std::string &hint_message);
 
     error_code construct_partitions(
         const std::vector<query_replica_info_response> &query_replica_info_responses,
-        const std::vector<dsn::host_port> &replica_nodes,
+        const std::vector<host_port> &replica_nodes,
         bool skip_lost_partitions,
         std::string &hint_message);
 
@@ -245,8 +245,8 @@ private:
     void
     update_configuration_locally(app_state &app,
                                  std::shared_ptr<configuration_update_request> &config_request);
-    void request_check(const partition_configuration &old,
-                       const configuration_update_request &request);
+    void check_request_DEBUG(const partition_configuration &old,
+                             const configuration_update_request &request);
     void recall_partition(std::shared_ptr<app_state> &app, int pidx);
     void drop_partition(std::shared_ptr<app_state> &app, int pidx);
     void downgrade_primary_to_inactive(std::shared_ptr<app_state> &app, int pidx);
@@ -256,8 +256,7 @@ private:
                                          const host_port &node);
     void
     downgrade_stateless_nodes(std::shared_ptr<app_state> &app, int pidx, const host_port &address);
-    void
-    on_partition_node_dead(std::shared_ptr<app_state> &app, int pidx, const dsn::host_port &node);
+    void on_partition_node_dead(std::shared_ptr<app_state> &app, int pidx, const host_port &node);
     void send_proposal(const host_port &target, const configuration_update_request &proposal);
     void send_proposal(const configuration_proposal_action &action,
                        const partition_configuration &pc,

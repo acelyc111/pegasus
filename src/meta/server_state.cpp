@@ -1375,13 +1375,13 @@ void server_state::list_apps(const configuration_list_apps_request &request,
 void server_state::send_proposal(const host_port &target,
                                  const configuration_update_request &proposal)
 {
-    LOG_INFO("send proposal %s for gpid(%d.%d), ballot = %" PRId64 ", target = %s, node = %s",
-             ::dsn::enum_to_string(proposal.type),
-             proposal.config.pid.get_app_id(),
-             proposal.config.pid.get_partition_index(),
-             proposal.config.ballot,
-             target.to_string(),
-             proposal.host_port_node.to_string());
+    LOG_INFO_F("send proposal {} for gpid({}), ballot = {}, target = {}, node = {}({})",
+               ::dsn::enum_to_string(proposal.type),
+               proposal.config.pid,
+               proposal.config.ballot,
+               target,
+               proposal.host_port_node,
+               proposal.node);
     dsn::message_ex *msg =
         dsn::message_ex::create_request(RPC_CONFIG_PROPOSAL, 0, proposal.config.pid.thread_hash());
     ::marshall(msg, proposal);
@@ -1395,13 +1395,16 @@ void server_state::send_proposal(const configuration_proposal_action &action,
     configuration_update_request request;
     request.info = app;
     request.type = action.type;
+    request.node = action.node;
     request.host_port_node = action.host_port_node;
     request.config = pc;
     send_proposal(action.host_port_target, request);
 }
 
-void server_state::request_check(const partition_configuration &old,
-                                 const configuration_update_request &request)
+// Because this function will only run in DEBUG version, so we will not check compatibility, i.e.
+// request fill rpc_address fields instead of host_port fields.
+void server_state::check_request_DEBUG(const partition_configuration &old,
+                                       const configuration_update_request &request)
 {
     const partition_configuration &new_config = request.config;
 
@@ -1475,7 +1478,7 @@ void server_state::update_configuration_locally(
             CHECK_NOTNULL(ns, "invalid node address, address = {}", config_request->host_port_node);
         }
 #ifndef NDEBUG
-        request_check(old_cfg, *config_request);
+        check_request_DEBUG(old_cfg, *config_request);
 #endif
         switch (config_request->type) {
         case config_type::CT_ASSIGN_PRIMARY:
@@ -1500,10 +1503,18 @@ void server_state::update_configuration_locally(
             break;
 
         case config_type::CT_DROP_PARTITION:
+            for (const rpc_address &addr : new_cfg.last_drops) {
+                host_port node(addr);
+                ns = get_node_state(_nodes, node, false);
+                if (ns != nullptr) {
+                    ns->remove_partition(gpid, false);
+                }
+            }
             for (const host_port &node : new_cfg.host_port_last_drops) {
                 ns = get_node_state(_nodes, node, false);
-                if (ns != nullptr)
+                if (ns != nullptr) {
                     ns->remove_partition(gpid, false);
+                }
             }
             break;
 
@@ -1513,6 +1524,11 @@ void server_state::update_configuration_locally(
             break;
         case config_type::CT_REGISTER_CHILD: {
             ns->put_partition(gpid, true);
+            for (auto &addr : config_request->config.secondaries) {
+                host_port secondary(addr);
+                auto secondary_node = get_node_state(_nodes, secondary, false);
+                secondary_node->put_partition(gpid, false);
+            }
             for (auto &secondary : config_request->config.host_port_secondaries) {
                 auto secondary_node = get_node_state(_nodes, secondary, false);
                 secondary_node->put_partition(gpid, false);
@@ -1528,23 +1544,28 @@ void server_state::update_configuration_locally(
 
         new_cfg = old_cfg;
         partition_configuration_stateless pcs(new_cfg);
-        if (config_request->type == config_type::type::CT_ADD_SECONDARY) {
-            pcs.hosts().emplace_back(config_request->host_port_node);
-            pcs.workers().emplace_back(config_request->host_port_node);
+
+        host_port node;
+        if (config_request->__isset.host_port_node) {
+            node = config_request->host_port_node;
         } else {
-            auto it =
-                std::remove(pcs.hosts().begin(), pcs.hosts().end(), config_request->host_port_node);
+            CHECK(config_request->__isset.node, "");
+            node = host_port(config_request->node);
+        }
+
+        if (config_request->type == config_type::type::CT_ADD_SECONDARY) {
+            pcs.hosts().emplace_back(node);
+            pcs.workers().emplace_back(node);
+        } else {
+            auto it = std::remove(pcs.hosts().begin(), pcs.hosts().end(), node);
             pcs.hosts().erase(it);
 
-            it = std::remove(
-                pcs.workers().begin(), pcs.workers().end(), config_request->host_port_node);
+            it = std::remove(pcs.workers().begin(), pcs.workers().end(), node);
             pcs.workers().erase(it);
         }
 
-        auto it = _nodes.find(config_request->host_port_node);
-        CHECK(it != _nodes.end(),
-              "invalid node address, address = {}",
-              config_request->host_port_node);
+        auto it = _nodes.find(node);
+        CHECK(it != _nodes.end(), "invalid node address, address = {}", node);
         if (config_type::CT_REMOVE == config_request->type) {
             it->second.remove_partition(gpid, false);
         } else {
@@ -1669,9 +1690,18 @@ void server_state::on_update_configuration_on_remote_reply(
                     // ignore adding secondary if add_secondary_enable_flow_control = true
                 } else {
                     config_request->type = action.type;
+                    config_request->node = action.node;
                     config_request->host_port_node = action.host_port_node;
                     config_request->info = *app;
-                    send_proposal(action.host_port_target, *config_request);
+
+                    host_port target;
+                    if (action.__isset.host_port_target) {
+                        target = action.host_port_target;
+                    } else {
+                        CHECK(action.__isset.target, "");
+                        target = host_port(action.target);
+                    }
+                    send_proposal(target, *config_request);
                 }
             }
         }
@@ -1713,33 +1743,30 @@ void server_state::drop_partition(std::shared_ptr<app_state> &app, int pidx)
     partition_configuration &pc = app->partitions[pidx];
     config_context &cc = app->helpers->contexts[pidx];
 
-    std::shared_ptr<configuration_update_request> req =
-        std::make_shared<configuration_update_request>();
-    configuration_update_request &request = *req;
+    auto req = std::make_shared<configuration_update_request>();
 
-    request.info = *app;
-    request.type = config_type::CT_DROP_PARTITION;
-    request.host_port_node = pc.host_port_primary;
-
-    request.config = pc;
+    req->info = *app;
+    req->type = config_type::CT_DROP_PARTITION;
+    req->host_port_node = pc.host_port_primary;
+    req->config = pc;
     for (auto &node : pc.host_port_secondaries) {
-        maintain_drops(request.config.host_port_last_drops, node, request.type);
+        maintain_drops(req->config.host_port_last_drops, node, req->type);
     }
     if (!pc.host_port_primary.is_invalid()) {
-        maintain_drops(request.config.host_port_last_drops, pc.host_port_primary, request.type);
+        maintain_drops(req->config.host_port_last_drops, pc.host_port_primary, req->type);
     }
-    request.config.host_port_primary.reset();
-    request.config.host_port_secondaries.clear();
+    req->config.host_port_primary.reset();
+    req->config.host_port_secondaries.clear();
 
     CHECK_EQ((pc.partition_flags & pc_flags::dropped), 0);
-    request.config.partition_flags |= pc_flags::dropped;
+    req->config.partition_flags |= pc_flags::dropped;
 
     // NOTICE this mis-understanding: if a old state is DDD, we may not need to udpate the ballot.
     // Actually it is necessary. Coz we may send a proposal due to the old DDD state
     // and laterly a update_config may arrive.
     // An updated ballot annouces a previous state is INVALID and all actions taken
     // due to the old one should be staled
-    request.config.ballot++;
+    req->config.ballot++;
 
     if (config_status::pending_remote_sync == cc.stage) {
         LOG_WARNING(
@@ -1781,16 +1808,14 @@ void server_state::downgrade_primary_to_inactive(std::shared_ptr<app_state> &app
         }
     }
 
-    std::shared_ptr<configuration_update_request> req =
-        std::make_shared<configuration_update_request>();
-    configuration_update_request &request = *req;
-    request.info = *app;
-    request.config = pc;
-    request.type = config_type::CT_DOWNGRADE_TO_INACTIVE;
-    request.host_port_node = pc.host_port_primary;
-    request.config.ballot++;
-    request.config.host_port_primary.reset();
-    maintain_drops(request.config.host_port_last_drops, pc.host_port_primary, request.type);
+    auto req = std::make_shared<configuration_update_request>();
+    req->info = *app;
+    req->config = pc;
+    req->type = config_type::CT_DOWNGRADE_TO_INACTIVE;
+    req->host_port_node = pc.host_port_primary;
+    req->config.ballot++;
+    req->config.host_port_primary.reset();
+    maintain_drops(req->config.host_port_last_drops, pc.host_port_primary, req->type);
 
     cc.stage = config_status::pending_remote_sync;
     cc.pending_sync_request = req;
