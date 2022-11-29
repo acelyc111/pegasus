@@ -34,7 +34,6 @@
     } while (false)
 
 namespace dsn {
-class host_port_group;
 class partition_configuration;
 namespace replication {
 class replication_ddl_client;
