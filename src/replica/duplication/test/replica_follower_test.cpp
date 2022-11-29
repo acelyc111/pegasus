@@ -116,10 +116,11 @@ TEST_F(replica_follower_test, test_init_master_info)
     ASSERT_EQ(follower->get_master_cluster_name(), "master");
     ASSERT_TRUE(follower->is_need_duplicate());
     ASSERT_TRUE(_mock_replica->is_duplication_follower());
-    std::vector<std::string> test_ip{"127.0.0.1:34801", "127.0.0.2:34801", "127.0.0.3:34802"};
-    for (int i = 0; i < follower->get_master_meta_list().size(); i++) {
-        ASSERT_EQ(std::string(follower->get_master_meta_list()[i].to_string()), test_ip[i]);
-    }
+    host_port_group test_ip;
+    test_ip.add_list({host_port("127.0.0.1", 34801),
+                      host_port("127.0.0.2", 34801),
+                      host_port("127.0.0.3", 34802)});
+    ASSERT_EQ(test_ip, follower->get_master_meta_list());
 
     _app_info.envs.clear();
     update_mock_replica(_app_info);

@@ -1646,7 +1646,7 @@ void server_state::on_update_configuration_on_remote_reply(
     error_code ec, std::shared_ptr<configuration_update_request> &config_request)
 {
     zauto_write_lock l(_lock);
-    dsn::gpid &gpid = config_request->config.pid;
+    const dsn::gpid &gpid = config_request->config.pid;
     std::shared_ptr<app_state> app = get_app(gpid.get_app_id());
     config_context &cc = app->helpers->contexts[gpid.get_partition_index()];
 
@@ -1744,11 +1744,10 @@ void server_state::drop_partition(std::shared_ptr<app_state> &app, int pidx)
     config_context &cc = app->helpers->contexts[pidx];
 
     auto req = std::make_shared<configuration_update_request>();
-
     req->info = *app;
     req->type = config_type::CT_DROP_PARTITION;
     req->host_port_node = pc.host_port_primary;
-    req->config = pc;
+    req->config = pc; // TODO: since pc only keep host_port_* fields, it cannot be downgraded
     for (auto &node : pc.host_port_secondaries) {
         maintain_drops(req->config.host_port_last_drops, node, req->type);
     }
@@ -1810,7 +1809,7 @@ void server_state::downgrade_primary_to_inactive(std::shared_ptr<app_state> &app
 
     auto req = std::make_shared<configuration_update_request>();
     req->info = *app;
-    req->config = pc;
+    req->config = pc; // TODO: since pc only keep host_port_* fields, it cannot be downgraded
     req->type = config_type::CT_DOWNGRADE_TO_INACTIVE;
     req->host_port_node = pc.host_port_primary;
     req->config.ballot++;
@@ -1837,6 +1836,7 @@ void server_state::downgrade_secondary_to_inactive(std::shared_ptr<app_state> &a
         request.info = *app;
         request.config = pc;
         request.type = config_type::CT_DOWNGRADE_TO_INACTIVE;
+        request.node = _meta_svc->get_dns_resolver()->resolve_address(node);
         request.host_port_node = node;
         send_proposal(pc.host_port_primary, request);
     } else {
@@ -1854,7 +1854,6 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
     auto req = std::make_shared<configuration_update_request>();
     req->info = *app;
     req->type = config_type::CT_REMOVE;
-    //    req->host_node = node;   // TODO(yingchun): make sure nobody use it
     req->config = app->partitions[pidx];
 
     config_context &cc = app->helpers->contexts[pidx];
@@ -1863,7 +1862,9 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
     unsigned i = 0;
     for (; i < pc.host_port_secondaries.size(); ++i) {
         if (pc.host_port_secondaries[i] == node) {
-            req->host_port_node = pc.host_port_last_drops[i];
+            const auto &hp = pc.host_port_last_drops[i];
+            req->node = _meta_svc->get_dns_resolver()->resolve_address(hp);
+            req->host_port_node = hp;
             break;
         }
     }
@@ -2247,9 +2248,7 @@ server_state::sync_apps_from_replica_nodes(const std::vector<host_port> &replica
         auto app_query_req = std::make_unique<query_app_info_request>();
         app_query_req->meta_server = dsn_primary_address();
         query_app_info_rpc app_rpc(std::move(app_query_req), RPC_QUERY_APP_INFO);
-        // TODO: from replica_nodes[i]
-        rpc_address addr;
-        app_rpc.call(addr,
+        app_rpc.call(_meta_svc->get_dns_resolver()->resolve_address(replica_nodes[i]),
                      &tracker,
                      [app_rpc, i, &replica_nodes, &query_app_errors, &query_app_responses](
                          error_code err) mutable {
@@ -2266,12 +2265,12 @@ server_state::sync_apps_from_replica_nodes(const std::vector<host_port> &replica
                      });
 
         auto replica_query_req = std::make_unique<query_replica_info_request>();
+        rpc_address target = _meta_svc->get_dns_resolver()->resolve_address(replica_nodes[i]);
+        replica_query_req->node = target;
         replica_query_req->host_port_node = replica_nodes[i];
         query_replica_info_rpc replica_rpc(std::move(replica_query_req), RPC_QUERY_REPLICA_INFO);
-        // TODO: feom replica_nodes[i]
-        rpc_address addr1;
         replica_rpc.call(
-            addr1,
+            target,
             &tracker,
             [replica_rpc, i, &replica_nodes, &query_replica_errors, &query_replica_responses](
                 error_code err) mutable {
@@ -2357,15 +2356,24 @@ server_state::sync_apps_from_replica_nodes(const std::vector<host_port> &replica
 void server_state::on_start_recovery(const configuration_recovery_request &req,
                                      configuration_recovery_response &resp)
 {
-    LOG_INFO("start recovery, node_count = %d, skip_bad_nodes = %s, skip_lost_partitions = %s",
-             (int)req.recovery_set.size(),
-             req.skip_bad_nodes ? "true" : "false",
-             req.skip_lost_partitions ? "true" : "false");
+    std::vector<host_port> replica_nodes;
+    if (req.__isset.host_port_recovery_set) {
+        replica_nodes = req.host_port_recovery_set;
+    } else {
+        CHECK(req.__isset.recovery_set, "");
+        replica_nodes.reserve(req.recovery_set.size());
+        for (const auto &addr : req.recovery_set) {
+            replica_nodes.emplace_back(host_port(addr));
+        }
+    }
 
-    resp.err = sync_apps_from_replica_nodes(req.host_port_recovery_set,
-                                            req.skip_bad_nodes,
-                                            req.skip_lost_partitions,
-                                            resp.hint_message);
+    LOG_INFO_F("start recovery, node_count = {}, skip_bad_nodes = {}, skip_lost_partitions = {}",
+               replica_nodes.size(),
+               req.skip_bad_nodes ? "true" : "false",
+               req.skip_lost_partitions ? "true" : "false");
+
+    resp.err = sync_apps_from_replica_nodes(
+        replica_nodes, req.skip_bad_nodes, req.skip_lost_partitions, resp.hint_message);
     if (resp.err != dsn::ERR_OK) {
         LOG_ERROR("sync apps from replica nodes failed when do recovery, err = %s",
                   resp.err.to_string());
@@ -2640,7 +2648,7 @@ void server_state::check_consistency(const dsn::gpid &gpid)
     partition_configuration &config = app.partitions[gpid.get_partition_index()];
 
     if (app.is_stateful) {
-        if (config.host_port_primary.is_invalid() == false) {
+        if (!config.host_port_primary.is_invalid()) {
             auto it = _nodes.find(config.host_port_primary);
             CHECK(it != _nodes.end(),
                   "invalid primary address, address = {}",

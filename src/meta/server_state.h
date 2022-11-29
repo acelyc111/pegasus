@@ -250,7 +250,6 @@ private:
     void recall_partition(std::shared_ptr<app_state> &app, int pidx);
     void drop_partition(std::shared_ptr<app_state> &app, int pidx);
     void downgrade_primary_to_inactive(std::shared_ptr<app_state> &app, int pidx);
-    // TODO(yingchun): ip
     void downgrade_secondary_to_inactive(std::shared_ptr<app_state> &app,
                                          int pidx,
                                          const host_port &node);

@@ -55,12 +55,14 @@ void replica_follower::init_master_info()
     const auto &meta_list_str = envs.at(duplication_constants::kDuplicationEnvMasterMetasKey);
     std::vector<std::string> metas;
     boost::split(metas, meta_list_str, boost::is_any_of(","));
+    // TODO(yingchun): too strict to crash on bad config
     CHECK(!metas.empty(), "master cluster meta list is invalid!");
     for (const auto &meta : metas) {
-        dsn::rpc_address node;
-        CHECK(node.from_string_ipv4(meta.c_str()), "{} is invalid meta address", meta);
-        _master_meta_list.emplace_back(std::move(node));
+        host_port node;
+        CHECK(node.parse_string(meta).is_ok(), "{} is invalid host:port", meta);
+        _master_meta_list.add(node);
     }
+    _master_meta_list.set_rand_leader();
 }
 
 // ThreadPool: THREAD_POOL_REPLICATION_LONG
@@ -89,10 +91,6 @@ error_code replica_follower::duplicate_checkpoint()
 // ThreadPool: THREAD_POOL_DEFAULT
 void replica_follower::async_duplicate_checkpoint_from_master_replica()
 {
-    rpc_address meta_servers;
-    meta_servers.assign_group(_master_cluster_name.c_str());
-    meta_servers.group_address()->add_list(_master_meta_list);
-
     configuration_query_by_index_request meta_config_request;
     meta_config_request.app_name = _master_app_name;
     // just fetch the same partition config
@@ -102,7 +100,9 @@ void replica_follower::async_duplicate_checkpoint_from_master_replica()
     dsn::message_ex *msg = dsn::message_ex::create_request(
         RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX, 0, get_gpid().thread_hash());
     dsn::marshall(msg, meta_config_request);
-    rpc::call(meta_servers,
+
+    rpc_address addr; // TODO: from _master_meta_list.leader()
+    rpc::call(addr,
               msg,
               &_tracker,
               [&](error_code err, configuration_query_by_index_response &&resp) mutable {
@@ -155,7 +155,7 @@ replica_follower::update_master_replica_config(error_code err,
         return ERR_INCONSISTENT_STATE;
     }
 
-    if (dsn_unlikely(resp.partitions[0].primary == rpc_address::s_invalid_address)) {
+    if (dsn_unlikely(!resp.partitions[0].host_port_primary.initialized())) {
         LOG_ERROR_PREFIX("master[{}] partition address is invalid", master_replica_name());
         return ERR_INVALID_STATE;
     }
@@ -165,7 +165,7 @@ replica_follower::update_master_replica_config(error_code err,
     LOG_INFO_PREFIX(
         "query master[{}] config successfully and update local config: remote={}, gpid={}",
         master_replica_name(),
-        _master_replica_config.primary.to_string(),
+        _master_replica_config.host_port_primary.to_string(),
         _master_replica_config.pid.to_string());
     return ERR_OK;
 }
@@ -180,12 +180,10 @@ void replica_follower::copy_master_replica_checkpoint()
     dsn::message_ex *msg = dsn::message_ex::create_request(
         RPC_QUERY_LAST_CHECKPOINT_INFO, 0, _master_replica_config.pid.thread_hash());
     dsn::marshall(msg, request);
-    rpc::call(_master_replica_config.primary,
-              msg,
-              &_tracker,
-              [&](error_code err, learn_response &&resp) mutable {
-                  nfs_copy_checkpoint(err, std::move(resp));
-              });
+    rpc_address addr; // TODO: from _master_replica_config.host_port_primary
+    rpc::call(addr, msg, &_tracker, [&](error_code err, learn_response &&resp) mutable {
+        nfs_copy_checkpoint(err, std::move(resp));
+    });
 }
 
 // ThreadPool: THREAD_POOL_DEFAULT
@@ -213,7 +211,7 @@ error_code replica_follower::nfs_copy_checkpoint(error_code err, learn_response 
 }
 
 // ThreadPool: THREAD_POOL_DEFAULT
-void replica_follower::nfs_copy_remote_files(const rpc_address &remote_node,
+void replica_follower::nfs_copy_remote_files(const host_port &remote_node,
                                              const std::string &remote_disk,
                                              const std::string &remote_dir,
                                              std::vector<std::string> &file_list,
@@ -222,7 +220,8 @@ void replica_follower::nfs_copy_remote_files(const rpc_address &remote_node,
     LOG_INFO_PREFIX(
         "nfs start copy master[{}] replica checkpoint: {}", master_replica_name(), remote_dir);
     std::shared_ptr<remote_copy_request> request = std::make_shared<remote_copy_request>();
-    request->source = remote_node;
+    rpc_address addr;       // TODO: from remote_node
+    request->source = addr; // TODO: use host_port to resolve?
     request->source_disk_tag = remote_disk;
     request->source_dir = remote_dir;
     request->files = file_list;

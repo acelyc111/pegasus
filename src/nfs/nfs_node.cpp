@@ -78,8 +78,8 @@ aio_task_ptr nfs_node::copy_remote_files(const rpc_address &remote,
 {
     auto cb = dsn::file::create_aio_task(callback_code, tracker, std::move(callback), hash);
 
-    std::shared_ptr<remote_copy_request> rci = std::make_shared<remote_copy_request>();
-    rci->source = remote;
+    auto rci = std::make_shared<remote_copy_request>();
+    rci->source = remote; // TODO: use host_port to resolve?
     rci->source_disk_tag = source_disk_tag;
     rci->source_dir = source_dir;
     rci->files = files;
