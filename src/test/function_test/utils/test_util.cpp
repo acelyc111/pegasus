@@ -24,7 +24,6 @@
 #include "base/pegasus_const.h"
 #include "client/replication_ddl_client.h"
 #include "common/replication_other_types.h"
-#include "runtime/rpc/rpc_address.h"
 #include "include/pegasus/client.h"
 #include "test/function_test/utils/global_env.h"
 #include "test/function_test/utils/utils.h"
@@ -46,11 +45,10 @@ void test_util::SetUpTestCase() { ASSERT_TRUE(pegasus_client_factory::initialize
 
 void test_util::SetUp()
 {
-    dsn::host_port_group meta_servers;
-    ASSERT_TRUE(dsn::host_port_group::load_servers(
-                    PEGASUS_CLUSTER_SECTION_NAME, cluster_name_, &meta_servers)
-                    .is_ok());
-    ddl_client_ = std::make_shared<replication_ddl_client>(meta_servers);
+    ASSERT_TRUE(
+        dsn::host_port_group::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name_, &meta_list_)
+            .is_ok());
+    ddl_client_ = std::make_shared<replication_ddl_client>(meta_list_);
     ASSERT_TRUE(ddl_client_ != nullptr);
 
     dsn::error_code ret =
