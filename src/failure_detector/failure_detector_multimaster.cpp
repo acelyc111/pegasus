@@ -37,7 +37,7 @@ namespace dist {
 
 slave_failure_detector_with_multimaster::slave_failure_detector_with_multimaster(
     const std::shared_ptr<dns_resolver> &dns_resolver,
-    const ::dsn::host_port_group &meta_servers,
+    const host_port_group &meta_servers,
     std::function<void()> &&master_disconnected_callback,
     std::function<void()> &&master_connected_callback)
     : dsn::fd::failure_detector(dns_resolver), _meta_servers(meta_servers)
@@ -100,10 +100,10 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
 
     host_port primary_node;
     if (ack.__isset.host_port_primary_node) {
-        this_node = ack.host_port_primary_node;
+        primary_node = ack.host_port_primary_node;
     } else {
         CHECK(ack.__isset.primary_node, "");
-        this_node = host_port(ack.primary_node);
+        primary_node = host_port(ack.primary_node);
     }
 
     // Try to send beacon to the next master when master changed and the hint master is invalid
