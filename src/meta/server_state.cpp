@@ -852,7 +852,8 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
                     // when register child partition, stage is config_status::pending_remote_sync,
                     // but cc.pending_sync_request is not set, see more in function
                     // 'register_child_on_meta'
-                    if (req == nullptr || req->host_port_node == node || host_port(req->node) == node) {
+                    if (req == nullptr || req->host_port_node == node ||
+                        host_port(req->node) == node) {
                         return false;
                     }
                 }
@@ -944,8 +945,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
                         }
                     }
                 } else if (app->status == app_status::AS_AVAILABLE) {
-                    bool is_useful_replica =
-                        collect_replica({&_all_apps, &_nodes}, node, rep);
+                    bool is_useful_replica = collect_replica({&_all_apps, &_nodes}, node, rep);
                     if (!is_useful_replica) {
                         if (level <= meta_function_level::fl_steady) {
                             LOG_INFO(
