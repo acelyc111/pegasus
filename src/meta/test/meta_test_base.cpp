@@ -24,8 +24,8 @@
 #include "meta/meta_split_service.h"
 #include "meta/meta_bulk_load_service.h"
 #include "meta/test/misc/misc.h"
-
 #include "meta_service_test_app.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -37,7 +37,8 @@ meta_test_base::~meta_test_base() {}
 void meta_test_base::SetUp()
 {
     _ms = make_unique<fake_receiver_meta_service>();
-    _ms->_failure_detector.reset(new meta_server_failure_detector(_ms.get()));
+    _ms->_failure_detector.reset(
+        new meta_server_failure_detector(std::make_shared<dns_resolver>(), _ms.get()));
     _ms->_balancer.reset(utils::factory_store<server_load_balancer>::create(
         _ms->_meta_opts._lb_opts.server_load_balancer_type.c_str(), PROVIDER_TYPE_MAIN, _ms.get()));
     _ms->_partition_guardian.reset(utils::factory_store<partition_guardian>::create(

@@ -36,6 +36,7 @@
 #include "meta_test_base.h"
 #include "meta/meta_split_service.h"
 #include "meta/meta_server_failure_detector.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -276,7 +277,8 @@ public:
         create_splitting_app_on_remote_stroage(state->_apps_root);
         state->initialize_data_structure();
 
-        _ms->_failure_detector.reset(new meta_server_failure_detector(_ms.get()));
+        _ms->_failure_detector.reset(
+            new meta_server_failure_detector(std::make_shared<dns_resolver>(), _ms.get()));
         _ss = _ms->_state;
     }
 

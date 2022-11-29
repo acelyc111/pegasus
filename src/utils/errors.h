@@ -219,3 +219,9 @@ private:
             return _s;                                                                             \
         }                                                                                          \
     } while (false);
+
+#define CHECK_OK(s, ...)                                                                           \
+    do {                                                                                           \
+        const ::dsn::error_s &_s = (s);                                                            \
+        CHECK(_s.is_ok(), fmt::format(__VA_ARGS__));                                               \
+    } while (false);

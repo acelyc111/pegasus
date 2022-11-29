@@ -17,7 +17,7 @@
 
 #pragma once
 
-#incude < vector >
+#include <vector>
 
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/rpc/rpc_host_port.h"
@@ -28,9 +28,13 @@ namespace dsn {
 class dns_resolver
 {
 public:
-    error_s resolve_addresses(const host_port &hp, std::vector<rpc_address> *addresses);
+    dns_resolver() = default;
+
+    rpc_address resolve_address(const host_port &hp);
 
 private:
+    error_s resolve_addresses(const host_port &hp, std::vector<rpc_address> *addresses);
+
     bool get_cached_addresses(const host_port &hp, std::vector<rpc_address> *addresses);
 
     error_s do_resolution(const host_port &hp, std::vector<rpc_address> *addresses);

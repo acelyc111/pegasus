@@ -29,13 +29,15 @@
 #include <chrono>
 #include <ctime>
 
+#include "runtime/rpc/dns_resolver.h"
 #include "utils/command_manager.h"
 #include "utils/fmt_logging.h"
 
 namespace dsn {
 namespace fd {
 
-failure_detector::failure_detector()
+failure_detector::failure_detector(const std::shared_ptr<dns_resolver> &dns_resolver)
+    : _dns_resolver(dns_resolver)
 {
     dsn::threadpool_code pool = task_spec::get(LPC_BEACON_CHECK.code())->pool_code;
     task_spec::get(RPC_FD_FAILURE_DETECTOR_PING.code())->pool_code = pool;
@@ -572,17 +574,18 @@ void failure_detector::send_beacon(const ::dsn::host_port &target, uint64_t time
     beacon.from_addr = dsn_primary_address();
     // TODO(yingchun): use FQDN
     beacon.host_port_from = dsn_primary_host_port();
-    // TODO(yingchun): use rpc_address
-    //    beacon.to_addr = target;
+    beacon.to_addr = _dns_resolver->resolve_address(target);
     beacon.host_port_to = target;
     beacon.__set_start_time(static_cast<int64_t>(dsn::utils::process_start_millis()));
 
-    LOG_INFO_F(
-        "send ping message, from[{}], to[{}], time[{}]", beacon.from_addr, beacon.to_addr, time);
+    LOG_INFO_F("send ping message, from[{}({})], to[{}({})], time[{}]",
+               beacon.host_port_from,
+               beacon.from_addr,
+               beacon.host_port_to,
+               beacon.to_addr,
+               time);
 
-    // TODO(ip): resolve to rpc_address
-    ::dsn::rpc_address addr; // from target
-    ::dsn::rpc::call(addr,
+    ::dsn::rpc::call(beacon.to_addr,
                      RPC_FD_FAILURE_DETECTOR_PING,
                      beacon,
                      &_tracker,

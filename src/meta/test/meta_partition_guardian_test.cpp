@@ -52,6 +52,7 @@
 #include "meta_test_base.h"
 #include "meta_service_test_app.h"
 #include "dummy_balancer.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -159,7 +160,8 @@ void meta_partition_guardian_test::cure_test()
     dsn::error_code ec;
     dsn::task_ptr t;
     std::shared_ptr<message_filter> svc(new message_filter(this));
-    svc->_failure_detector.reset(new dsn::replication::meta_server_failure_detector(svc.get()));
+    svc->_failure_detector.reset(new dsn::replication::meta_server_failure_detector(
+        std::make_shared<dns_resolver>(), svc.get()));
     bool proposal_sent;
     dsn::host_port last_addr;
 

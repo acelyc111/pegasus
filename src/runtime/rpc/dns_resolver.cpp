@@ -15,18 +15,32 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "runtime/rpc/rpc_host_port.h"
+#include "runtime/rpc/dns_resolver.h"
 
 using std::vector;
 
 namespace dsn {
 
+rpc_address dns_resolver::resolve_address(const host_port &hp)
+{
+    vector<rpc_address> addresses;
+    CHECK_OK(resolve_addresses(hp, &addresses), "host_port '{}' can not be resolved", hp);
+    CHECK(!addresses.empty(), "host_port '{}' can not be resolved to any address", hp);
+    if (addresses.size() > 1) {
+        LOG_WARNING_F("host_port '{}' resolves to {} different addresses, using {}",
+                      hp,
+                      addresses.size(),
+                      addresses[0]);
+    }
+    return addresses[0];
+}
+
 error_s dns_resolver::resolve_addresses(const host_port &hp, vector<rpc_address> *addresses)
 {
-    if (get_cached_addresses(hostport, addresses)) {
+    if (get_cached_addresses(hp, addresses)) {
         return error_s::ok();
     }
-    return do_resolution(hostport, addresses);
+    return do_resolution(hp, addresses);
 }
 
 bool dns_resolver::get_cached_addresses(const host_port &hp, vector<rpc_address> *addresses)

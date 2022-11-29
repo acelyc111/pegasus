@@ -43,6 +43,7 @@
 #include "runtime/service_app.h"
 #include "runtime/rpc/rpc_address.h"
 #include <vector>
+#include "runtime/rpc/dns_resolver.h"
 
 using namespace dsn;
 using namespace dsn::fd;
@@ -85,8 +86,11 @@ protected:
     }
 
 public:
-    worker_fd_test(replication::replica_stub *stub, const dsn::host_port_group &meta_servers)
-        : slave_failure_detector_with_multimaster(meta_servers,
+    worker_fd_test(const std::shared_ptr<dns_resolver> &dns_resolver,
+                   replication::replica_stub *stub,
+                   const dsn::host_port_group &meta_servers)
+        : slave_failure_detector_with_multimaster(dns_resolver,
+                                                  meta_servers,
                                                   [=]() { stub->on_meta_server_disconnected(); },
                                                   [=]() { stub->on_meta_server_connected(); })
     {
@@ -138,7 +142,8 @@ public:
         if (_connected_cb)
             _connected_cb(node);
     }
-    master_fd_test() : meta_server_failure_detector(host_port(), false)
+    master_fd_test(const std::shared_ptr<dns_resolver> &dns_resolver)
+        : meta_server_failure_detector(dns_resolver, host_port(), false)
     {
         _response_ping_switch = true;
     }
@@ -174,7 +179,7 @@ public:
         for (int i = 0; i < 3; ++i) {
             master_group.add(host_port("localhost", static_cast<uint16_t>(MPORT_START + i)));
         }
-        _worker_fd = new worker_fd_test(nullptr, master_group);
+        _worker_fd = new worker_fd_test(std::make_shared<dns_resolver>(), nullptr, master_group);
         _worker_fd->start(1, 1, 9, 10);
         ++started_apps;
 
@@ -212,7 +217,7 @@ public:
         _opts.stable_rs_min_running_seconds = 10;
         _opts.max_succssive_unstable_restart = 10;
 
-        _master_fd = new master_fd_test();
+        _master_fd = new master_fd_test(std::make_shared<dns_resolver>());
         _master_fd->set_options(&_opts);
         bool use_allow_list = false;
         if (args.size() >= 3 && args[1] == "whitelist") {

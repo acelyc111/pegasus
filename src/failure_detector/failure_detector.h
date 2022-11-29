@@ -57,6 +57,9 @@
 #include "utils/zlocks.h"
 
 namespace dsn {
+
+class dns_resolver;
+
 namespace fd {
 
 DEFINE_THREAD_POOL_CODE(THREAD_POOL_FD)
@@ -82,7 +85,7 @@ class failure_detector : public failure_detector_service,
                          public failure_detector_callback
 {
 public:
-    failure_detector();
+    failure_detector(const std::shared_ptr<dns_resolver> &dns_resolver);
     virtual ~failure_detector();
 
     virtual void on_ping(const beacon_msg &beacon, ::dsn::rpc_replier<beacon_ack> &reply);
@@ -216,6 +219,7 @@ private:
     perf_counter_wrapper _recent_beacon_fail_count;
 
     std::unique_ptr<command_deregister> _get_allow_list;
+    std::shared_ptr<dns_resolver> _dns_resolver;
 
 protected:
     mutable zlock _lock;

@@ -25,6 +25,7 @@
 #include "meta/meta_bulk_load_service.h"
 #include "meta/meta_data.h"
 #include "meta/meta_server_failure_detector.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -325,7 +326,8 @@ public:
         state->initialize_data_structure();
 
         _ms->set_function_level(meta_function_level::fl_steady);
-        _ms->_failure_detector.reset(new meta_server_failure_detector(_ms.get()));
+        _ms->_failure_detector.reset(
+            new meta_server_failure_detector(std::make_shared<dns_resolver>(), _ms.get()));
         _ss = _ms->_state;
     }
 

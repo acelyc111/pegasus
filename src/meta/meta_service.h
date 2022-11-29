@@ -332,6 +332,8 @@ private:
 
     // indicate which operation is processeding in meta server
     std::atomic<meta_op_status> _meta_op_status;
+
+    std::shared_ptr<dns_resolver> _dns_resolver;
 };
 
 template <typename TRpcHolder>

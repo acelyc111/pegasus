@@ -45,6 +45,9 @@
 #include "replica.h"
 
 namespace dsn {
+
+class dns_resolver;
+
 namespace replication {
 
 DSN_DECLARE_uint32(max_concurrent_manual_emergency_checkpointing_count);
@@ -406,6 +409,8 @@ private:
     std::atomic_int _manual_emergency_checkpointing_count;
 
     bool _is_running;
+
+    std::shared_ptr<dns_resolver> _dns_resolver;
 
 #ifdef DSN_ENABLE_GPERF
     std::atomic_bool _is_releasing_memory{false};

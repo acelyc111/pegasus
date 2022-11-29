@@ -46,6 +46,7 @@
 #include "meta/duplication/meta_duplication_service.h"
 #include "meta_split_service.h"
 #include "meta_bulk_load_service.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -59,7 +60,11 @@ DSN_DEFINE_validator(min_live_node_count_for_unfreeze,
                      [](uint64_t min_live_node_count) -> bool { return min_live_node_count > 0; });
 
 meta_service::meta_service()
-    : serverlet("meta_service"), _failure_detector(nullptr), _started(false), _recovering(false)
+    : serverlet("meta_service"),
+      _failure_detector(nullptr),
+      _started(false),
+      _recovering(false),
+      _dns_resolver(new dns_resolver())
 {
     _opts.initialize();
     _meta_opts.initialize();
@@ -318,7 +323,7 @@ error_code meta_service::start()
     LOG_INFO("remote storage is successfully initialized");
 
     // start failure detector, and try to acquire the leader lock
-    _failure_detector.reset(new meta_server_failure_detector(this));
+    _failure_detector.reset(new meta_server_failure_detector(_dns_resolver, this));
     if (_meta_opts.enable_white_list)
         _failure_detector->set_allow_list(_meta_opts.replica_white_list);
     _failure_detector->register_ctrl_commands();

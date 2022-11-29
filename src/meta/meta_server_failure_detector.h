@@ -54,7 +54,8 @@ public:
     typedef std::map<dsn::host_port, worker_stability> stability_map;
 
 public:
-    meta_server_failure_detector(meta_service *svc);
+    meta_server_failure_detector(const std::shared_ptr<dns_resolver> &dns_resolver,
+                                 meta_service *svc);
     virtual ~meta_server_failure_detector();
 
     // get the meta-server's leader
@@ -131,7 +132,9 @@ private:
 
 public:
     /* these two functions are for test */
-    meta_server_failure_detector(const host_port &leader_address, bool is_myself_leader);
+    meta_server_failure_detector(const std::shared_ptr<dns_resolver> &dns_resolver,
+                                 const host_port &leader_address,
+                                 bool is_myself_leader);
     void set_leader_for_test(const host_port &leader_address, bool is_myself_leader);
     stability_map *get_stability_map_for_test();
 };

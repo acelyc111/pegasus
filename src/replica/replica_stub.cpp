@@ -62,6 +62,7 @@
 #endif
 #include "utils/fail_point.h"
 #include "remote_cmd/remote_command.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -92,7 +93,8 @@ replica_stub::replica_stub(replica_state_subscriber subscriber /*= nullptr*/,
       _fs_manager(false),
       _bulk_load_downloading_count(0),
       _manual_emergency_checkpointing_count(0),
-      _is_running(false)
+      _is_running(false),
+      _dns_resolver(new dns_resolver())
 {
 #ifdef DSN_ENABLE_GPERF
     _is_releasing_memory = false;
@@ -808,6 +810,7 @@ void replica_stub::initialize_start()
     CHECK_EQ(NS_Disconnected, _state);
     if (_options.fd_disabled == false) {
         _failure_detector = std::make_shared<dsn::dist::slave_failure_detector_with_multimaster>(
+            _dns_resolver,
             _options.meta_servers1,
             [this]() { this->on_meta_server_disconnected(); },
             [this]() { this->on_meta_server_connected(); });
