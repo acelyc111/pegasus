@@ -180,9 +180,8 @@ bool failure_detector::switch_master(const host_port &from,
         LOG_INFO_F("switch master successfully, from[{}] to[{}]", from, to);
     } else {
         // TODO(yingchun): refactor to return early
-        LOG_WARNING_F("switch master failed as from node is not registered yet, from[{}] to[{}]",
-                      from.to_string(),
-                      to.to_string());
+        LOG_WARNING_F(
+            "switch master failed as from node is not registered yet, from[{}] to[{}]", from, to);
         return false;
     }
     return true;
@@ -312,6 +311,7 @@ bool failure_detector::remove_from_allow_list(const host_port &node)
     return _allow_list.erase(node) > 0;
 }
 
+// TODO: check what is send
 void failure_detector::set_allow_list(const std::vector<std::string> &replica_addrs)
 {
     CHECK(!_is_started,
@@ -320,6 +320,7 @@ void failure_detector::set_allow_list(const std::vector<std::string> &replica_ad
     std::vector<host_port> nodes;
     for (auto &addr : replica_addrs) {
         host_port hp;
+        // TODO(yingchun): thry can be in IP format
         if (!hp.parse_string(addr).is_ok()) {
             LOG_WARNING_F("replica_white_list has invalid ip {}, the allow list won't be modified",
                           addr);
@@ -421,10 +422,10 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
      */
     uint64_t beacon_send_time = ack.time;
     host_port node;
-    if (beacon.__isset.host_port_this_node) {
+    if (ack.__isset.host_port_this_node) {
         node = ack.host_port_this_node;
     } else {
-        CHECK(beacon.__isset.this_node, "");
+        CHECK(ack.__isset.this_node, "");
         node = host_port(ack.this_node);
     }
     if (err != ERR_OK) {
@@ -440,7 +441,7 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
         LOG_WARNING_F("received beacon ack without corresponding master, ignore it, "
                       "remote_master[{}], local_worker[{}]",
                       node,
-                      dsn_primary_address());
+                      dsn_primary_host_port());
         return false;
     }
 
@@ -449,7 +450,7 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
         LOG_WARNING_F("worker rejected, stop sending beacon message, "
                       "remote_master[{}], local_worker[{}]",
                       node,
-                      dsn_primary_address());
+                      dsn_primary_host_port());
         record.rejected = true;
         record.send_beacon_timer->cancel(true);
         return false;
