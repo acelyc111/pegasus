@@ -57,13 +57,15 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
                                                        void *)
 {
     LOG_INFO_F("end ping result, error[{}], time[{}], ack.this_node[{}({})], "
-               "ack.primary_node[{}({})], ack.is_master[{}], ack.allowed[{}]",
+               "ack.primary_node[{}({})], __isset: {}:{}, ack.is_master[{}], ack.allowed[{}]",
                err,
                ack.time,
                ack.host_port_this_node,
                ack.this_node,
                ack.host_port_primary_node,
                ack.primary_node,
+               ack.__isset.host_port_this_node,
+               ack.__isset.this_node,
                ack.is_master ? "true" : "false",
                ack.allowed ? "true" : "false");
 

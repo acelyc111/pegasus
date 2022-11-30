@@ -299,7 +299,7 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
     fd::beacon_ack ack;
     ack.time = beacon.time;
     ack.this_node = this_node_addr;
-    ack.host_port_this_node = this_node_hp;
+    ack.__set_host_port_this_node(this_node_hp);
     ack.allowed = true;
 
     if (beacon.__isset.start_time && !update_stability_stat(beacon)) {

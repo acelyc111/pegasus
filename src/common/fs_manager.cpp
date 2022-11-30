@@ -177,10 +177,7 @@ dsn::error_code fs_manager::initialize(const std::vector<std::string> &data_dirs
         utils::filesystem::get_normalized_path(data_dirs[i], norm_path);
         dir_node *n = new dir_node(tags[i], norm_path);
         _dir_nodes.emplace_back(n);
-        LOG_INFO("%s: mark data dir(%s) as tag(%s)",
-                 dsn_primary_host_port().to_string(),
-                 norm_path.c_str(),
-                 tags[i].c_str());
+        LOG_INFO_F("{}: mark data dir({}) as tag({})", dsn_primary_host_port(), norm_path, tags[i]);
     }
     _available_data_dirs = data_dirs;
 
