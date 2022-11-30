@@ -176,6 +176,14 @@ error_s host_port::parse_rpc_address(rpc_address addr)
 error_s host_port::resolve_addresses(vector<rpc_address> *addresses) const
 {
     // TODO: trace latency
+    rpc_address rpc_addr;
+    if (rpc_addr.from_string_ipv4(this->to_string().c_str())) {
+        if (addresses) {
+            addresses->push_back(rpc_addr);
+        }
+        return error_s::ok();
+    }
+
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;

@@ -49,7 +49,6 @@
 #include "common/partition_split_common.h"
 #include "common/manual_compact.h"
 #include "meta/meta_rpc_types.h"
-#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -442,9 +441,9 @@ dsn::error_code replication_ddl_client::list_apps(const dsn::app_status::type st
     return dsn::ERR_OK;
 }
 
-dsn::error_code replication_ddl_client::list_nodes(
-    const dsn::replication::node_status::type status,
-    std::map<host_port, dsn::replication::node_status::type> &nodes)
+dsn::error_code
+replication_ddl_client::list_nodes(const dsn::replication::node_status::type status,
+                                   std::map<host_port, dsn::replication::node_status::type> &nodes)
 {
     std::shared_ptr<configuration_list_nodes_request> req(new configuration_list_nodes_request());
     req->status = status;
@@ -591,9 +590,7 @@ dsn::error_code replication_ddl_client::list_nodes(const dsn::replication::node_
 
 dsn::error_code replication_ddl_client::cluster_name(int64_t timeout_ms, std::string &cluster_name)
 {
-    std::shared_ptr<configuration_cluster_info_request> req(
-        new configuration_cluster_info_request());
-
+    auto req = std::make_shared<configuration_cluster_info_request>();
     auto resp_task =
         request_meta<configuration_cluster_info_request>(RPC_CM_CLUSTER_INFO, req, timeout_ms);
     resp_task->wait();
