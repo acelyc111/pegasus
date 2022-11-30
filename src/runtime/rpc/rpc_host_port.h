@@ -46,6 +46,8 @@ public:
     // Note that <host> cannot be in IPv6 address notation.
     error_s parse_string(const std::string &str);
 
+    error_s parse_rpc_address(rpc_address addr);
+
     void reset()
     {
         _host.clear();

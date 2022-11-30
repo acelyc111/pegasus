@@ -41,6 +41,11 @@ using std::unique_ptr;
 using std::unordered_set;
 using std::vector;
 
+// Mac OS 10.9 does not appear to define HOST_NAME_MAX in unistd.h
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 64
+#endif
+
 namespace dsn {
 
 namespace {
@@ -93,6 +98,37 @@ error_s GetAddrInfo(const string &hostname, const addrinfo &hints, AddrInfo *inf
     return error_s::make(ERR_NETWORK_FAILURE, gai_strerror(rc));
 }
 
+// TODO(yingchun): duplicated, should refactor
+error_s hostname_from_ip(uint32_t ip, std::string *hostname_result)
+{
+    CHECK_NOTNULL(hostname_result, "");
+    struct sockaddr_in addr_in;
+    addr_in.sin_family = AF_INET;
+    addr_in.sin_port = 0;
+    addr_in.sin_addr.s_addr = ip;
+    char hostname[256];
+    int rc = getnameinfo((struct sockaddr *)(&addr_in),
+                         sizeof(struct sockaddr),
+                         hostname,
+                         sizeof(hostname),
+                         nullptr,
+                         0,
+                         NI_NAMEREQD);
+    const int err = errno; // preserving the errno from the getaddrinfo() call
+    if (rc != 0) {
+        struct in_addr net_addr;
+        net_addr.s_addr = ip;
+        char ip_str[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &net_addr, ip_str, sizeof(ip_str));
+        if (rc == EAI_SYSTEM) {
+            return error_s::make(ERR_NETWORK_FAILURE, utils::safe_strerror(err));
+        }
+        return error_s::make(ERR_NETWORK_FAILURE, gai_strerror(rc));
+    }
+    *hostname_result = std::string(hostname);
+    return error_s::ok();
+}
+
 } // anonymous namespace
 
 host_port::host_port(string host, uint16_t port) : _host(std::move(host)), _port(port) {}
@@ -121,6 +157,17 @@ error_s host_port::parse_string(const string &str)
 
     _host.swap(hostname_port[0]);
     _port = static_cast<uint16_t>(port);
+    return error_s::ok();
+}
+
+error_s host_port::parse_rpc_address(rpc_address addr)
+{
+    if (addr.is_invalid()) {
+        return error_s::make(ERR_INVALID_PARAMETERS, fmt::format("invalid rpc_address({})", addr));
+    }
+
+    RETURN_NOT_OK(hostname_from_ip(htonl(addr.ip()), &_host));
+    _port = addr.port();
     return error_s::ok();
 }
 

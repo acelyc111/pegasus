@@ -510,6 +510,7 @@ error_code rpc_engine::start(const service_app_spec &aspec)
 
     _local_primary_address = _client_nets[NET_HDR_DSN][0]->address();
     _local_primary_address.set_port(aspec.ports.size() > 0 ? *aspec.ports.begin() : aspec.id);
+    CHECK(_local_primary_host_port.parse_rpc_address(_local_primary_address).is_ok(), "");
 
     LOG_INFO_F("=== service_node=[{}], primary_address=[{}] ===",
                _node->full_name(),
