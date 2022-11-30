@@ -736,7 +736,6 @@ void server_state::initialize_node_state()
             if (pc.__isset.host_port_primary) {
                 primary = pc.host_port_primary;
             } else {
-                CHECK(pc.__isset.primary, "");
                 primary = host_port(pc.primary);
             }
             if (primary.initialized()) {
@@ -818,7 +817,6 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
     if (request.__isset.host_port_node) {
         node = request.host_port_node;
     } else {
-        CHECK(request.__isset.node, "");
         node = host_port(request.node);
     }
     LOG_INFO_F("got config sync request from {}, stored_replicas_count({})",
@@ -1549,7 +1547,6 @@ void server_state::update_configuration_locally(
         if (config_request->__isset.host_port_node) {
             node = config_request->host_port_node;
         } else {
-            CHECK(config_request->__isset.node, "");
             node = host_port(config_request->node);
         }
 
@@ -1698,7 +1695,6 @@ void server_state::on_update_configuration_on_remote_reply(
                     if (action.__isset.host_port_target) {
                         target = action.host_port_target;
                     } else {
-                        CHECK(action.__isset.target, "");
                         target = host_port(action.target);
                     }
                     send_proposal(target, *config_request);
@@ -2361,7 +2357,6 @@ void server_state::on_start_recovery(const configuration_recovery_request &req,
     if (req.__isset.host_port_recovery_set) {
         replica_nodes = req.host_port_recovery_set;
     } else {
-        CHECK(req.__isset.recovery_set, "");
         replica_nodes.reserve(req.recovery_set.size());
         for (const auto &addr : req.recovery_set) {
             replica_nodes.emplace_back(host_port(addr));

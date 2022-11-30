@@ -143,7 +143,7 @@ struct learn_request
     // be duplicated (ie. max_gced_decree < confirmed_decree), if not,
     // learnee will copy the missing logs.
     7:optional i64        max_gced_decree;
-    8:dsn.host_port       host_port_learner; // learner's address
+    8:optional dsn.host_port    host_port_learner; // learner's address
 }
 
 struct learn_response
@@ -156,8 +156,8 @@ struct learn_response
     6:learn_state           state; // learning data, including memory data and files
     7:dsn.rpc_address       address; // learnee's address
     8:string                base_local_dir; // base dir of files on learnee
-    9:optional string replica_disk_tag; // the disk tag of learnee located
-    10:dsn.host_port        host_port; // learnee's address
+    9:optional string           replica_disk_tag; // the disk tag of learnee located
+    10:optional dsn.host_port   host_port; // learnee's address
 }
 
 struct learn_notify_response
@@ -181,23 +181,23 @@ struct group_check_request
 
     // Used to deliver child gpid and meta_split_status during partition split
     6:optional dsn.gpid     child_gpid;
-    7:optional metadata.split_status meta_split_status;
-    8:dsn.host_port         host_port_node;
+    7:optional metadata.split_status    meta_split_status;
+    8:optional dsn.host_port            host_port_node;
 }
 
 struct group_check_response
 {
-    1:dsn.gpid pid;
-    2:dsn.error_code      err;
-    3:i64                 last_committed_decree_in_app;
-    4:i64                 last_committed_decree_in_prepare_list;
-    5:learner_status      learner_status_ = learner_status.LearningInvalid;
-    6:i64                 learner_signature;
-    7:dsn.rpc_address     node;
+    1:dsn.gpid                  pid;
+    2:dsn.error_code            err;
+    3:i64                       last_committed_decree_in_app;
+    4:i64                       last_committed_decree_in_prepare_list;
+    5:learner_status            learner_status_ = learner_status.LearningInvalid;
+    6:i64                       learner_signature;
+    7:dsn.rpc_address           node;
     // Used for pause or cancel partition split
     // if secondary pause or cancel split succeed, is_split_stopped = true
-    8:optional bool       is_split_stopped;
+    8:optional bool             is_split_stopped;
     9:optional metadata.disk_status disk_status = metadata.disk_status.NORMAL;
-    10:dsn.host_port      host_port_node;
+    10:optional dsn.host_port   host_port_node;
 }
 

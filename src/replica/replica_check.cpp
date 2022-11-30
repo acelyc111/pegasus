@@ -229,7 +229,6 @@ void replica::on_group_check_reply(error_code err,
     if (req->__isset.host_port_node) {
         node = req->host_port_node;
     } else {
-        CHECK((req->__isset.node), "");
         node = host_port(req->node);
     }
     auto r = _primary_states.group_check_pending_replies.erase(node);

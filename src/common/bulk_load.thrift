@@ -96,7 +96,7 @@ struct bulk_load_request
     7:bulk_load_status  meta_bulk_load_status;
     8:bool              query_bulk_load_metadata;
     9:string            remote_root_path;
-    10:dsn.host_port    host_port_primary_addr;
+    10:optional dsn.host_port    host_port_primary_addr;
 }
 
 struct bulk_load_response
@@ -118,7 +118,7 @@ struct bulk_load_response
     8:optional bool                                     is_group_ingestion_finished;
     9:optional bool                                     is_group_bulk_load_context_cleaned_up;
     10:optional bool                                    is_group_bulk_load_paused;
-    11:map<dsn.host_port, partition_bulk_load_state>    host_port_group_bulk_load_state;
+    11:optional map<dsn.host_port, partition_bulk_load_state>    host_port_group_bulk_load_state;
 }
 
 // primary -> secondary
@@ -131,7 +131,7 @@ struct group_bulk_load_request
     5:string                        cluster_name;
     6:bulk_load_status              meta_bulk_load_status;
     7:string                        remote_root_path;
-    8:dsn.host_port                 host_port_target_address;
+    8:optional dsn.host_port        host_port_target_address;
 }
 
 struct group_bulk_load_response
@@ -219,7 +219,7 @@ struct query_bulk_load_response
     6:list<map<dsn.rpc_address, partition_bulk_load_state>> bulk_load_states;
     7:optional string                                       hint_msg;
     8:optional bool                                         is_bulk_loading;
-    9:list<map<dsn.host_port, partition_bulk_load_state>> host_port_bulk_load_states;
+    9:optional list<map<dsn.host_port, partition_bulk_load_state>>  host_port_bulk_load_states;
 }
 
 struct clear_bulk_load_state_request

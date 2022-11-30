@@ -32,9 +32,9 @@ namespace cpp dsn.replication
 
 struct query_replica_decree_request
 {
-    1:dsn.gpid pid;
-    2:dsn.rpc_address     node;
-    3:dsn.host_port       host_port_node;
+    1:dsn.gpid                  pid;
+    2:dsn.rpc_address           node;
+    3:optional dsn.host_port    host_port_node;
 }
 
 struct query_replica_decree_response
@@ -45,8 +45,8 @@ struct query_replica_decree_response
 
 struct query_replica_info_request
 {
-    1:dsn.rpc_address     node;
-    2:dsn.host_port       host_port_node;
+    1:dsn.rpc_address           node;
+    2:optional dsn.host_port    host_port_node;
 }
 
 struct query_replica_info_response
@@ -69,9 +69,9 @@ struct disk_info
 // This request is sent from client to replica_server.
 struct query_disk_info_request
 {
-    1:dsn.rpc_address node;
-    2:string          app_name;
-    3:dsn.host_port   host_port_node;
+    1:dsn.rpc_address           node;
+    2:string                    app_name;
+    3:optional dsn.host_port    host_port_node;
 }
 
 // This response is from replica_server to client.

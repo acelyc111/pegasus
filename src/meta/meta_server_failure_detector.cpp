@@ -222,7 +222,6 @@ bool meta_server_failure_detector::update_stability_stat(const fd::beacon_msg &b
     if (beacon.__isset.host_port_from) {
         from = beacon.host_port_from;
     } else {
-        CHECK(beacon.__isset.from_addr, "");
         from = host_port(beacon.from_addr);
     }
 
@@ -283,7 +282,6 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
     if (beacon.__isset.host_port_to) {
         this_node_hp = beacon.host_port_to;
     } else {
-        CHECK(beacon.__isset.to_addr, "");
         // TODO: reverse resolve
         this_node_hp = host_port(beacon.to_addr);
     }
@@ -292,7 +290,6 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
     if (beacon.__isset.to_addr) {
         this_node_addr = beacon.to_addr;
     } else {
-        CHECK(beacon.__isset.host_port_to, "");
         this_node_addr = _dns_resolver->resolve_address(beacon.host_port_to);
     }
 

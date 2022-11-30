@@ -365,7 +365,6 @@ void failure_detector::on_ping_internal(const beacon_msg &beacon, /*out*/ beacon
     if (beacon.__isset.host_port_from) {
         node = beacon.host_port_from;
     } else {
-        CHECK(beacon.__isset.from_addr, "");
         node = host_port(beacon.from_addr);
     }
 
@@ -427,7 +426,6 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
     if (ack.__isset.host_port_this_node) {
         node = ack.host_port_this_node;
     } else {
-        CHECK(ack.__isset.this_node, "");
         node = host_port(ack.this_node);
     }
     if (err != ERR_OK) {

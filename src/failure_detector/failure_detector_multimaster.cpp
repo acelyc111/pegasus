@@ -78,7 +78,6 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
     if (ack.__isset.host_port_this_node) {
         this_node = ack.host_port_this_node;
     } else {
-        CHECK(ack.__isset.this_node, "");
         this_node = host_port(ack.this_node);
     }
     CHECK_EQ(this_node, _meta_servers.leader());
@@ -104,7 +103,6 @@ void slave_failure_detector_with_multimaster::end_ping(::dsn::error_code err,
     if (ack.__isset.host_port_primary_node) {
         primary_node = ack.host_port_primary_node;
     } else {
-        CHECK(ack.__isset.primary_node, "");
         primary_node = host_port(ack.primary_node);
     }
 

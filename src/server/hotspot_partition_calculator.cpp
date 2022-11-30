@@ -213,7 +213,6 @@ void hotspot_partition_calculator::send_detect_hotkey_request(
     if (partitions[partition_index].__isset.host_port_primary) {
         target_address = partitions[partition_index].host_port_primary;
     } else {
-        CHECK(partitions[partition_index].__isset.primary, "");
         target_address = host_port(partitions[partition_index].primary);
     }
 
