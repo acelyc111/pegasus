@@ -46,6 +46,7 @@
 #include "utils/fail_point.h"
 #include "utils/string_conv.h"
 #include "common/replica_envs.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -65,7 +66,7 @@ bool get_bool_envs(const std::map<std::string, std::string> &envs,
 
 namespace {
 bool get_replica_config(const partition_configuration &partition_config,
-                        const ::dsn::host_port &node,
+                        const host_port &node,
                         /*out*/ replica_configuration &replica_config)
 {
     replica_config.pid = partition_config.pid;
@@ -251,7 +252,7 @@ void replica::add_potential_secondary(configuration_update_request &proposal)
     rpc::call_one_way_typed(addr, RPC_LEARN_ADD_LEARNER, request, get_gpid().thread_hash());
 }
 
-void replica::upgrade_to_secondary_on_primary(const ::dsn::host_port &node)
+void replica::upgrade_to_secondary_on_primary(const host_port &node)
 {
     LOG_INFO_PREFIX("upgrade potential secondary {} to secondary", node.to_string());
 
@@ -364,7 +365,7 @@ void replica::on_remove(const replica_configuration &request)
 }
 
 void replica::update_configuration_on_meta_server(config_type::type type,
-                                                  const ::dsn::host_port &node,
+                                                  const host_port &node,
                                                   partition_configuration &newConfig)
 {
     // type should never be `CT_REGISTER_CHILD`
@@ -414,11 +415,8 @@ void replica::update_configuration_on_meta_server(config_type::type type,
         enum_to_string(request->type),
         request->node);
 
-    const auto &target(_stub->_failure_detector->get_servers());
-    // TODO(yingchun): send rpc_address
-    rpc_address addr; // from target
     _primary_states.reconfiguration_task =
-        rpc::call(addr,
+        rpc::call(_dns_resolver->resolve_address(_stub->_failure_detector->get_servers().leader()),
                   msg,
                   &_tracker,
                   [=](error_code err, dsn::message_ex *reqmsg, dsn::message_ex *response) {
@@ -513,12 +511,14 @@ void replica::on_update_configuration_on_meta_server_reply(
         case config_type::CT_UPGRADE_TO_SECONDARY:
             break;
         case config_type::CT_REMOVE:
+            // TODO: both
             if (req->host_port_node != _stub->_primary_address) {
                 replica_configuration rconfig;
                 get_replica_config(resp.config, req->host_port_node, rconfig);
-                rpc_address addr; // from req->host_port_node
-                rpc::call_one_way_typed(
-                    addr, RPC_REMOVE_REPLICA, rconfig, get_gpid().thread_hash());
+                rpc::call_one_way_typed(_dns_resolver->resolve_address(req->host_port_node),
+                                        RPC_REMOVE_REPLICA,
+                                        rconfig,
+                                        get_gpid().thread_hash());
             }
             break;
         case config_type::CT_PRIMARY_FORCE_UPDATE_BALLOT:

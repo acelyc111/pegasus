@@ -46,10 +46,11 @@
 #include "utils/threadpool_code.h"
 
 namespace dsn {
+class host_port;
 namespace replication {
 
-typedef std::unordered_map<::dsn::host_port, partition_status::type> node_statuses;
-typedef std::unordered_map<::dsn::host_port, dsn::task_ptr> node_tasks;
+typedef std::unordered_map<host_port, partition_status::type> node_statuses;
+typedef std::unordered_map<host_port, dsn::task_ptr> node_tasks;
 
 typedef rpc_holder<configuration_update_app_env_request, configuration_update_app_env_response>
     update_app_env_rpc;

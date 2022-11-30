@@ -2119,13 +2119,13 @@ void replica_stub::open_replica(
         _closed_replicas.erase(id);
     }
 
-    // TODO: from _primary_address
-    rpc_address addr;
     if (nullptr != group_check) {
-        rpc::call_one_way_typed(
-            addr, RPC_LEARN_ADD_LEARNER, *group_check, group_check->config.pid.thread_hash());
+        rpc::call_one_way_typed(_primary_rpc_address,
+                                RPC_LEARN_ADD_LEARNER,
+                                *group_check,
+                                group_check->config.pid.thread_hash());
     } else if (nullptr != configuration_update) {
-        rpc::call_one_way_typed(addr,
+        rpc::call_one_way_typed(_primary_rpc_address,
                                 RPC_CONFIG_PROPOSAL,
                                 *configuration_update,
                                 configuration_update->config.pid.thread_hash());

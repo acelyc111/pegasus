@@ -37,6 +37,7 @@
 #include "mutation.h"
 #include "mutation_log.h"
 #include "replica_stub.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -56,7 +57,7 @@ void replica::handle_local_failure(error_code error)
 }
 
 void replica::handle_remote_failure(partition_status::type st,
-                                    const ::dsn::host_port &node,
+                                    const host_port &node,
                                     error_code error,
                                     const std::string &caused_by)
 {
@@ -77,6 +78,7 @@ void replica::handle_remote_failure(partition_status::type st,
               enum_to_string(st));
         {
             configuration_update_request request;
+            request.node = _dns_resolver->resolve_address(node);
             request.host_port_node = node;
             request.type = config_type::CT_DOWNGRADE_TO_INACTIVE;
             request.config = _primary_states.membership;

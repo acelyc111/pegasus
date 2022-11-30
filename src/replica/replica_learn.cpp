@@ -42,6 +42,7 @@
 #include "utils/filesystem.h"
 #include "replica/replication_app_base.h"
 #include "utils/fmt_logging.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -183,7 +184,7 @@ void replica::init_learn(uint64_t signature)
                     "learn_app_concurrent_count(%d) >= learn_app_max_concurrent_count(%d), skip",
                     name(),
                     _potential_secondary_states.learning_version,
-                    _config.primary.to_string(),
+                    _config.host_port_primary.to_string(),
                     _potential_secondary_states.duration_ms(),
                     _stub->_learn_app_concurrent_count.load(),
                     _options->learn_app_max_concurrent_count);
@@ -198,6 +199,7 @@ void replica::init_learn(uint64_t signature)
     request.__set_max_gced_decree(get_max_gced_decree_for_learn());
     request.last_committed_decree_in_app = _app->last_committed_decree();
     request.last_committed_decree_in_prepare_list = _prepare_list->last_committed_decree();
+    request.learner = _stub->_primary_rpc_address;
     request.host_port_learner = _stub->_primary_address;
     request.signature = _potential_secondary_states.learning_version;
     _app->prepare_get_checkpoint(request.app_specific_learn_request);
@@ -209,7 +211,7 @@ void replica::init_learn(uint64_t signature)
              ", total_copy_file_size = %" PRIu64 ", total_copy_buffer_size = %" PRIu64,
              name(),
              request.signature,
-             _config.primary.to_string(),
+             _config.host_port_primary.to_string(),
              _potential_secondary_states.duration_ms(),
              request.max_gced_decree,
              last_committed_decree(),
@@ -223,7 +225,7 @@ void replica::init_learn(uint64_t signature)
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_LEARN, 0, get_gpid().thread_hash());
     dsn::marshall(msg, request);
     _potential_secondary_states.learning_task = rpc::call(
-        _config.primary,
+        _dns_resolver->resolve_address(_config.host_port_primary),
         msg,
         &_tracker,
         [ this, req_cap = std::move(request) ](error_code err, learn_response && resp) mutable {
@@ -568,7 +570,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
         "{}, learn_start_decree = {}, last_commit_decree = {}, current_learning_status = "
         "{} ",
         req.signature,
-        resp.config.primary.to_string(),
+        resp.config.host_port_primary.to_string(),
         _potential_secondary_states.duration_ms(),
         resp.err.to_string(),
         resp.last_committed_decree,
@@ -592,7 +594,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                 "reconciliation(inconsistent state), delay to start another round of learning",
                 name(),
                 req.signature,
-                resp.config.primary.to_string());
+                resp.config.host_port_primary.to_string());
             _potential_secondary_states.learning_round_is_running = false;
             _potential_secondary_states.delay_learning_task =
                 tasking::create_task(LPC_DELAY_LEARN,
@@ -611,7 +613,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                  "]: learnee = %s, update configuration because ballot have changed",
                  name(),
                  req.signature,
-                 resp.config.primary.to_string());
+                 resp.config.host_port_primary.to_string());
         CHECK(update_local_configuration(resp.config), "");
     }
 
@@ -620,7 +622,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                   "]: learnee = %s, current_status = %s, stop learning",
                   name(),
                   req.signature,
-                  resp.config.primary.to_string(),
+                  resp.config.host_port_primary.to_string(),
                   enum_to_string(status()));
         return;
     }
@@ -632,7 +634,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                     " vs %" PRId64 ", create new app",
                     name(),
                     req.signature,
-                    resp.config.primary.to_string(),
+                    resp.config.host_port_primary.to_string(),
                     _app->last_committed_decree(),
                     resp.last_committed_decree);
 
@@ -645,7 +647,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                       "]: learnee = %s, close app (with clear_state=true) failed, err = %s",
                       name(),
                       req.signature,
-                      resp.config.primary.to_string(),
+                      resp.config.host_port_primary.to_string(),
                       err.to_string());
         }
 
@@ -676,7 +678,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                           "]: learnee = %s, open app (with create_new=true) failed, err = %s",
                           name(),
                           req.signature,
-                          resp.config.primary.to_string(),
+                          resp.config.host_port_primary.to_string(),
                           err.to_string());
             }
         }
@@ -714,7 +716,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                         "learn_app_max_concurrent_count(%d), skip this round",
                         name(),
                         _potential_secondary_states.learning_version,
-                        _config.primary.to_string(),
+                        _config.host_port_primary.to_string(),
                         _stub->_learn_app_concurrent_count.load(),
                         _options->learn_app_max_concurrent_count);
             _potential_secondary_states.learning_round_is_running = false;
@@ -725,7 +727,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                      "]: learnee = %s, ++learn_app_concurrent_count = %d",
                      name(),
                      _potential_secondary_states.learning_version,
-                     _config.primary.to_string(),
+                     _config.host_port_primary.to_string(),
                      _stub->_learn_app_concurrent_count.load());
         }
     }
@@ -775,7 +777,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                  ", current_learning_status = %s",
                  name(),
                  req.signature,
-                 resp.config.primary.to_string(),
+                 resp.config.host_port_primary.to_string(),
                  _app->last_committed_decree(),
                  enum_to_string(_potential_secondary_states.learning_status));
 
@@ -808,7 +810,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                              "mutation(%s) exist on the learner with larger ballot %" PRId64 "",
                              name(),
                              req.signature,
-                             resp.config.primary.to_string(),
+                             resp.config.host_port_primary.to_string(),
                              mu->name(),
                              existing_mutation->data.header.ballot);
                 } else {
@@ -829,7 +831,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                  ", current_learning_status = %s",
                  name(),
                  req.signature,
-                 resp.config.primary.to_string(),
+                 resp.config.host_port_primary.to_string(),
                  _potential_secondary_states.duration_ms(),
                  cache_range.first,
                  cache_range.second,
@@ -874,7 +876,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                       "]: learnee = %s, create replica learn dir %s failed",
                       name(),
                       req.signature,
-                      resp.config.primary.to_string(),
+                      resp.config.host_port_primary.to_string(),
                       learn_dir.c_str());
 
             _potential_secondary_states.learn_remote_files_task =
@@ -899,13 +901,13 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                  " ms, start to copy remote files, copy_file_count = %d, priority = %s",
                  name(),
                  req.signature,
-                 resp.config.primary.to_string(),
+                 resp.config.host_port_primary.to_string(),
                  _potential_secondary_states.duration_ms(),
                  static_cast<int>(resp.state.files.size()),
                  high_priority ? "high" : "low");
 
         _potential_secondary_states.learn_remote_files_task = _stub->_nfs->copy_remote_files(
-            resp.config.primary,
+            _dns_resolver->resolve_address(resp.config.host_port_primary),
             resp.replica_disk_tag,
             resp.base_local_dir,
             resp.state.files,
@@ -1022,7 +1024,7 @@ void replica::on_copy_remote_state_completed(error_code err,
              "prepare_start_decree = %" PRId64 ", current_learning_status = %s",
              name(),
              req.signature,
-             resp.config.primary.to_string(),
+             resp.config.host_port_primary.to_string(),
              _potential_secondary_states.duration_ms(),
              err.to_string(),
              static_cast<int>(resp.state.files.size()),
@@ -1041,7 +1043,7 @@ void replica::on_copy_remote_state_completed(error_code err,
                  "]: learnee = %s, --learn_app_concurrent_count = %d",
                  name(),
                  _potential_secondary_states.learning_version,
-                 _config.primary.to_string(),
+                 _config.host_port_primary.to_string(),
                  _stub->_learn_app_concurrent_count.load());
     }
 
@@ -1091,7 +1093,7 @@ void replica::on_copy_remote_state_completed(error_code err,
                          " ns, apply checkpoint succeed, app_committed_decree = %" PRId64,
                          name(),
                          req.signature,
-                         resp.config.primary.to_string(),
+                         resp.config.host_port_primary.to_string(),
                          _potential_secondary_states.duration_ms(),
                          dsn_now_ns() - start_ts,
                          _app->last_committed_decree());
@@ -1101,7 +1103,7 @@ void replica::on_copy_remote_state_completed(error_code err,
                           "checkpoint duration = %" PRIu64 " ns, apply checkpoint failed, err = %s",
                           name(),
                           req.signature,
-                          resp.config.primary.to_string(),
+                          resp.config.host_port_primary.to_string(),
                           _potential_secondary_states.duration_ms(),
                           dsn_now_ns() - start_ts,
                           err.to_string());
@@ -1120,7 +1122,7 @@ void replica::on_copy_remote_state_completed(error_code err,
                          "succeed, app_committed_decree = %" PRId64,
                          name(),
                          req.signature,
-                         resp.config.primary.to_string(),
+                         resp.config.host_port_primary.to_string(),
                          _potential_secondary_states.duration_ms(),
                          dsn_now_ns() - start_ts,
                          _app->last_committed_decree());
@@ -1131,7 +1133,7 @@ void replica::on_copy_remote_state_completed(error_code err,
                           " ns, apply learned state from private log failed, err = %s",
                           name(),
                           req.signature,
-                          resp.config.primary.to_string(),
+                          resp.config.host_port_primary.to_string(),
                           _potential_secondary_states.duration_ms(),
                           dsn_now_ns() - start_ts,
                           err.to_string());
@@ -1153,7 +1155,7 @@ void replica::on_copy_remote_state_completed(error_code err,
                  "current_learning_status = %s",
                  name(),
                  req.signature,
-                 resp.config.primary.to_string(),
+                 resp.config.host_port_primary.to_string(),
                  _potential_secondary_states.duration_ms(),
                  err.to_string(),
                  old_prepared,
@@ -1181,7 +1183,7 @@ void replica::on_copy_remote_state_completed(error_code err,
                  "app_committed_decree = %" PRId64 ", app_durable_decree = %" PRId64 "",
                  name(),
                  req.signature,
-                 resp.config.primary.to_string(),
+                 resp.config.host_port_primary.to_string(),
                  _potential_secondary_states.duration_ms(),
                  err.to_string(),
                  _app->last_committed_decree(),
@@ -1217,7 +1219,7 @@ void replica::on_learn_remote_state_completed(error_code err)
                     "the learner status is not PS_POTENTIAL_SECONDARY, but %s, ignore",
                     name(),
                     _potential_secondary_states.learning_version,
-                    _config.primary.to_string(),
+                    _config.host_port_primary.to_string(),
                     _potential_secondary_states.duration_ms(),
                     err.to_string(),
                     enum_to_string(status()));
@@ -1230,7 +1232,7 @@ void replica::on_learn_remote_state_completed(error_code err)
              ", app_durable_decree = %" PRId64 ", current_learning_status = %s",
              name(),
              _potential_secondary_states.learning_version,
-             _config.primary.to_string(),
+             _config.host_port_primary.to_string(),
              _potential_secondary_states.duration_ms(),
              err.to_string(),
              last_committed_decree(),
@@ -1256,7 +1258,7 @@ void replica::handle_learning_error(error_code err, bool is_local_error)
               " ms, err = %s, %s",
               name(),
               _potential_secondary_states.learning_version,
-              _config.primary.to_string(),
+              _config.host_port_primary.to_string(),
               _potential_secondary_states.duration_ms(),
               err.to_string(),
               is_local_error ? "local_error" : "remote error");
@@ -1267,7 +1269,7 @@ void replica::handle_learning_error(error_code err, bool is_local_error)
         is_local_error ? partition_status::PS_ERROR : partition_status::PS_INACTIVE);
 }
 
-error_code replica::handle_learning_succeeded_on_primary(const ::dsn::host_port &node,
+error_code replica::handle_learning_succeeded_on_primary(const host_port &node,
                                                          uint64_t learn_signature)
 {
     auto it = _primary_states.learners.find(node);
@@ -1312,7 +1314,7 @@ void replica::notify_learn_completion()
              ", current_learning_status = %s",
              name(),
              _potential_secondary_states.learning_version,
-             _config.primary.to_string(),
+             _config.host_port_primary.to_string(),
              _potential_secondary_states.duration_ms(),
              last_committed_decree(),
              _app->last_committed_decree(),
@@ -1328,7 +1330,7 @@ void replica::notify_learn_completion()
     dsn::marshall(msg, report);
 
     _potential_secondary_states.completion_notify_task =
-        rpc::call(_config.primary, msg, &_tracker, [
+        rpc::call(_dns_resolver->resolve_address(_config.host_port_primary), msg, &_tracker, [
             this,
             report = std::move(report)
         ](error_code err, learn_notify_response && resp) mutable {
@@ -1402,7 +1404,7 @@ void replica::on_learn_completion_notification_reply(error_code err,
                   "signature not matched, current signature on primary is [%016" PRIx64 "]",
                   name(),
                   report.learner_signature,
-                  _config.primary.to_string(),
+                  _config.host_port_primary.to_string(),
                   _potential_secondary_states.duration_ms(),
                   resp.signature);
         handle_learning_error(ERR_INVALID_STATE, false);
@@ -1413,7 +1415,7 @@ void replica::on_learn_completion_notification_reply(error_code err,
              "]: learnee = %s, learn_duration = %" PRIu64 " ms, response_err = %s",
              name(),
              report.learner_signature,
-             _config.primary.to_string(),
+             _config.host_port_primary.to_string(),
              _potential_secondary_states.duration_ms(),
              resp.err.to_string());
 
@@ -1424,7 +1426,7 @@ void replica::on_learn_completion_notification_reply(error_code err,
                         "learnee is updating ballot, delay to start another round of learning",
                         name(),
                         report.learner_signature,
-                        _config.primary.to_string(),
+                        _config.host_port_primary.to_string(),
                         _potential_secondary_states.duration_ms());
             _potential_secondary_states.learning_round_is_running = false;
             _potential_secondary_states.delay_learning_task = tasking::create_task(
@@ -1445,7 +1447,7 @@ void replica::on_add_learner(const group_check_request &request)
 {
     LOG_INFO_PREFIX("process add learner, primary = {}, ballot ={}, status ={}, "
                     "last_committed_decree = {}, duplicating = {}",
-                    request.config.primary.to_string(),
+                    request.config.host_port_primary.to_string(),
                     request.config.ballot,
                     enum_to_string(request.config.status),
                     request.last_committed_decree,
@@ -1585,7 +1587,7 @@ error_code replica::apply_learned_state_from_private_log(learn_state &state)
         _potential_secondary_states.learning_version,
         duplicating,
         step_back,
-        _config.primary.to_string(),
+        _config.host_port_primary.to_string(),
         _potential_secondary_states.duration_ms(),
         state.files.size(),
         _potential_secondary_states.first_learn_start_decree,
@@ -1616,7 +1618,7 @@ error_code replica::apply_learned_state_from_private_log(learn_state &state)
                             "learned_to_decree_included({}) > last_committed_decree({}), commit to "
                             "to_decree_included",
                             _potential_secondary_states.learning_version,
-                            _config.primary.to_string(),
+                            _config.host_port_primary.to_string(),
                             state.to_decree_included,
                             last_committed_decree());
             plist.commit(state.to_decree_included, COMMIT_TO_DECREE_SOFT);
@@ -1626,7 +1628,7 @@ error_code replica::apply_learned_state_from_private_log(learn_state &state)
                         "learn_duration ={} ms, apply in-buffer private logs done, "
                         "replay_count ={}, app_committed_decree = {}",
                         _potential_secondary_states.learning_version,
-                        _config.primary.to_string(),
+                        _config.host_port_primary.to_string(),
                         _potential_secondary_states.duration_ms(),
                         replay_count,
                         _app->last_committed_decree());

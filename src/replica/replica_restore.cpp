@@ -31,6 +31,7 @@
 #include "replica_stub.h"
 #include "block_service/block_service_manager.h"
 #include "backup/cold_backup_context.h"
+#include "runtime/rpc/dns_resolver.h"
 
 using namespace dsn::dist::block_service;
 
@@ -420,11 +421,7 @@ void replica::tell_meta_to_restore_rollback()
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_DROP_APP);
     ::dsn::marshall(msg, request);
-
-    const auto &target = _stub->_failure_detector->get_servers();
-    // TODO(yingchun): send
-    rpc_address addr; // from target
-    rpc::call(addr,
+    rpc::call(_dns_resolver->resolve_address(_stub->_failure_detector->get_servers().leader()),
               msg,
               &_tracker,
               [this](error_code err, dsn::message_ex *request, dsn::message_ex *resp) {
@@ -452,23 +449,22 @@ void replica::report_restore_status_to_meta()
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_REPORT_RESTORE_STATUS);
     ::dsn::marshall(msg, request);
-    const auto &target = _stub->_failure_detector->get_servers();
-    // TODO(yingchun): send
-    rpc_address addr; // from target
-    rpc::call(
-        addr, msg, &_tracker, [](error_code err, dsn::message_ex *request, dsn::message_ex *resp) {
-            if (err == ERR_OK) {
-                configuration_report_restore_status_response response;
-                ::dsn::unmarshall(resp, response);
-                if (response.err == ERR_OK) {
-                    LOG_DEBUG("report restore status succeed");
-                    return;
-                }
-            } else if (err == ERR_TIMEOUT) {
-                // TODO: we should retry to make the result more precisely
-                // report_restore_status_to_meta();
-            }
-        });
+    rpc::call(_dns_resolver->resolve_address(_stub->_failure_detector->get_servers().leader()),
+              msg,
+              &_tracker,
+              [](error_code err, dsn::message_ex *request, dsn::message_ex *resp) {
+                  if (err == ERR_OK) {
+                      configuration_report_restore_status_response response;
+                      ::dsn::unmarshall(resp, response);
+                      if (response.err == ERR_OK) {
+                          LOG_DEBUG("report restore status succeed");
+                          return;
+                      }
+                  } else if (err == ERR_TIMEOUT) {
+                      // TODO: we should retry to make the result more precisely
+                      // report_restore_status_to_meta();
+                  }
+              });
 }
 
 void replica::update_restore_progress(uint64_t f_size)

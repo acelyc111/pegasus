@@ -35,8 +35,8 @@
 class replication_service_test_app;
 
 namespace dsn {
+class host_port;
 namespace replication {
-
 class replica;
 class replica_stub;
 
@@ -48,7 +48,7 @@ struct remote_learner_state
     std::string last_learn_log_file;
 };
 
-typedef std::unordered_map<::dsn::host_port, remote_learner_state> learner_map;
+typedef std::unordered_map<host_port, remote_learner_state> learner_map;
 
 #define CLEANUP_TASK(task_, force)                                                                 \
     {                                                                                              \
@@ -92,8 +92,8 @@ public:
     void get_replica_config(partition_status::type status,
                             /*out*/ replica_configuration &config,
                             uint64_t learner_signature = invalid_signature);
-    bool check_exist(const ::dsn::host_port &node, partition_status::type status);
-    partition_status::type get_node_status(const ::dsn::host_port &addr) const;
+    bool check_exist(const host_port &node, partition_status::type status);
+    partition_status::type get_node_status(const host_port &addr) const;
 
     void do_cleanup_pending_mutations(bool clean_pending_mutations = true);
 
@@ -138,7 +138,7 @@ public:
 
     // Used for partition split
     // child addresses who has been caught up with its parent
-    std::unordered_set<dsn::host_port> caught_up_children;
+    std::unordered_set<host_port> caught_up_children;
 
     // Used for partition split
     // whether parent's write request should be sent to child synchronously
@@ -280,7 +280,7 @@ public:
 
 //---------------inline impl----------------------------------------------------------------
 
-inline partition_status::type primary_context::get_node_status(const ::dsn::host_port &addr) const
+inline partition_status::type primary_context::get_node_status(const host_port &addr) const
 {
     auto it = statuses.find(addr);
     return it != statuses.end() ? it->second : partition_status::PS_INACTIVE;
