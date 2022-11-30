@@ -154,6 +154,7 @@ void meta_duplication_service::add_duplication(duplication_add_rpc rpc)
     }
 
     host_port_group meta_list;
+    // TODO: now only support FQDN format
     if (!host_port_group::load_servers(
              duplication_constants::kClustersSectionName, request.remote_cluster_name, &meta_list)
              .is_ok()) {
@@ -249,6 +250,7 @@ void meta_duplication_service::duplication_sync(duplication_sync_rpc rpc)
     auto &response = rpc.response();
     response.err = ERR_OK;
 
+    // TODO: now only support FQDN format
     node_state *ns = get_node_state(_state->_nodes, request.host_port_node, false);
     if (ns == nullptr) {
         LOG_WARNING_F("node({}) is not found in meta server", request.host_port_node.to_string());
@@ -334,14 +336,10 @@ void meta_duplication_service::create_follower_app_for_duplication(
     request.options.envs.emplace(duplication_constants::kDuplicationEnvMasterMetasKey,
                                  _meta_svc->get_options().meta_servers1.to_string());
 
-    host_port_group meta_servers = dup->follower_cluster_metas;
-
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_CREATE_APP);
     dsn::marshall(msg, request);
-    // TODO(ip): from meta_servers
-    rpc_address addrs;
     rpc::call(
-        addrs,
+        _meta_svc->get_dns_resolver()->resolve_address(dup->follower_cluster_metas.leader()),
         msg,
         _meta_svc->tracker(),
         [=](error_code err, configuration_create_app_response &&resp) mutable {
@@ -381,16 +379,12 @@ void meta_duplication_service::create_follower_app_for_duplication(
 void meta_duplication_service::check_follower_app_if_create_completed(
     const std::shared_ptr<duplication_info> &dup)
 {
-    host_port_group meta_servers = dup->follower_cluster_metas;
-
     configuration_query_by_index_request meta_config_request;
     meta_config_request.app_name = dup->app_name;
 
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX);
     dsn::marshall(msg, meta_config_request);
-    // TODO(ip): from meta_servers
-    rpc_address addrs;
-    rpc::call(addrs,
+    rpc::call(_meta_svc->get_dns_resolver()->resolve_address(dup->follower_cluster_metas.leader()),
               msg,
               _meta_svc->tracker(),
               [=](error_code err, configuration_query_by_index_response &&resp) mutable {

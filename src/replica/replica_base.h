@@ -55,6 +55,7 @@ struct replica_base
 
 private:
     const gpid _gpid;
+    // TODO: _name will be changed from IP to host
     const std::string _name;
     const std::string _app_name;
 };

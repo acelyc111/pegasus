@@ -60,8 +60,7 @@ replica::replica(replica_stub *stub,
                  bool need_restore,
                  bool is_duplication_follower)
     : serverlet<replica>("replica"),
-      replica_base(
-          gpid, fmt::format("{}@{}", gpid, stub->primary_address().to_string()), app.app_name),
+      replica_base(gpid, fmt::format("{}@{}", gpid, stub->primary_address()), app.app_name),
       _app_info(app),
       _primary_states(
           gpid, stub->options().staleness_for_commit, stub->options().batch_write_disabled),
@@ -77,7 +76,8 @@ replica::replica(replica_stub *stub,
       // todo(jiashuo1): app.duplicating need rename
       _is_duplication_master(app.duplicating),
       _is_duplication_follower(is_duplication_follower),
-      _backup_mgr(new replica_backup_manager(this))
+      _backup_mgr(new replica_backup_manager(this)),
+      _dns_resolver(stub->get_dns_resolver())
 {
     CHECK(!_app_info.app_type.empty(), "");
     CHECK_NOTNULL(stub, "");

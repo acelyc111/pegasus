@@ -235,6 +235,8 @@ public:
     // query last checkpoint info for follower in duplication process
     void on_query_last_checkpoint(query_last_checkpoint_info_rpc rpc);
 
+    std::shared_ptr<dns_resolver> get_dns_resolver() { return _dns_resolver; }
+
 private:
     enum replica_node_state
     {
@@ -354,6 +356,8 @@ private:
     closed_replicas _closed_replicas;
 
     mutation_log_ptr _log;
+    // TODO(yingchun): improve naming
+    rpc_address _primary_rpc_address;
     host_port _primary_address;
 
     std::shared_ptr<dsn::dist::slave_failure_detector_with_multimaster> _failure_detector;
