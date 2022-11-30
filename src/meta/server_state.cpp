@@ -2247,6 +2247,7 @@ server_state::sync_apps_from_replica_nodes(const std::vector<host_port> &replica
 
         auto app_query_req = std::make_unique<query_app_info_request>();
         app_query_req->meta_server = dsn_primary_address();
+        app_query_req->host_port_meta_server = dsn_primary_host_port();
         query_app_info_rpc app_rpc(std::move(app_query_req), RPC_QUERY_APP_INFO);
         app_rpc.call(_meta_svc->get_dns_resolver()->resolve_address(replica_nodes[i]),
                      &tracker,

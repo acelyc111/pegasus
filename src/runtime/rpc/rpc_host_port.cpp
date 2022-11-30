@@ -86,16 +86,18 @@ error_s GetAddrInfo(const string &hostname, const addrinfo &hints, AddrInfo *inf
     const int rc = getaddrinfo(hostname.c_str(), nullptr, &hints, &res);
     const int err = errno; // preserving the errno from the getaddrinfo() call
     AddrInfo result(res, ::freeaddrinfo);
-    if (rc == 0) {
-        if (info != nullptr) {
-            info->swap(result);
+    if (rc != 0) {
+        if (rc == EAI_SYSTEM) {
+            return error_s::make(ERR_NETWORK_FAILURE, utils::safe_strerror(err));
         }
-        return error_s::ok();
+        return error_s::make(ERR_NETWORK_FAILURE, gai_strerror(rc));
     }
-    if (rc == EAI_SYSTEM) {
-        return error_s::make(ERR_NETWORK_FAILURE, utils::safe_strerror(err));
+
+    if (info != nullptr) {
+        info->swap(result);
     }
-    return error_s::make(ERR_NETWORK_FAILURE, gai_strerror(rc));
+
+    return error_s::ok();
 }
 
 // TODO(yingchun): duplicated, should refactor
@@ -191,8 +193,8 @@ error_s host_port::resolve_addresses(vector<rpc_address> *addresses) const
         sockaddr_in *addr = reinterpret_cast<sockaddr_in *>(ai->ai_addr);
         addr->sin_port = htons(_port);
         rpc_address sockaddr(*addr);
-        LOG_DEBUG_F("resolved address {} for host/port {}", sockaddr, to_string());
-        if (!inserted.insert(sockaddr).second) {
+        LOG_INFO_F("resolved address {} for host_port {}", sockaddr, to_string());
+        if (inserted.insert(sockaddr).second) {
             result_addresses.emplace_back(sockaddr);
         }
     }

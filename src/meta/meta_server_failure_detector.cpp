@@ -211,7 +211,7 @@ void meta_server_failure_detector::leader_initialize(const std::string &lock_ser
     CHECK(hp.parse_string(lock_service_owner).is_ok(),
           "parse {} to host_port failed",
           lock_service_owner);
-    CHECK_EQ_MSG(hp, dsn_primary_address(), "acquire leader return success, but owner not match");
+    CHECK_EQ_MSG(hp, dsn_primary_host_port(), "acquire leader return success, but owner not match");
     _is_leader.store(true);
     _election_moment.store(dsn_now_ms());
 }

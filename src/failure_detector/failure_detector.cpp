@@ -355,7 +355,9 @@ void failure_detector::on_ping_internal(const beacon_msg &beacon, /*out*/ beacon
     uint64_t now = dsn_now_ms();
     ack.time = beacon.time;
     ack.this_node = beacon.to_addr;
+    ack.host_port_this_node = beacon.host_port_to;
     ack.primary_node = dsn_primary_address();
+    ack.host_port_primary_node = dsn_primary_host_port();
     ack.is_master = true;
     ack.allowed = true;
 
@@ -605,6 +607,7 @@ void failure_detector::send_beacon(const host_port &target, uint64_t time)
                              beacon_ack ack;
                              ack.time = beacon.time;
                              ack.this_node = beacon.to_addr;
+                             ack.host_port_this_node = beacon.host_port_to;
                              ack.primary_node.set_invalid();
                              ack.is_master = false;
                              ack.allowed = true;

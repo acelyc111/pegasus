@@ -473,7 +473,8 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
 {
     _primary_rpc_address = dsn_primary_address();
     _primary_address = dsn_primary_host_port();
-    LOG_INFO_F("primary_address = {}", _primary_address);
+    LOG_INFO_F(
+        "_primary_rpc_address = {}, primary_address = {}", _primary_rpc_address, _primary_address);
 
     set_options(opts);
     LOG_INFO_F("meta_servers = {}", _options.meta_servers1);
@@ -543,7 +544,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
                     LOG_INFO("%s@%s: load replica '%s' success, <durable, commit> = <%" PRId64
                              ", %" PRId64 ">, last_prepared_decree = %" PRId64,
                              r->get_gpid().to_string(),
-                             dsn_primary_address().to_string(),
+                             dsn_primary_host_port().to_string(),
                              dir.c_str(),
                              r->last_durable_decree(),
                              r->last_committed_decree(),
