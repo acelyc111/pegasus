@@ -49,6 +49,7 @@
 #include "common/partition_split_common.h"
 #include "common/manual_compact.h"
 #include "meta/meta_rpc_types.h"
+#include "runtime/rpc/dns_resolver.h"
 
 namespace dsn {
 namespace replication {
@@ -56,7 +57,7 @@ namespace replication {
 using tp_output_format = ::dsn::utils::table_printer::output_format;
 
 replication_ddl_client::replication_ddl_client(const host_port_group &meta_servers)
-    : _meta_server(meta_servers)
+    : _meta_server(meta_servers), _dns_resolver(new dns_resolver())
 {
 }
 
@@ -443,7 +444,7 @@ dsn::error_code replication_ddl_client::list_apps(const dsn::app_status::type st
 
 dsn::error_code replication_ddl_client::list_nodes(
     const dsn::replication::node_status::type status,
-    std::map<dsn::host_port, dsn::replication::node_status::type> &nodes)
+    std::map<host_port, dsn::replication::node_status::type> &nodes)
 {
     std::shared_ptr<configuration_list_nodes_request> req(new configuration_list_nodes_request());
     req->status = status;
@@ -493,13 +494,13 @@ dsn::error_code replication_ddl_client::list_nodes(const dsn::replication::node_
                                                    const std::string &file_name,
                                                    bool resolve_ip)
 {
-    std::map<dsn::host_port, dsn::replication::node_status::type> nodes;
+    std::map<host_port, dsn::replication::node_status::type> nodes;
     auto r = list_nodes(status, nodes);
     if (r != dsn::ERR_OK) {
         return r;
     }
 
-    std::map<dsn::host_port, list_nodes_helper> tmp_map;
+    std::map<host_port, list_nodes_helper> tmp_map;
     int alive_node_count = 0;
     for (auto &kv : nodes) {
         if (kv.second == dsn::replication::node_status::NS_ALIVE)
@@ -885,7 +886,7 @@ dsn::error_code replication_ddl_client::do_recovery(const std::vector<host_port>
 
     auto req = std::make_shared<configuration_recovery_request>();
     req->host_port_recovery_set.clear();
-    for (const dsn::host_port &node : replica_nodes) {
+    for (const host_port &node : replica_nodes) {
         if (std::find(req->host_port_recovery_set.begin(),
                       req->host_port_recovery_set.end(),
                       node) != req->host_port_recovery_set.end()) {
@@ -1422,9 +1423,7 @@ void replication_ddl_client::end_meta_request(const rpc_response_task_ptr &callb
                                               dsn::message_ex *resp)
 {
     if (err != dsn::ERR_OK && retry_times < 2) {
-        // TODO(ip): from _meta_server
-        rpc_address addr;
-        rpc::call(addr,
+        rpc::call(_dns_resolver->resolve_address(_meta_server.leader()),
                   request,
                   &_tracker,
                   [this, retry_times, callback](
@@ -1559,11 +1558,11 @@ replication_ddl_client::ddd_diagnose(gpid pid, std::vector<ddd_partition_info> &
 }
 
 void replication_ddl_client::query_disk_info(
-    const std::vector<dsn::host_port> &targets,
+    const std::vector<host_port> &targets,
     const std::string &app_name,
-    /*out*/ std::map<dsn::host_port, error_with<query_disk_info_response>> &resps)
+    /*out*/ std::map<host_port, error_with<query_disk_info_response>> &resps)
 {
-    std::map<dsn::host_port, query_disk_info_rpc> query_disk_info_rpcs;
+    std::map<host_port, query_disk_info_rpc> query_disk_info_rpcs;
     for (const auto &target : targets) {
         auto request = make_unique<query_disk_info_request>();
         request->host_port_node = target;
@@ -1617,14 +1616,14 @@ replication_ddl_client::clear_bulk_load(const std::string &app_name)
     return call_rpc_sync(clear_bulk_load_rpc(std::move(req), RPC_CM_CLEAR_BULK_LOAD));
 }
 
-error_code replication_ddl_client::detect_hotkey(const dsn::host_port &target,
+error_code replication_ddl_client::detect_hotkey(const host_port &target,
                                                  detect_hotkey_request &req,
                                                  detect_hotkey_response &resp)
 {
-    std::map<dsn::host_port, detect_hotkey_rpc> detect_hotkey_rpcs;
+    std::map<host_port, detect_hotkey_rpc> detect_hotkey_rpcs;
     auto request = make_unique<detect_hotkey_request>(req);
     detect_hotkey_rpcs.emplace(target, detect_hotkey_rpc(std::move(request), RPC_DETECT_HOTKEY));
-    std::map<dsn::host_port, error_with<detect_hotkey_response>> resps;
+    std::map<host_port, error_with<detect_hotkey_response>> resps;
     call_rpcs_sync(detect_hotkey_rpcs, resps);
     resp = resps.begin()->second.get_value();
     return resps.begin()->second.get_error().code();

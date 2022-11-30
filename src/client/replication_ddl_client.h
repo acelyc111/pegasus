@@ -52,12 +52,12 @@
 #include "utils/errors.h"
 
 namespace dsn {
+class dns_resolver;
 namespace replication {
-
 class replication_ddl_client
 {
 public:
-    replication_ddl_client(const dsn::host_port_group &meta_servers);
+    replication_ddl_client(const host_port_group &meta_servers);
     ~replication_ddl_client();
 
     dsn::error_code create_app(const std::string &app_name,
@@ -88,7 +88,7 @@ public:
 
     dsn::error_code
     list_nodes(const dsn::replication::node_status::type status,
-               std::map<dsn::host_port, dsn::replication::node_status::type> &nodes);
+               std::map<host_port, dsn::replication::node_status::type> &nodes);
 
     dsn::error_code cluster_name(int64_t timeout_ms, std::string &cluster_name);
 
@@ -113,7 +113,7 @@ public:
     dsn::error_code
     wait_app_ready(const std::string &app_name, int partition_count, int max_replica_count);
 
-    dsn::error_code do_recovery(const std::vector<dsn::host_port> &replica_nodes,
+    dsn::error_code do_recovery(const std::vector<host_port> &replica_nodes,
                                 int wait_seconds,
                                 bool skip_bad_nodes,
                                 bool skip_lost_partitions,
@@ -186,9 +186,9 @@ public:
     dsn::error_code ddd_diagnose(gpid pid, std::vector<ddd_partition_info> &ddd_partitions);
 
     void
-    query_disk_info(const std::vector<dsn::host_port> &targets,
+    query_disk_info(const std::vector<host_port> &targets,
                     const std::string &app_name,
-                    /*out*/ std::map<dsn::host_port, error_with<query_disk_info_response>> &resps);
+                    /*out*/ std::map<host_port, error_with<query_disk_info_response>> &resps);
 
     error_with<start_bulk_load_response> start_bulk_load(const std::string &app_name,
                                                          const std::string &cluster_name,
@@ -203,7 +203,7 @@ public:
 
     error_with<clear_bulk_load_state_response> clear_bulk_load(const std::string &app_name);
 
-    error_code detect_hotkey(const dsn::host_port &target,
+    error_code detect_hotkey(const host_port &target,
                              detect_hotkey_request &req,
                              detect_hotkey_response &resp);
 
@@ -299,8 +299,8 @@ private:
 
     /// Send request to multi replica server synchronously.
     template <typename TRpcHolder, typename TResponse = typename TRpcHolder::response_type>
-    void call_rpcs_sync(std::map<dsn::host_port, TRpcHolder> &rpcs,
-                        std::map<dsn::host_port, error_with<TResponse>> &resps,
+    void call_rpcs_sync(std::map<host_port, TRpcHolder> &rpcs,
+                        std::map<host_port, error_with<TResponse>> &resps,
                         int reply_thread_hash = 0,
                         bool enable_retry = true)
     {
@@ -323,7 +323,7 @@ private:
         tracker.wait_outstanding_tasks();
 
         if (enable_retry && rpcs.size() > 0) {
-            std::map<dsn::host_port, dsn::error_with<TResponse>> retry_resps;
+            std::map<host_port, dsn::error_with<TResponse>> retry_resps;
             call_rpcs_sync(rpcs, retry_resps, reply_thread_hash, false);
             for (auto &resp : retry_resps) {
                 resps.emplace(resp.first, std::move(resp.second));
@@ -332,8 +332,9 @@ private:
     }
 
 private:
-    dsn::host_port_group _meta_server;
+    host_port_group _meta_server;
     dsn::task_tracker _tracker;
+    std::unique_ptr<dns_resolver> _dns_resolver;
 
     typedef rpc_holder<detect_hotkey_request, detect_hotkey_response> detect_hotkey_rpc;
     typedef rpc_holder<query_disk_info_request, query_disk_info_response> query_disk_info_rpc;
