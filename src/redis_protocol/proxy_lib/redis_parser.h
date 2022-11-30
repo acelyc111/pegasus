@@ -26,6 +26,7 @@
 #include "geo/lib/geo_client.h"
 
 namespace dsn {
+class dns_resolver;
 namespace apps {
 class rrdb_client;
 }
@@ -148,6 +149,7 @@ private:
     // for rrdb
     std::unique_ptr<::dsn::apps::rrdb_client> client;
     std::unique_ptr<geo::geo_client> _geo_client;
+    std::shared_ptr<dsn::dns_resolver> _dns_resolver;
 
 protected:
     // function for data stream

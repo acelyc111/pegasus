@@ -200,10 +200,10 @@ error_s host_port::resolve_addresses(vector<rpc_address> *addresses) const
         CHECK_EQ(AF_INET, ai->ai_family);
         sockaddr_in *addr = reinterpret_cast<sockaddr_in *>(ai->ai_addr);
         addr->sin_port = htons(_port);
-        rpc_address sockaddr(*addr);
-        LOG_INFO_F("resolved address {} for host_port {}", sockaddr, to_string());
-        if (inserted.insert(sockaddr).second) {
-            result_addresses.emplace_back(sockaddr);
+        rpc_address rpc_addr(*addr);
+        LOG_INFO_F("resolved address {} for host_port {}", rpc_addr, to_string());
+        if (inserted.insert(rpc_addr).second) {
+            result_addresses.emplace_back(rpc_addr);
         }
     }
     if (addresses) {

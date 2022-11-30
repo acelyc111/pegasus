@@ -135,22 +135,26 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
             addr);
 
         // server address side effect
-        switch (req->server_address.type()) {
-        case HOST_TYPE_GROUP:
-            switch (spec->grpc_mode) {
-            case GRPC_TO_LEADER:
-                if (req->server_address.group_address()->is_update_leader_automatically()) {
-                    req->server_address.group_address()->set_leader(addr);
-                }
-                break;
-            default:
-                break;
-            }
-            break;
-        default:
-            CHECK(false, "not implemented");
-            break;
-        }
+        // TODO(yingchun):
+        // 1. dosen't need check if it is a 'group_address'
+        // 2. is_update_leader_automatically is never used, we can remove it
+        //        switch (req->server_address.type()) {
+        //        case HOST_TYPE_GROUP:
+        //            switch (spec->grpc_mode) {
+        //            case GRPC_TO_LEADER:
+        //                if (req->server_address.group_address()->is_update_leader_automatically())
+        //                {
+        //                    req->server_address.group_address()->set_leader(addr);
+        //                }
+        //                break;
+        //            default:
+        //                break;
+        //            }
+        //            break;
+        //        default:
+        //            CHECK(false, "not implemented, rpc_address={}", addr);
+        //            break;
+        //        }
 
         // do fake forwarding, reset request_id
         // TODO(qinzuoyan): reset timeout to new value

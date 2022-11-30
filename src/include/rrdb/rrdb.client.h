@@ -37,10 +37,11 @@ public:
     rrdb_client() {}
     explicit rrdb_client(const char *cluster_name,
                          const host_port_group &meta_list,
-                         const char *app_name)
+                         const char *app_name,
+                         const std::shared_ptr<dns_resolver> &dns_resolver)
     {
-        _resolver =
-            dsn::replication::partition_resolver::get_resolver(cluster_name, meta_list, app_name);
+        _resolver = dsn::replication::partition_resolver::get_resolver(
+            cluster_name, meta_list, app_name, dns_resolver);
     }
     ~rrdb_client() { _tracker.cancel_outstanding_tasks(); }
 

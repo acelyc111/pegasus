@@ -34,13 +34,16 @@
 #include "runtime/task/async_calls.h"
 
 namespace dsn {
+class dns_resolver;
 namespace replication {
-
 class partition_resolver : public ref_counter
 {
 public:
     static dsn::ref_ptr<partition_resolver>
-    get_resolver(const char *cluster_name, const host_port_group &meta_list, const char *app_name);
+    get_resolver(const char *cluster_name,
+                 const host_port_group &meta_list,
+                 const char *app_name,
+                 const std::shared_ptr<dns_resolver> &dns_resolver);
 
     template <typename TReq, typename TCallback>
     dsn::rpc_response_task_ptr call_op(dsn::task_code code,
@@ -72,8 +75,10 @@ public:
     const dsn::host_port_group &get_meta_server() const { return _meta_server; }
 
 protected:
-    partition_resolver(const host_port_group &meta_server, const char *app_name)
-        : _app_name(app_name), _meta_server(meta_server)
+    partition_resolver(const host_port_group &meta_server,
+                       const char *app_name,
+                       const std::shared_ptr<dns_resolver> &dns_resolver)
+        : _app_name(app_name), _meta_server(meta_server), _dns_resolver(dns_resolver)
     {
     }
 
@@ -129,6 +134,7 @@ protected:
     std::string _cluster_name;
     std::string _app_name;
     host_port_group _meta_server;
+    std::shared_ptr<dns_resolver> _dns_resolver;
 };
 
 typedef ref_ptr<partition_resolver> partition_resolver_ptr;

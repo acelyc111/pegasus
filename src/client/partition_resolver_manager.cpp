@@ -33,16 +33,18 @@
 namespace dsn {
 namespace replication {
 
-partition_resolver_ptr partition_resolver_manager::find_or_create(const char *cluster_name,
-                                                                  const host_port_group &meta_list,
-                                                                  const char *app_name)
+partition_resolver_ptr
+partition_resolver_manager::find_or_create(const char *cluster_name,
+                                           const host_port_group &meta_list,
+                                           const char *app_name,
+                                           const std::shared_ptr<dns_resolver> &dns_resolver)
 {
     dsn::zauto_lock l(_lock);
     std::map<std::string, partition_resolver_ptr> &app_map = _resolvers[cluster_name];
     partition_resolver_ptr &ptr = app_map[app_name];
 
     if (ptr == nullptr) {
-        ptr = new partition_resolver_simple(meta_list, app_name);
+        ptr = new partition_resolver_simple(meta_list, app_name, dns_resolver);
         return ptr;
     } else {
         const auto &meta_group = ptr->get_meta_server();

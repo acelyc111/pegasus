@@ -24,18 +24,22 @@
  * THE SOFTWARE.
  */
 
-#include "utils/fmt_logging.h"
-#include "utils/utils.h"
-#include "utils/rand.h"
-#include "runtime/task/async_calls.h"
 #include "partition_resolver_simple.h"
+
+#include "runtime/rpc/dns_resolver.h"
+#include "runtime/task/async_calls.h"
+#include "utils/fmt_logging.h"
+#include "utils/rand.h"
+#include "utils/utils.h"
 
 namespace dsn {
 namespace replication {
 
-partition_resolver_simple::partition_resolver_simple(const host_port_group &meta_server,
-                                                     const char *app_name)
-    : partition_resolver(meta_server, app_name),
+partition_resolver_simple::partition_resolver_simple(
+    const host_port_group &meta_server,
+    const char *app_name,
+    const std::shared_ptr<dns_resolver> &dns_resolver)
+    : partition_resolver(meta_server, app_name, dns_resolver),
       _app_id(-1),
       _app_partition_count(-1),
       _app_is_stateful(true)
@@ -248,10 +252,8 @@ task_ptr partition_resolver_simple::query_config(int partition_index, int timeou
     }
     marshall(msg, req);
 
-    // TODO(ip): from _meta_server
-    rpc_address addr;
     return rpc::call(
-        addr,
+        _dns_resolver->resolve_address(_meta_server.leader()),
         msg,
         &_tracker,
         [this, partition_index](error_code err, dsn::message_ex *req, dsn::message_ex *resp) {

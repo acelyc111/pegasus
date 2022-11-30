@@ -29,6 +29,7 @@
 #include "pegasus/error.h"
 #include "pegasus_client_impl.h"
 #include "rrdb/rrdb.code.definition.h"
+#include "runtime/rpc/dns_resolver.h"
 #include "runtime/rpc/group_address.h"
 #include "runtime/rpc/rpc_host_port.h"
 #include "runtime/task/task_code.h"
@@ -46,14 +47,15 @@ std::unordered_map<int, std::string> pegasus_client_impl::_client_error_to_strin
 std::unordered_map<int, int> pegasus_client_impl::_server_error_to_client;
 
 pegasus_client_impl::pegasus_client_impl(const char *cluster_name, const char *app_name)
-    : _cluster_name(cluster_name), _app_name(app_name)
+    : _cluster_name(cluster_name), _app_name(app_name), _dns_resolver(new dns_resolver())
 {
     CHECK(host_port_group::load_servers(PEGASUS_CLUSTER_SECTION_NAME, cluster_name, &_meta_server)
               .is_ok(),
           "invalid config in {}.{}",
           PEGASUS_CLUSTER_SECTION_NAME,
           cluster_name);
-    _client = new ::dsn::apps::rrdb_client(cluster_name, _meta_server, app_name);
+    _meta_server.set_rand_leader();
+    _client = new ::dsn::apps::rrdb_client(cluster_name, _meta_server, app_name, _dns_resolver);
 }
 
 pegasus_client_impl::~pegasus_client_impl() { delete _client; }
@@ -1237,9 +1239,7 @@ void pegasus_client_impl::async_get_unordered_scanners(
 
     configuration_query_by_index_request req;
     req.app_name = _app_name;
-    // TODO(ip): from _meta_server
-    rpc_address addr;
-    ::dsn::rpc::call(addr,
+    ::dsn::rpc::call(_dns_resolver->resolve_address(_meta_server.leader()),
                      RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX,
                      req,
                      nullptr,
