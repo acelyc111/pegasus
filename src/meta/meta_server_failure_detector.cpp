@@ -278,25 +278,36 @@ void meta_server_failure_detector::on_ping(const fd::beacon_msg &beacon,
                                            rpc_replier<fd::beacon_ack> &reply)
 {
     // TODO: should check beacon.host_port_to is current node?
+    LOG_INFO_F("meta_server_failure_detector::on_ping: {},{},{}|{},{},{}",
+               beacon.__isset.host_port_to,
+               beacon.host_port_to,
+               beacon.to_addr,
+               beacon.__isset.to_addr,
+               beacon.to_addr,
+               beacon.host_port_to);
     host_port this_node_hp;
     if (beacon.__isset.host_port_to) {
         this_node_hp = beacon.host_port_to;
+        LOG_INFO_F("{}", beacon.host_port_to);
     } else {
         // TODO: reverse resolve
         this_node_hp = host_port(beacon.to_addr);
+        LOG_INFO_F("{}", beacon.to_addr);
     }
 
     rpc_address this_node_addr;
     if (beacon.__isset.to_addr) {
         this_node_addr = beacon.to_addr;
+        LOG_INFO_F("{}", beacon.to_addr);
     } else {
         this_node_addr = _dns_resolver->resolve_address(beacon.host_port_to);
+        LOG_INFO_F("{}", beacon.host_port_to);
     }
 
     fd::beacon_ack ack;
     ack.time = beacon.time;
     ack.this_node = this_node_addr;
-    ack.__set_host_port_this_node(this_node_hp);
+    ack.host_port_this_node = this_node_hp;
     ack.allowed = true;
 
     if (beacon.__isset.start_time && !update_stability_stat(beacon)) {

@@ -346,9 +346,11 @@ error_code meta_service::start()
     dist::cmd::register_remote_command_rpc();
 
     _failure_detector->acquire_leader_lock();
-    CHECK(_failure_detector->get_leader(nullptr), "must be primary at this point");
-    LOG_INFO("%s got the primary lock, start to recover server state from remote storage",
-             dsn_primary_host_port().to_string());
+    host_port leader;
+    CHECK(_failure_detector->get_leader(&leader), "must be primary at this point");
+    // TODO: check 'leader' is the current node
+    LOG_INFO_F("{} got the primary lock, start to recover server state from remote storage",
+               leader);
 
     // initialize the load balancer
     server_load_balancer *balancer = utils::factory_store<server_load_balancer>::create(

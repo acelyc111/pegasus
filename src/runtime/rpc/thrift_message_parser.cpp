@@ -120,6 +120,7 @@ static message_ex *create_message_from_request_blob(const blob &body_data)
         stream.set_read_msg(nullptr);
         return nullptr;
     }
+    // TODO(yingchun): is DSF_THRIFT_BINARY the only format?
     dsn_hdr->context.u.serialize_format = DSF_THRIFT_BINARY; // always serialize in thrift binary
 
     // common fields

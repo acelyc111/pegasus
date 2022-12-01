@@ -29,6 +29,8 @@
 #include <chrono>
 #include <ctime>
 
+#include <boost/lexical_cast.hpp>
+
 #include "runtime/rpc/dns_resolver.h"
 #include "runtime/rpc/rpc_host_port.h"
 #include "utils/command_manager.h"

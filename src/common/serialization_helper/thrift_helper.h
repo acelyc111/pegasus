@@ -470,6 +470,7 @@ inline uint32_t host_port::read(apache::thrift::protocol::TProtocol *iprot)
         // the protocol is binary protocol
         xfer += iprot->readString(host);
         xfer += iprot->readI16(port);
+        LOG_INFO_F("xfer={}", xfer);
     } else {
         // the protocol is json protocol
         std::string fname;
@@ -504,10 +505,12 @@ inline uint32_t host_port::read(apache::thrift::protocol::TProtocol *iprot)
             xfer += iprot->readFieldEnd();
         }
         xfer += iprot->readStructEnd();
+        LOG_INFO_F("xfer={}", xfer);
     }
 
     _host = host;
     _port = static_cast<uint16_t>(port);
+    LOG_INFO_F("{}", *this);
 
     return xfer;
 }
@@ -520,6 +523,9 @@ inline uint32_t host_port::write(apache::thrift::protocol::TProtocol *oprot) con
         // the protocol is binary protocol
         xfer += binary_proto->writeString(_host);
         xfer += binary_proto->writeI16(static_cast<int16_t>(_port));
+        LOG_INFO_F("xfer={}", xfer);
+        LOG_INFO_F("{}", *this);
+        CHECK(false, "");
     } else {
         // the protocol is json protocol
         xfer += oprot->writeStructBegin("host_port");
@@ -534,6 +540,7 @@ inline uint32_t host_port::write(apache::thrift::protocol::TProtocol *oprot) con
 
         xfer += oprot->writeFieldStop();
         xfer += oprot->writeStructEnd();
+        LOG_INFO_F("xfer={}", xfer);
     }
 
     return xfer;
