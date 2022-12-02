@@ -26,7 +26,7 @@
 
 include "dsn.thrift"
 include "dsn.layer2.thrift"
-include "../src/common/metadata.thrift"
+include "metadata.thrift"
 
 namespace cpp dsn.replication
 namespace go admin

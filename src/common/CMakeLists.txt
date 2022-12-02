@@ -27,7 +27,7 @@ set(MY_PROJ_NAME dsn_replication_common)
 thrift_generate_cpp(
     METADATA_THRIFT_SRCS
     METADATA_THRIFT_HDRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/metadata.thrift
+        ../../idl/metadata.thrift
 )
 
 thrift_generate_cpp(
@@ -45,7 +45,7 @@ thrift_generate_cpp(
 thrift_generate_cpp(
     BACKUP_THRIFT_SRCS
     BACKUP_THRIFT_HDRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/backup.thrift
+        ../../idl/backup.thrift
 )
 
 thrift_generate_cpp(
