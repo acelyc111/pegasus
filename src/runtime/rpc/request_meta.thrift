@@ -17,6 +17,7 @@
 
 namespace cpp dsn
 
+// go: request_meta
 // Metadata field of the request in rDSN's thrift protocol (version 1).
 // TODO(wutao1): add design doc of the thrift protocol.
 struct thrift_request_meta_v1

@@ -24,11 +24,12 @@
  * THE SOFTWARE.
  */
 
-include "../../idl/dsn.thrift"
-include "../../idl/dsn.layer2.thrift"
-include "metadata.thrift"
+include "dsn.thrift"
+include "dsn.layer2.thrift"
+include "../src/common/metadata.thrift"
 
 namespace cpp dsn.replication
+namespace go admin
 
 // This file contains the administration RPCs from client to MetaServer.
 
@@ -131,12 +132,14 @@ struct create_app_options
     6:map<string, string>  envs;
 }
 
+// go: create_app_request
 struct configuration_create_app_request
 {
     1:string                   app_name;
     2:create_app_options       options;
 }
 
+// go: create_app_response
 // meta server => client
 struct configuration_create_app_response
 {
@@ -150,34 +153,40 @@ struct drop_app_options
     2:optional i64     reserve_seconds;
 }
 
+// go: drop_app_request
 struct configuration_drop_app_request
 {
     1:string                   app_name;
     2:drop_app_options         options;
 }
 
+// go: drop_app_response
 struct configuration_drop_app_response
 {
     1:dsn.error_code   err;
 }
 
+// go: recall_app_request
 struct configuration_recall_app_request
 {
     1:i32 app_id;
     2:string new_app_name;
 }
 
+// go: recall_app_response
 struct configuration_recall_app_response
 {
     1:dsn.error_code err;
     2:dsn.layer2.app_info info;
 }
 
+// go: list_apps_request
 struct configuration_list_apps_request
 {
     1:dsn.layer2.app_status    status = app_status.AS_INVALID;
 }
 
+// go: list_apps_response
 struct configuration_list_apps_response
 {
     1:dsn.error_code              err;
@@ -203,6 +212,7 @@ enum app_env_operation
     APP_ENV_OP_CLEAR
 }
 
+// go: update_app_env_request
 struct configuration_update_app_env_request
 {
     1:string app_name;
@@ -214,6 +224,7 @@ struct configuration_update_app_env_request
                                             // else clear the env that key = "clear_prefix.xxx"
 }
 
+// go: update_app_env_response
 struct configuration_update_app_env_response
 {
     1:dsn.error_code err;
@@ -264,21 +275,25 @@ struct node_info
     2:dsn.rpc_address  address;
 }
 
+// go: list_nodes_request
 struct configuration_list_nodes_request
 {
     1:node_status              status = node_status.NS_INVALID;
 }
 
+// go: list_nodes_response
 struct configuration_list_nodes_response
 {
     1:dsn.error_code   err;
     2:list<node_info>  infos;
 }
 
+// go: cluster_info_request
 struct configuration_cluster_info_request
 {
 }
 
+// go: cluster_info_response
 struct configuration_cluster_info_response
 {
     1:dsn.error_code   err;
@@ -303,12 +318,14 @@ enum meta_function_level
     fl_invalid = 10000
 }
 
+// go: meta_control_request
 // if the level is invalid, we just response the old level of meta without updating it
 struct configuration_meta_control_request
 {
     1:meta_function_level level;
 }
 
+// go: meta_control_response
 struct configuration_meta_control_response
 {
     1:dsn.error_code err;
@@ -333,6 +350,7 @@ struct configuration_proposal_action
     // 4:i64 period_ts;
 }
 
+// go: balance_request
 struct configuration_balancer_request
 {
     1:dsn.gpid gpid;
@@ -341,6 +359,7 @@ struct configuration_balancer_request
     4:optional balancer_request_type balance_type;
 }
 
+// go: balance_response
 struct configuration_balancer_response
 {
     1:dsn.error_code err;
@@ -402,3 +421,60 @@ struct configuration_set_max_replica_count_response
     2:i32                       old_max_replica_count;
     3:string                    hint_message;
 }
+
+// ONLY FOR GO
+// A client to MetaServer's administration API.
+//service admin_client
+//{
+//    create_app_response create_app(1:create_app_request req);
+//
+//    drop_app_response drop_app(1:drop_app_request req);
+//
+//    recall_app_response recall_app(1:recall_app_request req);
+//
+//    list_apps_response list_apps(1:list_apps_request req);
+//
+//    duplication_add_response add_duplication(1: duplication_add_request req);
+//
+//    duplication_query_response query_duplication(1: duplication_query_request req);
+//
+//    duplication_modify_response modify_duplication(1: duplication_modify_request req);
+//
+//    query_app_info_response query_app_info(1: query_app_info_request req);
+//
+//    update_app_env_response update_app_env(1: update_app_env_request req);
+//
+//    list_nodes_response list_nodes(1: list_nodes_request req);
+//
+//    cluster_info_response query_cluster_info(1: cluster_info_request req);
+//
+//    meta_control_response meta_control(1: meta_control_request req);
+//
+//    query_backup_policy_response query_backup_policy(1: query_backup_policy_request req);
+//
+//    balance_response balance(1: balance_request req);
+//
+//    start_backup_app_response start_backup_app(1: start_backup_app_request req);
+//
+//    query_backup_status_response query_backup_status(1: query_backup_status_request req);
+//
+//    create_app_response restore_app(1: restore_app_request req);
+//
+//    start_partition_split_response start_partition_split(1: start_partition_split_request req);
+//
+//    query_split_response query_split_status(1: query_split_request req);
+//
+//    control_split_response control_partition_split(1: control_split_request req);
+//
+//    start_bulk_load_response start_bulk_load(1: start_bulk_load_request req);
+//
+//    query_bulk_load_response query_bulk_load_status(1: query_bulk_load_request req);
+//
+//    control_bulk_load_response control_bulk_load(1: control_bulk_load_request req);
+//
+//    clear_bulk_load_state_response clear_bulk_load(1: clear_bulk_load_state_request req);
+//
+//    start_app_manual_compact_response start_manual_compact(1: start_app_manual_compact_request req);
+//
+//    query_app_manual_compact_response query_manual_compact(1: query_app_manual_compact_request req);
+//}

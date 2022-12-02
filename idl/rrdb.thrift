@@ -19,6 +19,7 @@
 include "dsn.thrift"
 
 namespace cpp dsn.apps
+namespace go rrdb
 
 enum filter_type
 {
@@ -124,7 +125,7 @@ struct multi_put_request
 struct multi_remove_request
 {
     1:dsn.blob      hash_key;
-    2:list<dsn.blob> sort_keys; // should not be empty
+    2:list<dsn.blob> sort_keys; // should not be empty  // TODO(yingchun): go: empty means remove all sortkeys
     3:i64           max_count; // deprecated
 }
 
@@ -276,7 +277,7 @@ struct get_scanner_request
     8:dsn.blob     hash_key_filter_pattern;
     9:filter_type  sort_key_filter_type;
     10:dsn.blob    sort_key_filter_pattern;
-    11:optional bool    validate_partition_hash;
+    11:optional bool    validate_partition_hash; // TODO(yingchun): go: need_check_hash
     12:optional bool    return_expire_ts;
     13:optional bool full_scan; // true means client want to build 'full scan' context with the server side, false otherwise
     14:optional bool only_return_count = false;
@@ -348,4 +349,10 @@ service rrdb
     scan_response scan(1:scan_request request);
     oneway void clear_scanner(1:i64 context_id);
 }
+
+// ONLY FOR GO
+//service meta
+//{
+//    replication.query_cfg_response query_cfg(1:replication.query_cfg_request query);
+//}
 

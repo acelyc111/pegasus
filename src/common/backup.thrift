@@ -19,6 +19,7 @@ include "../../idl/dsn.thrift"
 include "../../idl/dsn.layer2.thrift"
 
 namespace cpp dsn.replication
+namespace go admin
 
 struct policy_info
 {
@@ -26,6 +27,7 @@ struct policy_info
     2:string        backup_provider_type;
 }
 
+// go: restore_app_request
 // using configuration_create_app_response to response
 struct configuration_restore_request
 {
@@ -119,12 +121,14 @@ struct backup_entry
     4:set<i32>      app_ids;
 }
 
+// go: query_backup_policy_request
 struct configuration_query_backup_policy_request
 {
     1:list<string>      policy_names;
     2:i32               backup_info_count;
 }
 
+// go: query_backup_policy_response
 struct configuration_query_backup_policy_response
 {
     1:dsn.error_code            err;

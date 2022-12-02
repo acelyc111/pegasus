@@ -28,6 +28,7 @@ include "dsn.thrift"
 
 # TODO(yingchun): reuse the idls for server and all client libs
 namespace cpp dsn
+namespace go replication
 
 struct partition_configuration
 {
@@ -41,7 +42,7 @@ struct partition_configuration
     8:i32                    partition_flags;
 }
 
-
+// go: query_cfg_request
 struct configuration_query_by_index_request
 {
     1:string           app_name;
