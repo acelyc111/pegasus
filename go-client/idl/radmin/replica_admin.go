@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 	"github.com/apache/incubator-pegasus/idl/replication"
 	"github.com/apache/incubator-pegasus/idl/admin"
 
@@ -24,7 +24,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 var _ = replication.GoUnusedProtection__
 var _ = admin.GoUnusedProtection__
 type DiskMigrationStatus int64
@@ -199,23 +199,23 @@ return int64(*p), nil
 //  - Pid
 //  - Node
 type QueryReplicaDecreeRequest struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
-  Node *dsn.RPCAddress `thrift:"node,2" db:"node" json:"node"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Node *base.RPCAddress `thrift:"node,2" db:"node" json:"node"`
 }
 
 func NewQueryReplicaDecreeRequest() *QueryReplicaDecreeRequest {
   return &QueryReplicaDecreeRequest{}
 }
 
-var QueryReplicaDecreeRequest_Pid_DEFAULT *dsn.Gpid
-func (p *QueryReplicaDecreeRequest) GetPid() *dsn.Gpid {
+var QueryReplicaDecreeRequest_Pid_DEFAULT *base.Gpid
+func (p *QueryReplicaDecreeRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return QueryReplicaDecreeRequest_Pid_DEFAULT
   }
 return p.Pid
 }
-var QueryReplicaDecreeRequest_Node_DEFAULT *dsn.RPCAddress
-func (p *QueryReplicaDecreeRequest) GetNode() *dsn.RPCAddress {
+var QueryReplicaDecreeRequest_Node_DEFAULT *base.RPCAddress
+func (p *QueryReplicaDecreeRequest) GetNode() *base.RPCAddress {
   if !p.IsSetNode() {
     return QueryReplicaDecreeRequest_Node_DEFAULT
   }
@@ -278,7 +278,7 @@ func (p *QueryReplicaDecreeRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryReplicaDecreeRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -286,7 +286,7 @@ func (p *QueryReplicaDecreeRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryReplicaDecreeRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.Node = &dsn.RPCAddress{}
+  p.Node = &base.RPCAddress{}
   if err := p.Node.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Node), err)
   }
@@ -340,7 +340,7 @@ func (p *QueryReplicaDecreeRequest) String() string {
 //  - Err
 //  - LastDecree
 type QueryReplicaDecreeResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   LastDecree int64 `thrift:"last_decree,2" db:"last_decree" json:"last_decree"`
 }
 
@@ -348,8 +348,8 @@ func NewQueryReplicaDecreeResponse() *QueryReplicaDecreeResponse {
   return &QueryReplicaDecreeResponse{}
 }
 
-var QueryReplicaDecreeResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QueryReplicaDecreeResponse) GetErr() *dsn.ErrorCode {
+var QueryReplicaDecreeResponse_Err_DEFAULT *base.ErrorCode
+func (p *QueryReplicaDecreeResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QueryReplicaDecreeResponse_Err_DEFAULT
   }
@@ -412,7 +412,7 @@ func (p *QueryReplicaDecreeResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryReplicaDecreeResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -473,15 +473,15 @@ func (p *QueryReplicaDecreeResponse) String() string {
 // Attributes:
 //  - Node
 type QueryReplicaInfoRequest struct {
-  Node *dsn.RPCAddress `thrift:"node,1" db:"node" json:"node"`
+  Node *base.RPCAddress `thrift:"node,1" db:"node" json:"node"`
 }
 
 func NewQueryReplicaInfoRequest() *QueryReplicaInfoRequest {
   return &QueryReplicaInfoRequest{}
 }
 
-var QueryReplicaInfoRequest_Node_DEFAULT *dsn.RPCAddress
-func (p *QueryReplicaInfoRequest) GetNode() *dsn.RPCAddress {
+var QueryReplicaInfoRequest_Node_DEFAULT *base.RPCAddress
+func (p *QueryReplicaInfoRequest) GetNode() *base.RPCAddress {
   if !p.IsSetNode() {
     return QueryReplicaInfoRequest_Node_DEFAULT
   }
@@ -530,7 +530,7 @@ func (p *QueryReplicaInfoRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryReplicaInfoRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Node = &dsn.RPCAddress{}
+  p.Node = &base.RPCAddress{}
   if err := p.Node.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Node), err)
   }
@@ -572,7 +572,7 @@ func (p *QueryReplicaInfoRequest) String() string {
 //  - Err
 //  - Replicas
 type QueryReplicaInfoResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Replicas []*admin.ReplicaInfo `thrift:"replicas,2" db:"replicas" json:"replicas"`
 }
 
@@ -580,8 +580,8 @@ func NewQueryReplicaInfoResponse() *QueryReplicaInfoResponse {
   return &QueryReplicaInfoResponse{}
 }
 
-var QueryReplicaInfoResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QueryReplicaInfoResponse) GetErr() *dsn.ErrorCode {
+var QueryReplicaInfoResponse_Err_DEFAULT *base.ErrorCode
+func (p *QueryReplicaInfoResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QueryReplicaInfoResponse_Err_DEFAULT
   }
@@ -644,7 +644,7 @@ func (p *QueryReplicaInfoResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryReplicaInfoResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -734,8 +734,8 @@ type DiskInfo struct {
   FullDir string `thrift:"full_dir,2" db:"full_dir" json:"full_dir"`
   DiskCapacityMb int64 `thrift:"disk_capacity_mb,3" db:"disk_capacity_mb" json:"disk_capacity_mb"`
   DiskAvailableMb int64 `thrift:"disk_available_mb,4" db:"disk_available_mb" json:"disk_available_mb"`
-  HoldingPrimaryReplicas map[int32][]*dsn.Gpid `thrift:"holding_primary_replicas,5" db:"holding_primary_replicas" json:"holding_primary_replicas"`
-  HoldingSecondaryReplicas map[int32][]*dsn.Gpid `thrift:"holding_secondary_replicas,6" db:"holding_secondary_replicas" json:"holding_secondary_replicas"`
+  HoldingPrimaryReplicas map[int32][]*base.Gpid `thrift:"holding_primary_replicas,5" db:"holding_primary_replicas" json:"holding_primary_replicas"`
+  HoldingSecondaryReplicas map[int32][]*base.Gpid `thrift:"holding_secondary_replicas,6" db:"holding_secondary_replicas" json:"holding_secondary_replicas"`
 }
 
 func NewDiskInfo() *DiskInfo {
@@ -759,11 +759,11 @@ func (p *DiskInfo) GetDiskAvailableMb() int64 {
   return p.DiskAvailableMb
 }
 
-func (p *DiskInfo) GetHoldingPrimaryReplicas() map[int32][]*dsn.Gpid {
+func (p *DiskInfo) GetHoldingPrimaryReplicas() map[int32][]*base.Gpid {
   return p.HoldingPrimaryReplicas
 }
 
-func (p *DiskInfo) GetHoldingSecondaryReplicas() map[int32][]*dsn.Gpid {
+func (p *DiskInfo) GetHoldingSecondaryReplicas() map[int32][]*base.Gpid {
   return p.HoldingSecondaryReplicas
 }
 func (p *DiskInfo) Read(iprot thrift.TProtocol) error {
@@ -895,7 +895,7 @@ func (p *DiskInfo)  ReadField5(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading map begin: ", err)
   }
-  tMap := make(map[int32][]*dsn.Gpid, size)
+  tMap := make(map[int32][]*base.Gpid, size)
   p.HoldingPrimaryReplicas =  tMap
   for i := 0; i < size; i ++ {
 var _key1 int32
@@ -908,10 +908,10 @@ var _key1 int32
     if err != nil {
       return thrift.PrependError("error reading set begin: ", err)
     }
-    tSet := make([]*dsn.Gpid, 0, size)
+    tSet := make([]*base.Gpid, 0, size)
     _val2 :=  tSet
     for i := 0; i < size; i ++ {
-      _elem3 := &dsn.Gpid{}
+      _elem3 := &base.Gpid{}
       if err := _elem3.Read(iprot); err != nil {
         return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem3), err)
       }
@@ -933,7 +933,7 @@ func (p *DiskInfo)  ReadField6(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading map begin: ", err)
   }
-  tMap := make(map[int32][]*dsn.Gpid, size)
+  tMap := make(map[int32][]*base.Gpid, size)
   p.HoldingSecondaryReplicas =  tMap
   for i := 0; i < size; i ++ {
 var _key4 int32
@@ -946,10 +946,10 @@ var _key4 int32
     if err != nil {
       return thrift.PrependError("error reading set begin: ", err)
     }
-    tSet := make([]*dsn.Gpid, 0, size)
+    tSet := make([]*base.Gpid, 0, size)
     _val5 :=  tSet
     for i := 0; i < size; i ++ {
-      _elem6 := &dsn.Gpid{}
+      _elem6 := &base.Gpid{}
       if err := _elem6.Read(iprot); err != nil {
         return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem6), err)
       }
@@ -1107,7 +1107,7 @@ func (p *DiskInfo) String() string {
 //  - Node
 //  - AppName
 type QueryDiskInfoRequest struct {
-  Node *dsn.RPCAddress `thrift:"node,1" db:"node" json:"node"`
+  Node *base.RPCAddress `thrift:"node,1" db:"node" json:"node"`
   AppName string `thrift:"app_name,2" db:"app_name" json:"app_name"`
 }
 
@@ -1115,8 +1115,8 @@ func NewQueryDiskInfoRequest() *QueryDiskInfoRequest {
   return &QueryDiskInfoRequest{}
 }
 
-var QueryDiskInfoRequest_Node_DEFAULT *dsn.RPCAddress
-func (p *QueryDiskInfoRequest) GetNode() *dsn.RPCAddress {
+var QueryDiskInfoRequest_Node_DEFAULT *base.RPCAddress
+func (p *QueryDiskInfoRequest) GetNode() *base.RPCAddress {
   if !p.IsSetNode() {
     return QueryDiskInfoRequest_Node_DEFAULT
   }
@@ -1179,7 +1179,7 @@ func (p *QueryDiskInfoRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryDiskInfoRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Node = &dsn.RPCAddress{}
+  p.Node = &base.RPCAddress{}
   if err := p.Node.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Node), err)
   }
@@ -1243,7 +1243,7 @@ func (p *QueryDiskInfoRequest) String() string {
 //  - TotalAvailableMb
 //  - DiskInfos
 type QueryDiskInfoResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   TotalCapacityMb int64 `thrift:"total_capacity_mb,2" db:"total_capacity_mb" json:"total_capacity_mb"`
   TotalAvailableMb int64 `thrift:"total_available_mb,3" db:"total_available_mb" json:"total_available_mb"`
   DiskInfos []*DiskInfo `thrift:"disk_infos,4" db:"disk_infos" json:"disk_infos"`
@@ -1253,8 +1253,8 @@ func NewQueryDiskInfoResponse() *QueryDiskInfoResponse {
   return &QueryDiskInfoResponse{}
 }
 
-var QueryDiskInfoResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QueryDiskInfoResponse) GetErr() *dsn.ErrorCode {
+var QueryDiskInfoResponse_Err_DEFAULT *base.ErrorCode
+func (p *QueryDiskInfoResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QueryDiskInfoResponse_Err_DEFAULT
   }
@@ -1345,7 +1345,7 @@ func (p *QueryDiskInfoResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryDiskInfoResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1468,7 +1468,7 @@ func (p *QueryDiskInfoResponse) String() string {
 //  - OriginDisk
 //  - TargetDisk
 type ReplicaDiskMigrateRequest struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
   OriginDisk string `thrift:"origin_disk,2" db:"origin_disk" json:"origin_disk"`
   TargetDisk string `thrift:"target_disk,3" db:"target_disk" json:"target_disk"`
 }
@@ -1477,8 +1477,8 @@ func NewReplicaDiskMigrateRequest() *ReplicaDiskMigrateRequest {
   return &ReplicaDiskMigrateRequest{}
 }
 
-var ReplicaDiskMigrateRequest_Pid_DEFAULT *dsn.Gpid
-func (p *ReplicaDiskMigrateRequest) GetPid() *dsn.Gpid {
+var ReplicaDiskMigrateRequest_Pid_DEFAULT *base.Gpid
+func (p *ReplicaDiskMigrateRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return ReplicaDiskMigrateRequest_Pid_DEFAULT
   }
@@ -1555,7 +1555,7 @@ func (p *ReplicaDiskMigrateRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ReplicaDiskMigrateRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -1637,7 +1637,7 @@ func (p *ReplicaDiskMigrateRequest) String() string {
 //  - Err
 //  - Hint
 type ReplicaDiskMigrateResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Hint *string `thrift:"hint,2" db:"hint" json:"hint,omitempty"`
 }
 
@@ -1645,8 +1645,8 @@ func NewReplicaDiskMigrateResponse() *ReplicaDiskMigrateResponse {
   return &ReplicaDiskMigrateResponse{}
 }
 
-var ReplicaDiskMigrateResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ReplicaDiskMigrateResponse) GetErr() *dsn.ErrorCode {
+var ReplicaDiskMigrateResponse_Err_DEFAULT *base.ErrorCode
+func (p *ReplicaDiskMigrateResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ReplicaDiskMigrateResponse_Err_DEFAULT
   }
@@ -1716,7 +1716,7 @@ func (p *ReplicaDiskMigrateResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ReplicaDiskMigrateResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1783,7 +1783,7 @@ func (p *ReplicaDiskMigrateResponse) String() string {
 type DetectHotkeyRequest struct {
   Type HotkeyType `thrift:"type,1" db:"type" json:"type"`
   Action DetectAction `thrift:"action,2" db:"action" json:"action"`
-  Pid *dsn.Gpid `thrift:"pid,3" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,3" db:"pid" json:"pid"`
 }
 
 func NewDetectHotkeyRequest() *DetectHotkeyRequest {
@@ -1798,8 +1798,8 @@ func (p *DetectHotkeyRequest) GetType() HotkeyType {
 func (p *DetectHotkeyRequest) GetAction() DetectAction {
   return p.Action
 }
-var DetectHotkeyRequest_Pid_DEFAULT *dsn.Gpid
-func (p *DetectHotkeyRequest) GetPid() *dsn.Gpid {
+var DetectHotkeyRequest_Pid_DEFAULT *base.Gpid
+func (p *DetectHotkeyRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return DetectHotkeyRequest_Pid_DEFAULT
   }
@@ -1888,7 +1888,7 @@ func (p *DetectHotkeyRequest)  ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *DetectHotkeyRequest)  ReadField3(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -1953,7 +1953,7 @@ func (p *DetectHotkeyRequest) String() string {
 //  - ErrHint
 //  - HotkeyResult_
 type DetectHotkeyResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   ErrHint *string `thrift:"err_hint,2" db:"err_hint" json:"err_hint,omitempty"`
   HotkeyResult_ *string `thrift:"hotkey_result,3" db:"hotkey_result" json:"hotkey_result,omitempty"`
 }
@@ -1962,8 +1962,8 @@ func NewDetectHotkeyResponse() *DetectHotkeyResponse {
   return &DetectHotkeyResponse{}
 }
 
-var DetectHotkeyResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *DetectHotkeyResponse) GetErr() *dsn.ErrorCode {
+var DetectHotkeyResponse_Err_DEFAULT *base.ErrorCode
+func (p *DetectHotkeyResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return DetectHotkeyResponse_Err_DEFAULT
   }
@@ -2054,7 +2054,7 @@ func (p *DetectHotkeyResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DetectHotkeyResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2231,7 +2231,7 @@ func (p *AddNewDiskRequest) String() string {
 //  - Err
 //  - ErrHint
 type AddNewDiskResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   ErrHint *string `thrift:"err_hint,2" db:"err_hint" json:"err_hint,omitempty"`
 }
 
@@ -2239,8 +2239,8 @@ func NewAddNewDiskResponse() *AddNewDiskResponse {
   return &AddNewDiskResponse{}
 }
 
-var AddNewDiskResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *AddNewDiskResponse) GetErr() *dsn.ErrorCode {
+var AddNewDiskResponse_Err_DEFAULT *base.ErrorCode
+func (p *AddNewDiskResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return AddNewDiskResponse_Err_DEFAULT
   }
@@ -2310,7 +2310,7 @@ func (p *AddNewDiskResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *AddNewDiskResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }

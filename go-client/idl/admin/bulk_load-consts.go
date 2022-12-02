@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 	"github.com/apache/incubator-pegasus/idl/replication"
 
 )
@@ -21,7 +21,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 var _ = replication.GoUnusedProtection__
 
 func init() {

@@ -14,11 +14,11 @@ import (
         "strconv"
         "strings"
         "github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
         "github.com/apache/incubator-pegasus/idl/rrdb"
 )
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 
 func Usage() {
   fmt.Fprintln(os.Stderr, "Usage of ", os.Args[0], " [-h host:port] [-u url] [-f[ramed]] function [arg1 [arg2...]]:")
@@ -201,7 +201,7 @@ func main() {
     }
     factory55 := thrift.NewTSimpleJSONProtocolFactory()
     jsProt56 := factory55.GetProtocol(mbTrans53)
-    argvalue0 := dsn.NewBlob()
+    argvalue0 := base.NewBlob()
     err57 := argvalue0.Read(jsProt56)
     if err57 != nil {
       Usage()
@@ -326,7 +326,7 @@ func main() {
     }
     factory85 := thrift.NewTSimpleJSONProtocolFactory()
     jsProt86 := factory85.GetProtocol(mbTrans83)
-    argvalue0 := dsn.NewBlob()
+    argvalue0 := base.NewBlob()
     err87 := argvalue0.Read(jsProt86)
     if err87 != nil {
       Usage()
@@ -401,7 +401,7 @@ func main() {
     }
     factory103 := thrift.NewTSimpleJSONProtocolFactory()
     jsProt104 := factory103.GetProtocol(mbTrans101)
-    argvalue0 := dsn.NewBlob()
+    argvalue0 := base.NewBlob()
     err105 := argvalue0.Read(jsProt104)
     if err105 != nil {
       Usage()
@@ -426,7 +426,7 @@ func main() {
     }
     factory109 := thrift.NewTSimpleJSONProtocolFactory()
     jsProt110 := factory109.GetProtocol(mbTrans107)
-    argvalue0 := dsn.NewBlob()
+    argvalue0 := base.NewBlob()
     err111 := argvalue0.Read(jsProt110)
     if err111 != nil {
       Usage()

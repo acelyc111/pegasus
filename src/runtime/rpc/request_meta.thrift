@@ -16,6 +16,7 @@
 // under the License.
 
 namespace cpp dsn
+namespace go replication
 
 // go: request_meta
 // Metadata field of the request in rDSN's thrift protocol (version 1).

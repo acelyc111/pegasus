@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 
 )
 
@@ -22,7 +22,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 type FilterType int64
 const (
   FilterType_FT_NO_FILTER FilterType = 0
@@ -241,8 +241,8 @@ return int64(*p), nil
 //  - Value
 //  - ExpireTsSeconds
 type UpdateRequest struct {
-  Key *dsn.Blob `thrift:"key,1" db:"key" json:"key"`
-  Value *dsn.Blob `thrift:"value,2" db:"value" json:"value"`
+  Key *base.Blob `thrift:"key,1" db:"key" json:"key"`
+  Value *base.Blob `thrift:"value,2" db:"value" json:"value"`
   ExpireTsSeconds int32 `thrift:"expire_ts_seconds,3" db:"expire_ts_seconds" json:"expire_ts_seconds"`
 }
 
@@ -250,15 +250,15 @@ func NewUpdateRequest() *UpdateRequest {
   return &UpdateRequest{}
 }
 
-var UpdateRequest_Key_DEFAULT *dsn.Blob
-func (p *UpdateRequest) GetKey() *dsn.Blob {
+var UpdateRequest_Key_DEFAULT *base.Blob
+func (p *UpdateRequest) GetKey() *base.Blob {
   if !p.IsSetKey() {
     return UpdateRequest_Key_DEFAULT
   }
 return p.Key
 }
-var UpdateRequest_Value_DEFAULT *dsn.Blob
-func (p *UpdateRequest) GetValue() *dsn.Blob {
+var UpdateRequest_Value_DEFAULT *base.Blob
+func (p *UpdateRequest) GetValue() *base.Blob {
   if !p.IsSetValue() {
     return UpdateRequest_Value_DEFAULT
   }
@@ -335,7 +335,7 @@ func (p *UpdateRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *UpdateRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Key = &dsn.Blob{}
+  p.Key = &base.Blob{}
   if err := p.Key.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Key), err)
   }
@@ -343,7 +343,7 @@ func (p *UpdateRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *UpdateRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.Value = &dsn.Blob{}
+  p.Value = &base.Blob{}
   if err := p.Value.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Value), err)
   }
@@ -656,7 +656,7 @@ func (p *UpdateResponse) String() string {
 //  - Server
 type ReadResponse struct {
   Error int32 `thrift:"error,1" db:"error" json:"error"`
-  Value *dsn.Blob `thrift:"value,2" db:"value" json:"value"`
+  Value *base.Blob `thrift:"value,2" db:"value" json:"value"`
   AppID int32 `thrift:"app_id,3" db:"app_id" json:"app_id"`
   PartitionIndex int32 `thrift:"partition_index,4" db:"partition_index" json:"partition_index"`
   // unused field # 5
@@ -671,8 +671,8 @@ func NewReadResponse() *ReadResponse {
 func (p *ReadResponse) GetError() int32 {
   return p.Error
 }
-var ReadResponse_Value_DEFAULT *dsn.Blob
-func (p *ReadResponse) GetValue() *dsn.Blob {
+var ReadResponse_Value_DEFAULT *base.Blob
+func (p *ReadResponse) GetValue() *base.Blob {
   if !p.IsSetValue() {
     return ReadResponse_Value_DEFAULT
   }
@@ -782,7 +782,7 @@ func (p *ReadResponse)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *ReadResponse)  ReadField2(iprot thrift.TProtocol) error {
-  p.Value = &dsn.Blob{}
+  p.Value = &base.Blob{}
   if err := p.Value.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Value), err)
   }
@@ -1368,8 +1368,8 @@ func (p *CountResponse) String() string {
 //  - Value
 //  - ExpireTsSeconds
 type KeyValue struct {
-  Key *dsn.Blob `thrift:"key,1" db:"key" json:"key"`
-  Value *dsn.Blob `thrift:"value,2" db:"value" json:"value"`
+  Key *base.Blob `thrift:"key,1" db:"key" json:"key"`
+  Value *base.Blob `thrift:"value,2" db:"value" json:"value"`
   ExpireTsSeconds *int32 `thrift:"expire_ts_seconds,3" db:"expire_ts_seconds" json:"expire_ts_seconds,omitempty"`
 }
 
@@ -1377,15 +1377,15 @@ func NewKeyValue() *KeyValue {
   return &KeyValue{}
 }
 
-var KeyValue_Key_DEFAULT *dsn.Blob
-func (p *KeyValue) GetKey() *dsn.Blob {
+var KeyValue_Key_DEFAULT *base.Blob
+func (p *KeyValue) GetKey() *base.Blob {
   if !p.IsSetKey() {
     return KeyValue_Key_DEFAULT
   }
 return p.Key
 }
-var KeyValue_Value_DEFAULT *dsn.Blob
-func (p *KeyValue) GetValue() *dsn.Blob {
+var KeyValue_Value_DEFAULT *base.Blob
+func (p *KeyValue) GetValue() *base.Blob {
   if !p.IsSetValue() {
     return KeyValue_Value_DEFAULT
   }
@@ -1469,7 +1469,7 @@ func (p *KeyValue) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *KeyValue)  ReadField1(iprot thrift.TProtocol) error {
-  p.Key = &dsn.Blob{}
+  p.Key = &base.Blob{}
   if err := p.Key.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Key), err)
   }
@@ -1477,7 +1477,7 @@ func (p *KeyValue)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *KeyValue)  ReadField2(iprot thrift.TProtocol) error {
-  p.Value = &dsn.Blob{}
+  p.Value = &base.Blob{}
   if err := p.Value.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Value), err)
   }
@@ -1554,7 +1554,7 @@ func (p *KeyValue) String() string {
 //  - Kvs
 //  - ExpireTsSeconds
 type MultiPutRequest struct {
-  HashKey *dsn.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
+  HashKey *base.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
   Kvs []*KeyValue `thrift:"kvs,2" db:"kvs" json:"kvs"`
   ExpireTsSeconds int32 `thrift:"expire_ts_seconds,3" db:"expire_ts_seconds" json:"expire_ts_seconds"`
 }
@@ -1563,8 +1563,8 @@ func NewMultiPutRequest() *MultiPutRequest {
   return &MultiPutRequest{}
 }
 
-var MultiPutRequest_HashKey_DEFAULT *dsn.Blob
-func (p *MultiPutRequest) GetHashKey() *dsn.Blob {
+var MultiPutRequest_HashKey_DEFAULT *base.Blob
+func (p *MultiPutRequest) GetHashKey() *base.Blob {
   if !p.IsSetHashKey() {
     return MultiPutRequest_HashKey_DEFAULT
   }
@@ -1641,7 +1641,7 @@ func (p *MultiPutRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *MultiPutRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.HashKey = &dsn.Blob{}
+  p.HashKey = &base.Blob{}
   if err := p.HashKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKey), err)
   }
@@ -1744,8 +1744,8 @@ func (p *MultiPutRequest) String() string {
 //  - SortKeys
 //  - MaxCount
 type MultiRemoveRequest struct {
-  HashKey *dsn.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
-  SortKeys []*dsn.Blob `thrift:"sort_keys,2" db:"sort_keys" json:"sort_keys"`
+  HashKey *base.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
+  SortKeys []*base.Blob `thrift:"sort_keys,2" db:"sort_keys" json:"sort_keys"`
   MaxCount int64 `thrift:"max_count,3" db:"max_count" json:"max_count"`
 }
 
@@ -1753,15 +1753,15 @@ func NewMultiRemoveRequest() *MultiRemoveRequest {
   return &MultiRemoveRequest{}
 }
 
-var MultiRemoveRequest_HashKey_DEFAULT *dsn.Blob
-func (p *MultiRemoveRequest) GetHashKey() *dsn.Blob {
+var MultiRemoveRequest_HashKey_DEFAULT *base.Blob
+func (p *MultiRemoveRequest) GetHashKey() *base.Blob {
   if !p.IsSetHashKey() {
     return MultiRemoveRequest_HashKey_DEFAULT
   }
 return p.HashKey
 }
 
-func (p *MultiRemoveRequest) GetSortKeys() []*dsn.Blob {
+func (p *MultiRemoveRequest) GetSortKeys() []*base.Blob {
   return p.SortKeys
 }
 
@@ -1831,7 +1831,7 @@ func (p *MultiRemoveRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *MultiRemoveRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.HashKey = &dsn.Blob{}
+  p.HashKey = &base.Blob{}
   if err := p.HashKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKey), err)
   }
@@ -1843,10 +1843,10 @@ func (p *MultiRemoveRequest)  ReadField2(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading list begin: ", err)
   }
-  tSlice := make([]*dsn.Blob, 0, size)
+  tSlice := make([]*base.Blob, 0, size)
   p.SortKeys =  tSlice
   for i := 0; i < size; i ++ {
-    _elem1 := &dsn.Blob{}
+    _elem1 := &base.Blob{}
     if err := _elem1.Read(iprot); err != nil {
       return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem1), err)
     }
@@ -2214,17 +2214,17 @@ func (p *MultiRemoveResponse) String() string {
 //  - SortKeyFilterPattern
 //  - Reverse
 type MultiGetRequest struct {
-  HashKey *dsn.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
-  SortKeys []*dsn.Blob `thrift:"sort_keys,2" db:"sort_keys" json:"sort_keys"`
+  HashKey *base.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
+  SortKeys []*base.Blob `thrift:"sort_keys,2" db:"sort_keys" json:"sort_keys"`
   MaxKvCount int32 `thrift:"max_kv_count,3" db:"max_kv_count" json:"max_kv_count"`
   MaxKvSize int32 `thrift:"max_kv_size,4" db:"max_kv_size" json:"max_kv_size"`
   NoValue bool `thrift:"no_value,5" db:"no_value" json:"no_value"`
-  StartSortkey *dsn.Blob `thrift:"start_sortkey,6" db:"start_sortkey" json:"start_sortkey"`
-  StopSortkey *dsn.Blob `thrift:"stop_sortkey,7" db:"stop_sortkey" json:"stop_sortkey"`
+  StartSortkey *base.Blob `thrift:"start_sortkey,6" db:"start_sortkey" json:"start_sortkey"`
+  StopSortkey *base.Blob `thrift:"stop_sortkey,7" db:"stop_sortkey" json:"stop_sortkey"`
   StartInclusive bool `thrift:"start_inclusive,8" db:"start_inclusive" json:"start_inclusive"`
   StopInclusive bool `thrift:"stop_inclusive,9" db:"stop_inclusive" json:"stop_inclusive"`
   SortKeyFilterType FilterType `thrift:"sort_key_filter_type,10" db:"sort_key_filter_type" json:"sort_key_filter_type"`
-  SortKeyFilterPattern *dsn.Blob `thrift:"sort_key_filter_pattern,11" db:"sort_key_filter_pattern" json:"sort_key_filter_pattern"`
+  SortKeyFilterPattern *base.Blob `thrift:"sort_key_filter_pattern,11" db:"sort_key_filter_pattern" json:"sort_key_filter_pattern"`
   Reverse bool `thrift:"reverse,12" db:"reverse" json:"reverse"`
 }
 
@@ -2232,15 +2232,15 @@ func NewMultiGetRequest() *MultiGetRequest {
   return &MultiGetRequest{}
 }
 
-var MultiGetRequest_HashKey_DEFAULT *dsn.Blob
-func (p *MultiGetRequest) GetHashKey() *dsn.Blob {
+var MultiGetRequest_HashKey_DEFAULT *base.Blob
+func (p *MultiGetRequest) GetHashKey() *base.Blob {
   if !p.IsSetHashKey() {
     return MultiGetRequest_HashKey_DEFAULT
   }
 return p.HashKey
 }
 
-func (p *MultiGetRequest) GetSortKeys() []*dsn.Blob {
+func (p *MultiGetRequest) GetSortKeys() []*base.Blob {
   return p.SortKeys
 }
 
@@ -2255,15 +2255,15 @@ func (p *MultiGetRequest) GetMaxKvSize() int32 {
 func (p *MultiGetRequest) GetNoValue() bool {
   return p.NoValue
 }
-var MultiGetRequest_StartSortkey_DEFAULT *dsn.Blob
-func (p *MultiGetRequest) GetStartSortkey() *dsn.Blob {
+var MultiGetRequest_StartSortkey_DEFAULT *base.Blob
+func (p *MultiGetRequest) GetStartSortkey() *base.Blob {
   if !p.IsSetStartSortkey() {
     return MultiGetRequest_StartSortkey_DEFAULT
   }
 return p.StartSortkey
 }
-var MultiGetRequest_StopSortkey_DEFAULT *dsn.Blob
-func (p *MultiGetRequest) GetStopSortkey() *dsn.Blob {
+var MultiGetRequest_StopSortkey_DEFAULT *base.Blob
+func (p *MultiGetRequest) GetStopSortkey() *base.Blob {
   if !p.IsSetStopSortkey() {
     return MultiGetRequest_StopSortkey_DEFAULT
   }
@@ -2281,8 +2281,8 @@ func (p *MultiGetRequest) GetStopInclusive() bool {
 func (p *MultiGetRequest) GetSortKeyFilterType() FilterType {
   return p.SortKeyFilterType
 }
-var MultiGetRequest_SortKeyFilterPattern_DEFAULT *dsn.Blob
-func (p *MultiGetRequest) GetSortKeyFilterPattern() *dsn.Blob {
+var MultiGetRequest_SortKeyFilterPattern_DEFAULT *base.Blob
+func (p *MultiGetRequest) GetSortKeyFilterPattern() *base.Blob {
   if !p.IsSetSortKeyFilterPattern() {
     return MultiGetRequest_SortKeyFilterPattern_DEFAULT
   }
@@ -2457,7 +2457,7 @@ func (p *MultiGetRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *MultiGetRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.HashKey = &dsn.Blob{}
+  p.HashKey = &base.Blob{}
   if err := p.HashKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKey), err)
   }
@@ -2469,10 +2469,10 @@ func (p *MultiGetRequest)  ReadField2(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading list begin: ", err)
   }
-  tSlice := make([]*dsn.Blob, 0, size)
+  tSlice := make([]*base.Blob, 0, size)
   p.SortKeys =  tSlice
   for i := 0; i < size; i ++ {
-    _elem2 := &dsn.Blob{}
+    _elem2 := &base.Blob{}
     if err := _elem2.Read(iprot); err != nil {
       return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem2), err)
     }
@@ -2512,7 +2512,7 @@ func (p *MultiGetRequest)  ReadField5(iprot thrift.TProtocol) error {
 }
 
 func (p *MultiGetRequest)  ReadField6(iprot thrift.TProtocol) error {
-  p.StartSortkey = &dsn.Blob{}
+  p.StartSortkey = &base.Blob{}
   if err := p.StartSortkey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.StartSortkey), err)
   }
@@ -2520,7 +2520,7 @@ func (p *MultiGetRequest)  ReadField6(iprot thrift.TProtocol) error {
 }
 
 func (p *MultiGetRequest)  ReadField7(iprot thrift.TProtocol) error {
-  p.StopSortkey = &dsn.Blob{}
+  p.StopSortkey = &base.Blob{}
   if err := p.StopSortkey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.StopSortkey), err)
   }
@@ -2556,7 +2556,7 @@ func (p *MultiGetRequest)  ReadField10(iprot thrift.TProtocol) error {
 }
 
 func (p *MultiGetRequest)  ReadField11(iprot thrift.TProtocol) error {
-  p.SortKeyFilterPattern = &dsn.Blob{}
+  p.SortKeyFilterPattern = &base.Blob{}
   if err := p.SortKeyFilterPattern.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.SortKeyFilterPattern), err)
   }
@@ -3107,23 +3107,23 @@ func (p *BatchGetRequest) String() string {
 //  - HashKey
 //  - SortKey
 type FullKey struct {
-  HashKey *dsn.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
-  SortKey *dsn.Blob `thrift:"sort_key,2" db:"sort_key" json:"sort_key"`
+  HashKey *base.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
+  SortKey *base.Blob `thrift:"sort_key,2" db:"sort_key" json:"sort_key"`
 }
 
 func NewFullKey() *FullKey {
   return &FullKey{}
 }
 
-var FullKey_HashKey_DEFAULT *dsn.Blob
-func (p *FullKey) GetHashKey() *dsn.Blob {
+var FullKey_HashKey_DEFAULT *base.Blob
+func (p *FullKey) GetHashKey() *base.Blob {
   if !p.IsSetHashKey() {
     return FullKey_HashKey_DEFAULT
   }
 return p.HashKey
 }
-var FullKey_SortKey_DEFAULT *dsn.Blob
-func (p *FullKey) GetSortKey() *dsn.Blob {
+var FullKey_SortKey_DEFAULT *base.Blob
+func (p *FullKey) GetSortKey() *base.Blob {
   if !p.IsSetSortKey() {
     return FullKey_SortKey_DEFAULT
   }
@@ -3186,7 +3186,7 @@ func (p *FullKey) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *FullKey)  ReadField1(iprot thrift.TProtocol) error {
-  p.HashKey = &dsn.Blob{}
+  p.HashKey = &base.Blob{}
   if err := p.HashKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKey), err)
   }
@@ -3194,7 +3194,7 @@ func (p *FullKey)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *FullKey)  ReadField2(iprot thrift.TProtocol) error {
-  p.SortKey = &dsn.Blob{}
+  p.SortKey = &base.Blob{}
   if err := p.SortKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.SortKey), err)
   }
@@ -3505,31 +3505,31 @@ func (p *BatchGetResponse) String() string {
 //  - SortKey
 //  - Value
 type FullData struct {
-  HashKey *dsn.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
-  SortKey *dsn.Blob `thrift:"sort_key,2" db:"sort_key" json:"sort_key"`
-  Value *dsn.Blob `thrift:"value,3" db:"value" json:"value"`
+  HashKey *base.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
+  SortKey *base.Blob `thrift:"sort_key,2" db:"sort_key" json:"sort_key"`
+  Value *base.Blob `thrift:"value,3" db:"value" json:"value"`
 }
 
 func NewFullData() *FullData {
   return &FullData{}
 }
 
-var FullData_HashKey_DEFAULT *dsn.Blob
-func (p *FullData) GetHashKey() *dsn.Blob {
+var FullData_HashKey_DEFAULT *base.Blob
+func (p *FullData) GetHashKey() *base.Blob {
   if !p.IsSetHashKey() {
     return FullData_HashKey_DEFAULT
   }
 return p.HashKey
 }
-var FullData_SortKey_DEFAULT *dsn.Blob
-func (p *FullData) GetSortKey() *dsn.Blob {
+var FullData_SortKey_DEFAULT *base.Blob
+func (p *FullData) GetSortKey() *base.Blob {
   if !p.IsSetSortKey() {
     return FullData_SortKey_DEFAULT
   }
 return p.SortKey
 }
-var FullData_Value_DEFAULT *dsn.Blob
-func (p *FullData) GetValue() *dsn.Blob {
+var FullData_Value_DEFAULT *base.Blob
+func (p *FullData) GetValue() *base.Blob {
   if !p.IsSetValue() {
     return FullData_Value_DEFAULT
   }
@@ -3606,7 +3606,7 @@ func (p *FullData) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *FullData)  ReadField1(iprot thrift.TProtocol) error {
-  p.HashKey = &dsn.Blob{}
+  p.HashKey = &base.Blob{}
   if err := p.HashKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKey), err)
   }
@@ -3614,7 +3614,7 @@ func (p *FullData)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *FullData)  ReadField2(iprot thrift.TProtocol) error {
-  p.SortKey = &dsn.Blob{}
+  p.SortKey = &base.Blob{}
   if err := p.SortKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.SortKey), err)
   }
@@ -3622,7 +3622,7 @@ func (p *FullData)  ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *FullData)  ReadField3(iprot thrift.TProtocol) error {
-  p.Value = &dsn.Blob{}
+  p.Value = &base.Blob{}
   if err := p.Value.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Value), err)
   }
@@ -3689,7 +3689,7 @@ func (p *FullData) String() string {
 //  - Increment
 //  - ExpireTsSeconds
 type IncrRequest struct {
-  Key *dsn.Blob `thrift:"key,1" db:"key" json:"key"`
+  Key *base.Blob `thrift:"key,1" db:"key" json:"key"`
   Increment int64 `thrift:"increment,2" db:"increment" json:"increment"`
   ExpireTsSeconds int32 `thrift:"expire_ts_seconds,3" db:"expire_ts_seconds" json:"expire_ts_seconds"`
 }
@@ -3698,8 +3698,8 @@ func NewIncrRequest() *IncrRequest {
   return &IncrRequest{}
 }
 
-var IncrRequest_Key_DEFAULT *dsn.Blob
-func (p *IncrRequest) GetKey() *dsn.Blob {
+var IncrRequest_Key_DEFAULT *base.Blob
+func (p *IncrRequest) GetKey() *base.Blob {
   if !p.IsSetKey() {
     return IncrRequest_Key_DEFAULT
   }
@@ -3776,7 +3776,7 @@ func (p *IncrRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *IncrRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Key = &dsn.Blob{}
+  p.Key = &base.Blob{}
   if err := p.Key.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Key), err)
   }
@@ -4136,13 +4136,13 @@ func (p *IncrResponse) String() string {
 //  - SetExpireTsSeconds
 //  - ReturnCheckValue
 type CheckAndSetRequest struct {
-  HashKey *dsn.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
-  CheckSortKey *dsn.Blob `thrift:"check_sort_key,2" db:"check_sort_key" json:"check_sort_key"`
+  HashKey *base.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
+  CheckSortKey *base.Blob `thrift:"check_sort_key,2" db:"check_sort_key" json:"check_sort_key"`
   CheckType CasCheckType `thrift:"check_type,3" db:"check_type" json:"check_type"`
-  CheckOperand *dsn.Blob `thrift:"check_operand,4" db:"check_operand" json:"check_operand"`
+  CheckOperand *base.Blob `thrift:"check_operand,4" db:"check_operand" json:"check_operand"`
   SetDiffSortKey bool `thrift:"set_diff_sort_key,5" db:"set_diff_sort_key" json:"set_diff_sort_key"`
-  SetSortKey *dsn.Blob `thrift:"set_sort_key,6" db:"set_sort_key" json:"set_sort_key"`
-  SetValue *dsn.Blob `thrift:"set_value,7" db:"set_value" json:"set_value"`
+  SetSortKey *base.Blob `thrift:"set_sort_key,6" db:"set_sort_key" json:"set_sort_key"`
+  SetValue *base.Blob `thrift:"set_value,7" db:"set_value" json:"set_value"`
   SetExpireTsSeconds int32 `thrift:"set_expire_ts_seconds,8" db:"set_expire_ts_seconds" json:"set_expire_ts_seconds"`
   ReturnCheckValue bool `thrift:"return_check_value,9" db:"return_check_value" json:"return_check_value"`
 }
@@ -4151,15 +4151,15 @@ func NewCheckAndSetRequest() *CheckAndSetRequest {
   return &CheckAndSetRequest{}
 }
 
-var CheckAndSetRequest_HashKey_DEFAULT *dsn.Blob
-func (p *CheckAndSetRequest) GetHashKey() *dsn.Blob {
+var CheckAndSetRequest_HashKey_DEFAULT *base.Blob
+func (p *CheckAndSetRequest) GetHashKey() *base.Blob {
   if !p.IsSetHashKey() {
     return CheckAndSetRequest_HashKey_DEFAULT
   }
 return p.HashKey
 }
-var CheckAndSetRequest_CheckSortKey_DEFAULT *dsn.Blob
-func (p *CheckAndSetRequest) GetCheckSortKey() *dsn.Blob {
+var CheckAndSetRequest_CheckSortKey_DEFAULT *base.Blob
+func (p *CheckAndSetRequest) GetCheckSortKey() *base.Blob {
   if !p.IsSetCheckSortKey() {
     return CheckAndSetRequest_CheckSortKey_DEFAULT
   }
@@ -4169,8 +4169,8 @@ return p.CheckSortKey
 func (p *CheckAndSetRequest) GetCheckType() CasCheckType {
   return p.CheckType
 }
-var CheckAndSetRequest_CheckOperand_DEFAULT *dsn.Blob
-func (p *CheckAndSetRequest) GetCheckOperand() *dsn.Blob {
+var CheckAndSetRequest_CheckOperand_DEFAULT *base.Blob
+func (p *CheckAndSetRequest) GetCheckOperand() *base.Blob {
   if !p.IsSetCheckOperand() {
     return CheckAndSetRequest_CheckOperand_DEFAULT
   }
@@ -4180,15 +4180,15 @@ return p.CheckOperand
 func (p *CheckAndSetRequest) GetSetDiffSortKey() bool {
   return p.SetDiffSortKey
 }
-var CheckAndSetRequest_SetSortKey_DEFAULT *dsn.Blob
-func (p *CheckAndSetRequest) GetSetSortKey() *dsn.Blob {
+var CheckAndSetRequest_SetSortKey_DEFAULT *base.Blob
+func (p *CheckAndSetRequest) GetSetSortKey() *base.Blob {
   if !p.IsSetSetSortKey() {
     return CheckAndSetRequest_SetSortKey_DEFAULT
   }
 return p.SetSortKey
 }
-var CheckAndSetRequest_SetValue_DEFAULT *dsn.Blob
-func (p *CheckAndSetRequest) GetSetValue() *dsn.Blob {
+var CheckAndSetRequest_SetValue_DEFAULT *base.Blob
+func (p *CheckAndSetRequest) GetSetValue() *base.Blob {
   if !p.IsSetSetValue() {
     return CheckAndSetRequest_SetValue_DEFAULT
   }
@@ -4341,7 +4341,7 @@ func (p *CheckAndSetRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndSetRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.HashKey = &dsn.Blob{}
+  p.HashKey = &base.Blob{}
   if err := p.HashKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKey), err)
   }
@@ -4349,7 +4349,7 @@ func (p *CheckAndSetRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndSetRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.CheckSortKey = &dsn.Blob{}
+  p.CheckSortKey = &base.Blob{}
   if err := p.CheckSortKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.CheckSortKey), err)
   }
@@ -4367,7 +4367,7 @@ func (p *CheckAndSetRequest)  ReadField3(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndSetRequest)  ReadField4(iprot thrift.TProtocol) error {
-  p.CheckOperand = &dsn.Blob{}
+  p.CheckOperand = &base.Blob{}
   if err := p.CheckOperand.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.CheckOperand), err)
   }
@@ -4384,7 +4384,7 @@ func (p *CheckAndSetRequest)  ReadField5(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndSetRequest)  ReadField6(iprot thrift.TProtocol) error {
-  p.SetSortKey = &dsn.Blob{}
+  p.SetSortKey = &base.Blob{}
   if err := p.SetSortKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.SetSortKey), err)
   }
@@ -4392,7 +4392,7 @@ func (p *CheckAndSetRequest)  ReadField6(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndSetRequest)  ReadField7(iprot thrift.TProtocol) error {
-  p.SetValue = &dsn.Blob{}
+  p.SetValue = &base.Blob{}
   if err := p.SetValue.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.SetValue), err)
   }
@@ -4553,7 +4553,7 @@ type CheckAndSetResponse struct {
   Error int32 `thrift:"error,1" db:"error" json:"error"`
   CheckValueReturned bool `thrift:"check_value_returned,2" db:"check_value_returned" json:"check_value_returned"`
   CheckValueExist bool `thrift:"check_value_exist,3" db:"check_value_exist" json:"check_value_exist"`
-  CheckValue *dsn.Blob `thrift:"check_value,4" db:"check_value" json:"check_value"`
+  CheckValue *base.Blob `thrift:"check_value,4" db:"check_value" json:"check_value"`
   AppID int32 `thrift:"app_id,5" db:"app_id" json:"app_id"`
   PartitionIndex int32 `thrift:"partition_index,6" db:"partition_index" json:"partition_index"`
   Decree int64 `thrift:"decree,7" db:"decree" json:"decree"`
@@ -4576,8 +4576,8 @@ func (p *CheckAndSetResponse) GetCheckValueReturned() bool {
 func (p *CheckAndSetResponse) GetCheckValueExist() bool {
   return p.CheckValueExist
 }
-var CheckAndSetResponse_CheckValue_DEFAULT *dsn.Blob
-func (p *CheckAndSetResponse) GetCheckValue() *dsn.Blob {
+var CheckAndSetResponse_CheckValue_DEFAULT *base.Blob
+func (p *CheckAndSetResponse) GetCheckValue() *base.Blob {
   if !p.IsSetCheckValue() {
     return CheckAndSetResponse_CheckValue_DEFAULT
   }
@@ -4739,7 +4739,7 @@ func (p *CheckAndSetResponse)  ReadField3(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndSetResponse)  ReadField4(iprot thrift.TProtocol) error {
-  p.CheckValue = &dsn.Blob{}
+  p.CheckValue = &base.Blob{}
   if err := p.CheckValue.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.CheckValue), err)
   }
@@ -4897,8 +4897,8 @@ func (p *CheckAndSetResponse) String() string {
 //  - SetExpireTsSeconds
 type Mutate struct {
   Operation MutateOperation `thrift:"operation,1" db:"operation" json:"operation"`
-  SortKey *dsn.Blob `thrift:"sort_key,2" db:"sort_key" json:"sort_key"`
-  Value *dsn.Blob `thrift:"value,3" db:"value" json:"value"`
+  SortKey *base.Blob `thrift:"sort_key,2" db:"sort_key" json:"sort_key"`
+  Value *base.Blob `thrift:"value,3" db:"value" json:"value"`
   SetExpireTsSeconds int32 `thrift:"set_expire_ts_seconds,4" db:"set_expire_ts_seconds" json:"set_expire_ts_seconds"`
 }
 
@@ -4910,15 +4910,15 @@ func NewMutate() *Mutate {
 func (p *Mutate) GetOperation() MutateOperation {
   return p.Operation
 }
-var Mutate_SortKey_DEFAULT *dsn.Blob
-func (p *Mutate) GetSortKey() *dsn.Blob {
+var Mutate_SortKey_DEFAULT *base.Blob
+func (p *Mutate) GetSortKey() *base.Blob {
   if !p.IsSetSortKey() {
     return Mutate_SortKey_DEFAULT
   }
 return p.SortKey
 }
-var Mutate_Value_DEFAULT *dsn.Blob
-func (p *Mutate) GetValue() *dsn.Blob {
+var Mutate_Value_DEFAULT *base.Blob
+func (p *Mutate) GetValue() *base.Blob {
   if !p.IsSetValue() {
     return Mutate_Value_DEFAULT
   }
@@ -5015,7 +5015,7 @@ func (p *Mutate)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *Mutate)  ReadField2(iprot thrift.TProtocol) error {
-  p.SortKey = &dsn.Blob{}
+  p.SortKey = &base.Blob{}
   if err := p.SortKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.SortKey), err)
   }
@@ -5023,7 +5023,7 @@ func (p *Mutate)  ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *Mutate)  ReadField3(iprot thrift.TProtocol) error {
-  p.Value = &dsn.Blob{}
+  p.Value = &base.Blob{}
   if err := p.Value.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Value), err)
   }
@@ -5112,10 +5112,10 @@ func (p *Mutate) String() string {
 //  - MutateList
 //  - ReturnCheckValue
 type CheckAndMutateRequest struct {
-  HashKey *dsn.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
-  CheckSortKey *dsn.Blob `thrift:"check_sort_key,2" db:"check_sort_key" json:"check_sort_key"`
+  HashKey *base.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
+  CheckSortKey *base.Blob `thrift:"check_sort_key,2" db:"check_sort_key" json:"check_sort_key"`
   CheckType CasCheckType `thrift:"check_type,3" db:"check_type" json:"check_type"`
-  CheckOperand *dsn.Blob `thrift:"check_operand,4" db:"check_operand" json:"check_operand"`
+  CheckOperand *base.Blob `thrift:"check_operand,4" db:"check_operand" json:"check_operand"`
   MutateList []*Mutate `thrift:"mutate_list,5" db:"mutate_list" json:"mutate_list"`
   ReturnCheckValue bool `thrift:"return_check_value,6" db:"return_check_value" json:"return_check_value"`
 }
@@ -5124,15 +5124,15 @@ func NewCheckAndMutateRequest() *CheckAndMutateRequest {
   return &CheckAndMutateRequest{}
 }
 
-var CheckAndMutateRequest_HashKey_DEFAULT *dsn.Blob
-func (p *CheckAndMutateRequest) GetHashKey() *dsn.Blob {
+var CheckAndMutateRequest_HashKey_DEFAULT *base.Blob
+func (p *CheckAndMutateRequest) GetHashKey() *base.Blob {
   if !p.IsSetHashKey() {
     return CheckAndMutateRequest_HashKey_DEFAULT
   }
 return p.HashKey
 }
-var CheckAndMutateRequest_CheckSortKey_DEFAULT *dsn.Blob
-func (p *CheckAndMutateRequest) GetCheckSortKey() *dsn.Blob {
+var CheckAndMutateRequest_CheckSortKey_DEFAULT *base.Blob
+func (p *CheckAndMutateRequest) GetCheckSortKey() *base.Blob {
   if !p.IsSetCheckSortKey() {
     return CheckAndMutateRequest_CheckSortKey_DEFAULT
   }
@@ -5142,8 +5142,8 @@ return p.CheckSortKey
 func (p *CheckAndMutateRequest) GetCheckType() CasCheckType {
   return p.CheckType
 }
-var CheckAndMutateRequest_CheckOperand_DEFAULT *dsn.Blob
-func (p *CheckAndMutateRequest) GetCheckOperand() *dsn.Blob {
+var CheckAndMutateRequest_CheckOperand_DEFAULT *base.Blob
+func (p *CheckAndMutateRequest) GetCheckOperand() *base.Blob {
   if !p.IsSetCheckOperand() {
     return CheckAndMutateRequest_CheckOperand_DEFAULT
   }
@@ -5258,7 +5258,7 @@ func (p *CheckAndMutateRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndMutateRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.HashKey = &dsn.Blob{}
+  p.HashKey = &base.Blob{}
   if err := p.HashKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKey), err)
   }
@@ -5266,7 +5266,7 @@ func (p *CheckAndMutateRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndMutateRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.CheckSortKey = &dsn.Blob{}
+  p.CheckSortKey = &base.Blob{}
   if err := p.CheckSortKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.CheckSortKey), err)
   }
@@ -5284,7 +5284,7 @@ func (p *CheckAndMutateRequest)  ReadField3(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndMutateRequest)  ReadField4(iprot thrift.TProtocol) error {
-  p.CheckOperand = &dsn.Blob{}
+  p.CheckOperand = &base.Blob{}
   if err := p.CheckOperand.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.CheckOperand), err)
   }
@@ -5430,7 +5430,7 @@ type CheckAndMutateResponse struct {
   Error int32 `thrift:"error,1" db:"error" json:"error"`
   CheckValueReturned bool `thrift:"check_value_returned,2" db:"check_value_returned" json:"check_value_returned"`
   CheckValueExist bool `thrift:"check_value_exist,3" db:"check_value_exist" json:"check_value_exist"`
-  CheckValue *dsn.Blob `thrift:"check_value,4" db:"check_value" json:"check_value"`
+  CheckValue *base.Blob `thrift:"check_value,4" db:"check_value" json:"check_value"`
   AppID int32 `thrift:"app_id,5" db:"app_id" json:"app_id"`
   PartitionIndex int32 `thrift:"partition_index,6" db:"partition_index" json:"partition_index"`
   Decree int64 `thrift:"decree,7" db:"decree" json:"decree"`
@@ -5453,8 +5453,8 @@ func (p *CheckAndMutateResponse) GetCheckValueReturned() bool {
 func (p *CheckAndMutateResponse) GetCheckValueExist() bool {
   return p.CheckValueExist
 }
-var CheckAndMutateResponse_CheckValue_DEFAULT *dsn.Blob
-func (p *CheckAndMutateResponse) GetCheckValue() *dsn.Blob {
+var CheckAndMutateResponse_CheckValue_DEFAULT *base.Blob
+func (p *CheckAndMutateResponse) GetCheckValue() *base.Blob {
   if !p.IsSetCheckValue() {
     return CheckAndMutateResponse_CheckValue_DEFAULT
   }
@@ -5616,7 +5616,7 @@ func (p *CheckAndMutateResponse)  ReadField3(iprot thrift.TProtocol) error {
 }
 
 func (p *CheckAndMutateResponse)  ReadField4(iprot thrift.TProtocol) error {
-  p.CheckValue = &dsn.Blob{}
+  p.CheckValue = &base.Blob{}
   if err := p.CheckValue.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.CheckValue), err)
   }
@@ -5783,16 +5783,16 @@ func (p *CheckAndMutateResponse) String() string {
 //  - FullScan
 //  - OnlyReturnCount
 type GetScannerRequest struct {
-  StartKey *dsn.Blob `thrift:"start_key,1" db:"start_key" json:"start_key"`
-  StopKey *dsn.Blob `thrift:"stop_key,2" db:"stop_key" json:"stop_key"`
+  StartKey *base.Blob `thrift:"start_key,1" db:"start_key" json:"start_key"`
+  StopKey *base.Blob `thrift:"stop_key,2" db:"stop_key" json:"stop_key"`
   StartInclusive bool `thrift:"start_inclusive,3" db:"start_inclusive" json:"start_inclusive"`
   StopInclusive bool `thrift:"stop_inclusive,4" db:"stop_inclusive" json:"stop_inclusive"`
   BatchSize int32 `thrift:"batch_size,5" db:"batch_size" json:"batch_size"`
   NoValue bool `thrift:"no_value,6" db:"no_value" json:"no_value"`
   HashKeyFilterType FilterType `thrift:"hash_key_filter_type,7" db:"hash_key_filter_type" json:"hash_key_filter_type"`
-  HashKeyFilterPattern *dsn.Blob `thrift:"hash_key_filter_pattern,8" db:"hash_key_filter_pattern" json:"hash_key_filter_pattern"`
+  HashKeyFilterPattern *base.Blob `thrift:"hash_key_filter_pattern,8" db:"hash_key_filter_pattern" json:"hash_key_filter_pattern"`
   SortKeyFilterType FilterType `thrift:"sort_key_filter_type,9" db:"sort_key_filter_type" json:"sort_key_filter_type"`
-  SortKeyFilterPattern *dsn.Blob `thrift:"sort_key_filter_pattern,10" db:"sort_key_filter_pattern" json:"sort_key_filter_pattern"`
+  SortKeyFilterPattern *base.Blob `thrift:"sort_key_filter_pattern,10" db:"sort_key_filter_pattern" json:"sort_key_filter_pattern"`
   ValidatePartitionHash *bool `thrift:"validate_partition_hash,11" db:"validate_partition_hash" json:"validate_partition_hash,omitempty"`
   ReturnExpireTs *bool `thrift:"return_expire_ts,12" db:"return_expire_ts" json:"return_expire_ts,omitempty"`
   FullScan *bool `thrift:"full_scan,13" db:"full_scan" json:"full_scan,omitempty"`
@@ -5803,15 +5803,15 @@ func NewGetScannerRequest() *GetScannerRequest {
   return &GetScannerRequest{}
 }
 
-var GetScannerRequest_StartKey_DEFAULT *dsn.Blob
-func (p *GetScannerRequest) GetStartKey() *dsn.Blob {
+var GetScannerRequest_StartKey_DEFAULT *base.Blob
+func (p *GetScannerRequest) GetStartKey() *base.Blob {
   if !p.IsSetStartKey() {
     return GetScannerRequest_StartKey_DEFAULT
   }
 return p.StartKey
 }
-var GetScannerRequest_StopKey_DEFAULT *dsn.Blob
-func (p *GetScannerRequest) GetStopKey() *dsn.Blob {
+var GetScannerRequest_StopKey_DEFAULT *base.Blob
+func (p *GetScannerRequest) GetStopKey() *base.Blob {
   if !p.IsSetStopKey() {
     return GetScannerRequest_StopKey_DEFAULT
   }
@@ -5837,8 +5837,8 @@ func (p *GetScannerRequest) GetNoValue() bool {
 func (p *GetScannerRequest) GetHashKeyFilterType() FilterType {
   return p.HashKeyFilterType
 }
-var GetScannerRequest_HashKeyFilterPattern_DEFAULT *dsn.Blob
-func (p *GetScannerRequest) GetHashKeyFilterPattern() *dsn.Blob {
+var GetScannerRequest_HashKeyFilterPattern_DEFAULT *base.Blob
+func (p *GetScannerRequest) GetHashKeyFilterPattern() *base.Blob {
   if !p.IsSetHashKeyFilterPattern() {
     return GetScannerRequest_HashKeyFilterPattern_DEFAULT
   }
@@ -5848,8 +5848,8 @@ return p.HashKeyFilterPattern
 func (p *GetScannerRequest) GetSortKeyFilterType() FilterType {
   return p.SortKeyFilterType
 }
-var GetScannerRequest_SortKeyFilterPattern_DEFAULT *dsn.Blob
-func (p *GetScannerRequest) GetSortKeyFilterPattern() *dsn.Blob {
+var GetScannerRequest_SortKeyFilterPattern_DEFAULT *base.Blob
+func (p *GetScannerRequest) GetSortKeyFilterPattern() *base.Blob {
   if !p.IsSetSortKeyFilterPattern() {
     return GetScannerRequest_SortKeyFilterPattern_DEFAULT
   }
@@ -6082,7 +6082,7 @@ func (p *GetScannerRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *GetScannerRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.StartKey = &dsn.Blob{}
+  p.StartKey = &base.Blob{}
   if err := p.StartKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.StartKey), err)
   }
@@ -6090,7 +6090,7 @@ func (p *GetScannerRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *GetScannerRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.StopKey = &dsn.Blob{}
+  p.StopKey = &base.Blob{}
   if err := p.StopKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.StopKey), err)
   }
@@ -6144,7 +6144,7 @@ func (p *GetScannerRequest)  ReadField7(iprot thrift.TProtocol) error {
 }
 
 func (p *GetScannerRequest)  ReadField8(iprot thrift.TProtocol) error {
-  p.HashKeyFilterPattern = &dsn.Blob{}
+  p.HashKeyFilterPattern = &base.Blob{}
   if err := p.HashKeyFilterPattern.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKeyFilterPattern), err)
   }
@@ -6162,7 +6162,7 @@ func (p *GetScannerRequest)  ReadField9(iprot thrift.TProtocol) error {
 }
 
 func (p *GetScannerRequest)  ReadField10(iprot thrift.TProtocol) error {
-  p.SortKeyFilterPattern = &dsn.Blob{}
+  p.SortKeyFilterPattern = &base.Blob{}
   if err := p.SortKeyFilterPattern.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.SortKeyFilterPattern), err)
   }
@@ -6936,8 +6936,8 @@ func (p *DuplicateRequest) String() string {
 //  - VerifyTimetag
 type DuplicateEntry struct {
   Timestamp *int64 `thrift:"timestamp,1" db:"timestamp" json:"timestamp,omitempty"`
-  TaskCode *dsn.TaskCode `thrift:"task_code,2" db:"task_code" json:"task_code,omitempty"`
-  RawMessage *dsn.Blob `thrift:"raw_message,3" db:"raw_message" json:"raw_message,omitempty"`
+  TaskCode *base.TaskCode `thrift:"task_code,2" db:"task_code" json:"task_code,omitempty"`
+  RawMessage *base.Blob `thrift:"raw_message,3" db:"raw_message" json:"raw_message,omitempty"`
   ClusterID *int8 `thrift:"cluster_id,4" db:"cluster_id" json:"cluster_id,omitempty"`
   VerifyTimetag *bool `thrift:"verify_timetag,5" db:"verify_timetag" json:"verify_timetag,omitempty"`
 }
@@ -6953,15 +6953,15 @@ func (p *DuplicateEntry) GetTimestamp() int64 {
   }
 return *p.Timestamp
 }
-var DuplicateEntry_TaskCode_DEFAULT *dsn.TaskCode
-func (p *DuplicateEntry) GetTaskCode() *dsn.TaskCode {
+var DuplicateEntry_TaskCode_DEFAULT *base.TaskCode
+func (p *DuplicateEntry) GetTaskCode() *base.TaskCode {
   if !p.IsSetTaskCode() {
     return DuplicateEntry_TaskCode_DEFAULT
   }
 return p.TaskCode
 }
-var DuplicateEntry_RawMessage_DEFAULT *dsn.Blob
-func (p *DuplicateEntry) GetRawMessage() *dsn.Blob {
+var DuplicateEntry_RawMessage_DEFAULT *base.Blob
+func (p *DuplicateEntry) GetRawMessage() *base.Blob {
   if !p.IsSetRawMessage() {
     return DuplicateEntry_RawMessage_DEFAULT
   }
@@ -7089,7 +7089,7 @@ func (p *DuplicateEntry)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *DuplicateEntry)  ReadField2(iprot thrift.TProtocol) error {
-  p.TaskCode = &dsn.TaskCode{}
+  p.TaskCode = &base.TaskCode{}
   if err := p.TaskCode.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.TaskCode), err)
   }
@@ -7097,7 +7097,7 @@ func (p *DuplicateEntry)  ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *DuplicateEntry)  ReadField3(iprot thrift.TProtocol) error {
-  p.RawMessage = &dsn.Blob{}
+  p.RawMessage = &base.Blob{}
   if err := p.RawMessage.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.RawMessage), err)
   }
@@ -7363,7 +7363,7 @@ type Rrdb interface {
   MultiPut(ctx context.Context, request *MultiPutRequest) (r *UpdateResponse, err error)
   // Parameters:
   //  - Key
-  Remove(ctx context.Context, key *dsn.Blob) (r *UpdateResponse, err error)
+  Remove(ctx context.Context, key *base.Blob) (r *UpdateResponse, err error)
   // Parameters:
   //  - Request
   MultiRemove(ctx context.Context, request *MultiRemoveRequest) (r *MultiRemoveResponse, err error)
@@ -7378,7 +7378,7 @@ type Rrdb interface {
   CheckAndMutate(ctx context.Context, request *CheckAndMutateRequest) (r *CheckAndMutateResponse, err error)
   // Parameters:
   //  - Key
-  Get(ctx context.Context, key *dsn.Blob) (r *ReadResponse, err error)
+  Get(ctx context.Context, key *base.Blob) (r *ReadResponse, err error)
   // Parameters:
   //  - Request
   MultiGet(ctx context.Context, request *MultiGetRequest) (r *MultiGetResponse, err error)
@@ -7387,10 +7387,10 @@ type Rrdb interface {
   BatchGet(ctx context.Context, request *BatchGetRequest) (r *BatchGetResponse, err error)
   // Parameters:
   //  - HashKey
-  SortkeyCount(ctx context.Context, hash_key *dsn.Blob) (r *CountResponse, err error)
+  SortkeyCount(ctx context.Context, hash_key *base.Blob) (r *CountResponse, err error)
   // Parameters:
   //  - Key
-  TTL(ctx context.Context, key *dsn.Blob) (r *TTLResponse, err error)
+  TTL(ctx context.Context, key *base.Blob) (r *TTLResponse, err error)
   // Parameters:
   //  - Request
   GetScanner(ctx context.Context, request *GetScannerRequest) (r *ScanResponse, err error)
@@ -7452,7 +7452,7 @@ func (p *RrdbClient) MultiPut(ctx context.Context, request *MultiPutRequest) (r 
 
 // Parameters:
 //  - Key
-func (p *RrdbClient) Remove(ctx context.Context, key *dsn.Blob) (r *UpdateResponse, err error) {
+func (p *RrdbClient) Remove(ctx context.Context, key *base.Blob) (r *UpdateResponse, err error) {
   var _args13 RrdbRemoveArgs
   _args13.Key = key
   var _result14 RrdbRemoveResult
@@ -7512,7 +7512,7 @@ func (p *RrdbClient) CheckAndMutate(ctx context.Context, request *CheckAndMutate
 
 // Parameters:
 //  - Key
-func (p *RrdbClient) Get(ctx context.Context, key *dsn.Blob) (r *ReadResponse, err error) {
+func (p *RrdbClient) Get(ctx context.Context, key *base.Blob) (r *ReadResponse, err error) {
   var _args23 RrdbGetArgs
   _args23.Key = key
   var _result24 RrdbGetResult
@@ -7548,7 +7548,7 @@ func (p *RrdbClient) BatchGet(ctx context.Context, request *BatchGetRequest) (r 
 
 // Parameters:
 //  - HashKey
-func (p *RrdbClient) SortkeyCount(ctx context.Context, hash_key *dsn.Blob) (r *CountResponse, err error) {
+func (p *RrdbClient) SortkeyCount(ctx context.Context, hash_key *base.Blob) (r *CountResponse, err error) {
   var _args29 RrdbSortkeyCountArgs
   _args29.HashKey = hash_key
   var _result30 RrdbSortkeyCountResult
@@ -7560,7 +7560,7 @@ func (p *RrdbClient) SortkeyCount(ctx context.Context, hash_key *dsn.Blob) (r *C
 
 // Parameters:
 //  - Key
-func (p *RrdbClient) TTL(ctx context.Context, key *dsn.Blob) (r *TTLResponse, err error) {
+func (p *RrdbClient) TTL(ctx context.Context, key *base.Blob) (r *TTLResponse, err error) {
   var _args31 RrdbTTLArgs
   _args31.Key = key
   var _result32 RrdbTTLResult
@@ -8754,15 +8754,15 @@ func (p *RrdbMultiPutResult) String() string {
 // Attributes:
 //  - Key
 type RrdbRemoveArgs struct {
-  Key *dsn.Blob `thrift:"key,1" db:"key" json:"key"`
+  Key *base.Blob `thrift:"key,1" db:"key" json:"key"`
 }
 
 func NewRrdbRemoveArgs() *RrdbRemoveArgs {
   return &RrdbRemoveArgs{}
 }
 
-var RrdbRemoveArgs_Key_DEFAULT *dsn.Blob
-func (p *RrdbRemoveArgs) GetKey() *dsn.Blob {
+var RrdbRemoveArgs_Key_DEFAULT *base.Blob
+func (p *RrdbRemoveArgs) GetKey() *base.Blob {
   if !p.IsSetKey() {
     return RrdbRemoveArgs_Key_DEFAULT
   }
@@ -8811,7 +8811,7 @@ func (p *RrdbRemoveArgs) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *RrdbRemoveArgs)  ReadField1(iprot thrift.TProtocol) error {
-  p.Key = &dsn.Blob{}
+  p.Key = &base.Blob{}
   if err := p.Key.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Key), err)
   }
@@ -9744,15 +9744,15 @@ func (p *RrdbCheckAndMutateResult) String() string {
 // Attributes:
 //  - Key
 type RrdbGetArgs struct {
-  Key *dsn.Blob `thrift:"key,1" db:"key" json:"key"`
+  Key *base.Blob `thrift:"key,1" db:"key" json:"key"`
 }
 
 func NewRrdbGetArgs() *RrdbGetArgs {
   return &RrdbGetArgs{}
 }
 
-var RrdbGetArgs_Key_DEFAULT *dsn.Blob
-func (p *RrdbGetArgs) GetKey() *dsn.Blob {
+var RrdbGetArgs_Key_DEFAULT *base.Blob
+func (p *RrdbGetArgs) GetKey() *base.Blob {
   if !p.IsSetKey() {
     return RrdbGetArgs_Key_DEFAULT
   }
@@ -9801,7 +9801,7 @@ func (p *RrdbGetArgs) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *RrdbGetArgs)  ReadField1(iprot thrift.TProtocol) error {
-  p.Key = &dsn.Blob{}
+  p.Key = &base.Blob{}
   if err := p.Key.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Key), err)
   }
@@ -10338,15 +10338,15 @@ func (p *RrdbBatchGetResult) String() string {
 // Attributes:
 //  - HashKey
 type RrdbSortkeyCountArgs struct {
-  HashKey *dsn.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
+  HashKey *base.Blob `thrift:"hash_key,1" db:"hash_key" json:"hash_key"`
 }
 
 func NewRrdbSortkeyCountArgs() *RrdbSortkeyCountArgs {
   return &RrdbSortkeyCountArgs{}
 }
 
-var RrdbSortkeyCountArgs_HashKey_DEFAULT *dsn.Blob
-func (p *RrdbSortkeyCountArgs) GetHashKey() *dsn.Blob {
+var RrdbSortkeyCountArgs_HashKey_DEFAULT *base.Blob
+func (p *RrdbSortkeyCountArgs) GetHashKey() *base.Blob {
   if !p.IsSetHashKey() {
     return RrdbSortkeyCountArgs_HashKey_DEFAULT
   }
@@ -10395,7 +10395,7 @@ func (p *RrdbSortkeyCountArgs) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *RrdbSortkeyCountArgs)  ReadField1(iprot thrift.TProtocol) error {
-  p.HashKey = &dsn.Blob{}
+  p.HashKey = &base.Blob{}
   if err := p.HashKey.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HashKey), err)
   }
@@ -10536,15 +10536,15 @@ func (p *RrdbSortkeyCountResult) String() string {
 // Attributes:
 //  - Key
 type RrdbTTLArgs struct {
-  Key *dsn.Blob `thrift:"key,1" db:"key" json:"key"`
+  Key *base.Blob `thrift:"key,1" db:"key" json:"key"`
 }
 
 func NewRrdbTTLArgs() *RrdbTTLArgs {
   return &RrdbTTLArgs{}
 }
 
-var RrdbTTLArgs_Key_DEFAULT *dsn.Blob
-func (p *RrdbTTLArgs) GetKey() *dsn.Blob {
+var RrdbTTLArgs_Key_DEFAULT *base.Blob
+func (p *RrdbTTLArgs) GetKey() *base.Blob {
   if !p.IsSetKey() {
     return RrdbTTLArgs_Key_DEFAULT
   }
@@ -10593,7 +10593,7 @@ func (p *RrdbTTLArgs) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *RrdbTTLArgs)  ReadField1(iprot thrift.TProtocol) error {
-  p.Key = &dsn.Blob{}
+  p.Key = &base.Blob{}
   if err := p.Key.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Key), err)
   }

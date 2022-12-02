@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 	"github.com/apache/incubator-pegasus/idl/replication"
 
 )
@@ -23,7 +23,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 var _ = replication.GoUnusedProtection__
 type BulkLoadStatus int64
 const (
@@ -603,7 +603,7 @@ func (p *StartBulkLoadRequest) String() string {
 //  - Err
 //  - HintMsg
 type StartBulkLoadResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMsg string `thrift:"hint_msg,2" db:"hint_msg" json:"hint_msg"`
 }
 
@@ -611,8 +611,8 @@ func NewStartBulkLoadResponse() *StartBulkLoadResponse {
   return &StartBulkLoadResponse{}
 }
 
-var StartBulkLoadResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *StartBulkLoadResponse) GetErr() *dsn.ErrorCode {
+var StartBulkLoadResponse_Err_DEFAULT *base.ErrorCode
+func (p *StartBulkLoadResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return StartBulkLoadResponse_Err_DEFAULT
   }
@@ -675,7 +675,7 @@ func (p *StartBulkLoadResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *StartBulkLoadResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -741,7 +741,7 @@ func (p *StartBulkLoadResponse) String() string {
 //  - IsPaused
 type PartitionBulkLoadState struct {
   DownloadProgress int32 `thrift:"download_progress,1" db:"download_progress" json:"download_progress,omitempty"`
-  DownloadStatus *dsn.ErrorCode `thrift:"download_status,2" db:"download_status" json:"download_status,omitempty"`
+  DownloadStatus *base.ErrorCode `thrift:"download_status,2" db:"download_status" json:"download_status,omitempty"`
   IngestStatus IngestionStatus `thrift:"ingest_status,3" db:"ingest_status" json:"ingest_status,omitempty"`
   IsCleanedUp bool `thrift:"is_cleaned_up,4" db:"is_cleaned_up" json:"is_cleaned_up,omitempty"`
   IsPaused bool `thrift:"is_paused,5" db:"is_paused" json:"is_paused,omitempty"`
@@ -758,8 +758,8 @@ var PartitionBulkLoadState_DownloadProgress_DEFAULT int32 = 0
 func (p *PartitionBulkLoadState) GetDownloadProgress() int32 {
   return p.DownloadProgress
 }
-var PartitionBulkLoadState_DownloadStatus_DEFAULT *dsn.ErrorCode
-func (p *PartitionBulkLoadState) GetDownloadStatus() *dsn.ErrorCode {
+var PartitionBulkLoadState_DownloadStatus_DEFAULT *base.ErrorCode
+func (p *PartitionBulkLoadState) GetDownloadStatus() *base.ErrorCode {
   if !p.IsSetDownloadStatus() {
     return PartitionBulkLoadState_DownloadStatus_DEFAULT
   }
@@ -888,7 +888,7 @@ func (p *PartitionBulkLoadState)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *PartitionBulkLoadState)  ReadField2(iprot thrift.TProtocol) error {
-  p.DownloadStatus = &dsn.ErrorCode{}
+  p.DownloadStatus = &base.ErrorCode{}
   if err := p.DownloadStatus.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.DownloadStatus), err)
   }
@@ -1019,9 +1019,9 @@ func (p *PartitionBulkLoadState) String() string {
 //  - QueryBulkLoadMetadata
 //  - RemoteRootPath
 type BulkLoadRequest struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
   AppName string `thrift:"app_name,2" db:"app_name" json:"app_name"`
-  PrimaryAddr *dsn.RPCAddress `thrift:"primary_addr,3" db:"primary_addr" json:"primary_addr"`
+  PrimaryAddr *base.RPCAddress `thrift:"primary_addr,3" db:"primary_addr" json:"primary_addr"`
   RemoteProviderName string `thrift:"remote_provider_name,4" db:"remote_provider_name" json:"remote_provider_name"`
   ClusterName string `thrift:"cluster_name,5" db:"cluster_name" json:"cluster_name"`
   Ballot int64 `thrift:"ballot,6" db:"ballot" json:"ballot"`
@@ -1034,8 +1034,8 @@ func NewBulkLoadRequest() *BulkLoadRequest {
   return &BulkLoadRequest{}
 }
 
-var BulkLoadRequest_Pid_DEFAULT *dsn.Gpid
-func (p *BulkLoadRequest) GetPid() *dsn.Gpid {
+var BulkLoadRequest_Pid_DEFAULT *base.Gpid
+func (p *BulkLoadRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return BulkLoadRequest_Pid_DEFAULT
   }
@@ -1045,8 +1045,8 @@ return p.Pid
 func (p *BulkLoadRequest) GetAppName() string {
   return p.AppName
 }
-var BulkLoadRequest_PrimaryAddr_DEFAULT *dsn.RPCAddress
-func (p *BulkLoadRequest) GetPrimaryAddr() *dsn.RPCAddress {
+var BulkLoadRequest_PrimaryAddr_DEFAULT *base.RPCAddress
+func (p *BulkLoadRequest) GetPrimaryAddr() *base.RPCAddress {
   if !p.IsSetPrimaryAddr() {
     return BulkLoadRequest_PrimaryAddr_DEFAULT
   }
@@ -1203,7 +1203,7 @@ func (p *BulkLoadRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *BulkLoadRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -1220,7 +1220,7 @@ func (p *BulkLoadRequest)  ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *BulkLoadRequest)  ReadField3(iprot thrift.TProtocol) error {
-  p.PrimaryAddr = &dsn.RPCAddress{}
+  p.PrimaryAddr = &base.RPCAddress{}
   if err := p.PrimaryAddr.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.PrimaryAddr), err)
   }
@@ -1414,11 +1414,11 @@ func (p *BulkLoadRequest) String() string {
 //  - IsGroupBulkLoadContextCleanedUp
 //  - IsGroupBulkLoadPaused
 type BulkLoadResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
-  Pid *dsn.Gpid `thrift:"pid,2" db:"pid" json:"pid"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Pid *base.Gpid `thrift:"pid,2" db:"pid" json:"pid"`
   AppName string `thrift:"app_name,3" db:"app_name" json:"app_name"`
   PrimaryBulkLoadStatus BulkLoadStatus `thrift:"primary_bulk_load_status,4" db:"primary_bulk_load_status" json:"primary_bulk_load_status"`
-  GroupBulkLoadState map[*dsn.RPCAddress]*PartitionBulkLoadState `thrift:"group_bulk_load_state,5" db:"group_bulk_load_state" json:"group_bulk_load_state"`
+  GroupBulkLoadState map[*base.RPCAddress]*PartitionBulkLoadState `thrift:"group_bulk_load_state,5" db:"group_bulk_load_state" json:"group_bulk_load_state"`
   Metadata *BulkLoadMetadata `thrift:"metadata,6" db:"metadata" json:"metadata,omitempty"`
   TotalDownloadProgress *int32 `thrift:"total_download_progress,7" db:"total_download_progress" json:"total_download_progress,omitempty"`
   IsGroupIngestionFinished *bool `thrift:"is_group_ingestion_finished,8" db:"is_group_ingestion_finished" json:"is_group_ingestion_finished,omitempty"`
@@ -1430,15 +1430,15 @@ func NewBulkLoadResponse() *BulkLoadResponse {
   return &BulkLoadResponse{}
 }
 
-var BulkLoadResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *BulkLoadResponse) GetErr() *dsn.ErrorCode {
+var BulkLoadResponse_Err_DEFAULT *base.ErrorCode
+func (p *BulkLoadResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return BulkLoadResponse_Err_DEFAULT
   }
 return p.Err
 }
-var BulkLoadResponse_Pid_DEFAULT *dsn.Gpid
-func (p *BulkLoadResponse) GetPid() *dsn.Gpid {
+var BulkLoadResponse_Pid_DEFAULT *base.Gpid
+func (p *BulkLoadResponse) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return BulkLoadResponse_Pid_DEFAULT
   }
@@ -1453,7 +1453,7 @@ func (p *BulkLoadResponse) GetPrimaryBulkLoadStatus() BulkLoadStatus {
   return p.PrimaryBulkLoadStatus
 }
 
-func (p *BulkLoadResponse) GetGroupBulkLoadState() map[*dsn.RPCAddress]*PartitionBulkLoadState {
+func (p *BulkLoadResponse) GetGroupBulkLoadState() map[*base.RPCAddress]*PartitionBulkLoadState {
   return p.GroupBulkLoadState
 }
 var BulkLoadResponse_Metadata_DEFAULT *BulkLoadMetadata
@@ -1648,7 +1648,7 @@ func (p *BulkLoadResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *BulkLoadResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1656,7 +1656,7 @@ func (p *BulkLoadResponse)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *BulkLoadResponse)  ReadField2(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -1687,10 +1687,10 @@ func (p *BulkLoadResponse)  ReadField5(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading map begin: ", err)
   }
-  tMap := make(map[*dsn.RPCAddress]*PartitionBulkLoadState, size)
+  tMap := make(map[*base.RPCAddress]*PartitionBulkLoadState, size)
   p.GroupBulkLoadState =  tMap
   for i := 0; i < size; i ++ {
-    _key1 := &dsn.RPCAddress{}
+    _key1 := &base.RPCAddress{}
     if err := _key1.Read(iprot); err != nil {
       return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _key1), err)
     }
@@ -1916,7 +1916,7 @@ func (p *BulkLoadResponse) String() string {
 //  - RemoteRootPath
 type GroupBulkLoadRequest struct {
   AppName string `thrift:"app_name,1" db:"app_name" json:"app_name"`
-  TargetAddress *dsn.RPCAddress `thrift:"target_address,2" db:"target_address" json:"target_address"`
+  TargetAddress *base.RPCAddress `thrift:"target_address,2" db:"target_address" json:"target_address"`
   Config *ReplicaConfiguration `thrift:"config,3" db:"config" json:"config"`
   ProviderName string `thrift:"provider_name,4" db:"provider_name" json:"provider_name"`
   ClusterName string `thrift:"cluster_name,5" db:"cluster_name" json:"cluster_name"`
@@ -1932,8 +1932,8 @@ func NewGroupBulkLoadRequest() *GroupBulkLoadRequest {
 func (p *GroupBulkLoadRequest) GetAppName() string {
   return p.AppName
 }
-var GroupBulkLoadRequest_TargetAddress_DEFAULT *dsn.RPCAddress
-func (p *GroupBulkLoadRequest) GetTargetAddress() *dsn.RPCAddress {
+var GroupBulkLoadRequest_TargetAddress_DEFAULT *base.RPCAddress
+func (p *GroupBulkLoadRequest) GetTargetAddress() *base.RPCAddress {
   if !p.IsSetTargetAddress() {
     return GroupBulkLoadRequest_TargetAddress_DEFAULT
   }
@@ -2078,7 +2078,7 @@ func (p *GroupBulkLoadRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *GroupBulkLoadRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.TargetAddress = &dsn.RPCAddress{}
+  p.TargetAddress = &base.RPCAddress{}
   if err := p.TargetAddress.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.TargetAddress), err)
   }
@@ -2235,7 +2235,7 @@ func (p *GroupBulkLoadRequest) String() string {
 //  - Status
 //  - BulkLoadState
 type GroupBulkLoadResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Status BulkLoadStatus `thrift:"status,2" db:"status" json:"status"`
   BulkLoadState *PartitionBulkLoadState `thrift:"bulk_load_state,3" db:"bulk_load_state" json:"bulk_load_state"`
 }
@@ -2244,8 +2244,8 @@ func NewGroupBulkLoadResponse() *GroupBulkLoadResponse {
   return &GroupBulkLoadResponse{}
 }
 
-var GroupBulkLoadResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *GroupBulkLoadResponse) GetErr() *dsn.ErrorCode {
+var GroupBulkLoadResponse_Err_DEFAULT *base.ErrorCode
+func (p *GroupBulkLoadResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return GroupBulkLoadResponse_Err_DEFAULT
   }
@@ -2329,7 +2329,7 @@ func (p *GroupBulkLoadResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *GroupBulkLoadResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2656,7 +2656,7 @@ func (p *IngestionRequest) String() string {
 //  - Err
 //  - RocksdbError
 type IngestionResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   RocksdbError int32 `thrift:"rocksdb_error,2" db:"rocksdb_error" json:"rocksdb_error"`
 }
 
@@ -2664,8 +2664,8 @@ func NewIngestionResponse() *IngestionResponse {
   return &IngestionResponse{}
 }
 
-var IngestionResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *IngestionResponse) GetErr() *dsn.ErrorCode {
+var IngestionResponse_Err_DEFAULT *base.ErrorCode
+func (p *IngestionResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return IngestionResponse_Err_DEFAULT
   }
@@ -2728,7 +2728,7 @@ func (p *IngestionResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *IngestionResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2918,7 +2918,7 @@ func (p *ControlBulkLoadRequest) String() string {
 //  - Err
 //  - HintMsg
 type ControlBulkLoadResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMsg *string `thrift:"hint_msg,2" db:"hint_msg" json:"hint_msg,omitempty"`
 }
 
@@ -2926,8 +2926,8 @@ func NewControlBulkLoadResponse() *ControlBulkLoadResponse {
   return &ControlBulkLoadResponse{}
 }
 
-var ControlBulkLoadResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ControlBulkLoadResponse) GetErr() *dsn.ErrorCode {
+var ControlBulkLoadResponse_Err_DEFAULT *base.ErrorCode
+func (p *ControlBulkLoadResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ControlBulkLoadResponse_Err_DEFAULT
   }
@@ -2997,7 +2997,7 @@ func (p *ControlBulkLoadResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ControlBulkLoadResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -3158,12 +3158,12 @@ func (p *QueryBulkLoadRequest) String() string {
 //  - HintMsg
 //  - IsBulkLoading
 type QueryBulkLoadResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   AppName string `thrift:"app_name,2" db:"app_name" json:"app_name"`
   AppStatus BulkLoadStatus `thrift:"app_status,3" db:"app_status" json:"app_status"`
   PartitionsStatus []BulkLoadStatus `thrift:"partitions_status,4" db:"partitions_status" json:"partitions_status"`
   MaxReplicaCount int32 `thrift:"max_replica_count,5" db:"max_replica_count" json:"max_replica_count"`
-  BulkLoadStates []map[*dsn.RPCAddress]*PartitionBulkLoadState `thrift:"bulk_load_states,6" db:"bulk_load_states" json:"bulk_load_states"`
+  BulkLoadStates []map[*base.RPCAddress]*PartitionBulkLoadState `thrift:"bulk_load_states,6" db:"bulk_load_states" json:"bulk_load_states"`
   HintMsg *string `thrift:"hint_msg,7" db:"hint_msg" json:"hint_msg,omitempty"`
   IsBulkLoading *bool `thrift:"is_bulk_loading,8" db:"is_bulk_loading" json:"is_bulk_loading,omitempty"`
 }
@@ -3172,8 +3172,8 @@ func NewQueryBulkLoadResponse() *QueryBulkLoadResponse {
   return &QueryBulkLoadResponse{}
 }
 
-var QueryBulkLoadResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QueryBulkLoadResponse) GetErr() *dsn.ErrorCode {
+var QueryBulkLoadResponse_Err_DEFAULT *base.ErrorCode
+func (p *QueryBulkLoadResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QueryBulkLoadResponse_Err_DEFAULT
   }
@@ -3196,7 +3196,7 @@ func (p *QueryBulkLoadResponse) GetMaxReplicaCount() int32 {
   return p.MaxReplicaCount
 }
 
-func (p *QueryBulkLoadResponse) GetBulkLoadStates() []map[*dsn.RPCAddress]*PartitionBulkLoadState {
+func (p *QueryBulkLoadResponse) GetBulkLoadStates() []map[*base.RPCAddress]*PartitionBulkLoadState {
   return p.BulkLoadStates
 }
 var QueryBulkLoadResponse_HintMsg_DEFAULT string
@@ -3334,7 +3334,7 @@ func (p *QueryBulkLoadResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryBulkLoadResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -3397,17 +3397,17 @@ func (p *QueryBulkLoadResponse)  ReadField6(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading list begin: ", err)
   }
-  tSlice := make([]map[*dsn.RPCAddress]*PartitionBulkLoadState, 0, size)
+  tSlice := make([]map[*base.RPCAddress]*PartitionBulkLoadState, 0, size)
   p.BulkLoadStates =  tSlice
   for i := 0; i < size; i ++ {
     _, _, size, err := iprot.ReadMapBegin()
     if err != nil {
       return thrift.PrependError("error reading map begin: ", err)
     }
-    tMap := make(map[*dsn.RPCAddress]*PartitionBulkLoadState, size)
+    tMap := make(map[*base.RPCAddress]*PartitionBulkLoadState, size)
     _elem4 :=  tMap
     for i := 0; i < size; i ++ {
-      _key5 := &dsn.RPCAddress{}
+      _key5 := &base.RPCAddress{}
       if err := _key5.Read(iprot); err != nil {
         return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _key5), err)
       }
@@ -3683,7 +3683,7 @@ func (p *ClearBulkLoadStateRequest) String() string {
 //  - Err
 //  - HintMsg
 type ClearBulkLoadStateResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMsg string `thrift:"hint_msg,2" db:"hint_msg" json:"hint_msg"`
 }
 
@@ -3691,8 +3691,8 @@ func NewClearBulkLoadStateResponse() *ClearBulkLoadStateResponse {
   return &ClearBulkLoadStateResponse{}
 }
 
-var ClearBulkLoadStateResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ClearBulkLoadStateResponse) GetErr() *dsn.ErrorCode {
+var ClearBulkLoadStateResponse_Err_DEFAULT *base.ErrorCode
+func (p *ClearBulkLoadStateResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ClearBulkLoadStateResponse_Err_DEFAULT
   }
@@ -3755,7 +3755,7 @@ func (p *ClearBulkLoadStateResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ClearBulkLoadStateResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }

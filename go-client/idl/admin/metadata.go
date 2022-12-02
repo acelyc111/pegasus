@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 	"github.com/apache/incubator-pegasus/idl/replication"
 
 )
@@ -23,7 +23,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 var _ = replication.GoUnusedProtection__
 type PartitionStatus int64
 const (
@@ -439,9 +439,9 @@ func (p *FileMeta) String() string {
 //  - PopAll
 //  - SplitSyncToChild
 type ReplicaConfiguration struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
   Ballot int64 `thrift:"ballot,2" db:"ballot" json:"ballot"`
-  Primary *dsn.RPCAddress `thrift:"primary,3" db:"primary" json:"primary"`
+  Primary *base.RPCAddress `thrift:"primary,3" db:"primary" json:"primary"`
   Status PartitionStatus `thrift:"status,4" db:"status" json:"status"`
   LearnerSignature int64 `thrift:"learner_signature,5" db:"learner_signature" json:"learner_signature"`
   PopAll bool `thrift:"pop_all,6" db:"pop_all" json:"pop_all,omitempty"`
@@ -454,8 +454,8 @@ Status: 0,
 }
 }
 
-var ReplicaConfiguration_Pid_DEFAULT *dsn.Gpid
-func (p *ReplicaConfiguration) GetPid() *dsn.Gpid {
+var ReplicaConfiguration_Pid_DEFAULT *base.Gpid
+func (p *ReplicaConfiguration) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return ReplicaConfiguration_Pid_DEFAULT
   }
@@ -465,8 +465,8 @@ return p.Pid
 func (p *ReplicaConfiguration) GetBallot() int64 {
   return p.Ballot
 }
-var ReplicaConfiguration_Primary_DEFAULT *dsn.RPCAddress
-func (p *ReplicaConfiguration) GetPrimary() *dsn.RPCAddress {
+var ReplicaConfiguration_Primary_DEFAULT *base.RPCAddress
+func (p *ReplicaConfiguration) GetPrimary() *base.RPCAddress {
   if !p.IsSetPrimary() {
     return ReplicaConfiguration_Primary_DEFAULT
   }
@@ -605,7 +605,7 @@ func (p *ReplicaConfiguration) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ReplicaConfiguration)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -622,7 +622,7 @@ func (p *ReplicaConfiguration)  ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *ReplicaConfiguration)  ReadField3(iprot thrift.TProtocol) error {
-  p.Primary = &dsn.RPCAddress{}
+  p.Primary = &base.RPCAddress{}
   if err := p.Primary.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Primary), err)
   }
@@ -779,7 +779,7 @@ func (p *ReplicaConfiguration) String() string {
 //  - DiskTag
 //  - ManualCompactStatus
 type ReplicaInfo struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
   Ballot int64 `thrift:"ballot,2" db:"ballot" json:"ballot"`
   Status PartitionStatus `thrift:"status,3" db:"status" json:"status"`
   LastCommittedDecree int64 `thrift:"last_committed_decree,4" db:"last_committed_decree" json:"last_committed_decree"`
@@ -794,8 +794,8 @@ func NewReplicaInfo() *ReplicaInfo {
   return &ReplicaInfo{}
 }
 
-var ReplicaInfo_Pid_DEFAULT *dsn.Gpid
-func (p *ReplicaInfo) GetPid() *dsn.Gpid {
+var ReplicaInfo_Pid_DEFAULT *base.Gpid
+func (p *ReplicaInfo) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return ReplicaInfo_Pid_DEFAULT
   }
@@ -963,7 +963,7 @@ func (p *ReplicaInfo) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ReplicaInfo)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }

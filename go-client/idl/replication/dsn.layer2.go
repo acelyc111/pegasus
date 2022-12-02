@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 
 )
 
@@ -22,7 +22,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 type AppStatus int64
 const (
   AppStatus_AS_INVALID AppStatus = 0
@@ -104,12 +104,12 @@ return int64(*p), nil
 //  - LastCommittedDecree
 //  - PartitionFlags
 type PartitionConfiguration struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
   Ballot int64 `thrift:"ballot,2" db:"ballot" json:"ballot"`
   MaxReplicaCount int32 `thrift:"max_replica_count,3" db:"max_replica_count" json:"max_replica_count"`
-  Primary *dsn.RPCAddress `thrift:"primary,4" db:"primary" json:"primary"`
-  Secondaries []*dsn.RPCAddress `thrift:"secondaries,5" db:"secondaries" json:"secondaries"`
-  LastDrops []*dsn.RPCAddress `thrift:"last_drops,6" db:"last_drops" json:"last_drops"`
+  Primary *base.RPCAddress `thrift:"primary,4" db:"primary" json:"primary"`
+  Secondaries []*base.RPCAddress `thrift:"secondaries,5" db:"secondaries" json:"secondaries"`
+  LastDrops []*base.RPCAddress `thrift:"last_drops,6" db:"last_drops" json:"last_drops"`
   LastCommittedDecree int64 `thrift:"last_committed_decree,7" db:"last_committed_decree" json:"last_committed_decree"`
   PartitionFlags int32 `thrift:"partition_flags,8" db:"partition_flags" json:"partition_flags"`
 }
@@ -118,8 +118,8 @@ func NewPartitionConfiguration() *PartitionConfiguration {
   return &PartitionConfiguration{}
 }
 
-var PartitionConfiguration_Pid_DEFAULT *dsn.Gpid
-func (p *PartitionConfiguration) GetPid() *dsn.Gpid {
+var PartitionConfiguration_Pid_DEFAULT *base.Gpid
+func (p *PartitionConfiguration) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return PartitionConfiguration_Pid_DEFAULT
   }
@@ -133,19 +133,19 @@ func (p *PartitionConfiguration) GetBallot() int64 {
 func (p *PartitionConfiguration) GetMaxReplicaCount() int32 {
   return p.MaxReplicaCount
 }
-var PartitionConfiguration_Primary_DEFAULT *dsn.RPCAddress
-func (p *PartitionConfiguration) GetPrimary() *dsn.RPCAddress {
+var PartitionConfiguration_Primary_DEFAULT *base.RPCAddress
+func (p *PartitionConfiguration) GetPrimary() *base.RPCAddress {
   if !p.IsSetPrimary() {
     return PartitionConfiguration_Primary_DEFAULT
   }
 return p.Primary
 }
 
-func (p *PartitionConfiguration) GetSecondaries() []*dsn.RPCAddress {
+func (p *PartitionConfiguration) GetSecondaries() []*base.RPCAddress {
   return p.Secondaries
 }
 
-func (p *PartitionConfiguration) GetLastDrops() []*dsn.RPCAddress {
+func (p *PartitionConfiguration) GetLastDrops() []*base.RPCAddress {
   return p.LastDrops
 }
 
@@ -273,7 +273,7 @@ func (p *PartitionConfiguration) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *PartitionConfiguration)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -299,7 +299,7 @@ func (p *PartitionConfiguration)  ReadField3(iprot thrift.TProtocol) error {
 }
 
 func (p *PartitionConfiguration)  ReadField4(iprot thrift.TProtocol) error {
-  p.Primary = &dsn.RPCAddress{}
+  p.Primary = &base.RPCAddress{}
   if err := p.Primary.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Primary), err)
   }
@@ -311,10 +311,10 @@ func (p *PartitionConfiguration)  ReadField5(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading list begin: ", err)
   }
-  tSlice := make([]*dsn.RPCAddress, 0, size)
+  tSlice := make([]*base.RPCAddress, 0, size)
   p.Secondaries =  tSlice
   for i := 0; i < size; i ++ {
-    _elem0 := &dsn.RPCAddress{}
+    _elem0 := &base.RPCAddress{}
     if err := _elem0.Read(iprot); err != nil {
       return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem0), err)
     }
@@ -331,10 +331,10 @@ func (p *PartitionConfiguration)  ReadField6(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading list begin: ", err)
   }
-  tSlice := make([]*dsn.RPCAddress, 0, size)
+  tSlice := make([]*base.RPCAddress, 0, size)
   p.LastDrops =  tSlice
   for i := 0; i < size; i ++ {
-    _elem1 := &dsn.RPCAddress{}
+    _elem1 := &base.RPCAddress{}
     if err := _elem1.Read(iprot); err != nil {
       return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem1), err)
     }
@@ -646,7 +646,7 @@ func (p *ConfigurationQueryByIndexRequest) String() string {
 //  - IsStateful
 //  - Partitions
 type ConfigurationQueryByIndexResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   AppID int32 `thrift:"app_id,2" db:"app_id" json:"app_id"`
   PartitionCount int32 `thrift:"partition_count,3" db:"partition_count" json:"partition_count"`
   IsStateful bool `thrift:"is_stateful,4" db:"is_stateful" json:"is_stateful"`
@@ -657,8 +657,8 @@ func NewConfigurationQueryByIndexResponse() *ConfigurationQueryByIndexResponse {
   return &ConfigurationQueryByIndexResponse{}
 }
 
-var ConfigurationQueryByIndexResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationQueryByIndexResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationQueryByIndexResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationQueryByIndexResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationQueryByIndexResponse_Err_DEFAULT
   }
@@ -763,7 +763,7 @@ func (p *ConfigurationQueryByIndexResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationQueryByIndexResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }

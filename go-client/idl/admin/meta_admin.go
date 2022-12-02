@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 	"github.com/apache/incubator-pegasus/idl/replication"
 
 )
@@ -23,7 +23,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 var _ = replication.GoUnusedProtection__
 type ConfigType int64
 const (
@@ -355,8 +355,8 @@ type ConfigurationUpdateRequest struct {
   Info *replication.AppInfo `thrift:"info,1" db:"info" json:"info"`
   Config *replication.PartitionConfiguration `thrift:"config,2" db:"config" json:"config"`
   Type ConfigType `thrift:"type,3" db:"type" json:"type"`
-  Node *dsn.RPCAddress `thrift:"node,4" db:"node" json:"node"`
-  HostNode *dsn.RPCAddress `thrift:"host_node,5" db:"host_node" json:"host_node"`
+  Node *base.RPCAddress `thrift:"node,4" db:"node" json:"node"`
+  HostNode *base.RPCAddress `thrift:"host_node,5" db:"host_node" json:"host_node"`
   MetaSplitStatus *SplitStatus `thrift:"meta_split_status,6" db:"meta_split_status" json:"meta_split_status,omitempty"`
 }
 
@@ -384,15 +384,15 @@ return p.Config
 func (p *ConfigurationUpdateRequest) GetType() ConfigType {
   return p.Type
 }
-var ConfigurationUpdateRequest_Node_DEFAULT *dsn.RPCAddress
-func (p *ConfigurationUpdateRequest) GetNode() *dsn.RPCAddress {
+var ConfigurationUpdateRequest_Node_DEFAULT *base.RPCAddress
+func (p *ConfigurationUpdateRequest) GetNode() *base.RPCAddress {
   if !p.IsSetNode() {
     return ConfigurationUpdateRequest_Node_DEFAULT
   }
 return p.Node
 }
-var ConfigurationUpdateRequest_HostNode_DEFAULT *dsn.RPCAddress
-func (p *ConfigurationUpdateRequest) GetHostNode() *dsn.RPCAddress {
+var ConfigurationUpdateRequest_HostNode_DEFAULT *base.RPCAddress
+func (p *ConfigurationUpdateRequest) GetHostNode() *base.RPCAddress {
   if !p.IsSetHostNode() {
     return ConfigurationUpdateRequest_HostNode_DEFAULT
   }
@@ -544,7 +544,7 @@ func (p *ConfigurationUpdateRequest)  ReadField3(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationUpdateRequest)  ReadField4(iprot thrift.TProtocol) error {
-  p.Node = &dsn.RPCAddress{}
+  p.Node = &base.RPCAddress{}
   if err := p.Node.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Node), err)
   }
@@ -552,7 +552,7 @@ func (p *ConfigurationUpdateRequest)  ReadField4(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationUpdateRequest)  ReadField5(iprot thrift.TProtocol) error {
-  p.HostNode = &dsn.RPCAddress{}
+  p.HostNode = &base.RPCAddress{}
   if err := p.HostNode.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.HostNode), err)
   }
@@ -664,7 +664,7 @@ func (p *ConfigurationUpdateRequest) String() string {
 //  - Err
 //  - Config
 type ConfigurationUpdateResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Config *replication.PartitionConfiguration `thrift:"config,2" db:"config" json:"config"`
 }
 
@@ -672,8 +672,8 @@ func NewConfigurationUpdateResponse() *ConfigurationUpdateResponse {
   return &ConfigurationUpdateResponse{}
 }
 
-var ConfigurationUpdateResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationUpdateResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationUpdateResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationUpdateResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationUpdateResponse_Err_DEFAULT
   }
@@ -743,7 +743,7 @@ func (p *ConfigurationUpdateResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationUpdateResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -962,7 +962,7 @@ func (p *ReplicaServerInfo) String() string {
 //  - StoredReplicas
 //  - Info
 type ConfigurationQueryByNodeRequest struct {
-  Node *dsn.RPCAddress `thrift:"node,1" db:"node" json:"node"`
+  Node *base.RPCAddress `thrift:"node,1" db:"node" json:"node"`
   StoredReplicas []*ReplicaInfo `thrift:"stored_replicas,2" db:"stored_replicas" json:"stored_replicas,omitempty"`
   Info *ReplicaServerInfo `thrift:"info,3" db:"info" json:"info,omitempty"`
 }
@@ -971,8 +971,8 @@ func NewConfigurationQueryByNodeRequest() *ConfigurationQueryByNodeRequest {
   return &ConfigurationQueryByNodeRequest{}
 }
 
-var ConfigurationQueryByNodeRequest_Node_DEFAULT *dsn.RPCAddress
-func (p *ConfigurationQueryByNodeRequest) GetNode() *dsn.RPCAddress {
+var ConfigurationQueryByNodeRequest_Node_DEFAULT *base.RPCAddress
+func (p *ConfigurationQueryByNodeRequest) GetNode() *base.RPCAddress {
   if !p.IsSetNode() {
     return ConfigurationQueryByNodeRequest_Node_DEFAULT
   }
@@ -1061,7 +1061,7 @@ func (p *ConfigurationQueryByNodeRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationQueryByNodeRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Node = &dsn.RPCAddress{}
+  p.Node = &base.RPCAddress{}
   if err := p.Node.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Node), err)
   }
@@ -1168,7 +1168,7 @@ func (p *ConfigurationQueryByNodeRequest) String() string {
 //  - Partitions
 //  - GcReplicas
 type ConfigurationQueryByNodeResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Partitions []*ConfigurationUpdateRequest `thrift:"partitions,2" db:"partitions" json:"partitions"`
   GcReplicas []*ReplicaInfo `thrift:"gc_replicas,3" db:"gc_replicas" json:"gc_replicas,omitempty"`
 }
@@ -1177,8 +1177,8 @@ func NewConfigurationQueryByNodeResponse() *ConfigurationQueryByNodeResponse {
   return &ConfigurationQueryByNodeResponse{}
 }
 
-var ConfigurationQueryByNodeResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationQueryByNodeResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationQueryByNodeResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationQueryByNodeResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationQueryByNodeResponse_Err_DEFAULT
   }
@@ -1260,7 +1260,7 @@ func (p *ConfigurationQueryByNodeResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationQueryByNodeResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1387,7 +1387,7 @@ func (p *ConfigurationQueryByNodeResponse) String() string {
 //  - SkipBadNodes
 //  - SkipLostPartitions
 type ConfigurationRecoveryRequest struct {
-  RecoverySet []*dsn.RPCAddress `thrift:"recovery_set,1" db:"recovery_set" json:"recovery_set"`
+  RecoverySet []*base.RPCAddress `thrift:"recovery_set,1" db:"recovery_set" json:"recovery_set"`
   SkipBadNodes bool `thrift:"skip_bad_nodes,2" db:"skip_bad_nodes" json:"skip_bad_nodes"`
   SkipLostPartitions bool `thrift:"skip_lost_partitions,3" db:"skip_lost_partitions" json:"skip_lost_partitions"`
 }
@@ -1397,7 +1397,7 @@ func NewConfigurationRecoveryRequest() *ConfigurationRecoveryRequest {
 }
 
 
-func (p *ConfigurationRecoveryRequest) GetRecoverySet() []*dsn.RPCAddress {
+func (p *ConfigurationRecoveryRequest) GetRecoverySet() []*base.RPCAddress {
   return p.RecoverySet
 }
 
@@ -1471,10 +1471,10 @@ func (p *ConfigurationRecoveryRequest)  ReadField1(iprot thrift.TProtocol) error
   if err != nil {
     return thrift.PrependError("error reading list begin: ", err)
   }
-  tSlice := make([]*dsn.RPCAddress, 0, size)
+  tSlice := make([]*base.RPCAddress, 0, size)
   p.RecoverySet =  tSlice
   for i := 0; i < size; i ++ {
-    _elem5 := &dsn.RPCAddress{}
+    _elem5 := &base.RPCAddress{}
     if err := _elem5.Read(iprot); err != nil {
       return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem5), err)
     }
@@ -1569,7 +1569,7 @@ func (p *ConfigurationRecoveryRequest) String() string {
 //  - Err
 //  - HintMessage
 type ConfigurationRecoveryResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMessage string `thrift:"hint_message,2" db:"hint_message" json:"hint_message"`
 }
 
@@ -1577,8 +1577,8 @@ func NewConfigurationRecoveryResponse() *ConfigurationRecoveryResponse {
   return &ConfigurationRecoveryResponse{}
 }
 
-var ConfigurationRecoveryResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationRecoveryResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationRecoveryResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationRecoveryResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationRecoveryResponse_Err_DEFAULT
   }
@@ -1641,7 +1641,7 @@ func (p *ConfigurationRecoveryResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationRecoveryResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2137,7 +2137,7 @@ func (p *ConfigurationCreateAppRequest) String() string {
 //  - Err
 //  - Appid
 type ConfigurationCreateAppResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Appid int32 `thrift:"appid,2" db:"appid" json:"appid"`
 }
 
@@ -2145,8 +2145,8 @@ func NewConfigurationCreateAppResponse() *ConfigurationCreateAppResponse {
   return &ConfigurationCreateAppResponse{}
 }
 
-var ConfigurationCreateAppResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationCreateAppResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationCreateAppResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationCreateAppResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationCreateAppResponse_Err_DEFAULT
   }
@@ -2209,7 +2209,7 @@ func (p *ConfigurationCreateAppResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationCreateAppResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2540,15 +2540,15 @@ func (p *ConfigurationDropAppRequest) String() string {
 // Attributes:
 //  - Err
 type ConfigurationDropAppResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
 }
 
 func NewConfigurationDropAppResponse() *ConfigurationDropAppResponse {
   return &ConfigurationDropAppResponse{}
 }
 
-var ConfigurationDropAppResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationDropAppResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationDropAppResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationDropAppResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationDropAppResponse_Err_DEFAULT
   }
@@ -2597,7 +2597,7 @@ func (p *ConfigurationDropAppResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationDropAppResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2766,7 +2766,7 @@ func (p *ConfigurationRecallAppRequest) String() string {
 //  - Err
 //  - Info
 type ConfigurationRecallAppResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Info *replication.AppInfo `thrift:"info,2" db:"info" json:"info"`
 }
 
@@ -2774,8 +2774,8 @@ func NewConfigurationRecallAppResponse() *ConfigurationRecallAppResponse {
   return &ConfigurationRecallAppResponse{}
 }
 
-var ConfigurationRecallAppResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationRecallAppResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationRecallAppResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationRecallAppResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationRecallAppResponse_Err_DEFAULT
   }
@@ -2845,7 +2845,7 @@ func (p *ConfigurationRecallAppResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationRecallAppResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -3005,7 +3005,7 @@ func (p *ConfigurationListAppsRequest) String() string {
 //  - Err
 //  - Infos
 type ConfigurationListAppsResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Infos []*replication.AppInfo `thrift:"infos,2" db:"infos" json:"infos"`
 }
 
@@ -3013,8 +3013,8 @@ func NewConfigurationListAppsResponse() *ConfigurationListAppsResponse {
   return &ConfigurationListAppsResponse{}
 }
 
-var ConfigurationListAppsResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationListAppsResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationListAppsResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationListAppsResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationListAppsResponse_Err_DEFAULT
   }
@@ -3077,7 +3077,7 @@ func (p *ConfigurationListAppsResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationListAppsResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -3162,15 +3162,15 @@ func (p *ConfigurationListAppsResponse) String() string {
 // Attributes:
 //  - MetaServer
 type QueryAppInfoRequest struct {
-  MetaServer *dsn.RPCAddress `thrift:"meta_server,1" db:"meta_server" json:"meta_server"`
+  MetaServer *base.RPCAddress `thrift:"meta_server,1" db:"meta_server" json:"meta_server"`
 }
 
 func NewQueryAppInfoRequest() *QueryAppInfoRequest {
   return &QueryAppInfoRequest{}
 }
 
-var QueryAppInfoRequest_MetaServer_DEFAULT *dsn.RPCAddress
-func (p *QueryAppInfoRequest) GetMetaServer() *dsn.RPCAddress {
+var QueryAppInfoRequest_MetaServer_DEFAULT *base.RPCAddress
+func (p *QueryAppInfoRequest) GetMetaServer() *base.RPCAddress {
   if !p.IsSetMetaServer() {
     return QueryAppInfoRequest_MetaServer_DEFAULT
   }
@@ -3219,7 +3219,7 @@ func (p *QueryAppInfoRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryAppInfoRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.MetaServer = &dsn.RPCAddress{}
+  p.MetaServer = &base.RPCAddress{}
   if err := p.MetaServer.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.MetaServer), err)
   }
@@ -3261,7 +3261,7 @@ func (p *QueryAppInfoRequest) String() string {
 //  - Err
 //  - Apps
 type QueryAppInfoResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Apps []*replication.AppInfo `thrift:"apps,2" db:"apps" json:"apps"`
 }
 
@@ -3269,8 +3269,8 @@ func NewQueryAppInfoResponse() *QueryAppInfoResponse {
   return &QueryAppInfoResponse{}
 }
 
-var QueryAppInfoResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QueryAppInfoResponse) GetErr() *dsn.ErrorCode {
+var QueryAppInfoResponse_Err_DEFAULT *base.ErrorCode
+func (p *QueryAppInfoResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QueryAppInfoResponse_Err_DEFAULT
   }
@@ -3333,7 +3333,7 @@ func (p *QueryAppInfoResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryAppInfoResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -3722,7 +3722,7 @@ func (p *ConfigurationUpdateAppEnvRequest) String() string {
 //  - Err
 //  - HintMessage
 type ConfigurationUpdateAppEnvResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMessage string `thrift:"hint_message,2" db:"hint_message" json:"hint_message"`
 }
 
@@ -3730,8 +3730,8 @@ func NewConfigurationUpdateAppEnvResponse() *ConfigurationUpdateAppEnvResponse {
   return &ConfigurationUpdateAppEnvResponse{}
 }
 
-var ConfigurationUpdateAppEnvResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationUpdateAppEnvResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationUpdateAppEnvResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationUpdateAppEnvResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationUpdateAppEnvResponse_Err_DEFAULT
   }
@@ -3794,7 +3794,7 @@ func (p *ConfigurationUpdateAppEnvResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationUpdateAppEnvResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -4127,7 +4127,7 @@ func (p *StartAppManualCompactRequest) String() string {
 //  - Err
 //  - HintMsg
 type StartAppManualCompactResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMsg string `thrift:"hint_msg,2" db:"hint_msg" json:"hint_msg"`
 }
 
@@ -4135,8 +4135,8 @@ func NewStartAppManualCompactResponse() *StartAppManualCompactResponse {
   return &StartAppManualCompactResponse{}
 }
 
-var StartAppManualCompactResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *StartAppManualCompactResponse) GetErr() *dsn.ErrorCode {
+var StartAppManualCompactResponse_Err_DEFAULT *base.ErrorCode
+func (p *StartAppManualCompactResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return StartAppManualCompactResponse_Err_DEFAULT
   }
@@ -4199,7 +4199,7 @@ func (p *StartAppManualCompactResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *StartAppManualCompactResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -4353,7 +4353,7 @@ func (p *QueryAppManualCompactRequest) String() string {
 //  - HintMsg
 //  - Progress
 type QueryAppManualCompactResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMsg string `thrift:"hint_msg,2" db:"hint_msg" json:"hint_msg"`
   Progress *int32 `thrift:"progress,3" db:"progress" json:"progress,omitempty"`
 }
@@ -4362,8 +4362,8 @@ func NewQueryAppManualCompactResponse() *QueryAppManualCompactResponse {
   return &QueryAppManualCompactResponse{}
 }
 
-var QueryAppManualCompactResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QueryAppManualCompactResponse) GetErr() *dsn.ErrorCode {
+var QueryAppManualCompactResponse_Err_DEFAULT *base.ErrorCode
+func (p *QueryAppManualCompactResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QueryAppManualCompactResponse_Err_DEFAULT
   }
@@ -4447,7 +4447,7 @@ func (p *QueryAppManualCompactResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryAppManualCompactResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -4532,7 +4532,7 @@ func (p *QueryAppManualCompactResponse) String() string {
 //  - Address
 type NodeInfo struct {
   Status NodeStatus `thrift:"status,1" db:"status" json:"status"`
-  Address *dsn.RPCAddress `thrift:"address,2" db:"address" json:"address"`
+  Address *base.RPCAddress `thrift:"address,2" db:"address" json:"address"`
 }
 
 func NewNodeInfo() *NodeInfo {
@@ -4545,8 +4545,8 @@ Status: 0,
 func (p *NodeInfo) GetStatus() NodeStatus {
   return p.Status
 }
-var NodeInfo_Address_DEFAULT *dsn.RPCAddress
-func (p *NodeInfo) GetAddress() *dsn.RPCAddress {
+var NodeInfo_Address_DEFAULT *base.RPCAddress
+func (p *NodeInfo) GetAddress() *base.RPCAddress {
   if !p.IsSetAddress() {
     return NodeInfo_Address_DEFAULT
   }
@@ -4615,7 +4615,7 @@ func (p *NodeInfo)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *NodeInfo)  ReadField2(iprot thrift.TProtocol) error {
-  p.Address = &dsn.RPCAddress{}
+  p.Address = &base.RPCAddress{}
   if err := p.Address.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Address), err)
   }
@@ -4762,7 +4762,7 @@ func (p *ConfigurationListNodesRequest) String() string {
 //  - Err
 //  - Infos
 type ConfigurationListNodesResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Infos []*NodeInfo `thrift:"infos,2" db:"infos" json:"infos"`
 }
 
@@ -4770,8 +4770,8 @@ func NewConfigurationListNodesResponse() *ConfigurationListNodesResponse {
   return &ConfigurationListNodesResponse{}
 }
 
-var ConfigurationListNodesResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationListNodesResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationListNodesResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationListNodesResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationListNodesResponse_Err_DEFAULT
   }
@@ -4834,7 +4834,7 @@ func (p *ConfigurationListNodesResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationListNodesResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -4970,7 +4970,7 @@ func (p *ConfigurationClusterInfoRequest) String() string {
 //  - Keys
 //  - Values
 type ConfigurationClusterInfoResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Keys []string `thrift:"keys,2" db:"keys" json:"keys"`
   Values []string `thrift:"values,3" db:"values" json:"values"`
 }
@@ -4979,8 +4979,8 @@ func NewConfigurationClusterInfoResponse() *ConfigurationClusterInfoResponse {
   return &ConfigurationClusterInfoResponse{}
 }
 
-var ConfigurationClusterInfoResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationClusterInfoResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationClusterInfoResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationClusterInfoResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationClusterInfoResponse_Err_DEFAULT
   }
@@ -5057,7 +5057,7 @@ func (p *ConfigurationClusterInfoResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationClusterInfoResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -5273,7 +5273,7 @@ func (p *ConfigurationMetaControlRequest) String() string {
 //  - Err
 //  - OldLevel
 type ConfigurationMetaControlResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   OldLevel MetaFunctionLevel `thrift:"old_level,2" db:"old_level" json:"old_level"`
 }
 
@@ -5281,8 +5281,8 @@ func NewConfigurationMetaControlResponse() *ConfigurationMetaControlResponse {
   return &ConfigurationMetaControlResponse{}
 }
 
-var ConfigurationMetaControlResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationMetaControlResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationMetaControlResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationMetaControlResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationMetaControlResponse_Err_DEFAULT
   }
@@ -5345,7 +5345,7 @@ func (p *ConfigurationMetaControlResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationMetaControlResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -5409,8 +5409,8 @@ func (p *ConfigurationMetaControlResponse) String() string {
 //  - Node
 //  - Type
 type ConfigurationProposalAction struct {
-  Target *dsn.RPCAddress `thrift:"target,1" db:"target" json:"target"`
-  Node *dsn.RPCAddress `thrift:"node,2" db:"node" json:"node"`
+  Target *base.RPCAddress `thrift:"target,1" db:"target" json:"target"`
+  Node *base.RPCAddress `thrift:"node,2" db:"node" json:"node"`
   Type ConfigType `thrift:"type,3" db:"type" json:"type"`
 }
 
@@ -5418,15 +5418,15 @@ func NewConfigurationProposalAction() *ConfigurationProposalAction {
   return &ConfigurationProposalAction{}
 }
 
-var ConfigurationProposalAction_Target_DEFAULT *dsn.RPCAddress
-func (p *ConfigurationProposalAction) GetTarget() *dsn.RPCAddress {
+var ConfigurationProposalAction_Target_DEFAULT *base.RPCAddress
+func (p *ConfigurationProposalAction) GetTarget() *base.RPCAddress {
   if !p.IsSetTarget() {
     return ConfigurationProposalAction_Target_DEFAULT
   }
 return p.Target
 }
-var ConfigurationProposalAction_Node_DEFAULT *dsn.RPCAddress
-func (p *ConfigurationProposalAction) GetNode() *dsn.RPCAddress {
+var ConfigurationProposalAction_Node_DEFAULT *base.RPCAddress
+func (p *ConfigurationProposalAction) GetNode() *base.RPCAddress {
   if !p.IsSetNode() {
     return ConfigurationProposalAction_Node_DEFAULT
   }
@@ -5503,7 +5503,7 @@ func (p *ConfigurationProposalAction) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationProposalAction)  ReadField1(iprot thrift.TProtocol) error {
-  p.Target = &dsn.RPCAddress{}
+  p.Target = &base.RPCAddress{}
   if err := p.Target.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Target), err)
   }
@@ -5511,7 +5511,7 @@ func (p *ConfigurationProposalAction)  ReadField1(iprot thrift.TProtocol) error 
 }
 
 func (p *ConfigurationProposalAction)  ReadField2(iprot thrift.TProtocol) error {
-  p.Node = &dsn.RPCAddress{}
+  p.Node = &base.RPCAddress{}
   if err := p.Node.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Node), err)
   }
@@ -5588,7 +5588,7 @@ func (p *ConfigurationProposalAction) String() string {
 //  - Force
 //  - BalanceType
 type ConfigurationBalancerRequest struct {
-  Gpid *dsn.Gpid `thrift:"gpid,1" db:"gpid" json:"gpid"`
+  Gpid *base.Gpid `thrift:"gpid,1" db:"gpid" json:"gpid"`
   ActionList []*ConfigurationProposalAction `thrift:"action_list,2" db:"action_list" json:"action_list"`
   Force bool `thrift:"force,3" db:"force" json:"force,omitempty"`
   BalanceType *BalancerRequestType `thrift:"balance_type,4" db:"balance_type" json:"balance_type,omitempty"`
@@ -5598,8 +5598,8 @@ func NewConfigurationBalancerRequest() *ConfigurationBalancerRequest {
   return &ConfigurationBalancerRequest{}
 }
 
-var ConfigurationBalancerRequest_Gpid_DEFAULT *dsn.Gpid
-func (p *ConfigurationBalancerRequest) GetGpid() *dsn.Gpid {
+var ConfigurationBalancerRequest_Gpid_DEFAULT *base.Gpid
+func (p *ConfigurationBalancerRequest) GetGpid() *base.Gpid {
   if !p.IsSetGpid() {
     return ConfigurationBalancerRequest_Gpid_DEFAULT
   }
@@ -5702,7 +5702,7 @@ func (p *ConfigurationBalancerRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationBalancerRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Gpid = &dsn.Gpid{}
+  p.Gpid = &base.Gpid{}
   if err := p.Gpid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Gpid), err)
   }
@@ -5828,15 +5828,15 @@ func (p *ConfigurationBalancerRequest) String() string {
 // Attributes:
 //  - Err
 type ConfigurationBalancerResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
 }
 
 func NewConfigurationBalancerResponse() *ConfigurationBalancerResponse {
   return &ConfigurationBalancerResponse{}
 }
 
-var ConfigurationBalancerResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationBalancerResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationBalancerResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationBalancerResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationBalancerResponse_Err_DEFAULT
   }
@@ -5885,7 +5885,7 @@ func (p *ConfigurationBalancerResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationBalancerResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -5926,15 +5926,15 @@ func (p *ConfigurationBalancerResponse) String() string {
 // Attributes:
 //  - Pid
 type DddDiagnoseRequest struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
 }
 
 func NewDddDiagnoseRequest() *DddDiagnoseRequest {
   return &DddDiagnoseRequest{}
 }
 
-var DddDiagnoseRequest_Pid_DEFAULT *dsn.Gpid
-func (p *DddDiagnoseRequest) GetPid() *dsn.Gpid {
+var DddDiagnoseRequest_Pid_DEFAULT *base.Gpid
+func (p *DddDiagnoseRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return DddDiagnoseRequest_Pid_DEFAULT
   }
@@ -5983,7 +5983,7 @@ func (p *DddDiagnoseRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DddDiagnoseRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -6030,7 +6030,7 @@ func (p *DddDiagnoseRequest) String() string {
 //  - LastCommittedDecree
 //  - LastPreparedDecree
 type DddNodeInfo struct {
-  Node *dsn.RPCAddress `thrift:"node,1" db:"node" json:"node"`
+  Node *base.RPCAddress `thrift:"node,1" db:"node" json:"node"`
   DropTimeMs int64 `thrift:"drop_time_ms,2" db:"drop_time_ms" json:"drop_time_ms"`
   IsAlive bool `thrift:"is_alive,3" db:"is_alive" json:"is_alive"`
   IsCollected bool `thrift:"is_collected,4" db:"is_collected" json:"is_collected"`
@@ -6043,8 +6043,8 @@ func NewDddNodeInfo() *DddNodeInfo {
   return &DddNodeInfo{}
 }
 
-var DddNodeInfo_Node_DEFAULT *dsn.RPCAddress
-func (p *DddNodeInfo) GetNode() *dsn.RPCAddress {
+var DddNodeInfo_Node_DEFAULT *base.RPCAddress
+func (p *DddNodeInfo) GetNode() *base.RPCAddress {
   if !p.IsSetNode() {
     return DddNodeInfo_Node_DEFAULT
   }
@@ -6177,7 +6177,7 @@ func (p *DddNodeInfo) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DddNodeInfo)  ReadField1(iprot thrift.TProtocol) error {
-  p.Node = &dsn.RPCAddress{}
+  p.Node = &base.RPCAddress{}
   if err := p.Node.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Node), err)
   }
@@ -6529,7 +6529,7 @@ func (p *DddPartitionInfo) String() string {
 //  - Err
 //  - Partitions
 type DddDiagnoseResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Partitions []*DddPartitionInfo `thrift:"partitions,2" db:"partitions" json:"partitions"`
 }
 
@@ -6537,8 +6537,8 @@ func NewDddDiagnoseResponse() *DddDiagnoseResponse {
   return &DddDiagnoseResponse{}
 }
 
-var DddDiagnoseResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *DddDiagnoseResponse) GetErr() *dsn.ErrorCode {
+var DddDiagnoseResponse_Err_DEFAULT *base.ErrorCode
+func (p *DddDiagnoseResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return DddDiagnoseResponse_Err_DEFAULT
   }
@@ -6601,7 +6601,7 @@ func (p *DddDiagnoseResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DddDiagnoseResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -6775,7 +6775,7 @@ func (p *ConfigurationGetMaxReplicaCountRequest) String() string {
 //  - MaxReplicaCount
 //  - HintMessage
 type ConfigurationGetMaxReplicaCountResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   MaxReplicaCount int32 `thrift:"max_replica_count,2" db:"max_replica_count" json:"max_replica_count"`
   HintMessage string `thrift:"hint_message,3" db:"hint_message" json:"hint_message"`
 }
@@ -6784,8 +6784,8 @@ func NewConfigurationGetMaxReplicaCountResponse() *ConfigurationGetMaxReplicaCou
   return &ConfigurationGetMaxReplicaCountResponse{}
 }
 
-var ConfigurationGetMaxReplicaCountResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationGetMaxReplicaCountResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationGetMaxReplicaCountResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationGetMaxReplicaCountResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationGetMaxReplicaCountResponse_Err_DEFAULT
   }
@@ -6862,7 +6862,7 @@ func (p *ConfigurationGetMaxReplicaCountResponse) Read(iprot thrift.TProtocol) e
 }
 
 func (p *ConfigurationGetMaxReplicaCountResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -7072,7 +7072,7 @@ func (p *ConfigurationSetMaxReplicaCountRequest) String() string {
 //  - OldMaxReplicaCount
 //  - HintMessage
 type ConfigurationSetMaxReplicaCountResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   OldMaxReplicaCount int32 `thrift:"old_max_replica_count,2" db:"old_max_replica_count" json:"old_max_replica_count"`
   HintMessage string `thrift:"hint_message,3" db:"hint_message" json:"hint_message"`
 }
@@ -7081,8 +7081,8 @@ func NewConfigurationSetMaxReplicaCountResponse() *ConfigurationSetMaxReplicaCou
   return &ConfigurationSetMaxReplicaCountResponse{}
 }
 
-var ConfigurationSetMaxReplicaCountResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationSetMaxReplicaCountResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationSetMaxReplicaCountResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationSetMaxReplicaCountResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationSetMaxReplicaCountResponse_Err_DEFAULT
   }
@@ -7159,7 +7159,7 @@ func (p *ConfigurationSetMaxReplicaCountResponse) Read(iprot thrift.TProtocol) e
 }
 
 func (p *ConfigurationSetMaxReplicaCountResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }

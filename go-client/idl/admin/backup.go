@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 	"github.com/apache/incubator-pegasus/idl/replication"
 
 )
@@ -21,7 +21,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 var _ = replication.GoUnusedProtection__
 // Attributes:
 //  - PolicyName
@@ -545,7 +545,7 @@ func (p *ConfigurationRestoreRequest) String() string {
 //  - BackupID
 //  - BackupPath
 type BackupRequest struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
   Policy *PolicyInfo `thrift:"policy,2" db:"policy" json:"policy"`
   AppName string `thrift:"app_name,3" db:"app_name" json:"app_name"`
   BackupID int64 `thrift:"backup_id,4" db:"backup_id" json:"backup_id"`
@@ -556,8 +556,8 @@ func NewBackupRequest() *BackupRequest {
   return &BackupRequest{}
 }
 
-var BackupRequest_Pid_DEFAULT *dsn.Gpid
-func (p *BackupRequest) GetPid() *dsn.Gpid {
+var BackupRequest_Pid_DEFAULT *base.Gpid
+func (p *BackupRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return BackupRequest_Pid_DEFAULT
   }
@@ -676,7 +676,7 @@ func (p *BackupRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *BackupRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -804,8 +804,8 @@ func (p *BackupRequest) String() string {
 //  - BackupID
 //  - CheckpointTotalSize
 type BackupResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
-  Pid *dsn.Gpid `thrift:"pid,2" db:"pid" json:"pid"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Pid *base.Gpid `thrift:"pid,2" db:"pid" json:"pid"`
   Progress int32 `thrift:"progress,3" db:"progress" json:"progress"`
   PolicyName string `thrift:"policy_name,4" db:"policy_name" json:"policy_name"`
   BackupID int64 `thrift:"backup_id,5" db:"backup_id" json:"backup_id"`
@@ -816,15 +816,15 @@ func NewBackupResponse() *BackupResponse {
   return &BackupResponse{}
 }
 
-var BackupResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *BackupResponse) GetErr() *dsn.ErrorCode {
+var BackupResponse_Err_DEFAULT *base.ErrorCode
+func (p *BackupResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return BackupResponse_Err_DEFAULT
   }
 return p.Err
 }
-var BackupResponse_Pid_DEFAULT *dsn.Gpid
-func (p *BackupResponse) GetPid() *dsn.Gpid {
+var BackupResponse_Pid_DEFAULT *base.Gpid
+func (p *BackupResponse) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return BackupResponse_Pid_DEFAULT
   }
@@ -943,7 +943,7 @@ func (p *BackupResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *BackupResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -951,7 +951,7 @@ func (p *BackupResponse)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *BackupResponse)  ReadField2(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -1085,7 +1085,7 @@ func (p *BackupResponse) String() string {
 //  - Pid
 //  - PolicyName
 type BackupClearRequest struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
   PolicyName string `thrift:"policy_name,2" db:"policy_name" json:"policy_name"`
 }
 
@@ -1093,8 +1093,8 @@ func NewBackupClearRequest() *BackupClearRequest {
   return &BackupClearRequest{}
 }
 
-var BackupClearRequest_Pid_DEFAULT *dsn.Gpid
-func (p *BackupClearRequest) GetPid() *dsn.Gpid {
+var BackupClearRequest_Pid_DEFAULT *base.Gpid
+func (p *BackupClearRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return BackupClearRequest_Pid_DEFAULT
   }
@@ -1157,7 +1157,7 @@ func (p *BackupClearRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *BackupClearRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -1618,7 +1618,7 @@ func (p *ConfigurationModifyBackupPolicyRequest) String() string {
 //  - Err
 //  - HintMessage
 type ConfigurationModifyBackupPolicyResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMessage string `thrift:"hint_message,2" db:"hint_message" json:"hint_message"`
 }
 
@@ -1626,8 +1626,8 @@ func NewConfigurationModifyBackupPolicyResponse() *ConfigurationModifyBackupPoli
   return &ConfigurationModifyBackupPolicyResponse{}
 }
 
-var ConfigurationModifyBackupPolicyResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationModifyBackupPolicyResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationModifyBackupPolicyResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationModifyBackupPolicyResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationModifyBackupPolicyResponse_Err_DEFAULT
   }
@@ -1690,7 +1690,7 @@ func (p *ConfigurationModifyBackupPolicyResponse) Read(iprot thrift.TProtocol) e
 }
 
 func (p *ConfigurationModifyBackupPolicyResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2044,7 +2044,7 @@ func (p *ConfigurationAddBackupPolicyRequest) String() string {
 //  - Err
 //  - HintMessage
 type ConfigurationAddBackupPolicyResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMessage string `thrift:"hint_message,2" db:"hint_message" json:"hint_message"`
 }
 
@@ -2052,8 +2052,8 @@ func NewConfigurationAddBackupPolicyResponse() *ConfigurationAddBackupPolicyResp
   return &ConfigurationAddBackupPolicyResponse{}
 }
 
-var ConfigurationAddBackupPolicyResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationAddBackupPolicyResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationAddBackupPolicyResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationAddBackupPolicyResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationAddBackupPolicyResponse_Err_DEFAULT
   }
@@ -2116,7 +2116,7 @@ func (p *ConfigurationAddBackupPolicyResponse) Read(iprot thrift.TProtocol) erro
 }
 
 func (p *ConfigurationAddBackupPolicyResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2890,7 +2890,7 @@ func (p *ConfigurationQueryBackupPolicyRequest) String() string {
 //  - BackupInfos
 //  - HintMsg
 type ConfigurationQueryBackupPolicyResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Policys []*PolicyEntry `thrift:"policys,2" db:"policys" json:"policys"`
   BackupInfos [][]*BackupEntry `thrift:"backup_infos,3" db:"backup_infos" json:"backup_infos"`
   HintMsg *string `thrift:"hint_msg,4" db:"hint_msg" json:"hint_msg,omitempty"`
@@ -2900,8 +2900,8 @@ func NewConfigurationQueryBackupPolicyResponse() *ConfigurationQueryBackupPolicy
   return &ConfigurationQueryBackupPolicyResponse{}
 }
 
-var ConfigurationQueryBackupPolicyResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationQueryBackupPolicyResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationQueryBackupPolicyResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationQueryBackupPolicyResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationQueryBackupPolicyResponse_Err_DEFAULT
   }
@@ -2999,7 +2999,7 @@ func (p *ConfigurationQueryBackupPolicyResponse) Read(iprot thrift.TProtocol) er
 }
 
 func (p *ConfigurationQueryBackupPolicyResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -3165,8 +3165,8 @@ func (p *ConfigurationQueryBackupPolicyResponse) String() string {
 //  - Progress
 //  - Reason
 type ConfigurationReportRestoreStatusRequest struct {
-  Pid *dsn.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
-  RestoreStatus *dsn.ErrorCode `thrift:"restore_status,2" db:"restore_status" json:"restore_status"`
+  Pid *base.Gpid `thrift:"pid,1" db:"pid" json:"pid"`
+  RestoreStatus *base.ErrorCode `thrift:"restore_status,2" db:"restore_status" json:"restore_status"`
   Progress int32 `thrift:"progress,3" db:"progress" json:"progress"`
   Reason *string `thrift:"reason,4" db:"reason" json:"reason,omitempty"`
 }
@@ -3175,15 +3175,15 @@ func NewConfigurationReportRestoreStatusRequest() *ConfigurationReportRestoreSta
   return &ConfigurationReportRestoreStatusRequest{}
 }
 
-var ConfigurationReportRestoreStatusRequest_Pid_DEFAULT *dsn.Gpid
-func (p *ConfigurationReportRestoreStatusRequest) GetPid() *dsn.Gpid {
+var ConfigurationReportRestoreStatusRequest_Pid_DEFAULT *base.Gpid
+func (p *ConfigurationReportRestoreStatusRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return ConfigurationReportRestoreStatusRequest_Pid_DEFAULT
   }
 return p.Pid
 }
-var ConfigurationReportRestoreStatusRequest_RestoreStatus_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationReportRestoreStatusRequest) GetRestoreStatus() *dsn.ErrorCode {
+var ConfigurationReportRestoreStatusRequest_RestoreStatus_DEFAULT *base.ErrorCode
+func (p *ConfigurationReportRestoreStatusRequest) GetRestoreStatus() *base.ErrorCode {
   if !p.IsSetRestoreStatus() {
     return ConfigurationReportRestoreStatusRequest_RestoreStatus_DEFAULT
   }
@@ -3281,7 +3281,7 @@ func (p *ConfigurationReportRestoreStatusRequest) Read(iprot thrift.TProtocol) e
 }
 
 func (p *ConfigurationReportRestoreStatusRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -3289,7 +3289,7 @@ func (p *ConfigurationReportRestoreStatusRequest)  ReadField1(iprot thrift.TProt
 }
 
 func (p *ConfigurationReportRestoreStatusRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.RestoreStatus = &dsn.ErrorCode{}
+  p.RestoreStatus = &base.ErrorCode{}
   if err := p.RestoreStatus.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.RestoreStatus), err)
   }
@@ -3384,15 +3384,15 @@ func (p *ConfigurationReportRestoreStatusRequest) String() string {
 // Attributes:
 //  - Err
 type ConfigurationReportRestoreStatusResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
 }
 
 func NewConfigurationReportRestoreStatusResponse() *ConfigurationReportRestoreStatusResponse {
   return &ConfigurationReportRestoreStatusResponse{}
 }
 
-var ConfigurationReportRestoreStatusResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationReportRestoreStatusResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationReportRestoreStatusResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationReportRestoreStatusResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationReportRestoreStatusResponse_Err_DEFAULT
   }
@@ -3441,7 +3441,7 @@ func (p *ConfigurationReportRestoreStatusResponse) Read(iprot thrift.TProtocol) 
 }
 
 func (p *ConfigurationReportRestoreStatusResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -3575,8 +3575,8 @@ func (p *ConfigurationQueryRestoreRequest) String() string {
 //  - RestoreStatus
 //  - RestoreProgress
 type ConfigurationQueryRestoreResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
-  RestoreStatus []*dsn.ErrorCode `thrift:"restore_status,2" db:"restore_status" json:"restore_status"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  RestoreStatus []*base.ErrorCode `thrift:"restore_status,2" db:"restore_status" json:"restore_status"`
   RestoreProgress []int32 `thrift:"restore_progress,3" db:"restore_progress" json:"restore_progress"`
 }
 
@@ -3584,15 +3584,15 @@ func NewConfigurationQueryRestoreResponse() *ConfigurationQueryRestoreResponse {
   return &ConfigurationQueryRestoreResponse{}
 }
 
-var ConfigurationQueryRestoreResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ConfigurationQueryRestoreResponse) GetErr() *dsn.ErrorCode {
+var ConfigurationQueryRestoreResponse_Err_DEFAULT *base.ErrorCode
+func (p *ConfigurationQueryRestoreResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ConfigurationQueryRestoreResponse_Err_DEFAULT
   }
 return p.Err
 }
 
-func (p *ConfigurationQueryRestoreResponse) GetRestoreStatus() []*dsn.ErrorCode {
+func (p *ConfigurationQueryRestoreResponse) GetRestoreStatus() []*base.ErrorCode {
   return p.RestoreStatus
 }
 
@@ -3662,7 +3662,7 @@ func (p *ConfigurationQueryRestoreResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ConfigurationQueryRestoreResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -3674,10 +3674,10 @@ func (p *ConfigurationQueryRestoreResponse)  ReadField2(iprot thrift.TProtocol) 
   if err != nil {
     return thrift.PrependError("error reading list begin: ", err)
   }
-  tSlice := make([]*dsn.ErrorCode, 0, size)
+  tSlice := make([]*base.ErrorCode, 0, size)
   p.RestoreStatus =  tSlice
   for i := 0; i < size; i ++ {
-    _elem9 := &dsn.ErrorCode{}
+    _elem9 := &base.ErrorCode{}
     if err := _elem9.Read(iprot); err != nil {
       return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem9), err)
     }
@@ -3958,7 +3958,7 @@ func (p *StartBackupAppRequest) String() string {
 //  - HintMessage
 //  - BackupID
 type StartBackupAppResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMessage string `thrift:"hint_message,2" db:"hint_message" json:"hint_message"`
   BackupID *int64 `thrift:"backup_id,3" db:"backup_id" json:"backup_id,omitempty"`
 }
@@ -3967,8 +3967,8 @@ func NewStartBackupAppResponse() *StartBackupAppResponse {
   return &StartBackupAppResponse{}
 }
 
-var StartBackupAppResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *StartBackupAppResponse) GetErr() *dsn.ErrorCode {
+var StartBackupAppResponse_Err_DEFAULT *base.ErrorCode
+func (p *StartBackupAppResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return StartBackupAppResponse_Err_DEFAULT
   }
@@ -4052,7 +4052,7 @@ func (p *StartBackupAppResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *StartBackupAppResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -4580,7 +4580,7 @@ func (p *QueryBackupStatusRequest) String() string {
 //  - HintMessage
 //  - BackupItems
 type QueryBackupStatusResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMessage string `thrift:"hint_message,2" db:"hint_message" json:"hint_message"`
   BackupItems []*BackupItem `thrift:"backup_items,3" db:"backup_items" json:"backup_items,omitempty"`
 }
@@ -4589,8 +4589,8 @@ func NewQueryBackupStatusResponse() *QueryBackupStatusResponse {
   return &QueryBackupStatusResponse{}
 }
 
-var QueryBackupStatusResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QueryBackupStatusResponse) GetErr() *dsn.ErrorCode {
+var QueryBackupStatusResponse_Err_DEFAULT *base.ErrorCode
+func (p *QueryBackupStatusResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QueryBackupStatusResponse_Err_DEFAULT
   }
@@ -4672,7 +4672,7 @@ func (p *QueryBackupStatusResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryBackupStatusResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }

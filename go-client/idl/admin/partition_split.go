@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 	"github.com/apache/incubator-pegasus/idl/replication"
 
 )
@@ -23,7 +23,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 var _ = replication.GoUnusedProtection__
 type SplitControlType int64
 const (
@@ -212,7 +212,7 @@ func (p *StartPartitionSplitRequest) String() string {
 //  - Err
 //  - HintMsg
 type StartPartitionSplitResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMsg string `thrift:"hint_msg,2" db:"hint_msg" json:"hint_msg"`
 }
 
@@ -220,8 +220,8 @@ func NewStartPartitionSplitResponse() *StartPartitionSplitResponse {
   return &StartPartitionSplitResponse{}
 }
 
-var StartPartitionSplitResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *StartPartitionSplitResponse) GetErr() *dsn.ErrorCode {
+var StartPartitionSplitResponse_Err_DEFAULT *base.ErrorCode
+func (p *StartPartitionSplitResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return StartPartitionSplitResponse_Err_DEFAULT
   }
@@ -284,7 +284,7 @@ func (p *StartPartitionSplitResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *StartPartitionSplitResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -555,7 +555,7 @@ func (p *ControlSplitRequest) String() string {
 //  - Err
 //  - HintMsg
 type ControlSplitResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   HintMsg *string `thrift:"hint_msg,2" db:"hint_msg" json:"hint_msg,omitempty"`
 }
 
@@ -563,8 +563,8 @@ func NewControlSplitResponse() *ControlSplitResponse {
   return &ControlSplitResponse{}
 }
 
-var ControlSplitResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *ControlSplitResponse) GetErr() *dsn.ErrorCode {
+var ControlSplitResponse_Err_DEFAULT *base.ErrorCode
+func (p *ControlSplitResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return ControlSplitResponse_Err_DEFAULT
   }
@@ -634,7 +634,7 @@ func (p *ControlSplitResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *ControlSplitResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -791,7 +791,7 @@ func (p *QuerySplitRequest) String() string {
 //  - Status
 //  - HintMsg
 type QuerySplitResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   NewPartitionCount_ int32 `thrift:"new_partition_count,2" db:"new_partition_count" json:"new_partition_count"`
   Status map[int32]SplitStatus `thrift:"status,3" db:"status" json:"status"`
   HintMsg *string `thrift:"hint_msg,4" db:"hint_msg" json:"hint_msg,omitempty"`
@@ -801,8 +801,8 @@ func NewQuerySplitResponse() *QuerySplitResponse {
   return &QuerySplitResponse{}
 }
 
-var QuerySplitResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QuerySplitResponse) GetErr() *dsn.ErrorCode {
+var QuerySplitResponse_Err_DEFAULT *base.ErrorCode
+func (p *QuerySplitResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QuerySplitResponse_Err_DEFAULT
   }
@@ -900,7 +900,7 @@ func (p *QuerySplitResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QuerySplitResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1036,25 +1036,25 @@ func (p *QuerySplitResponse) String() string {
 //  - ChildBallot
 //  - ChildAddress
 type NotifyCatchUpRequest struct {
-  ParentGpid *dsn.Gpid `thrift:"parent_gpid,1" db:"parent_gpid" json:"parent_gpid"`
-  ChildGpid *dsn.Gpid `thrift:"child_gpid,2" db:"child_gpid" json:"child_gpid"`
+  ParentGpid *base.Gpid `thrift:"parent_gpid,1" db:"parent_gpid" json:"parent_gpid"`
+  ChildGpid *base.Gpid `thrift:"child_gpid,2" db:"child_gpid" json:"child_gpid"`
   ChildBallot int64 `thrift:"child_ballot,3" db:"child_ballot" json:"child_ballot"`
-  ChildAddress *dsn.RPCAddress `thrift:"child_address,4" db:"child_address" json:"child_address"`
+  ChildAddress *base.RPCAddress `thrift:"child_address,4" db:"child_address" json:"child_address"`
 }
 
 func NewNotifyCatchUpRequest() *NotifyCatchUpRequest {
   return &NotifyCatchUpRequest{}
 }
 
-var NotifyCatchUpRequest_ParentGpid_DEFAULT *dsn.Gpid
-func (p *NotifyCatchUpRequest) GetParentGpid() *dsn.Gpid {
+var NotifyCatchUpRequest_ParentGpid_DEFAULT *base.Gpid
+func (p *NotifyCatchUpRequest) GetParentGpid() *base.Gpid {
   if !p.IsSetParentGpid() {
     return NotifyCatchUpRequest_ParentGpid_DEFAULT
   }
 return p.ParentGpid
 }
-var NotifyCatchUpRequest_ChildGpid_DEFAULT *dsn.Gpid
-func (p *NotifyCatchUpRequest) GetChildGpid() *dsn.Gpid {
+var NotifyCatchUpRequest_ChildGpid_DEFAULT *base.Gpid
+func (p *NotifyCatchUpRequest) GetChildGpid() *base.Gpid {
   if !p.IsSetChildGpid() {
     return NotifyCatchUpRequest_ChildGpid_DEFAULT
   }
@@ -1064,8 +1064,8 @@ return p.ChildGpid
 func (p *NotifyCatchUpRequest) GetChildBallot() int64 {
   return p.ChildBallot
 }
-var NotifyCatchUpRequest_ChildAddress_DEFAULT *dsn.RPCAddress
-func (p *NotifyCatchUpRequest) GetChildAddress() *dsn.RPCAddress {
+var NotifyCatchUpRequest_ChildAddress_DEFAULT *base.RPCAddress
+func (p *NotifyCatchUpRequest) GetChildAddress() *base.RPCAddress {
   if !p.IsSetChildAddress() {
     return NotifyCatchUpRequest_ChildAddress_DEFAULT
   }
@@ -1152,7 +1152,7 @@ func (p *NotifyCatchUpRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *NotifyCatchUpRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.ParentGpid = &dsn.Gpid{}
+  p.ParentGpid = &base.Gpid{}
   if err := p.ParentGpid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.ParentGpid), err)
   }
@@ -1160,7 +1160,7 @@ func (p *NotifyCatchUpRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *NotifyCatchUpRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.ChildGpid = &dsn.Gpid{}
+  p.ChildGpid = &base.Gpid{}
   if err := p.ChildGpid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.ChildGpid), err)
   }
@@ -1177,7 +1177,7 @@ func (p *NotifyCatchUpRequest)  ReadField3(iprot thrift.TProtocol) error {
 }
 
 func (p *NotifyCatchUpRequest)  ReadField4(iprot thrift.TProtocol) error {
-  p.ChildAddress = &dsn.RPCAddress{}
+  p.ChildAddress = &base.RPCAddress{}
   if err := p.ChildAddress.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.ChildAddress), err)
   }
@@ -1253,15 +1253,15 @@ func (p *NotifyCatchUpRequest) String() string {
 // Attributes:
 //  - Err
 type NotifyCacthUpResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
 }
 
 func NewNotifyCacthUpResponse() *NotifyCacthUpResponse {
   return &NotifyCacthUpResponse{}
 }
 
-var NotifyCacthUpResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *NotifyCacthUpResponse) GetErr() *dsn.ErrorCode {
+var NotifyCacthUpResponse_Err_DEFAULT *base.ErrorCode
+func (p *NotifyCacthUpResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return NotifyCacthUpResponse_Err_DEFAULT
   }
@@ -1310,7 +1310,7 @@ func (p *NotifyCacthUpResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *NotifyCacthUpResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1354,9 +1354,9 @@ func (p *NotifyCacthUpResponse) String() string {
 //  - ChildPid
 //  - Ballot
 type UpdateChildGroupPartitionCountRequest struct {
-  TargetAddress *dsn.RPCAddress `thrift:"target_address,1" db:"target_address" json:"target_address"`
+  TargetAddress *base.RPCAddress `thrift:"target_address,1" db:"target_address" json:"target_address"`
   NewPartitionCount_ int32 `thrift:"new_partition_count,2" db:"new_partition_count" json:"new_partition_count"`
-  ChildPid *dsn.Gpid `thrift:"child_pid,3" db:"child_pid" json:"child_pid"`
+  ChildPid *base.Gpid `thrift:"child_pid,3" db:"child_pid" json:"child_pid"`
   Ballot int64 `thrift:"ballot,4" db:"ballot" json:"ballot"`
 }
 
@@ -1364,8 +1364,8 @@ func NewUpdateChildGroupPartitionCountRequest() *UpdateChildGroupPartitionCountR
   return &UpdateChildGroupPartitionCountRequest{}
 }
 
-var UpdateChildGroupPartitionCountRequest_TargetAddress_DEFAULT *dsn.RPCAddress
-func (p *UpdateChildGroupPartitionCountRequest) GetTargetAddress() *dsn.RPCAddress {
+var UpdateChildGroupPartitionCountRequest_TargetAddress_DEFAULT *base.RPCAddress
+func (p *UpdateChildGroupPartitionCountRequest) GetTargetAddress() *base.RPCAddress {
   if !p.IsSetTargetAddress() {
     return UpdateChildGroupPartitionCountRequest_TargetAddress_DEFAULT
   }
@@ -1375,8 +1375,8 @@ return p.TargetAddress
 func (p *UpdateChildGroupPartitionCountRequest) GetNewPartitionCount_() int32 {
   return p.NewPartitionCount_
 }
-var UpdateChildGroupPartitionCountRequest_ChildPid_DEFAULT *dsn.Gpid
-func (p *UpdateChildGroupPartitionCountRequest) GetChildPid() *dsn.Gpid {
+var UpdateChildGroupPartitionCountRequest_ChildPid_DEFAULT *base.Gpid
+func (p *UpdateChildGroupPartitionCountRequest) GetChildPid() *base.Gpid {
   if !p.IsSetChildPid() {
     return UpdateChildGroupPartitionCountRequest_ChildPid_DEFAULT
   }
@@ -1463,7 +1463,7 @@ func (p *UpdateChildGroupPartitionCountRequest) Read(iprot thrift.TProtocol) err
 }
 
 func (p *UpdateChildGroupPartitionCountRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.TargetAddress = &dsn.RPCAddress{}
+  p.TargetAddress = &base.RPCAddress{}
   if err := p.TargetAddress.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.TargetAddress), err)
   }
@@ -1480,7 +1480,7 @@ func (p *UpdateChildGroupPartitionCountRequest)  ReadField2(iprot thrift.TProtoc
 }
 
 func (p *UpdateChildGroupPartitionCountRequest)  ReadField3(iprot thrift.TProtocol) error {
-  p.ChildPid = &dsn.Gpid{}
+  p.ChildPid = &base.Gpid{}
   if err := p.ChildPid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.ChildPid), err)
   }
@@ -1564,15 +1564,15 @@ func (p *UpdateChildGroupPartitionCountRequest) String() string {
 // Attributes:
 //  - Err
 type UpdateChildGroupPartitionCountResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
 }
 
 func NewUpdateChildGroupPartitionCountResponse() *UpdateChildGroupPartitionCountResponse {
   return &UpdateChildGroupPartitionCountResponse{}
 }
 
-var UpdateChildGroupPartitionCountResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *UpdateChildGroupPartitionCountResponse) GetErr() *dsn.ErrorCode {
+var UpdateChildGroupPartitionCountResponse_Err_DEFAULT *base.ErrorCode
+func (p *UpdateChildGroupPartitionCountResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return UpdateChildGroupPartitionCountResponse_Err_DEFAULT
   }
@@ -1621,7 +1621,7 @@ func (p *UpdateChildGroupPartitionCountResponse) Read(iprot thrift.TProtocol) er
 }
 
 func (p *UpdateChildGroupPartitionCountResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1668,7 +1668,7 @@ type RegisterChildRequest struct {
   App *replication.AppInfo `thrift:"app,1" db:"app" json:"app"`
   ParentConfig *replication.PartitionConfiguration `thrift:"parent_config,2" db:"parent_config" json:"parent_config"`
   ChildConfig *replication.PartitionConfiguration `thrift:"child_config,3" db:"child_config" json:"child_config"`
-  PrimaryAddress *dsn.RPCAddress `thrift:"primary_address,4" db:"primary_address" json:"primary_address"`
+  PrimaryAddress *base.RPCAddress `thrift:"primary_address,4" db:"primary_address" json:"primary_address"`
 }
 
 func NewRegisterChildRequest() *RegisterChildRequest {
@@ -1696,8 +1696,8 @@ func (p *RegisterChildRequest) GetChildConfig() *replication.PartitionConfigurat
   }
 return p.ChildConfig
 }
-var RegisterChildRequest_PrimaryAddress_DEFAULT *dsn.RPCAddress
-func (p *RegisterChildRequest) GetPrimaryAddress() *dsn.RPCAddress {
+var RegisterChildRequest_PrimaryAddress_DEFAULT *base.RPCAddress
+func (p *RegisterChildRequest) GetPrimaryAddress() *base.RPCAddress {
   if !p.IsSetPrimaryAddress() {
     return RegisterChildRequest_PrimaryAddress_DEFAULT
   }
@@ -1816,7 +1816,7 @@ func (p *RegisterChildRequest)  ReadField3(iprot thrift.TProtocol) error {
 }
 
 func (p *RegisterChildRequest)  ReadField4(iprot thrift.TProtocol) error {
-  p.PrimaryAddress = &dsn.RPCAddress{}
+  p.PrimaryAddress = &base.RPCAddress{}
   if err := p.PrimaryAddress.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.PrimaryAddress), err)
   }
@@ -1896,7 +1896,7 @@ func (p *RegisterChildRequest) String() string {
 //  - ParentConfig
 //  - ChildConfig
 type RegisterChildResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   App *replication.AppInfo `thrift:"app,2" db:"app" json:"app"`
   ParentConfig *replication.PartitionConfiguration `thrift:"parent_config,3" db:"parent_config" json:"parent_config"`
   ChildConfig *replication.PartitionConfiguration `thrift:"child_config,4" db:"child_config" json:"child_config"`
@@ -1906,8 +1906,8 @@ func NewRegisterChildResponse() *RegisterChildResponse {
   return &RegisterChildResponse{}
 }
 
-var RegisterChildResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *RegisterChildResponse) GetErr() *dsn.ErrorCode {
+var RegisterChildResponse_Err_DEFAULT *base.ErrorCode
+func (p *RegisterChildResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return RegisterChildResponse_Err_DEFAULT
   }
@@ -2019,7 +2019,7 @@ func (p *RegisterChildResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *RegisterChildResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2128,7 +2128,7 @@ func (p *RegisterChildResponse) String() string {
 //  - PartitionCount
 type NotifyStopSplitRequest struct {
   AppName string `thrift:"app_name,1" db:"app_name" json:"app_name"`
-  ParentGpid *dsn.Gpid `thrift:"parent_gpid,2" db:"parent_gpid" json:"parent_gpid"`
+  ParentGpid *base.Gpid `thrift:"parent_gpid,2" db:"parent_gpid" json:"parent_gpid"`
   MetaSplitStatus SplitStatus `thrift:"meta_split_status,3" db:"meta_split_status" json:"meta_split_status"`
   PartitionCount int32 `thrift:"partition_count,4" db:"partition_count" json:"partition_count"`
 }
@@ -2141,8 +2141,8 @@ func NewNotifyStopSplitRequest() *NotifyStopSplitRequest {
 func (p *NotifyStopSplitRequest) GetAppName() string {
   return p.AppName
 }
-var NotifyStopSplitRequest_ParentGpid_DEFAULT *dsn.Gpid
-func (p *NotifyStopSplitRequest) GetParentGpid() *dsn.Gpid {
+var NotifyStopSplitRequest_ParentGpid_DEFAULT *base.Gpid
+func (p *NotifyStopSplitRequest) GetParentGpid() *base.Gpid {
   if !p.IsSetParentGpid() {
     return NotifyStopSplitRequest_ParentGpid_DEFAULT
   }
@@ -2238,7 +2238,7 @@ func (p *NotifyStopSplitRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *NotifyStopSplitRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.ParentGpid = &dsn.Gpid{}
+  p.ParentGpid = &base.Gpid{}
   if err := p.ParentGpid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.ParentGpid), err)
   }
@@ -2331,15 +2331,15 @@ func (p *NotifyStopSplitRequest) String() string {
 // Attributes:
 //  - Err
 type NotifyStopSplitResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
 }
 
 func NewNotifyStopSplitResponse() *NotifyStopSplitResponse {
   return &NotifyStopSplitResponse{}
 }
 
-var NotifyStopSplitResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *NotifyStopSplitResponse) GetErr() *dsn.ErrorCode {
+var NotifyStopSplitResponse_Err_DEFAULT *base.ErrorCode
+func (p *NotifyStopSplitResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return NotifyStopSplitResponse_Err_DEFAULT
   }
@@ -2388,7 +2388,7 @@ func (p *NotifyStopSplitResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *NotifyStopSplitResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -2432,7 +2432,7 @@ func (p *NotifyStopSplitResponse) String() string {
 //  - PartitionCount
 type QueryChildStateRequest struct {
   AppName string `thrift:"app_name,1" db:"app_name" json:"app_name"`
-  Pid *dsn.Gpid `thrift:"pid,2" db:"pid" json:"pid"`
+  Pid *base.Gpid `thrift:"pid,2" db:"pid" json:"pid"`
   PartitionCount int32 `thrift:"partition_count,3" db:"partition_count" json:"partition_count"`
 }
 
@@ -2444,8 +2444,8 @@ func NewQueryChildStateRequest() *QueryChildStateRequest {
 func (p *QueryChildStateRequest) GetAppName() string {
   return p.AppName
 }
-var QueryChildStateRequest_Pid_DEFAULT *dsn.Gpid
-func (p *QueryChildStateRequest) GetPid() *dsn.Gpid {
+var QueryChildStateRequest_Pid_DEFAULT *base.Gpid
+func (p *QueryChildStateRequest) GetPid() *base.Gpid {
   if !p.IsSetPid() {
     return QueryChildStateRequest_Pid_DEFAULT
   }
@@ -2527,7 +2527,7 @@ func (p *QueryChildStateRequest)  ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryChildStateRequest)  ReadField2(iprot thrift.TProtocol) error {
-  p.Pid = &dsn.Gpid{}
+  p.Pid = &base.Gpid{}
   if err := p.Pid.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Pid), err)
   }
@@ -2601,7 +2601,7 @@ func (p *QueryChildStateRequest) String() string {
 //  - PartitionCount
 //  - ChildConfig
 type QueryChildStateResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   PartitionCount *int32 `thrift:"partition_count,2" db:"partition_count" json:"partition_count,omitempty"`
   ChildConfig *replication.PartitionConfiguration `thrift:"child_config,3" db:"child_config" json:"child_config,omitempty"`
 }
@@ -2610,8 +2610,8 @@ func NewQueryChildStateResponse() *QueryChildStateResponse {
   return &QueryChildStateResponse{}
 }
 
-var QueryChildStateResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *QueryChildStateResponse) GetErr() *dsn.ErrorCode {
+var QueryChildStateResponse_Err_DEFAULT *base.ErrorCode
+func (p *QueryChildStateResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return QueryChildStateResponse_Err_DEFAULT
   }
@@ -2702,7 +2702,7 @@ func (p *QueryChildStateResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *QueryChildStateResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }

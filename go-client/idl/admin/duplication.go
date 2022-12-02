@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/apache/incubator-pegasus/idl/dsn"
+	"github.com/apache/incubator-pegasus/idl/base"
 	"github.com/apache/incubator-pegasus/idl/replication"
 
 )
@@ -23,7 +23,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
-var _ = dsn.GoUnusedProtection__
+var _ = base.GoUnusedProtection__
 var _ = replication.GoUnusedProtection__
 type DuplicationStatus int64
 const (
@@ -324,7 +324,7 @@ func (p *DuplicationAddRequest) String() string {
 //  - Dupid
 //  - Hint
 type DuplicationAddResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Appid int32 `thrift:"appid,2" db:"appid" json:"appid"`
   Dupid int32 `thrift:"dupid,3" db:"dupid" json:"dupid"`
   Hint *string `thrift:"hint,4" db:"hint" json:"hint,omitempty"`
@@ -334,8 +334,8 @@ func NewDuplicationAddResponse() *DuplicationAddResponse {
   return &DuplicationAddResponse{}
 }
 
-var DuplicationAddResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *DuplicationAddResponse) GetErr() *dsn.ErrorCode {
+var DuplicationAddResponse_Err_DEFAULT *base.ErrorCode
+func (p *DuplicationAddResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return DuplicationAddResponse_Err_DEFAULT
   }
@@ -433,7 +433,7 @@ func (p *DuplicationAddResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DuplicationAddResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -756,7 +756,7 @@ func (p *DuplicationModifyRequest) String() string {
 //  - Err
 //  - Appid
 type DuplicationModifyResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   Appid int32 `thrift:"appid,2" db:"appid" json:"appid"`
 }
 
@@ -764,8 +764,8 @@ func NewDuplicationModifyResponse() *DuplicationModifyResponse {
   return &DuplicationModifyResponse{}
 }
 
-var DuplicationModifyResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *DuplicationModifyResponse) GetErr() *dsn.ErrorCode {
+var DuplicationModifyResponse_Err_DEFAULT *base.ErrorCode
+func (p *DuplicationModifyResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return DuplicationModifyResponse_Err_DEFAULT
   }
@@ -828,7 +828,7 @@ func (p *DuplicationModifyResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DuplicationModifyResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1301,7 +1301,7 @@ func (p *DuplicationQueryRequest) String() string {
 //  - Appid
 //  - EntryList
 type DuplicationQueryResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   // unused field # 2
   Appid int32 `thrift:"appid,3" db:"appid" json:"appid"`
   EntryList []*DuplicationEntry `thrift:"entry_list,4" db:"entry_list" json:"entry_list"`
@@ -1311,8 +1311,8 @@ func NewDuplicationQueryResponse() *DuplicationQueryResponse {
   return &DuplicationQueryResponse{}
 }
 
-var DuplicationQueryResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *DuplicationQueryResponse) GetErr() *dsn.ErrorCode {
+var DuplicationQueryResponse_Err_DEFAULT *base.ErrorCode
+func (p *DuplicationQueryResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return DuplicationQueryResponse_Err_DEFAULT
   }
@@ -1389,7 +1389,7 @@ func (p *DuplicationQueryResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DuplicationQueryResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
@@ -1661,23 +1661,23 @@ func (p *DuplicationConfirmEntry) String() string {
 //  - Node
 //  - ConfirmList
 type DuplicationSyncRequest struct {
-  Node *dsn.RPCAddress `thrift:"node,1" db:"node" json:"node"`
-  ConfirmList map[*dsn.Gpid][]*DuplicationConfirmEntry `thrift:"confirm_list,2" db:"confirm_list" json:"confirm_list"`
+  Node *base.RPCAddress `thrift:"node,1" db:"node" json:"node"`
+  ConfirmList map[*base.Gpid][]*DuplicationConfirmEntry `thrift:"confirm_list,2" db:"confirm_list" json:"confirm_list"`
 }
 
 func NewDuplicationSyncRequest() *DuplicationSyncRequest {
   return &DuplicationSyncRequest{}
 }
 
-var DuplicationSyncRequest_Node_DEFAULT *dsn.RPCAddress
-func (p *DuplicationSyncRequest) GetNode() *dsn.RPCAddress {
+var DuplicationSyncRequest_Node_DEFAULT *base.RPCAddress
+func (p *DuplicationSyncRequest) GetNode() *base.RPCAddress {
   if !p.IsSetNode() {
     return DuplicationSyncRequest_Node_DEFAULT
   }
 return p.Node
 }
 
-func (p *DuplicationSyncRequest) GetConfirmList() map[*dsn.Gpid][]*DuplicationConfirmEntry {
+func (p *DuplicationSyncRequest) GetConfirmList() map[*base.Gpid][]*DuplicationConfirmEntry {
   return p.ConfirmList
 }
 func (p *DuplicationSyncRequest) IsSetNode() bool {
@@ -1733,7 +1733,7 @@ func (p *DuplicationSyncRequest) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DuplicationSyncRequest)  ReadField1(iprot thrift.TProtocol) error {
-  p.Node = &dsn.RPCAddress{}
+  p.Node = &base.RPCAddress{}
   if err := p.Node.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Node), err)
   }
@@ -1745,10 +1745,10 @@ func (p *DuplicationSyncRequest)  ReadField2(iprot thrift.TProtocol) error {
   if err != nil {
     return thrift.PrependError("error reading map begin: ", err)
   }
-  tMap := make(map[*dsn.Gpid][]*DuplicationConfirmEntry, size)
+  tMap := make(map[*base.Gpid][]*DuplicationConfirmEntry, size)
   p.ConfirmList =  tMap
   for i := 0; i < size; i ++ {
-    _key3 := &dsn.Gpid{}
+    _key3 := &base.Gpid{}
     if err := _key3.Read(iprot); err != nil {
       return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _key3), err)
     }
@@ -1842,7 +1842,7 @@ func (p *DuplicationSyncRequest) String() string {
 //  - Err
 //  - DupMap
 type DuplicationSyncResponse struct {
-  Err *dsn.ErrorCode `thrift:"err,1" db:"err" json:"err"`
+  Err *base.ErrorCode `thrift:"err,1" db:"err" json:"err"`
   DupMap map[int32]map[int32]*DuplicationEntry `thrift:"dup_map,2" db:"dup_map" json:"dup_map"`
 }
 
@@ -1850,8 +1850,8 @@ func NewDuplicationSyncResponse() *DuplicationSyncResponse {
   return &DuplicationSyncResponse{}
 }
 
-var DuplicationSyncResponse_Err_DEFAULT *dsn.ErrorCode
-func (p *DuplicationSyncResponse) GetErr() *dsn.ErrorCode {
+var DuplicationSyncResponse_Err_DEFAULT *base.ErrorCode
+func (p *DuplicationSyncResponse) GetErr() *base.ErrorCode {
   if !p.IsSetErr() {
     return DuplicationSyncResponse_Err_DEFAULT
   }
@@ -1914,7 +1914,7 @@ func (p *DuplicationSyncResponse) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *DuplicationSyncResponse)  ReadField1(iprot thrift.TProtocol) error {
-  p.Err = &dsn.ErrorCode{}
+  p.Err = &base.ErrorCode{}
   if err := p.Err.Read(iprot); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Err), err)
   }
