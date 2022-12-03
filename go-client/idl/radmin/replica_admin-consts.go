@@ -3,15 +3,16 @@
 
 package radmin
 
-import (
+import(
 	"bytes"
 	"context"
+	"reflect"
 	"fmt"
-	"github.com/apache/incubator-pegasus/go-client/idl/admin"
+	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/apache/incubator-pegasus/go-client/idl/base"
 	"github.com/apache/incubator-pegasus/go-client/idl/replication"
-	"github.com/apache/thrift/lib/go/thrift"
-	"reflect"
+	"github.com/apache/incubator-pegasus/go-client/idl/admin"
+
 )
 
 // (needed to ensure safety because of naive import list construction.)
@@ -27,3 +28,4 @@ var _ = admin.GoUnusedProtection__
 
 func init() {
 }
+

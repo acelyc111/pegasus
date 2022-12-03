@@ -3,14 +3,15 @@
 
 package admin
 
-import (
+import(
 	"bytes"
 	"context"
+	"reflect"
 	"fmt"
+	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/apache/incubator-pegasus/go-client/idl/base"
 	"github.com/apache/incubator-pegasus/go-client/idl/replication"
-	"github.com/apache/thrift/lib/go/thrift"
-	"reflect"
+
 )
 
 // (needed to ensure safety because of naive import list construction.)
@@ -25,3 +26,4 @@ var _ = replication.GoUnusedProtection__
 
 func init() {
 }
+
