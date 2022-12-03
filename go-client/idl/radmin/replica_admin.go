@@ -2370,3 +2370,862 @@ func (p *AddNewDiskResponse) String() string {
   return fmt.Sprintf("AddNewDiskResponse(%+v)", *p)
 }
 
+type ReplicaClient interface {
+  // Parameters:
+  //  - Req
+  QueryDiskInfo(ctx context.Context, req *QueryDiskInfoRequest) (r *QueryDiskInfoResponse, err error)
+  // Parameters:
+  //  - Req
+  DiskMigrate(ctx context.Context, req *ReplicaDiskMigrateRequest) (r *ReplicaDiskMigrateResponse, err error)
+  // Parameters:
+  //  - Req
+  AddDisk(ctx context.Context, req *AddNewDiskRequest) (r *AddNewDiskResponse, err error)
+}
+
+type ReplicaClientClient struct {
+  c thrift.TClient
+}
+
+func NewReplicaClientClientFactory(t thrift.TTransport, f thrift.TProtocolFactory) *ReplicaClientClient {
+  return &ReplicaClientClient{
+    c: thrift.NewTStandardClient(f.GetProtocol(t), f.GetProtocol(t)),
+  }
+}
+
+func NewReplicaClientClientProtocol(t thrift.TTransport, iprot thrift.TProtocol, oprot thrift.TProtocol) *ReplicaClientClient {
+  return &ReplicaClientClient{
+    c: thrift.NewTStandardClient(iprot, oprot),
+  }
+}
+
+func NewReplicaClientClient(c thrift.TClient) *ReplicaClientClient {
+  return &ReplicaClientClient{
+    c: c,
+  }
+}
+
+func (p *ReplicaClientClient) Client_() thrift.TClient {
+  return p.c
+}
+// Parameters:
+//  - Req
+func (p *ReplicaClientClient) QueryDiskInfo(ctx context.Context, req *QueryDiskInfoRequest) (r *QueryDiskInfoResponse, err error) {
+  var _args8 ReplicaClientQueryDiskInfoArgs
+  _args8.Req = req
+  var _result9 ReplicaClientQueryDiskInfoResult
+  if err = p.Client_().Call(ctx, "query_disk_info", &_args8, &_result9); err != nil {
+    return
+  }
+  return _result9.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *ReplicaClientClient) DiskMigrate(ctx context.Context, req *ReplicaDiskMigrateRequest) (r *ReplicaDiskMigrateResponse, err error) {
+  var _args10 ReplicaClientDiskMigrateArgs
+  _args10.Req = req
+  var _result11 ReplicaClientDiskMigrateResult
+  if err = p.Client_().Call(ctx, "disk_migrate", &_args10, &_result11); err != nil {
+    return
+  }
+  return _result11.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *ReplicaClientClient) AddDisk(ctx context.Context, req *AddNewDiskRequest) (r *AddNewDiskResponse, err error) {
+  var _args12 ReplicaClientAddDiskArgs
+  _args12.Req = req
+  var _result13 ReplicaClientAddDiskResult
+  if err = p.Client_().Call(ctx, "add_disk", &_args12, &_result13); err != nil {
+    return
+  }
+  return _result13.GetSuccess(), nil
+}
+
+type ReplicaClientProcessor struct {
+  processorMap map[string]thrift.TProcessorFunction
+  handler ReplicaClient
+}
+
+func (p *ReplicaClientProcessor) AddToProcessorMap(key string, processor thrift.TProcessorFunction) {
+  p.processorMap[key] = processor
+}
+
+func (p *ReplicaClientProcessor) GetProcessorFunction(key string) (processor thrift.TProcessorFunction, ok bool) {
+  processor, ok = p.processorMap[key]
+  return processor, ok
+}
+
+func (p *ReplicaClientProcessor) ProcessorMap() map[string]thrift.TProcessorFunction {
+  return p.processorMap
+}
+
+func NewReplicaClientProcessor(handler ReplicaClient) *ReplicaClientProcessor {
+
+  self14 := &ReplicaClientProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
+  self14.processorMap["query_disk_info"] = &replicaClientProcessorQueryDiskInfo{handler:handler}
+  self14.processorMap["disk_migrate"] = &replicaClientProcessorDiskMigrate{handler:handler}
+  self14.processorMap["add_disk"] = &replicaClientProcessorAddDisk{handler:handler}
+return self14
+}
+
+func (p *ReplicaClientProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  name, _, seqId, err := iprot.ReadMessageBegin()
+  if err != nil { return false, err }
+  if processor, ok := p.GetProcessorFunction(name); ok {
+    return processor.Process(ctx, seqId, iprot, oprot)
+  }
+  iprot.Skip(thrift.STRUCT)
+  iprot.ReadMessageEnd()
+  x15 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
+  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
+  x15.Write(oprot)
+  oprot.WriteMessageEnd()
+  oprot.Flush(ctx)
+  return false, x15
+
+}
+
+type replicaClientProcessorQueryDiskInfo struct {
+  handler ReplicaClient
+}
+
+func (p *replicaClientProcessorQueryDiskInfo) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := ReplicaClientQueryDiskInfoArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("query_disk_info", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := ReplicaClientQueryDiskInfoResult{}
+var retval *QueryDiskInfoResponse
+  var err2 error
+  if retval, err2 = p.handler.QueryDiskInfo(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing query_disk_info: " + err2.Error())
+    oprot.WriteMessageBegin("query_disk_info", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("query_disk_info", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type replicaClientProcessorDiskMigrate struct {
+  handler ReplicaClient
+}
+
+func (p *replicaClientProcessorDiskMigrate) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := ReplicaClientDiskMigrateArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("disk_migrate", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := ReplicaClientDiskMigrateResult{}
+var retval *ReplicaDiskMigrateResponse
+  var err2 error
+  if retval, err2 = p.handler.DiskMigrate(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing disk_migrate: " + err2.Error())
+    oprot.WriteMessageBegin("disk_migrate", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("disk_migrate", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type replicaClientProcessorAddDisk struct {
+  handler ReplicaClient
+}
+
+func (p *replicaClientProcessorAddDisk) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := ReplicaClientAddDiskArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("add_disk", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := ReplicaClientAddDiskResult{}
+var retval *AddNewDiskResponse
+  var err2 error
+  if retval, err2 = p.handler.AddDisk(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing add_disk: " + err2.Error())
+    oprot.WriteMessageBegin("add_disk", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("add_disk", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+
+// HELPER FUNCTIONS AND STRUCTURES
+
+// Attributes:
+//  - Req
+type ReplicaClientQueryDiskInfoArgs struct {
+  Req *QueryDiskInfoRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewReplicaClientQueryDiskInfoArgs() *ReplicaClientQueryDiskInfoArgs {
+  return &ReplicaClientQueryDiskInfoArgs{}
+}
+
+var ReplicaClientQueryDiskInfoArgs_Req_DEFAULT *QueryDiskInfoRequest
+func (p *ReplicaClientQueryDiskInfoArgs) GetReq() *QueryDiskInfoRequest {
+  if !p.IsSetReq() {
+    return ReplicaClientQueryDiskInfoArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *ReplicaClientQueryDiskInfoArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *ReplicaClientQueryDiskInfoArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientQueryDiskInfoArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &QueryDiskInfoRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientQueryDiskInfoArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_disk_info_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *ReplicaClientQueryDiskInfoArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *ReplicaClientQueryDiskInfoArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("ReplicaClientQueryDiskInfoArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type ReplicaClientQueryDiskInfoResult struct {
+  Success *QueryDiskInfoResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewReplicaClientQueryDiskInfoResult() *ReplicaClientQueryDiskInfoResult {
+  return &ReplicaClientQueryDiskInfoResult{}
+}
+
+var ReplicaClientQueryDiskInfoResult_Success_DEFAULT *QueryDiskInfoResponse
+func (p *ReplicaClientQueryDiskInfoResult) GetSuccess() *QueryDiskInfoResponse {
+  if !p.IsSetSuccess() {
+    return ReplicaClientQueryDiskInfoResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *ReplicaClientQueryDiskInfoResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *ReplicaClientQueryDiskInfoResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientQueryDiskInfoResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &QueryDiskInfoResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientQueryDiskInfoResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_disk_info_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *ReplicaClientQueryDiskInfoResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *ReplicaClientQueryDiskInfoResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("ReplicaClientQueryDiskInfoResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type ReplicaClientDiskMigrateArgs struct {
+  Req *ReplicaDiskMigrateRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewReplicaClientDiskMigrateArgs() *ReplicaClientDiskMigrateArgs {
+  return &ReplicaClientDiskMigrateArgs{}
+}
+
+var ReplicaClientDiskMigrateArgs_Req_DEFAULT *ReplicaDiskMigrateRequest
+func (p *ReplicaClientDiskMigrateArgs) GetReq() *ReplicaDiskMigrateRequest {
+  if !p.IsSetReq() {
+    return ReplicaClientDiskMigrateArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *ReplicaClientDiskMigrateArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *ReplicaClientDiskMigrateArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientDiskMigrateArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &ReplicaDiskMigrateRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientDiskMigrateArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("disk_migrate_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *ReplicaClientDiskMigrateArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *ReplicaClientDiskMigrateArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("ReplicaClientDiskMigrateArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type ReplicaClientDiskMigrateResult struct {
+  Success *ReplicaDiskMigrateResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewReplicaClientDiskMigrateResult() *ReplicaClientDiskMigrateResult {
+  return &ReplicaClientDiskMigrateResult{}
+}
+
+var ReplicaClientDiskMigrateResult_Success_DEFAULT *ReplicaDiskMigrateResponse
+func (p *ReplicaClientDiskMigrateResult) GetSuccess() *ReplicaDiskMigrateResponse {
+  if !p.IsSetSuccess() {
+    return ReplicaClientDiskMigrateResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *ReplicaClientDiskMigrateResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *ReplicaClientDiskMigrateResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientDiskMigrateResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &ReplicaDiskMigrateResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientDiskMigrateResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("disk_migrate_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *ReplicaClientDiskMigrateResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *ReplicaClientDiskMigrateResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("ReplicaClientDiskMigrateResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type ReplicaClientAddDiskArgs struct {
+  Req *AddNewDiskRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewReplicaClientAddDiskArgs() *ReplicaClientAddDiskArgs {
+  return &ReplicaClientAddDiskArgs{}
+}
+
+var ReplicaClientAddDiskArgs_Req_DEFAULT *AddNewDiskRequest
+func (p *ReplicaClientAddDiskArgs) GetReq() *AddNewDiskRequest {
+  if !p.IsSetReq() {
+    return ReplicaClientAddDiskArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *ReplicaClientAddDiskArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *ReplicaClientAddDiskArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientAddDiskArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &AddNewDiskRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientAddDiskArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("add_disk_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *ReplicaClientAddDiskArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *ReplicaClientAddDiskArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("ReplicaClientAddDiskArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type ReplicaClientAddDiskResult struct {
+  Success *AddNewDiskResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewReplicaClientAddDiskResult() *ReplicaClientAddDiskResult {
+  return &ReplicaClientAddDiskResult{}
+}
+
+var ReplicaClientAddDiskResult_Success_DEFAULT *AddNewDiskResponse
+func (p *ReplicaClientAddDiskResult) GetSuccess() *AddNewDiskResponse {
+  if !p.IsSetSuccess() {
+    return ReplicaClientAddDiskResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *ReplicaClientAddDiskResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *ReplicaClientAddDiskResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientAddDiskResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &AddNewDiskResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *ReplicaClientAddDiskResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("add_disk_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *ReplicaClientAddDiskResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *ReplicaClientAddDiskResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("ReplicaClientAddDiskResult(%+v)", *p)
+}
+
+

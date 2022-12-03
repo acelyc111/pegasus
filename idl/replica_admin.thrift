@@ -160,11 +160,11 @@ struct add_new_disk_response {
 
 // ONLY FOR GO
 // A client to ReplicaServer's administration API.
-//service replica_client
-//{
-//    query_disk_info_response query_disk_info(1:query_disk_info_request req);
-//
-//    replica_disk_migrate_response disk_migrate(1:replica_disk_migrate_request req);
-//
-//    add_new_disk_response add_disk(1:add_new_disk_request req);
-//}
+service replica_client
+{
+    query_disk_info_response query_disk_info(1:query_disk_info_request req);
+
+    replica_disk_migrate_response disk_migrate(1:replica_disk_migrate_request req);
+
+    add_new_disk_response add_disk(1:add_new_disk_request req);
+}
