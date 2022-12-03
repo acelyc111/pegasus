@@ -7252,6 +7252,15 @@ type AdminClient interface {
   ListApps(ctx context.Context, req *ConfigurationListAppsRequest) (r *ConfigurationListAppsResponse, err error)
   // Parameters:
   //  - Req
+  AddDuplication(ctx context.Context, req *DuplicationAddRequest) (r *DuplicationAddResponse, err error)
+  // Parameters:
+  //  - Req
+  QueryDuplication(ctx context.Context, req *DuplicationQueryRequest) (r *DuplicationQueryResponse, err error)
+  // Parameters:
+  //  - Req
+  ModifyDuplication(ctx context.Context, req *DuplicationModifyRequest) (r *DuplicationModifyResponse, err error)
+  // Parameters:
+  //  - Req
   QueryAppInfo(ctx context.Context, req *QueryAppInfoRequest) (r *QueryAppInfoResponse, err error)
   // Parameters:
   //  - Req
@@ -7267,7 +7276,40 @@ type AdminClient interface {
   MetaControl(ctx context.Context, req *ConfigurationMetaControlRequest) (r *ConfigurationMetaControlResponse, err error)
   // Parameters:
   //  - Req
+  QueryBackupPolicy(ctx context.Context, req *ConfigurationQueryBackupPolicyRequest) (r *ConfigurationQueryBackupPolicyResponse, err error)
+  // Parameters:
+  //  - Req
   Balance(ctx context.Context, req *ConfigurationBalancerRequest) (r *ConfigurationBalancerResponse, err error)
+  // Parameters:
+  //  - Req
+  StartBackupApp(ctx context.Context, req *StartBackupAppRequest) (r *StartBackupAppResponse, err error)
+  // Parameters:
+  //  - Req
+  QueryBackupStatus(ctx context.Context, req *QueryBackupStatusRequest) (r *QueryBackupStatusResponse, err error)
+  // Parameters:
+  //  - Req
+  RestoreApp(ctx context.Context, req *ConfigurationRestoreRequest) (r *ConfigurationCreateAppResponse, err error)
+  // Parameters:
+  //  - Req
+  StartPartitionSplit(ctx context.Context, req *StartPartitionSplitRequest) (r *StartPartitionSplitResponse, err error)
+  // Parameters:
+  //  - Req
+  QuerySplitStatus(ctx context.Context, req *QuerySplitRequest) (r *QuerySplitResponse, err error)
+  // Parameters:
+  //  - Req
+  ControlPartitionSplit(ctx context.Context, req *ControlSplitRequest) (r *ControlSplitResponse, err error)
+  // Parameters:
+  //  - Req
+  StartBulkLoad(ctx context.Context, req *StartBulkLoadRequest) (r *StartBulkLoadResponse, err error)
+  // Parameters:
+  //  - Req
+  QueryBulkLoadStatus(ctx context.Context, req *QueryBulkLoadRequest) (r *QueryBulkLoadResponse, err error)
+  // Parameters:
+  //  - Req
+  ControlBulkLoad(ctx context.Context, req *ControlBulkLoadRequest) (r *ControlBulkLoadResponse, err error)
+  // Parameters:
+  //  - Req
+  ClearBulkLoad(ctx context.Context, req *ClearBulkLoadStateRequest) (r *ClearBulkLoadStateResponse, err error)
   // Parameters:
   //  - Req
   StartManualCompact(ctx context.Context, req *StartAppManualCompactRequest) (r *StartAppManualCompactResponse, err error)
@@ -7351,11 +7393,11 @@ func (p *AdminClientClient) ListApps(ctx context.Context, req *ConfigurationList
 
 // Parameters:
 //  - Req
-func (p *AdminClientClient) QueryAppInfo(ctx context.Context, req *QueryAppInfoRequest) (r *QueryAppInfoResponse, err error) {
-  var _args26 AdminClientQueryAppInfoArgs
+func (p *AdminClientClient) AddDuplication(ctx context.Context, req *DuplicationAddRequest) (r *DuplicationAddResponse, err error) {
+  var _args26 AdminClientAddDuplicationArgs
   _args26.Req = req
-  var _result27 AdminClientQueryAppInfoResult
-  if err = p.Client_().Call(ctx, "query_app_info", &_args26, &_result27); err != nil {
+  var _result27 AdminClientAddDuplicationResult
+  if err = p.Client_().Call(ctx, "add_duplication", &_args26, &_result27); err != nil {
     return
   }
   return _result27.GetSuccess(), nil
@@ -7363,11 +7405,11 @@ func (p *AdminClientClient) QueryAppInfo(ctx context.Context, req *QueryAppInfoR
 
 // Parameters:
 //  - Req
-func (p *AdminClientClient) UpdateAppEnv(ctx context.Context, req *ConfigurationUpdateAppEnvRequest) (r *ConfigurationUpdateAppEnvResponse, err error) {
-  var _args28 AdminClientUpdateAppEnvArgs
+func (p *AdminClientClient) QueryDuplication(ctx context.Context, req *DuplicationQueryRequest) (r *DuplicationQueryResponse, err error) {
+  var _args28 AdminClientQueryDuplicationArgs
   _args28.Req = req
-  var _result29 AdminClientUpdateAppEnvResult
-  if err = p.Client_().Call(ctx, "update_app_env", &_args28, &_result29); err != nil {
+  var _result29 AdminClientQueryDuplicationResult
+  if err = p.Client_().Call(ctx, "query_duplication", &_args28, &_result29); err != nil {
     return
   }
   return _result29.GetSuccess(), nil
@@ -7375,11 +7417,11 @@ func (p *AdminClientClient) UpdateAppEnv(ctx context.Context, req *Configuration
 
 // Parameters:
 //  - Req
-func (p *AdminClientClient) ListNodes(ctx context.Context, req *ConfigurationListNodesRequest) (r *ConfigurationListNodesResponse, err error) {
-  var _args30 AdminClientListNodesArgs
+func (p *AdminClientClient) ModifyDuplication(ctx context.Context, req *DuplicationModifyRequest) (r *DuplicationModifyResponse, err error) {
+  var _args30 AdminClientModifyDuplicationArgs
   _args30.Req = req
-  var _result31 AdminClientListNodesResult
-  if err = p.Client_().Call(ctx, "list_nodes", &_args30, &_result31); err != nil {
+  var _result31 AdminClientModifyDuplicationResult
+  if err = p.Client_().Call(ctx, "modify_duplication", &_args30, &_result31); err != nil {
     return
   }
   return _result31.GetSuccess(), nil
@@ -7387,11 +7429,11 @@ func (p *AdminClientClient) ListNodes(ctx context.Context, req *ConfigurationLis
 
 // Parameters:
 //  - Req
-func (p *AdminClientClient) QueryClusterInfo(ctx context.Context, req *ConfigurationClusterInfoRequest) (r *ConfigurationClusterInfoResponse, err error) {
-  var _args32 AdminClientQueryClusterInfoArgs
+func (p *AdminClientClient) QueryAppInfo(ctx context.Context, req *QueryAppInfoRequest) (r *QueryAppInfoResponse, err error) {
+  var _args32 AdminClientQueryAppInfoArgs
   _args32.Req = req
-  var _result33 AdminClientQueryClusterInfoResult
-  if err = p.Client_().Call(ctx, "query_cluster_info", &_args32, &_result33); err != nil {
+  var _result33 AdminClientQueryAppInfoResult
+  if err = p.Client_().Call(ctx, "query_app_info", &_args32, &_result33); err != nil {
     return
   }
   return _result33.GetSuccess(), nil
@@ -7399,11 +7441,11 @@ func (p *AdminClientClient) QueryClusterInfo(ctx context.Context, req *Configura
 
 // Parameters:
 //  - Req
-func (p *AdminClientClient) MetaControl(ctx context.Context, req *ConfigurationMetaControlRequest) (r *ConfigurationMetaControlResponse, err error) {
-  var _args34 AdminClientMetaControlArgs
+func (p *AdminClientClient) UpdateAppEnv(ctx context.Context, req *ConfigurationUpdateAppEnvRequest) (r *ConfigurationUpdateAppEnvResponse, err error) {
+  var _args34 AdminClientUpdateAppEnvArgs
   _args34.Req = req
-  var _result35 AdminClientMetaControlResult
-  if err = p.Client_().Call(ctx, "meta_control", &_args34, &_result35); err != nil {
+  var _result35 AdminClientUpdateAppEnvResult
+  if err = p.Client_().Call(ctx, "update_app_env", &_args34, &_result35); err != nil {
     return
   }
   return _result35.GetSuccess(), nil
@@ -7411,11 +7453,11 @@ func (p *AdminClientClient) MetaControl(ctx context.Context, req *ConfigurationM
 
 // Parameters:
 //  - Req
-func (p *AdminClientClient) Balance(ctx context.Context, req *ConfigurationBalancerRequest) (r *ConfigurationBalancerResponse, err error) {
-  var _args36 AdminClientBalanceArgs
+func (p *AdminClientClient) ListNodes(ctx context.Context, req *ConfigurationListNodesRequest) (r *ConfigurationListNodesResponse, err error) {
+  var _args36 AdminClientListNodesArgs
   _args36.Req = req
-  var _result37 AdminClientBalanceResult
-  if err = p.Client_().Call(ctx, "balance", &_args36, &_result37); err != nil {
+  var _result37 AdminClientListNodesResult
+  if err = p.Client_().Call(ctx, "list_nodes", &_args36, &_result37); err != nil {
     return
   }
   return _result37.GetSuccess(), nil
@@ -7423,11 +7465,11 @@ func (p *AdminClientClient) Balance(ctx context.Context, req *ConfigurationBalan
 
 // Parameters:
 //  - Req
-func (p *AdminClientClient) StartManualCompact(ctx context.Context, req *StartAppManualCompactRequest) (r *StartAppManualCompactResponse, err error) {
-  var _args38 AdminClientStartManualCompactArgs
+func (p *AdminClientClient) QueryClusterInfo(ctx context.Context, req *ConfigurationClusterInfoRequest) (r *ConfigurationClusterInfoResponse, err error) {
+  var _args38 AdminClientQueryClusterInfoArgs
   _args38.Req = req
-  var _result39 AdminClientStartManualCompactResult
-  if err = p.Client_().Call(ctx, "start_manual_compact", &_args38, &_result39); err != nil {
+  var _result39 AdminClientQueryClusterInfoResult
+  if err = p.Client_().Call(ctx, "query_cluster_info", &_args38, &_result39); err != nil {
     return
   }
   return _result39.GetSuccess(), nil
@@ -7435,14 +7477,182 @@ func (p *AdminClientClient) StartManualCompact(ctx context.Context, req *StartAp
 
 // Parameters:
 //  - Req
-func (p *AdminClientClient) QueryManualCompact(ctx context.Context, req *QueryAppManualCompactRequest) (r *QueryAppManualCompactResponse, err error) {
-  var _args40 AdminClientQueryManualCompactArgs
+func (p *AdminClientClient) MetaControl(ctx context.Context, req *ConfigurationMetaControlRequest) (r *ConfigurationMetaControlResponse, err error) {
+  var _args40 AdminClientMetaControlArgs
   _args40.Req = req
-  var _result41 AdminClientQueryManualCompactResult
-  if err = p.Client_().Call(ctx, "query_manual_compact", &_args40, &_result41); err != nil {
+  var _result41 AdminClientMetaControlResult
+  if err = p.Client_().Call(ctx, "meta_control", &_args40, &_result41); err != nil {
     return
   }
   return _result41.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) QueryBackupPolicy(ctx context.Context, req *ConfigurationQueryBackupPolicyRequest) (r *ConfigurationQueryBackupPolicyResponse, err error) {
+  var _args42 AdminClientQueryBackupPolicyArgs
+  _args42.Req = req
+  var _result43 AdminClientQueryBackupPolicyResult
+  if err = p.Client_().Call(ctx, "query_backup_policy", &_args42, &_result43); err != nil {
+    return
+  }
+  return _result43.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) Balance(ctx context.Context, req *ConfigurationBalancerRequest) (r *ConfigurationBalancerResponse, err error) {
+  var _args44 AdminClientBalanceArgs
+  _args44.Req = req
+  var _result45 AdminClientBalanceResult
+  if err = p.Client_().Call(ctx, "balance", &_args44, &_result45); err != nil {
+    return
+  }
+  return _result45.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) StartBackupApp(ctx context.Context, req *StartBackupAppRequest) (r *StartBackupAppResponse, err error) {
+  var _args46 AdminClientStartBackupAppArgs
+  _args46.Req = req
+  var _result47 AdminClientStartBackupAppResult
+  if err = p.Client_().Call(ctx, "start_backup_app", &_args46, &_result47); err != nil {
+    return
+  }
+  return _result47.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) QueryBackupStatus(ctx context.Context, req *QueryBackupStatusRequest) (r *QueryBackupStatusResponse, err error) {
+  var _args48 AdminClientQueryBackupStatusArgs
+  _args48.Req = req
+  var _result49 AdminClientQueryBackupStatusResult
+  if err = p.Client_().Call(ctx, "query_backup_status", &_args48, &_result49); err != nil {
+    return
+  }
+  return _result49.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) RestoreApp(ctx context.Context, req *ConfigurationRestoreRequest) (r *ConfigurationCreateAppResponse, err error) {
+  var _args50 AdminClientRestoreAppArgs
+  _args50.Req = req
+  var _result51 AdminClientRestoreAppResult
+  if err = p.Client_().Call(ctx, "restore_app", &_args50, &_result51); err != nil {
+    return
+  }
+  return _result51.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) StartPartitionSplit(ctx context.Context, req *StartPartitionSplitRequest) (r *StartPartitionSplitResponse, err error) {
+  var _args52 AdminClientStartPartitionSplitArgs
+  _args52.Req = req
+  var _result53 AdminClientStartPartitionSplitResult
+  if err = p.Client_().Call(ctx, "start_partition_split", &_args52, &_result53); err != nil {
+    return
+  }
+  return _result53.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) QuerySplitStatus(ctx context.Context, req *QuerySplitRequest) (r *QuerySplitResponse, err error) {
+  var _args54 AdminClientQuerySplitStatusArgs
+  _args54.Req = req
+  var _result55 AdminClientQuerySplitStatusResult
+  if err = p.Client_().Call(ctx, "query_split_status", &_args54, &_result55); err != nil {
+    return
+  }
+  return _result55.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) ControlPartitionSplit(ctx context.Context, req *ControlSplitRequest) (r *ControlSplitResponse, err error) {
+  var _args56 AdminClientControlPartitionSplitArgs
+  _args56.Req = req
+  var _result57 AdminClientControlPartitionSplitResult
+  if err = p.Client_().Call(ctx, "control_partition_split", &_args56, &_result57); err != nil {
+    return
+  }
+  return _result57.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) StartBulkLoad(ctx context.Context, req *StartBulkLoadRequest) (r *StartBulkLoadResponse, err error) {
+  var _args58 AdminClientStartBulkLoadArgs
+  _args58.Req = req
+  var _result59 AdminClientStartBulkLoadResult
+  if err = p.Client_().Call(ctx, "start_bulk_load", &_args58, &_result59); err != nil {
+    return
+  }
+  return _result59.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) QueryBulkLoadStatus(ctx context.Context, req *QueryBulkLoadRequest) (r *QueryBulkLoadResponse, err error) {
+  var _args60 AdminClientQueryBulkLoadStatusArgs
+  _args60.Req = req
+  var _result61 AdminClientQueryBulkLoadStatusResult
+  if err = p.Client_().Call(ctx, "query_bulk_load_status", &_args60, &_result61); err != nil {
+    return
+  }
+  return _result61.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) ControlBulkLoad(ctx context.Context, req *ControlBulkLoadRequest) (r *ControlBulkLoadResponse, err error) {
+  var _args62 AdminClientControlBulkLoadArgs
+  _args62.Req = req
+  var _result63 AdminClientControlBulkLoadResult
+  if err = p.Client_().Call(ctx, "control_bulk_load", &_args62, &_result63); err != nil {
+    return
+  }
+  return _result63.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) ClearBulkLoad(ctx context.Context, req *ClearBulkLoadStateRequest) (r *ClearBulkLoadStateResponse, err error) {
+  var _args64 AdminClientClearBulkLoadArgs
+  _args64.Req = req
+  var _result65 AdminClientClearBulkLoadResult
+  if err = p.Client_().Call(ctx, "clear_bulk_load", &_args64, &_result65); err != nil {
+    return
+  }
+  return _result65.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) StartManualCompact(ctx context.Context, req *StartAppManualCompactRequest) (r *StartAppManualCompactResponse, err error) {
+  var _args66 AdminClientStartManualCompactArgs
+  _args66.Req = req
+  var _result67 AdminClientStartManualCompactResult
+  if err = p.Client_().Call(ctx, "start_manual_compact", &_args66, &_result67); err != nil {
+    return
+  }
+  return _result67.GetSuccess(), nil
+}
+
+// Parameters:
+//  - Req
+func (p *AdminClientClient) QueryManualCompact(ctx context.Context, req *QueryAppManualCompactRequest) (r *QueryAppManualCompactResponse, err error) {
+  var _args68 AdminClientQueryManualCompactArgs
+  _args68.Req = req
+  var _result69 AdminClientQueryManualCompactResult
+  if err = p.Client_().Call(ctx, "query_manual_compact", &_args68, &_result69); err != nil {
+    return
+  }
+  return _result69.GetSuccess(), nil
 }
 
 type AdminClientProcessor struct {
@@ -7465,20 +7675,34 @@ func (p *AdminClientProcessor) ProcessorMap() map[string]thrift.TProcessorFuncti
 
 func NewAdminClientProcessor(handler AdminClient) *AdminClientProcessor {
 
-  self42 := &AdminClientProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
-  self42.processorMap["create_app"] = &adminClientProcessorCreateApp{handler:handler}
-  self42.processorMap["drop_app"] = &adminClientProcessorDropApp{handler:handler}
-  self42.processorMap["recall_app"] = &adminClientProcessorRecallApp{handler:handler}
-  self42.processorMap["list_apps"] = &adminClientProcessorListApps{handler:handler}
-  self42.processorMap["query_app_info"] = &adminClientProcessorQueryAppInfo{handler:handler}
-  self42.processorMap["update_app_env"] = &adminClientProcessorUpdateAppEnv{handler:handler}
-  self42.processorMap["list_nodes"] = &adminClientProcessorListNodes{handler:handler}
-  self42.processorMap["query_cluster_info"] = &adminClientProcessorQueryClusterInfo{handler:handler}
-  self42.processorMap["meta_control"] = &adminClientProcessorMetaControl{handler:handler}
-  self42.processorMap["balance"] = &adminClientProcessorBalance{handler:handler}
-  self42.processorMap["start_manual_compact"] = &adminClientProcessorStartManualCompact{handler:handler}
-  self42.processorMap["query_manual_compact"] = &adminClientProcessorQueryManualCompact{handler:handler}
-return self42
+  self70 := &AdminClientProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
+  self70.processorMap["create_app"] = &adminClientProcessorCreateApp{handler:handler}
+  self70.processorMap["drop_app"] = &adminClientProcessorDropApp{handler:handler}
+  self70.processorMap["recall_app"] = &adminClientProcessorRecallApp{handler:handler}
+  self70.processorMap["list_apps"] = &adminClientProcessorListApps{handler:handler}
+  self70.processorMap["add_duplication"] = &adminClientProcessorAddDuplication{handler:handler}
+  self70.processorMap["query_duplication"] = &adminClientProcessorQueryDuplication{handler:handler}
+  self70.processorMap["modify_duplication"] = &adminClientProcessorModifyDuplication{handler:handler}
+  self70.processorMap["query_app_info"] = &adminClientProcessorQueryAppInfo{handler:handler}
+  self70.processorMap["update_app_env"] = &adminClientProcessorUpdateAppEnv{handler:handler}
+  self70.processorMap["list_nodes"] = &adminClientProcessorListNodes{handler:handler}
+  self70.processorMap["query_cluster_info"] = &adminClientProcessorQueryClusterInfo{handler:handler}
+  self70.processorMap["meta_control"] = &adminClientProcessorMetaControl{handler:handler}
+  self70.processorMap["query_backup_policy"] = &adminClientProcessorQueryBackupPolicy{handler:handler}
+  self70.processorMap["balance"] = &adminClientProcessorBalance{handler:handler}
+  self70.processorMap["start_backup_app"] = &adminClientProcessorStartBackupApp{handler:handler}
+  self70.processorMap["query_backup_status"] = &adminClientProcessorQueryBackupStatus{handler:handler}
+  self70.processorMap["restore_app"] = &adminClientProcessorRestoreApp{handler:handler}
+  self70.processorMap["start_partition_split"] = &adminClientProcessorStartPartitionSplit{handler:handler}
+  self70.processorMap["query_split_status"] = &adminClientProcessorQuerySplitStatus{handler:handler}
+  self70.processorMap["control_partition_split"] = &adminClientProcessorControlPartitionSplit{handler:handler}
+  self70.processorMap["start_bulk_load"] = &adminClientProcessorStartBulkLoad{handler:handler}
+  self70.processorMap["query_bulk_load_status"] = &adminClientProcessorQueryBulkLoadStatus{handler:handler}
+  self70.processorMap["control_bulk_load"] = &adminClientProcessorControlBulkLoad{handler:handler}
+  self70.processorMap["clear_bulk_load"] = &adminClientProcessorClearBulkLoad{handler:handler}
+  self70.processorMap["start_manual_compact"] = &adminClientProcessorStartManualCompact{handler:handler}
+  self70.processorMap["query_manual_compact"] = &adminClientProcessorQueryManualCompact{handler:handler}
+return self70
 }
 
 func (p *AdminClientProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -7489,12 +7713,12 @@ func (p *AdminClientProcessor) Process(ctx context.Context, iprot, oprot thrift.
   }
   iprot.Skip(thrift.STRUCT)
   iprot.ReadMessageEnd()
-  x43 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
+  x71 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
   oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
-  x43.Write(oprot)
+  x71.Write(oprot)
   oprot.WriteMessageEnd()
   oprot.Flush(ctx)
-  return false, x43
+  return false, x71
 
 }
 
@@ -7673,6 +7897,150 @@ var retval *ConfigurationListAppsResponse
     result.Success = retval
 }
   if err2 = oprot.WriteMessageBegin("list_apps", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorAddDuplication struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorAddDuplication) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientAddDuplicationArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("add_duplication", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientAddDuplicationResult{}
+var retval *DuplicationAddResponse
+  var err2 error
+  if retval, err2 = p.handler.AddDuplication(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing add_duplication: " + err2.Error())
+    oprot.WriteMessageBegin("add_duplication", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("add_duplication", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorQueryDuplication struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorQueryDuplication) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientQueryDuplicationArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("query_duplication", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientQueryDuplicationResult{}
+var retval *DuplicationQueryResponse
+  var err2 error
+  if retval, err2 = p.handler.QueryDuplication(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing query_duplication: " + err2.Error())
+    oprot.WriteMessageBegin("query_duplication", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("query_duplication", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorModifyDuplication struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorModifyDuplication) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientModifyDuplicationArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("modify_duplication", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientModifyDuplicationResult{}
+var retval *DuplicationModifyResponse
+  var err2 error
+  if retval, err2 = p.handler.ModifyDuplication(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing modify_duplication: " + err2.Error())
+    oprot.WriteMessageBegin("modify_duplication", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("modify_duplication", thrift.REPLY, seqId); err2 != nil {
     err = err2
   }
   if err2 = result.Write(oprot); err == nil && err2 != nil {
@@ -7930,6 +8298,54 @@ var retval *ConfigurationMetaControlResponse
   return true, err
 }
 
+type adminClientProcessorQueryBackupPolicy struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorQueryBackupPolicy) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientQueryBackupPolicyArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("query_backup_policy", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientQueryBackupPolicyResult{}
+var retval *ConfigurationQueryBackupPolicyResponse
+  var err2 error
+  if retval, err2 = p.handler.QueryBackupPolicy(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing query_backup_policy: " + err2.Error())
+    oprot.WriteMessageBegin("query_backup_policy", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("query_backup_policy", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
 type adminClientProcessorBalance struct {
   handler AdminClient
 }
@@ -7961,6 +8377,486 @@ var retval *ConfigurationBalancerResponse
     result.Success = retval
 }
   if err2 = oprot.WriteMessageBegin("balance", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorStartBackupApp struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorStartBackupApp) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientStartBackupAppArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("start_backup_app", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientStartBackupAppResult{}
+var retval *StartBackupAppResponse
+  var err2 error
+  if retval, err2 = p.handler.StartBackupApp(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing start_backup_app: " + err2.Error())
+    oprot.WriteMessageBegin("start_backup_app", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("start_backup_app", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorQueryBackupStatus struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorQueryBackupStatus) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientQueryBackupStatusArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("query_backup_status", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientQueryBackupStatusResult{}
+var retval *QueryBackupStatusResponse
+  var err2 error
+  if retval, err2 = p.handler.QueryBackupStatus(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing query_backup_status: " + err2.Error())
+    oprot.WriteMessageBegin("query_backup_status", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("query_backup_status", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorRestoreApp struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorRestoreApp) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientRestoreAppArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("restore_app", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientRestoreAppResult{}
+var retval *ConfigurationCreateAppResponse
+  var err2 error
+  if retval, err2 = p.handler.RestoreApp(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing restore_app: " + err2.Error())
+    oprot.WriteMessageBegin("restore_app", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("restore_app", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorStartPartitionSplit struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorStartPartitionSplit) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientStartPartitionSplitArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("start_partition_split", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientStartPartitionSplitResult{}
+var retval *StartPartitionSplitResponse
+  var err2 error
+  if retval, err2 = p.handler.StartPartitionSplit(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing start_partition_split: " + err2.Error())
+    oprot.WriteMessageBegin("start_partition_split", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("start_partition_split", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorQuerySplitStatus struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorQuerySplitStatus) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientQuerySplitStatusArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("query_split_status", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientQuerySplitStatusResult{}
+var retval *QuerySplitResponse
+  var err2 error
+  if retval, err2 = p.handler.QuerySplitStatus(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing query_split_status: " + err2.Error())
+    oprot.WriteMessageBegin("query_split_status", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("query_split_status", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorControlPartitionSplit struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorControlPartitionSplit) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientControlPartitionSplitArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("control_partition_split", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientControlPartitionSplitResult{}
+var retval *ControlSplitResponse
+  var err2 error
+  if retval, err2 = p.handler.ControlPartitionSplit(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing control_partition_split: " + err2.Error())
+    oprot.WriteMessageBegin("control_partition_split", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("control_partition_split", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorStartBulkLoad struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorStartBulkLoad) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientStartBulkLoadArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("start_bulk_load", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientStartBulkLoadResult{}
+var retval *StartBulkLoadResponse
+  var err2 error
+  if retval, err2 = p.handler.StartBulkLoad(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing start_bulk_load: " + err2.Error())
+    oprot.WriteMessageBegin("start_bulk_load", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("start_bulk_load", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorQueryBulkLoadStatus struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorQueryBulkLoadStatus) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientQueryBulkLoadStatusArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("query_bulk_load_status", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientQueryBulkLoadStatusResult{}
+var retval *QueryBulkLoadResponse
+  var err2 error
+  if retval, err2 = p.handler.QueryBulkLoadStatus(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing query_bulk_load_status: " + err2.Error())
+    oprot.WriteMessageBegin("query_bulk_load_status", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("query_bulk_load_status", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorControlBulkLoad struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorControlBulkLoad) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientControlBulkLoadArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("control_bulk_load", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientControlBulkLoadResult{}
+var retval *ControlBulkLoadResponse
+  var err2 error
+  if retval, err2 = p.handler.ControlBulkLoad(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing control_bulk_load: " + err2.Error())
+    oprot.WriteMessageBegin("control_bulk_load", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("control_bulk_load", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type adminClientProcessorClearBulkLoad struct {
+  handler AdminClient
+}
+
+func (p *adminClientProcessorClearBulkLoad) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := AdminClientClearBulkLoadArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("clear_bulk_load", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := AdminClientClearBulkLoadResult{}
+var retval *ClearBulkLoadStateResponse
+  var err2 error
+  if retval, err2 = p.handler.ClearBulkLoad(ctx, args.Req); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing clear_bulk_load: " + err2.Error())
+    oprot.WriteMessageBegin("clear_bulk_load", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("clear_bulk_load", thrift.REPLY, seqId); err2 != nil {
     err = err2
   }
   if err2 = result.Write(oprot); err == nil && err2 != nil {
@@ -8869,6 +9765,602 @@ func (p *AdminClientListAppsResult) String() string {
     return "<nil>"
   }
   return fmt.Sprintf("AdminClientListAppsResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientAddDuplicationArgs struct {
+  Req *DuplicationAddRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientAddDuplicationArgs() *AdminClientAddDuplicationArgs {
+  return &AdminClientAddDuplicationArgs{}
+}
+
+var AdminClientAddDuplicationArgs_Req_DEFAULT *DuplicationAddRequest
+func (p *AdminClientAddDuplicationArgs) GetReq() *DuplicationAddRequest {
+  if !p.IsSetReq() {
+    return AdminClientAddDuplicationArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientAddDuplicationArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientAddDuplicationArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientAddDuplicationArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &DuplicationAddRequest{
+  IsDuplicatingCheckpoint: true,
+}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientAddDuplicationArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("add_duplication_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientAddDuplicationArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientAddDuplicationArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientAddDuplicationArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientAddDuplicationResult struct {
+  Success *DuplicationAddResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientAddDuplicationResult() *AdminClientAddDuplicationResult {
+  return &AdminClientAddDuplicationResult{}
+}
+
+var AdminClientAddDuplicationResult_Success_DEFAULT *DuplicationAddResponse
+func (p *AdminClientAddDuplicationResult) GetSuccess() *DuplicationAddResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientAddDuplicationResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientAddDuplicationResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientAddDuplicationResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientAddDuplicationResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &DuplicationAddResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientAddDuplicationResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("add_duplication_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientAddDuplicationResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientAddDuplicationResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientAddDuplicationResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientQueryDuplicationArgs struct {
+  Req *DuplicationQueryRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientQueryDuplicationArgs() *AdminClientQueryDuplicationArgs {
+  return &AdminClientQueryDuplicationArgs{}
+}
+
+var AdminClientQueryDuplicationArgs_Req_DEFAULT *DuplicationQueryRequest
+func (p *AdminClientQueryDuplicationArgs) GetReq() *DuplicationQueryRequest {
+  if !p.IsSetReq() {
+    return AdminClientQueryDuplicationArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientQueryDuplicationArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientQueryDuplicationArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryDuplicationArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &DuplicationQueryRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryDuplicationArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_duplication_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQueryDuplicationArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientQueryDuplicationArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQueryDuplicationArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientQueryDuplicationResult struct {
+  Success *DuplicationQueryResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientQueryDuplicationResult() *AdminClientQueryDuplicationResult {
+  return &AdminClientQueryDuplicationResult{}
+}
+
+var AdminClientQueryDuplicationResult_Success_DEFAULT *DuplicationQueryResponse
+func (p *AdminClientQueryDuplicationResult) GetSuccess() *DuplicationQueryResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientQueryDuplicationResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientQueryDuplicationResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientQueryDuplicationResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryDuplicationResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &DuplicationQueryResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryDuplicationResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_duplication_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQueryDuplicationResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientQueryDuplicationResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQueryDuplicationResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientModifyDuplicationArgs struct {
+  Req *DuplicationModifyRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientModifyDuplicationArgs() *AdminClientModifyDuplicationArgs {
+  return &AdminClientModifyDuplicationArgs{}
+}
+
+var AdminClientModifyDuplicationArgs_Req_DEFAULT *DuplicationModifyRequest
+func (p *AdminClientModifyDuplicationArgs) GetReq() *DuplicationModifyRequest {
+  if !p.IsSetReq() {
+    return AdminClientModifyDuplicationArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientModifyDuplicationArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientModifyDuplicationArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientModifyDuplicationArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &DuplicationModifyRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientModifyDuplicationArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("modify_duplication_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientModifyDuplicationArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientModifyDuplicationArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientModifyDuplicationArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientModifyDuplicationResult struct {
+  Success *DuplicationModifyResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientModifyDuplicationResult() *AdminClientModifyDuplicationResult {
+  return &AdminClientModifyDuplicationResult{}
+}
+
+var AdminClientModifyDuplicationResult_Success_DEFAULT *DuplicationModifyResponse
+func (p *AdminClientModifyDuplicationResult) GetSuccess() *DuplicationModifyResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientModifyDuplicationResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientModifyDuplicationResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientModifyDuplicationResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientModifyDuplicationResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &DuplicationModifyResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientModifyDuplicationResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("modify_duplication_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientModifyDuplicationResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientModifyDuplicationResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientModifyDuplicationResult(%+v)", *p)
 }
 
 // Attributes:
@@ -9867,6 +11359,204 @@ func (p *AdminClientMetaControlResult) String() string {
 
 // Attributes:
 //  - Req
+type AdminClientQueryBackupPolicyArgs struct {
+  Req *ConfigurationQueryBackupPolicyRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientQueryBackupPolicyArgs() *AdminClientQueryBackupPolicyArgs {
+  return &AdminClientQueryBackupPolicyArgs{}
+}
+
+var AdminClientQueryBackupPolicyArgs_Req_DEFAULT *ConfigurationQueryBackupPolicyRequest
+func (p *AdminClientQueryBackupPolicyArgs) GetReq() *ConfigurationQueryBackupPolicyRequest {
+  if !p.IsSetReq() {
+    return AdminClientQueryBackupPolicyArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientQueryBackupPolicyArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientQueryBackupPolicyArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBackupPolicyArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &ConfigurationQueryBackupPolicyRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBackupPolicyArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_backup_policy_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQueryBackupPolicyArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientQueryBackupPolicyArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQueryBackupPolicyArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientQueryBackupPolicyResult struct {
+  Success *ConfigurationQueryBackupPolicyResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientQueryBackupPolicyResult() *AdminClientQueryBackupPolicyResult {
+  return &AdminClientQueryBackupPolicyResult{}
+}
+
+var AdminClientQueryBackupPolicyResult_Success_DEFAULT *ConfigurationQueryBackupPolicyResponse
+func (p *AdminClientQueryBackupPolicyResult) GetSuccess() *ConfigurationQueryBackupPolicyResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientQueryBackupPolicyResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientQueryBackupPolicyResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientQueryBackupPolicyResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBackupPolicyResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &ConfigurationQueryBackupPolicyResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBackupPolicyResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_backup_policy_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQueryBackupPolicyResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientQueryBackupPolicyResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQueryBackupPolicyResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
 type AdminClientBalanceArgs struct {
   Req *ConfigurationBalancerRequest `thrift:"req,1" db:"req" json:"req"`
 }
@@ -10061,6 +11751,1986 @@ func (p *AdminClientBalanceResult) String() string {
     return "<nil>"
   }
   return fmt.Sprintf("AdminClientBalanceResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientStartBackupAppArgs struct {
+  Req *StartBackupAppRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientStartBackupAppArgs() *AdminClientStartBackupAppArgs {
+  return &AdminClientStartBackupAppArgs{}
+}
+
+var AdminClientStartBackupAppArgs_Req_DEFAULT *StartBackupAppRequest
+func (p *AdminClientStartBackupAppArgs) GetReq() *StartBackupAppRequest {
+  if !p.IsSetReq() {
+    return AdminClientStartBackupAppArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientStartBackupAppArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientStartBackupAppArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartBackupAppArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &StartBackupAppRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartBackupAppArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("start_backup_app_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientStartBackupAppArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientStartBackupAppArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientStartBackupAppArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientStartBackupAppResult struct {
+  Success *StartBackupAppResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientStartBackupAppResult() *AdminClientStartBackupAppResult {
+  return &AdminClientStartBackupAppResult{}
+}
+
+var AdminClientStartBackupAppResult_Success_DEFAULT *StartBackupAppResponse
+func (p *AdminClientStartBackupAppResult) GetSuccess() *StartBackupAppResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientStartBackupAppResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientStartBackupAppResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientStartBackupAppResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartBackupAppResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &StartBackupAppResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartBackupAppResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("start_backup_app_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientStartBackupAppResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientStartBackupAppResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientStartBackupAppResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientQueryBackupStatusArgs struct {
+  Req *QueryBackupStatusRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientQueryBackupStatusArgs() *AdminClientQueryBackupStatusArgs {
+  return &AdminClientQueryBackupStatusArgs{}
+}
+
+var AdminClientQueryBackupStatusArgs_Req_DEFAULT *QueryBackupStatusRequest
+func (p *AdminClientQueryBackupStatusArgs) GetReq() *QueryBackupStatusRequest {
+  if !p.IsSetReq() {
+    return AdminClientQueryBackupStatusArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientQueryBackupStatusArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientQueryBackupStatusArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBackupStatusArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &QueryBackupStatusRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBackupStatusArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_backup_status_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQueryBackupStatusArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientQueryBackupStatusArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQueryBackupStatusArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientQueryBackupStatusResult struct {
+  Success *QueryBackupStatusResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientQueryBackupStatusResult() *AdminClientQueryBackupStatusResult {
+  return &AdminClientQueryBackupStatusResult{}
+}
+
+var AdminClientQueryBackupStatusResult_Success_DEFAULT *QueryBackupStatusResponse
+func (p *AdminClientQueryBackupStatusResult) GetSuccess() *QueryBackupStatusResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientQueryBackupStatusResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientQueryBackupStatusResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientQueryBackupStatusResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBackupStatusResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &QueryBackupStatusResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBackupStatusResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_backup_status_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQueryBackupStatusResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientQueryBackupStatusResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQueryBackupStatusResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientRestoreAppArgs struct {
+  Req *ConfigurationRestoreRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientRestoreAppArgs() *AdminClientRestoreAppArgs {
+  return &AdminClientRestoreAppArgs{}
+}
+
+var AdminClientRestoreAppArgs_Req_DEFAULT *ConfigurationRestoreRequest
+func (p *AdminClientRestoreAppArgs) GetReq() *ConfigurationRestoreRequest {
+  if !p.IsSetReq() {
+    return AdminClientRestoreAppArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientRestoreAppArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientRestoreAppArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientRestoreAppArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &ConfigurationRestoreRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientRestoreAppArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("restore_app_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientRestoreAppArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientRestoreAppArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientRestoreAppArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientRestoreAppResult struct {
+  Success *ConfigurationCreateAppResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientRestoreAppResult() *AdminClientRestoreAppResult {
+  return &AdminClientRestoreAppResult{}
+}
+
+var AdminClientRestoreAppResult_Success_DEFAULT *ConfigurationCreateAppResponse
+func (p *AdminClientRestoreAppResult) GetSuccess() *ConfigurationCreateAppResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientRestoreAppResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientRestoreAppResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientRestoreAppResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientRestoreAppResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &ConfigurationCreateAppResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientRestoreAppResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("restore_app_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientRestoreAppResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientRestoreAppResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientRestoreAppResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientStartPartitionSplitArgs struct {
+  Req *StartPartitionSplitRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientStartPartitionSplitArgs() *AdminClientStartPartitionSplitArgs {
+  return &AdminClientStartPartitionSplitArgs{}
+}
+
+var AdminClientStartPartitionSplitArgs_Req_DEFAULT *StartPartitionSplitRequest
+func (p *AdminClientStartPartitionSplitArgs) GetReq() *StartPartitionSplitRequest {
+  if !p.IsSetReq() {
+    return AdminClientStartPartitionSplitArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientStartPartitionSplitArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientStartPartitionSplitArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartPartitionSplitArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &StartPartitionSplitRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartPartitionSplitArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("start_partition_split_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientStartPartitionSplitArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientStartPartitionSplitArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientStartPartitionSplitArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientStartPartitionSplitResult struct {
+  Success *StartPartitionSplitResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientStartPartitionSplitResult() *AdminClientStartPartitionSplitResult {
+  return &AdminClientStartPartitionSplitResult{}
+}
+
+var AdminClientStartPartitionSplitResult_Success_DEFAULT *StartPartitionSplitResponse
+func (p *AdminClientStartPartitionSplitResult) GetSuccess() *StartPartitionSplitResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientStartPartitionSplitResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientStartPartitionSplitResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientStartPartitionSplitResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartPartitionSplitResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &StartPartitionSplitResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartPartitionSplitResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("start_partition_split_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientStartPartitionSplitResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientStartPartitionSplitResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientStartPartitionSplitResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientQuerySplitStatusArgs struct {
+  Req *QuerySplitRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientQuerySplitStatusArgs() *AdminClientQuerySplitStatusArgs {
+  return &AdminClientQuerySplitStatusArgs{}
+}
+
+var AdminClientQuerySplitStatusArgs_Req_DEFAULT *QuerySplitRequest
+func (p *AdminClientQuerySplitStatusArgs) GetReq() *QuerySplitRequest {
+  if !p.IsSetReq() {
+    return AdminClientQuerySplitStatusArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientQuerySplitStatusArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientQuerySplitStatusArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQuerySplitStatusArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &QuerySplitRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQuerySplitStatusArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_split_status_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQuerySplitStatusArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientQuerySplitStatusArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQuerySplitStatusArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientQuerySplitStatusResult struct {
+  Success *QuerySplitResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientQuerySplitStatusResult() *AdminClientQuerySplitStatusResult {
+  return &AdminClientQuerySplitStatusResult{}
+}
+
+var AdminClientQuerySplitStatusResult_Success_DEFAULT *QuerySplitResponse
+func (p *AdminClientQuerySplitStatusResult) GetSuccess() *QuerySplitResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientQuerySplitStatusResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientQuerySplitStatusResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientQuerySplitStatusResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQuerySplitStatusResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &QuerySplitResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQuerySplitStatusResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_split_status_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQuerySplitStatusResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientQuerySplitStatusResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQuerySplitStatusResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientControlPartitionSplitArgs struct {
+  Req *ControlSplitRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientControlPartitionSplitArgs() *AdminClientControlPartitionSplitArgs {
+  return &AdminClientControlPartitionSplitArgs{}
+}
+
+var AdminClientControlPartitionSplitArgs_Req_DEFAULT *ControlSplitRequest
+func (p *AdminClientControlPartitionSplitArgs) GetReq() *ControlSplitRequest {
+  if !p.IsSetReq() {
+    return AdminClientControlPartitionSplitArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientControlPartitionSplitArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientControlPartitionSplitArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientControlPartitionSplitArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &ControlSplitRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientControlPartitionSplitArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("control_partition_split_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientControlPartitionSplitArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientControlPartitionSplitArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientControlPartitionSplitArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientControlPartitionSplitResult struct {
+  Success *ControlSplitResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientControlPartitionSplitResult() *AdminClientControlPartitionSplitResult {
+  return &AdminClientControlPartitionSplitResult{}
+}
+
+var AdminClientControlPartitionSplitResult_Success_DEFAULT *ControlSplitResponse
+func (p *AdminClientControlPartitionSplitResult) GetSuccess() *ControlSplitResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientControlPartitionSplitResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientControlPartitionSplitResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientControlPartitionSplitResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientControlPartitionSplitResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &ControlSplitResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientControlPartitionSplitResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("control_partition_split_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientControlPartitionSplitResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientControlPartitionSplitResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientControlPartitionSplitResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientStartBulkLoadArgs struct {
+  Req *StartBulkLoadRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientStartBulkLoadArgs() *AdminClientStartBulkLoadArgs {
+  return &AdminClientStartBulkLoadArgs{}
+}
+
+var AdminClientStartBulkLoadArgs_Req_DEFAULT *StartBulkLoadRequest
+func (p *AdminClientStartBulkLoadArgs) GetReq() *StartBulkLoadRequest {
+  if !p.IsSetReq() {
+    return AdminClientStartBulkLoadArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientStartBulkLoadArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientStartBulkLoadArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartBulkLoadArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &StartBulkLoadRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartBulkLoadArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("start_bulk_load_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientStartBulkLoadArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientStartBulkLoadArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientStartBulkLoadArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientStartBulkLoadResult struct {
+  Success *StartBulkLoadResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientStartBulkLoadResult() *AdminClientStartBulkLoadResult {
+  return &AdminClientStartBulkLoadResult{}
+}
+
+var AdminClientStartBulkLoadResult_Success_DEFAULT *StartBulkLoadResponse
+func (p *AdminClientStartBulkLoadResult) GetSuccess() *StartBulkLoadResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientStartBulkLoadResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientStartBulkLoadResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientStartBulkLoadResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartBulkLoadResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &StartBulkLoadResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientStartBulkLoadResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("start_bulk_load_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientStartBulkLoadResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientStartBulkLoadResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientStartBulkLoadResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientQueryBulkLoadStatusArgs struct {
+  Req *QueryBulkLoadRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientQueryBulkLoadStatusArgs() *AdminClientQueryBulkLoadStatusArgs {
+  return &AdminClientQueryBulkLoadStatusArgs{}
+}
+
+var AdminClientQueryBulkLoadStatusArgs_Req_DEFAULT *QueryBulkLoadRequest
+func (p *AdminClientQueryBulkLoadStatusArgs) GetReq() *QueryBulkLoadRequest {
+  if !p.IsSetReq() {
+    return AdminClientQueryBulkLoadStatusArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientQueryBulkLoadStatusArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientQueryBulkLoadStatusArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBulkLoadStatusArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &QueryBulkLoadRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBulkLoadStatusArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_bulk_load_status_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQueryBulkLoadStatusArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientQueryBulkLoadStatusArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQueryBulkLoadStatusArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientQueryBulkLoadStatusResult struct {
+  Success *QueryBulkLoadResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientQueryBulkLoadStatusResult() *AdminClientQueryBulkLoadStatusResult {
+  return &AdminClientQueryBulkLoadStatusResult{}
+}
+
+var AdminClientQueryBulkLoadStatusResult_Success_DEFAULT *QueryBulkLoadResponse
+func (p *AdminClientQueryBulkLoadStatusResult) GetSuccess() *QueryBulkLoadResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientQueryBulkLoadStatusResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientQueryBulkLoadStatusResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientQueryBulkLoadStatusResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBulkLoadStatusResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &QueryBulkLoadResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientQueryBulkLoadStatusResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_bulk_load_status_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientQueryBulkLoadStatusResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientQueryBulkLoadStatusResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientQueryBulkLoadStatusResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientControlBulkLoadArgs struct {
+  Req *ControlBulkLoadRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientControlBulkLoadArgs() *AdminClientControlBulkLoadArgs {
+  return &AdminClientControlBulkLoadArgs{}
+}
+
+var AdminClientControlBulkLoadArgs_Req_DEFAULT *ControlBulkLoadRequest
+func (p *AdminClientControlBulkLoadArgs) GetReq() *ControlBulkLoadRequest {
+  if !p.IsSetReq() {
+    return AdminClientControlBulkLoadArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientControlBulkLoadArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientControlBulkLoadArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientControlBulkLoadArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &ControlBulkLoadRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientControlBulkLoadArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("control_bulk_load_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientControlBulkLoadArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientControlBulkLoadArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientControlBulkLoadArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientControlBulkLoadResult struct {
+  Success *ControlBulkLoadResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientControlBulkLoadResult() *AdminClientControlBulkLoadResult {
+  return &AdminClientControlBulkLoadResult{}
+}
+
+var AdminClientControlBulkLoadResult_Success_DEFAULT *ControlBulkLoadResponse
+func (p *AdminClientControlBulkLoadResult) GetSuccess() *ControlBulkLoadResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientControlBulkLoadResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientControlBulkLoadResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientControlBulkLoadResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientControlBulkLoadResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &ControlBulkLoadResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientControlBulkLoadResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("control_bulk_load_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientControlBulkLoadResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientControlBulkLoadResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientControlBulkLoadResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Req
+type AdminClientClearBulkLoadArgs struct {
+  Req *ClearBulkLoadStateRequest `thrift:"req,1" db:"req" json:"req"`
+}
+
+func NewAdminClientClearBulkLoadArgs() *AdminClientClearBulkLoadArgs {
+  return &AdminClientClearBulkLoadArgs{}
+}
+
+var AdminClientClearBulkLoadArgs_Req_DEFAULT *ClearBulkLoadStateRequest
+func (p *AdminClientClearBulkLoadArgs) GetReq() *ClearBulkLoadStateRequest {
+  if !p.IsSetReq() {
+    return AdminClientClearBulkLoadArgs_Req_DEFAULT
+  }
+return p.Req
+}
+func (p *AdminClientClearBulkLoadArgs) IsSetReq() bool {
+  return p.Req != nil
+}
+
+func (p *AdminClientClearBulkLoadArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientClearBulkLoadArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Req = &ClearBulkLoadStateRequest{}
+  if err := p.Req.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Req), err)
+  }
+  return nil
+}
+
+func (p *AdminClientClearBulkLoadArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("clear_bulk_load_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientClearBulkLoadArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:req: ", p), err) }
+  if err := p.Req.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Req), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:req: ", p), err) }
+  return err
+}
+
+func (p *AdminClientClearBulkLoadArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientClearBulkLoadArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type AdminClientClearBulkLoadResult struct {
+  Success *ClearBulkLoadStateResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewAdminClientClearBulkLoadResult() *AdminClientClearBulkLoadResult {
+  return &AdminClientClearBulkLoadResult{}
+}
+
+var AdminClientClearBulkLoadResult_Success_DEFAULT *ClearBulkLoadStateResponse
+func (p *AdminClientClearBulkLoadResult) GetSuccess() *ClearBulkLoadStateResponse {
+  if !p.IsSetSuccess() {
+    return AdminClientClearBulkLoadResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *AdminClientClearBulkLoadResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *AdminClientClearBulkLoadResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *AdminClientClearBulkLoadResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &ClearBulkLoadStateResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *AdminClientClearBulkLoadResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("clear_bulk_load_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *AdminClientClearBulkLoadResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *AdminClientClearBulkLoadResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("AdminClientClearBulkLoadResult(%+v)", *p)
 }
 
 // Attributes:
