@@ -16,6 +16,14 @@
 #
 
 build:
+	thrift_13 -I ../idl -out idl --gen go:thrift_import='github.com/apache/thrift/lib/go/thrift',package_prefix='github.com/apache/incubator-pegasus/go-client/idl/' ../idl/backup.thrift
+	thrift_13 -I ../idl -out idl --gen go:thrift_import='github.com/apache/thrift/lib/go/thrift',package_prefix='github.com/apache/incubator-pegasus/go-client/idl/' ../idl/bulk_load.thrift
+	thrift_13 -I ../idl -out idl --gen go:thrift_import='github.com/apache/thrift/lib/go/thrift',package_prefix='github.com/apache/incubator-pegasus/go-client/idl/' ../idl/dsn.layer2.thrift
+	thrift_13 -I ../idl -out idl --gen go:thrift_import='github.com/apache/thrift/lib/go/thrift',package_prefix='github.com/apache/incubator-pegasus/go-client/idl/' ../idl/duplication.thrift
+	thrift_13 -I ../idl -out idl --gen go:thrift_import='github.com/apache/thrift/lib/go/thrift',package_prefix='github.com/apache/incubator-pegasus/go-client/idl/' ../idl/meta_admin.thrift
+	thrift_13 -I ../idl -out idl --gen go:thrift_import='github.com/apache/thrift/lib/go/thrift',package_prefix='github.com/apache/incubator-pegasus/go-client/idl/' ../idl/metadata.thrift
+	thrift_13 -I ../idl -out idl --gen go:thrift_import='github.com/apache/thrift/lib/go/thrift',package_prefix='github.com/apache/incubator-pegasus/go-client/idl/' ../idl/replica_admin.thrift
+	thrift_13 -I ../idl -out idl --gen go:thrift_import='github.com/apache/thrift/lib/go/thrift',package_prefix='github.com/apache/incubator-pegasus/go-client/idl/' ../idl/rrdb.thrift
 	go mod tidy
 	go mod verify
 	go build -o ./bin/echo ./rpc/main/echo.go
