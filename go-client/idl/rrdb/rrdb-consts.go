@@ -9,6 +9,7 @@ import(
 	"reflect"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/incubator-pegasus/go-client/idl/replication"
 	"github.com/apache/incubator-pegasus/go-client/idl/base"
 
 )
@@ -20,6 +21,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
+var _ = replication.GoUnusedProtection__
 var _ = base.GoUnusedProtection__
 
 func init() {

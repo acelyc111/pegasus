@@ -14,10 +14,12 @@ import (
 	"strconv"
 	"strings"
 	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/incubator-pegasus/go-client/idl/replication"
 	"github.com/apache/incubator-pegasus/go-client/idl/base"
 	"github.com/apache/incubator-pegasus/go-client/idl/rrdb"
 )
 
+var _ = replication.GoUnusedProtection__
 var _ = base.GoUnusedProtection__
 var _ = rrdb.GoUnusedProtection__
 

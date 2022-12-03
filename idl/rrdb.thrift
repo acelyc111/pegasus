@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+include "dsn.layer2.thrift"
 include "dsn.thrift"
 
 namespace cpp dsn.apps
@@ -320,8 +321,8 @@ service rrdb
 }
 
 // ONLY FOR GO
-//service meta
-//{
-//    replication.query_cfg_response query_cfg(1:replication.query_cfg_request query);
-//}
+service meta
+{
+    dsn.layer2.configuration_query_by_index_response query_cfg(1:dsn.layer2.configuration_query_by_index_request query);
+}
 

@@ -11,6 +11,7 @@ import(
 	"errors"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/incubator-pegasus/go-client/idl/replication"
 	"github.com/apache/incubator-pegasus/go-client/idl/base"
 
 )
@@ -22,6 +23,7 @@ var _ = context.Background
 var _ = reflect.DeepEqual
 var _ = bytes.Equal
 
+var _ = replication.GoUnusedProtection__
 var _ = base.GoUnusedProtection__
 type FilterType int64
 const (
@@ -10680,6 +10682,341 @@ func (p *RrdbClearScannerArgs) String() string {
     return "<nil>"
   }
   return fmt.Sprintf("RrdbClearScannerArgs(%+v)", *p)
+}
+
+
+type Meta interface {
+  // Parameters:
+  //  - Query
+  QueryCfg(ctx context.Context, query *replication.ConfigurationQueryByIndexRequest) (r *replication.ConfigurationQueryByIndexResponse, err error)
+}
+
+type MetaClient struct {
+  c thrift.TClient
+}
+
+func NewMetaClientFactory(t thrift.TTransport, f thrift.TProtocolFactory) *MetaClient {
+  return &MetaClient{
+    c: thrift.NewTStandardClient(f.GetProtocol(t), f.GetProtocol(t)),
+  }
+}
+
+func NewMetaClientProtocol(t thrift.TTransport, iprot thrift.TProtocol, oprot thrift.TProtocol) *MetaClient {
+  return &MetaClient{
+    c: thrift.NewTStandardClient(iprot, oprot),
+  }
+}
+
+func NewMetaClient(c thrift.TClient) *MetaClient {
+  return &MetaClient{
+    c: c,
+  }
+}
+
+func (p *MetaClient) Client_() thrift.TClient {
+  return p.c
+}
+// Parameters:
+//  - Query
+func (p *MetaClient) QueryCfg(ctx context.Context, query *replication.ConfigurationQueryByIndexRequest) (r *replication.ConfigurationQueryByIndexResponse, err error) {
+  var _args124 MetaQueryCfgArgs
+  _args124.Query = query
+  var _result125 MetaQueryCfgResult
+  if err = p.Client_().Call(ctx, "query_cfg", &_args124, &_result125); err != nil {
+    return
+  }
+  return _result125.GetSuccess(), nil
+}
+
+type MetaProcessor struct {
+  processorMap map[string]thrift.TProcessorFunction
+  handler Meta
+}
+
+func (p *MetaProcessor) AddToProcessorMap(key string, processor thrift.TProcessorFunction) {
+  p.processorMap[key] = processor
+}
+
+func (p *MetaProcessor) GetProcessorFunction(key string) (processor thrift.TProcessorFunction, ok bool) {
+  processor, ok = p.processorMap[key]
+  return processor, ok
+}
+
+func (p *MetaProcessor) ProcessorMap() map[string]thrift.TProcessorFunction {
+  return p.processorMap
+}
+
+func NewMetaProcessor(handler Meta) *MetaProcessor {
+
+  self126 := &MetaProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
+  self126.processorMap["query_cfg"] = &metaProcessorQueryCfg{handler:handler}
+return self126
+}
+
+func (p *MetaProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  name, _, seqId, err := iprot.ReadMessageBegin()
+  if err != nil { return false, err }
+  if processor, ok := p.GetProcessorFunction(name); ok {
+    return processor.Process(ctx, seqId, iprot, oprot)
+  }
+  iprot.Skip(thrift.STRUCT)
+  iprot.ReadMessageEnd()
+  x127 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
+  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
+  x127.Write(oprot)
+  oprot.WriteMessageEnd()
+  oprot.Flush(ctx)
+  return false, x127
+
+}
+
+type metaProcessorQueryCfg struct {
+  handler Meta
+}
+
+func (p *metaProcessorQueryCfg) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := MetaQueryCfgArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("query_cfg", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := MetaQueryCfgResult{}
+var retval *replication.ConfigurationQueryByIndexResponse
+  var err2 error
+  if retval, err2 = p.handler.QueryCfg(ctx, args.Query); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing query_cfg: " + err2.Error())
+    oprot.WriteMessageBegin("query_cfg", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush(ctx)
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("query_cfg", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+
+// HELPER FUNCTIONS AND STRUCTURES
+
+// Attributes:
+//  - Query
+type MetaQueryCfgArgs struct {
+  Query *replication.ConfigurationQueryByIndexRequest `thrift:"query,1" db:"query" json:"query"`
+}
+
+func NewMetaQueryCfgArgs() *MetaQueryCfgArgs {
+  return &MetaQueryCfgArgs{}
+}
+
+var MetaQueryCfgArgs_Query_DEFAULT *replication.ConfigurationQueryByIndexRequest
+func (p *MetaQueryCfgArgs) GetQuery() *replication.ConfigurationQueryByIndexRequest {
+  if !p.IsSetQuery() {
+    return MetaQueryCfgArgs_Query_DEFAULT
+  }
+return p.Query
+}
+func (p *MetaQueryCfgArgs) IsSetQuery() bool {
+  return p.Query != nil
+}
+
+func (p *MetaQueryCfgArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *MetaQueryCfgArgs)  ReadField1(iprot thrift.TProtocol) error {
+  p.Query = &replication.ConfigurationQueryByIndexRequest{}
+  if err := p.Query.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Query), err)
+  }
+  return nil
+}
+
+func (p *MetaQueryCfgArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_cfg_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *MetaQueryCfgArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("query", thrift.STRUCT, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:query: ", p), err) }
+  if err := p.Query.Write(oprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Query), err)
+  }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:query: ", p), err) }
+  return err
+}
+
+func (p *MetaQueryCfgArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("MetaQueryCfgArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type MetaQueryCfgResult struct {
+  Success *replication.ConfigurationQueryByIndexResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewMetaQueryCfgResult() *MetaQueryCfgResult {
+  return &MetaQueryCfgResult{}
+}
+
+var MetaQueryCfgResult_Success_DEFAULT *replication.ConfigurationQueryByIndexResponse
+func (p *MetaQueryCfgResult) GetSuccess() *replication.ConfigurationQueryByIndexResponse {
+  if !p.IsSetSuccess() {
+    return MetaQueryCfgResult_Success_DEFAULT
+  }
+return p.Success
+}
+func (p *MetaQueryCfgResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *MetaQueryCfgResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *MetaQueryCfgResult)  ReadField0(iprot thrift.TProtocol) error {
+  p.Success = &replication.ConfigurationQueryByIndexResponse{}
+  if err := p.Success.Read(iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.Success), err)
+  }
+  return nil
+}
+
+func (p *MetaQueryCfgResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("query_cfg_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *MetaQueryCfgResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := p.Success.Write(oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Success), err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *MetaQueryCfgResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("MetaQueryCfgResult(%+v)", *p)
 }
 
 
