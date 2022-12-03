@@ -37,6 +37,12 @@ thrift_generate_cpp(
 )
 
 thrift_generate_cpp(
+        DUPLICATION_THRIFT_SRCS
+        DUPLICATION_THRIFT_HDRS
+        ../../idl/duplication_internal.thrift
+)
+
+thrift_generate_cpp(
     DUPLICATION_THRIFT_SRCS
     DUPLICATION_THRIFT_HDRS
         ../../idl/duplication.thrift
