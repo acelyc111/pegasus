@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/apache/incubator-pegasus/idl/meta_admin"
+	"github.com/apache/incubator-pegasus/go-client/idl/admin"
 	"github.com/apache/incubator-pegasus/go-client/idl/base"
 	"github.com/apache/incubator-pegasus/go-client/session"
 )
