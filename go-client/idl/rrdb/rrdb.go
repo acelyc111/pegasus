@@ -6817,543 +6817,6 @@ func (p *ScanResponse) String() string {
   return fmt.Sprintf("ScanResponse(%+v)", *p)
 }
 
-// Attributes:
-//  - Entries
-type DuplicateRequest struct {
-  Entries []*DuplicateEntry `thrift:"entries,1" db:"entries" json:"entries"`
-}
-
-func NewDuplicateRequest() *DuplicateRequest {
-  return &DuplicateRequest{}
-}
-
-
-func (p *DuplicateRequest) GetEntries() []*DuplicateEntry {
-  return p.Entries
-}
-func (p *DuplicateRequest) Read(iprot thrift.TProtocol) error {
-  if _, err := iprot.ReadStructBegin(); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
-  }
-
-
-  for {
-    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
-    if err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
-    }
-    if fieldTypeId == thrift.STOP { break; }
-    switch fieldId {
-    case 1:
-      if fieldTypeId == thrift.LIST {
-        if err := p.ReadField1(iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(fieldTypeId); err != nil {
-          return err
-        }
-      }
-    default:
-      if err := iprot.Skip(fieldTypeId); err != nil {
-        return err
-      }
-    }
-    if err := iprot.ReadFieldEnd(); err != nil {
-      return err
-    }
-  }
-  if err := iprot.ReadStructEnd(); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
-  }
-  return nil
-}
-
-func (p *DuplicateRequest)  ReadField1(iprot thrift.TProtocol) error {
-  _, size, err := iprot.ReadListBegin()
-  if err != nil {
-    return thrift.PrependError("error reading list begin: ", err)
-  }
-  tSlice := make([]*DuplicateEntry, 0, size)
-  p.Entries =  tSlice
-  for i := 0; i < size; i ++ {
-    _elem8 := &DuplicateEntry{}
-    if err := _elem8.Read(iprot); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem8), err)
-    }
-    p.Entries = append(p.Entries, _elem8)
-  }
-  if err := iprot.ReadListEnd(); err != nil {
-    return thrift.PrependError("error reading list end: ", err)
-  }
-  return nil
-}
-
-func (p *DuplicateRequest) Write(oprot thrift.TProtocol) error {
-  if err := oprot.WriteStructBegin("duplicate_request"); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
-  if p != nil {
-    if err := p.writeField1(oprot); err != nil { return err }
-  }
-  if err := oprot.WriteFieldStop(); err != nil {
-    return thrift.PrependError("write field stop error: ", err) }
-  if err := oprot.WriteStructEnd(); err != nil {
-    return thrift.PrependError("write struct stop error: ", err) }
-  return nil
-}
-
-func (p *DuplicateRequest) writeField1(oprot thrift.TProtocol) (err error) {
-  if err := oprot.WriteFieldBegin("entries", thrift.LIST, 1); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:entries: ", p), err) }
-  if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Entries)); err != nil {
-    return thrift.PrependError("error writing list begin: ", err)
-  }
-  for _, v := range p.Entries {
-    if err := v.Write(oprot); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", v), err)
-    }
-  }
-  if err := oprot.WriteListEnd(); err != nil {
-    return thrift.PrependError("error writing list end: ", err)
-  }
-  if err := oprot.WriteFieldEnd(); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:entries: ", p), err) }
-  return err
-}
-
-func (p *DuplicateRequest) String() string {
-  if p == nil {
-    return "<nil>"
-  }
-  return fmt.Sprintf("DuplicateRequest(%+v)", *p)
-}
-
-// Attributes:
-//  - Timestamp
-//  - TaskCode
-//  - RawMessage
-//  - ClusterID
-//  - VerifyTimetag
-type DuplicateEntry struct {
-  Timestamp *int64 `thrift:"timestamp,1" db:"timestamp" json:"timestamp,omitempty"`
-  TaskCode *base.TaskCode `thrift:"task_code,2" db:"task_code" json:"task_code,omitempty"`
-  RawMessage *base.Blob `thrift:"raw_message,3" db:"raw_message" json:"raw_message,omitempty"`
-  ClusterID *int8 `thrift:"cluster_id,4" db:"cluster_id" json:"cluster_id,omitempty"`
-  VerifyTimetag *bool `thrift:"verify_timetag,5" db:"verify_timetag" json:"verify_timetag,omitempty"`
-}
-
-func NewDuplicateEntry() *DuplicateEntry {
-  return &DuplicateEntry{}
-}
-
-var DuplicateEntry_Timestamp_DEFAULT int64
-func (p *DuplicateEntry) GetTimestamp() int64 {
-  if !p.IsSetTimestamp() {
-    return DuplicateEntry_Timestamp_DEFAULT
-  }
-return *p.Timestamp
-}
-var DuplicateEntry_TaskCode_DEFAULT *base.TaskCode
-func (p *DuplicateEntry) GetTaskCode() *base.TaskCode {
-  if !p.IsSetTaskCode() {
-    return DuplicateEntry_TaskCode_DEFAULT
-  }
-return p.TaskCode
-}
-var DuplicateEntry_RawMessage_DEFAULT *base.Blob
-func (p *DuplicateEntry) GetRawMessage() *base.Blob {
-  if !p.IsSetRawMessage() {
-    return DuplicateEntry_RawMessage_DEFAULT
-  }
-return p.RawMessage
-}
-var DuplicateEntry_ClusterID_DEFAULT int8
-func (p *DuplicateEntry) GetClusterID() int8 {
-  if !p.IsSetClusterID() {
-    return DuplicateEntry_ClusterID_DEFAULT
-  }
-return *p.ClusterID
-}
-var DuplicateEntry_VerifyTimetag_DEFAULT bool
-func (p *DuplicateEntry) GetVerifyTimetag() bool {
-  if !p.IsSetVerifyTimetag() {
-    return DuplicateEntry_VerifyTimetag_DEFAULT
-  }
-return *p.VerifyTimetag
-}
-func (p *DuplicateEntry) IsSetTimestamp() bool {
-  return p.Timestamp != nil
-}
-
-func (p *DuplicateEntry) IsSetTaskCode() bool {
-  return p.TaskCode != nil
-}
-
-func (p *DuplicateEntry) IsSetRawMessage() bool {
-  return p.RawMessage != nil
-}
-
-func (p *DuplicateEntry) IsSetClusterID() bool {
-  return p.ClusterID != nil
-}
-
-func (p *DuplicateEntry) IsSetVerifyTimetag() bool {
-  return p.VerifyTimetag != nil
-}
-
-func (p *DuplicateEntry) Read(iprot thrift.TProtocol) error {
-  if _, err := iprot.ReadStructBegin(); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
-  }
-
-
-  for {
-    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
-    if err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
-    }
-    if fieldTypeId == thrift.STOP { break; }
-    switch fieldId {
-    case 1:
-      if fieldTypeId == thrift.I64 {
-        if err := p.ReadField1(iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(fieldTypeId); err != nil {
-          return err
-        }
-      }
-    case 2:
-      if fieldTypeId == thrift.STRUCT {
-        if err := p.ReadField2(iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(fieldTypeId); err != nil {
-          return err
-        }
-      }
-    case 3:
-      if fieldTypeId == thrift.STRUCT {
-        if err := p.ReadField3(iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(fieldTypeId); err != nil {
-          return err
-        }
-      }
-    case 4:
-      if fieldTypeId == thrift.BYTE {
-        if err := p.ReadField4(iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(fieldTypeId); err != nil {
-          return err
-        }
-      }
-    case 5:
-      if fieldTypeId == thrift.BOOL {
-        if err := p.ReadField5(iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(fieldTypeId); err != nil {
-          return err
-        }
-      }
-    default:
-      if err := iprot.Skip(fieldTypeId); err != nil {
-        return err
-      }
-    }
-    if err := iprot.ReadFieldEnd(); err != nil {
-      return err
-    }
-  }
-  if err := iprot.ReadStructEnd(); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
-  }
-  return nil
-}
-
-func (p *DuplicateEntry)  ReadField1(iprot thrift.TProtocol) error {
-  if v, err := iprot.ReadI64(); err != nil {
-  return thrift.PrependError("error reading field 1: ", err)
-} else {
-  p.Timestamp = &v
-}
-  return nil
-}
-
-func (p *DuplicateEntry)  ReadField2(iprot thrift.TProtocol) error {
-  p.TaskCode = &base.TaskCode{}
-  if err := p.TaskCode.Read(iprot); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.TaskCode), err)
-  }
-  return nil
-}
-
-func (p *DuplicateEntry)  ReadField3(iprot thrift.TProtocol) error {
-  p.RawMessage = &base.Blob{}
-  if err := p.RawMessage.Read(iprot); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.RawMessage), err)
-  }
-  return nil
-}
-
-func (p *DuplicateEntry)  ReadField4(iprot thrift.TProtocol) error {
-  if v, err := iprot.ReadByte(); err != nil {
-  return thrift.PrependError("error reading field 4: ", err)
-} else {
-  temp := int8(v)
-  p.ClusterID = &temp
-}
-  return nil
-}
-
-func (p *DuplicateEntry)  ReadField5(iprot thrift.TProtocol) error {
-  if v, err := iprot.ReadBool(); err != nil {
-  return thrift.PrependError("error reading field 5: ", err)
-} else {
-  p.VerifyTimetag = &v
-}
-  return nil
-}
-
-func (p *DuplicateEntry) Write(oprot thrift.TProtocol) error {
-  if err := oprot.WriteStructBegin("duplicate_entry"); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
-  if p != nil {
-    if err := p.writeField1(oprot); err != nil { return err }
-    if err := p.writeField2(oprot); err != nil { return err }
-    if err := p.writeField3(oprot); err != nil { return err }
-    if err := p.writeField4(oprot); err != nil { return err }
-    if err := p.writeField5(oprot); err != nil { return err }
-  }
-  if err := oprot.WriteFieldStop(); err != nil {
-    return thrift.PrependError("write field stop error: ", err) }
-  if err := oprot.WriteStructEnd(); err != nil {
-    return thrift.PrependError("write struct stop error: ", err) }
-  return nil
-}
-
-func (p *DuplicateEntry) writeField1(oprot thrift.TProtocol) (err error) {
-  if p.IsSetTimestamp() {
-    if err := oprot.WriteFieldBegin("timestamp", thrift.I64, 1); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:timestamp: ", p), err) }
-    if err := oprot.WriteI64(int64(*p.Timestamp)); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T.timestamp (1) field write error: ", p), err) }
-    if err := oprot.WriteFieldEnd(); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field end error 1:timestamp: ", p), err) }
-  }
-  return err
-}
-
-func (p *DuplicateEntry) writeField2(oprot thrift.TProtocol) (err error) {
-  if p.IsSetTaskCode() {
-    if err := oprot.WriteFieldBegin("task_code", thrift.STRUCT, 2); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:task_code: ", p), err) }
-    if err := p.TaskCode.Write(oprot); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.TaskCode), err)
-    }
-    if err := oprot.WriteFieldEnd(); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field end error 2:task_code: ", p), err) }
-  }
-  return err
-}
-
-func (p *DuplicateEntry) writeField3(oprot thrift.TProtocol) (err error) {
-  if p.IsSetRawMessage() {
-    if err := oprot.WriteFieldBegin("raw_message", thrift.STRUCT, 3); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field begin error 3:raw_message: ", p), err) }
-    if err := p.RawMessage.Write(oprot); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.RawMessage), err)
-    }
-    if err := oprot.WriteFieldEnd(); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field end error 3:raw_message: ", p), err) }
-  }
-  return err
-}
-
-func (p *DuplicateEntry) writeField4(oprot thrift.TProtocol) (err error) {
-  if p.IsSetClusterID() {
-    if err := oprot.WriteFieldBegin("cluster_id", thrift.BYTE, 4); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field begin error 4:cluster_id: ", p), err) }
-    if err := oprot.WriteByte(int8(*p.ClusterID)); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T.cluster_id (4) field write error: ", p), err) }
-    if err := oprot.WriteFieldEnd(); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field end error 4:cluster_id: ", p), err) }
-  }
-  return err
-}
-
-func (p *DuplicateEntry) writeField5(oprot thrift.TProtocol) (err error) {
-  if p.IsSetVerifyTimetag() {
-    if err := oprot.WriteFieldBegin("verify_timetag", thrift.BOOL, 5); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field begin error 5:verify_timetag: ", p), err) }
-    if err := oprot.WriteBool(bool(*p.VerifyTimetag)); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T.verify_timetag (5) field write error: ", p), err) }
-    if err := oprot.WriteFieldEnd(); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field end error 5:verify_timetag: ", p), err) }
-  }
-  return err
-}
-
-func (p *DuplicateEntry) String() string {
-  if p == nil {
-    return "<nil>"
-  }
-  return fmt.Sprintf("DuplicateEntry(%+v)", *p)
-}
-
-// Attributes:
-//  - Error
-//  - ErrorHint
-type DuplicateResponse struct {
-  Error *int32 `thrift:"error,1" db:"error" json:"error,omitempty"`
-  ErrorHint *string `thrift:"error_hint,2" db:"error_hint" json:"error_hint,omitempty"`
-}
-
-func NewDuplicateResponse() *DuplicateResponse {
-  return &DuplicateResponse{}
-}
-
-var DuplicateResponse_Error_DEFAULT int32
-func (p *DuplicateResponse) GetError() int32 {
-  if !p.IsSetError() {
-    return DuplicateResponse_Error_DEFAULT
-  }
-return *p.Error
-}
-var DuplicateResponse_ErrorHint_DEFAULT string
-func (p *DuplicateResponse) GetErrorHint() string {
-  if !p.IsSetErrorHint() {
-    return DuplicateResponse_ErrorHint_DEFAULT
-  }
-return *p.ErrorHint
-}
-func (p *DuplicateResponse) IsSetError() bool {
-  return p.Error != nil
-}
-
-func (p *DuplicateResponse) IsSetErrorHint() bool {
-  return p.ErrorHint != nil
-}
-
-func (p *DuplicateResponse) Read(iprot thrift.TProtocol) error {
-  if _, err := iprot.ReadStructBegin(); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
-  }
-
-
-  for {
-    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
-    if err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
-    }
-    if fieldTypeId == thrift.STOP { break; }
-    switch fieldId {
-    case 1:
-      if fieldTypeId == thrift.I32 {
-        if err := p.ReadField1(iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(fieldTypeId); err != nil {
-          return err
-        }
-      }
-    case 2:
-      if fieldTypeId == thrift.STRING {
-        if err := p.ReadField2(iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(fieldTypeId); err != nil {
-          return err
-        }
-      }
-    default:
-      if err := iprot.Skip(fieldTypeId); err != nil {
-        return err
-      }
-    }
-    if err := iprot.ReadFieldEnd(); err != nil {
-      return err
-    }
-  }
-  if err := iprot.ReadStructEnd(); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
-  }
-  return nil
-}
-
-func (p *DuplicateResponse)  ReadField1(iprot thrift.TProtocol) error {
-  if v, err := iprot.ReadI32(); err != nil {
-  return thrift.PrependError("error reading field 1: ", err)
-} else {
-  p.Error = &v
-}
-  return nil
-}
-
-func (p *DuplicateResponse)  ReadField2(iprot thrift.TProtocol) error {
-  if v, err := iprot.ReadString(); err != nil {
-  return thrift.PrependError("error reading field 2: ", err)
-} else {
-  p.ErrorHint = &v
-}
-  return nil
-}
-
-func (p *DuplicateResponse) Write(oprot thrift.TProtocol) error {
-  if err := oprot.WriteStructBegin("duplicate_response"); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
-  if p != nil {
-    if err := p.writeField1(oprot); err != nil { return err }
-    if err := p.writeField2(oprot); err != nil { return err }
-  }
-  if err := oprot.WriteFieldStop(); err != nil {
-    return thrift.PrependError("write field stop error: ", err) }
-  if err := oprot.WriteStructEnd(); err != nil {
-    return thrift.PrependError("write struct stop error: ", err) }
-  return nil
-}
-
-func (p *DuplicateResponse) writeField1(oprot thrift.TProtocol) (err error) {
-  if p.IsSetError() {
-    if err := oprot.WriteFieldBegin("error", thrift.I32, 1); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:error: ", p), err) }
-    if err := oprot.WriteI32(int32(*p.Error)); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T.error (1) field write error: ", p), err) }
-    if err := oprot.WriteFieldEnd(); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field end error 1:error: ", p), err) }
-  }
-  return err
-}
-
-func (p *DuplicateResponse) writeField2(oprot thrift.TProtocol) (err error) {
-  if p.IsSetErrorHint() {
-    if err := oprot.WriteFieldBegin("error_hint", thrift.STRING, 2); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:error_hint: ", p), err) }
-    if err := oprot.WriteString(string(*p.ErrorHint)); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T.error_hint (2) field write error: ", p), err) }
-    if err := oprot.WriteFieldEnd(); err != nil {
-      return thrift.PrependError(fmt.Sprintf("%T write field end error 2:error_hint: ", p), err) }
-  }
-  return err
-}
-
-func (p *DuplicateResponse) String() string {
-  if p == nil {
-    return "<nil>"
-  }
-  return fmt.Sprintf("DuplicateResponse(%+v)", *p)
-}
-
 type Rrdb interface {
   // Parameters:
   //  - Update
@@ -7430,177 +6893,177 @@ func (p *RrdbClient) Client_() thrift.TClient {
 // Parameters:
 //  - Update
 func (p *RrdbClient) Put(ctx context.Context, update *UpdateRequest) (r *UpdateResponse, err error) {
-  var _args9 RrdbPutArgs
-  _args9.Update = update
-  var _result10 RrdbPutResult
-  if err = p.Client_().Call(ctx, "put", &_args9, &_result10); err != nil {
+  var _args8 RrdbPutArgs
+  _args8.Update = update
+  var _result9 RrdbPutResult
+  if err = p.Client_().Call(ctx, "put", &_args8, &_result9); err != nil {
     return
   }
-  return _result10.GetSuccess(), nil
+  return _result9.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) MultiPut(ctx context.Context, request *MultiPutRequest) (r *UpdateResponse, err error) {
-  var _args11 RrdbMultiPutArgs
-  _args11.Request = request
-  var _result12 RrdbMultiPutResult
-  if err = p.Client_().Call(ctx, "multi_put", &_args11, &_result12); err != nil {
+  var _args10 RrdbMultiPutArgs
+  _args10.Request = request
+  var _result11 RrdbMultiPutResult
+  if err = p.Client_().Call(ctx, "multi_put", &_args10, &_result11); err != nil {
     return
   }
-  return _result12.GetSuccess(), nil
+  return _result11.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Key
 func (p *RrdbClient) Remove(ctx context.Context, key *base.Blob) (r *UpdateResponse, err error) {
-  var _args13 RrdbRemoveArgs
-  _args13.Key = key
-  var _result14 RrdbRemoveResult
-  if err = p.Client_().Call(ctx, "remove", &_args13, &_result14); err != nil {
+  var _args12 RrdbRemoveArgs
+  _args12.Key = key
+  var _result13 RrdbRemoveResult
+  if err = p.Client_().Call(ctx, "remove", &_args12, &_result13); err != nil {
     return
   }
-  return _result14.GetSuccess(), nil
+  return _result13.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) MultiRemove(ctx context.Context, request *MultiRemoveRequest) (r *MultiRemoveResponse, err error) {
-  var _args15 RrdbMultiRemoveArgs
-  _args15.Request = request
-  var _result16 RrdbMultiRemoveResult
-  if err = p.Client_().Call(ctx, "multi_remove", &_args15, &_result16); err != nil {
+  var _args14 RrdbMultiRemoveArgs
+  _args14.Request = request
+  var _result15 RrdbMultiRemoveResult
+  if err = p.Client_().Call(ctx, "multi_remove", &_args14, &_result15); err != nil {
     return
   }
-  return _result16.GetSuccess(), nil
+  return _result15.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) Incr(ctx context.Context, request *IncrRequest) (r *IncrResponse, err error) {
-  var _args17 RrdbIncrArgs
-  _args17.Request = request
-  var _result18 RrdbIncrResult
-  if err = p.Client_().Call(ctx, "incr", &_args17, &_result18); err != nil {
+  var _args16 RrdbIncrArgs
+  _args16.Request = request
+  var _result17 RrdbIncrResult
+  if err = p.Client_().Call(ctx, "incr", &_args16, &_result17); err != nil {
     return
   }
-  return _result18.GetSuccess(), nil
+  return _result17.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) CheckAndSet(ctx context.Context, request *CheckAndSetRequest) (r *CheckAndSetResponse, err error) {
-  var _args19 RrdbCheckAndSetArgs
-  _args19.Request = request
-  var _result20 RrdbCheckAndSetResult
-  if err = p.Client_().Call(ctx, "check_and_set", &_args19, &_result20); err != nil {
+  var _args18 RrdbCheckAndSetArgs
+  _args18.Request = request
+  var _result19 RrdbCheckAndSetResult
+  if err = p.Client_().Call(ctx, "check_and_set", &_args18, &_result19); err != nil {
     return
   }
-  return _result20.GetSuccess(), nil
+  return _result19.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) CheckAndMutate(ctx context.Context, request *CheckAndMutateRequest) (r *CheckAndMutateResponse, err error) {
-  var _args21 RrdbCheckAndMutateArgs
-  _args21.Request = request
-  var _result22 RrdbCheckAndMutateResult
-  if err = p.Client_().Call(ctx, "check_and_mutate", &_args21, &_result22); err != nil {
+  var _args20 RrdbCheckAndMutateArgs
+  _args20.Request = request
+  var _result21 RrdbCheckAndMutateResult
+  if err = p.Client_().Call(ctx, "check_and_mutate", &_args20, &_result21); err != nil {
     return
   }
-  return _result22.GetSuccess(), nil
+  return _result21.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Key
 func (p *RrdbClient) Get(ctx context.Context, key *base.Blob) (r *ReadResponse, err error) {
-  var _args23 RrdbGetArgs
-  _args23.Key = key
-  var _result24 RrdbGetResult
-  if err = p.Client_().Call(ctx, "get", &_args23, &_result24); err != nil {
+  var _args22 RrdbGetArgs
+  _args22.Key = key
+  var _result23 RrdbGetResult
+  if err = p.Client_().Call(ctx, "get", &_args22, &_result23); err != nil {
     return
   }
-  return _result24.GetSuccess(), nil
+  return _result23.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) MultiGet(ctx context.Context, request *MultiGetRequest) (r *MultiGetResponse, err error) {
-  var _args25 RrdbMultiGetArgs
-  _args25.Request = request
-  var _result26 RrdbMultiGetResult
-  if err = p.Client_().Call(ctx, "multi_get", &_args25, &_result26); err != nil {
+  var _args24 RrdbMultiGetArgs
+  _args24.Request = request
+  var _result25 RrdbMultiGetResult
+  if err = p.Client_().Call(ctx, "multi_get", &_args24, &_result25); err != nil {
     return
   }
-  return _result26.GetSuccess(), nil
+  return _result25.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) BatchGet(ctx context.Context, request *BatchGetRequest) (r *BatchGetResponse, err error) {
-  var _args27 RrdbBatchGetArgs
-  _args27.Request = request
-  var _result28 RrdbBatchGetResult
-  if err = p.Client_().Call(ctx, "batch_get", &_args27, &_result28); err != nil {
+  var _args26 RrdbBatchGetArgs
+  _args26.Request = request
+  var _result27 RrdbBatchGetResult
+  if err = p.Client_().Call(ctx, "batch_get", &_args26, &_result27); err != nil {
     return
   }
-  return _result28.GetSuccess(), nil
+  return _result27.GetSuccess(), nil
 }
 
 // Parameters:
 //  - HashKey
 func (p *RrdbClient) SortkeyCount(ctx context.Context, hash_key *base.Blob) (r *CountResponse, err error) {
-  var _args29 RrdbSortkeyCountArgs
-  _args29.HashKey = hash_key
-  var _result30 RrdbSortkeyCountResult
-  if err = p.Client_().Call(ctx, "sortkey_count", &_args29, &_result30); err != nil {
+  var _args28 RrdbSortkeyCountArgs
+  _args28.HashKey = hash_key
+  var _result29 RrdbSortkeyCountResult
+  if err = p.Client_().Call(ctx, "sortkey_count", &_args28, &_result29); err != nil {
     return
   }
-  return _result30.GetSuccess(), nil
+  return _result29.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Key
 func (p *RrdbClient) TTL(ctx context.Context, key *base.Blob) (r *TTLResponse, err error) {
-  var _args31 RrdbTTLArgs
-  _args31.Key = key
-  var _result32 RrdbTTLResult
-  if err = p.Client_().Call(ctx, "ttl", &_args31, &_result32); err != nil {
+  var _args30 RrdbTTLArgs
+  _args30.Key = key
+  var _result31 RrdbTTLResult
+  if err = p.Client_().Call(ctx, "ttl", &_args30, &_result31); err != nil {
     return
   }
-  return _result32.GetSuccess(), nil
+  return _result31.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) GetScanner(ctx context.Context, request *GetScannerRequest) (r *ScanResponse, err error) {
-  var _args33 RrdbGetScannerArgs
-  _args33.Request = request
-  var _result34 RrdbGetScannerResult
-  if err = p.Client_().Call(ctx, "get_scanner", &_args33, &_result34); err != nil {
+  var _args32 RrdbGetScannerArgs
+  _args32.Request = request
+  var _result33 RrdbGetScannerResult
+  if err = p.Client_().Call(ctx, "get_scanner", &_args32, &_result33); err != nil {
     return
   }
-  return _result34.GetSuccess(), nil
+  return _result33.GetSuccess(), nil
 }
 
 // Parameters:
 //  - Request
 func (p *RrdbClient) Scan(ctx context.Context, request *ScanRequest) (r *ScanResponse, err error) {
-  var _args35 RrdbScanArgs
-  _args35.Request = request
-  var _result36 RrdbScanResult
-  if err = p.Client_().Call(ctx, "scan", &_args35, &_result36); err != nil {
+  var _args34 RrdbScanArgs
+  _args34.Request = request
+  var _result35 RrdbScanResult
+  if err = p.Client_().Call(ctx, "scan", &_args34, &_result35); err != nil {
     return
   }
-  return _result36.GetSuccess(), nil
+  return _result35.GetSuccess(), nil
 }
 
 // Parameters:
 //  - ContextID
 func (p *RrdbClient) ClearScanner(ctx context.Context, context_id int64) (err error) {
-  var _args37 RrdbClearScannerArgs
-  _args37.ContextID = context_id
-  if err := p.Client_().Call(ctx, "clear_scanner", &_args37, nil); err != nil {
+  var _args36 RrdbClearScannerArgs
+  _args36.ContextID = context_id
+  if err := p.Client_().Call(ctx, "clear_scanner", &_args36, nil); err != nil {
     return err
   }
   return nil
@@ -7626,23 +7089,23 @@ func (p *RrdbProcessor) ProcessorMap() map[string]thrift.TProcessorFunction {
 
 func NewRrdbProcessor(handler Rrdb) *RrdbProcessor {
 
-  self38 := &RrdbProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
-  self38.processorMap["put"] = &rrdbProcessorPut{handler:handler}
-  self38.processorMap["multi_put"] = &rrdbProcessorMultiPut{handler:handler}
-  self38.processorMap["remove"] = &rrdbProcessorRemove{handler:handler}
-  self38.processorMap["multi_remove"] = &rrdbProcessorMultiRemove{handler:handler}
-  self38.processorMap["incr"] = &rrdbProcessorIncr{handler:handler}
-  self38.processorMap["check_and_set"] = &rrdbProcessorCheckAndSet{handler:handler}
-  self38.processorMap["check_and_mutate"] = &rrdbProcessorCheckAndMutate{handler:handler}
-  self38.processorMap["get"] = &rrdbProcessorGet{handler:handler}
-  self38.processorMap["multi_get"] = &rrdbProcessorMultiGet{handler:handler}
-  self38.processorMap["batch_get"] = &rrdbProcessorBatchGet{handler:handler}
-  self38.processorMap["sortkey_count"] = &rrdbProcessorSortkeyCount{handler:handler}
-  self38.processorMap["ttl"] = &rrdbProcessorTTL{handler:handler}
-  self38.processorMap["get_scanner"] = &rrdbProcessorGetScanner{handler:handler}
-  self38.processorMap["scan"] = &rrdbProcessorScan{handler:handler}
-  self38.processorMap["clear_scanner"] = &rrdbProcessorClearScanner{handler:handler}
-return self38
+  self37 := &RrdbProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
+  self37.processorMap["put"] = &rrdbProcessorPut{handler:handler}
+  self37.processorMap["multi_put"] = &rrdbProcessorMultiPut{handler:handler}
+  self37.processorMap["remove"] = &rrdbProcessorRemove{handler:handler}
+  self37.processorMap["multi_remove"] = &rrdbProcessorMultiRemove{handler:handler}
+  self37.processorMap["incr"] = &rrdbProcessorIncr{handler:handler}
+  self37.processorMap["check_and_set"] = &rrdbProcessorCheckAndSet{handler:handler}
+  self37.processorMap["check_and_mutate"] = &rrdbProcessorCheckAndMutate{handler:handler}
+  self37.processorMap["get"] = &rrdbProcessorGet{handler:handler}
+  self37.processorMap["multi_get"] = &rrdbProcessorMultiGet{handler:handler}
+  self37.processorMap["batch_get"] = &rrdbProcessorBatchGet{handler:handler}
+  self37.processorMap["sortkey_count"] = &rrdbProcessorSortkeyCount{handler:handler}
+  self37.processorMap["ttl"] = &rrdbProcessorTTL{handler:handler}
+  self37.processorMap["get_scanner"] = &rrdbProcessorGetScanner{handler:handler}
+  self37.processorMap["scan"] = &rrdbProcessorScan{handler:handler}
+  self37.processorMap["clear_scanner"] = &rrdbProcessorClearScanner{handler:handler}
+return self37
 }
 
 func (p *RrdbProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -7653,12 +7116,12 @@ func (p *RrdbProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtoc
   }
   iprot.Skip(thrift.STRUCT)
   iprot.ReadMessageEnd()
-  x39 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
+  x38 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
   oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
-  x39.Write(oprot)
+  x38.Write(oprot)
   oprot.WriteMessageEnd()
   oprot.Flush(ctx)
-  return false, x39
+  return false, x38
 
 }
 
