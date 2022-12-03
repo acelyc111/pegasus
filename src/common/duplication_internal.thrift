@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-include "dsn.thrift"
+include "../../idl/dsn.thrift"
 
 namespace cpp dsn.apps
 

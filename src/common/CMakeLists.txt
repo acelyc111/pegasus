@@ -37,9 +37,9 @@ thrift_generate_cpp(
 )
 
 thrift_generate_cpp(
-        DUPLICATION_THRIFT_SRCS
-        DUPLICATION_THRIFT_HDRS
-        ../../idl/duplication_internal.thrift
+        DUPLICATION_INTERNAL_THRIFT_SRCS
+        DUPLICATION_INTERNAL_THRIFT_HDRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/duplication_internal.thrift
 )
 
 thrift_generate_cpp(
@@ -79,6 +79,7 @@ thrift_generate_cpp(
 )
 
 set(MY_PROJ_SRC
+    ${DUPLICATION_INTERNAL_THRIFT_SRCS}
     ${DUPLICATION_THRIFT_SRCS}
     ${BACKUP_THRIFT_SRCS}
     ${META_ADMIN_THRIFT_SRCS}
