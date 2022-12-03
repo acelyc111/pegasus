@@ -3,5 +3,4 @@
 
 package admin
 
-var GoUnusedProtection__ int;
-
+var GoUnusedProtection__ int

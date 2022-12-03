@@ -45,7 +45,7 @@ func (ms *metaSession) queryConfig(ctx context.Context, tableName string) (*repl
 	ms.logger.Printf("querying configuration of table(%s) from %s", tableName, ms)
 
 	arg := rrdb.NewMetaQueryCfgArgs()
-	arg.Query = replication.NewQueryCfgRequest()
+	arg.Query = replication.NewConfigurationQueryByIndexRequest()
 	arg.Query.AppName = tableName
 	arg.Query.PartitionIndices = []int32{}
 

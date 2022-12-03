@@ -3,5 +3,4 @@
 
 package replication
 
-var GoUnusedProtection__ int;
-
+var GoUnusedProtection__ int
