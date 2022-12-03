@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/apache/incubator-pegasus/go-client/idl/admin"
+	"github.com/apache/incubator-pegasus/go-client/idl/base"
 	"github.com/apache/incubator-pegasus/go-client/idl/cmd"
 	"github.com/apache/incubator-pegasus/go-client/idl/radmin"
 	"github.com/apache/incubator-pegasus/go-client/idl/replication"
