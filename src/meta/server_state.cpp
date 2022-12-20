@@ -829,7 +829,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
 
                 response.partitions[i].info = *app;
                 response.partitions[i].config = app->partitions[pid.get_partition_index()];
-                response.partitions[i].host_node = request.node;
+//                response.partitions[i].host_node = request.node;
                 // set meta_split_status
                 const split_state &app_split_states = app->helpers->split_states;
                 if (app->splitting()) {
@@ -1567,27 +1567,27 @@ void server_state::update_configuration_locally(
     } else {
         CHECK_EQ(old_cfg.ballot, new_cfg.ballot);
 
-        new_cfg = old_cfg;
-        partition_configuration_stateless pcs(new_cfg);
-        if (config_request->type == config_type::type::CT_ADD_SECONDARY) {
-            pcs.hosts().emplace_back(config_request->host_node);
-            pcs.workers().emplace_back(config_request->node);
-        } else {
-            auto it =
-                std::remove(pcs.hosts().begin(), pcs.hosts().end(), config_request->host_node);
-            pcs.hosts().erase(it);
-
-            it = std::remove(pcs.workers().begin(), pcs.workers().end(), config_request->node);
-            pcs.workers().erase(it);
-        }
-
-        auto it = _nodes.find(config_request->host_node);
-        CHECK(it != _nodes.end(), "invalid node address, address = {}", config_request->host_node);
-        if (config_type::CT_REMOVE == config_request->type) {
-            it->second.remove_partition(gpid, false);
-        } else {
-            it->second.put_partition(gpid, false);
-        }
+//        new_cfg = old_cfg;
+//        partition_configuration_stateless pcs(new_cfg);
+//        if (config_request->type == config_type::type::CT_ADD_SECONDARY) {
+//            pcs.hosts().emplace_back(config_request->host_node);
+//            pcs.workers().emplace_back(config_request->node);
+//        } else {
+//            auto it =
+//                std::remove(pcs.hosts().begin(), pcs.hosts().end(), config_request->host_node);
+//            pcs.hosts().erase(it);
+//
+//            it = std::remove(pcs.workers().begin(), pcs.workers().end(), config_request->node);
+//            pcs.workers().erase(it);
+//        }
+//
+//        auto it = _nodes.find(config_request->host_node);
+//        CHECK(it != _nodes.end(), "invalid node address, address = {}", config_request->host_node);
+//        if (config_type::CT_REMOVE == config_request->type) {
+//            it->second.remove_partition(gpid, false);
+//        } else {
+//            it->second.put_partition(gpid, false);
+//        }
     }
 
     // we assume config in config_request stores the proper new config
@@ -1860,6 +1860,7 @@ void server_state::downgrade_secondary_to_inactive(std::shared_ptr<app_state> &a
     }
 }
 
+// TODO: remove the function totally?
 void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
                                              int pidx,
                                              const rpc_address &address)
@@ -1868,7 +1869,7 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
         std::make_shared<configuration_update_request>();
     req->info = *app;
     req->type = config_type::CT_REMOVE;
-    req->host_node = address;
+//    req->host_node = address;
     req->node.set_invalid();
     req->config = app->partitions[pidx];
 
@@ -1893,10 +1894,10 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
 
     if (config_status::pending_remote_sync == cc.stage) {
         LOG_WARNING("gpid(%d.%d) is syncing another request with remote, cancel it due to meta is "
-                    "removing host(%s) worker(%s)",
+                    "removing host() worker(%s)",
                     pc.pid.get_app_id(),
                     pc.pid.get_partition_index(),
-                    req->host_node.to_string(),
+//                    req->host_node.to_string(),
                     req->node.to_string());
         cc.cancel_sync();
     }

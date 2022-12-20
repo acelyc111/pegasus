@@ -800,7 +800,7 @@ void meta_partition_guardian_test::cure()
                 fake_request.config = the_app->partitions[i];
                 fake_request.type = action.type;
                 fake_request.node = action.node;
-                fake_request.host_node = action.node;
+//                fake_request.host_node = action.node;
 
                 guardian.reconfig({&app, &nodes}, fake_request);
                 check_nodes_loads(nodes);
