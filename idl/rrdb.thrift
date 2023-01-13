@@ -22,6 +22,7 @@ include "dsn.thrift"
 namespace cpp dsn.apps
 namespace go rrdb
 namespace java org.apache.pegasus.apps
+namespace py pypegasus.rrdb
 
 enum filter_type
 {
