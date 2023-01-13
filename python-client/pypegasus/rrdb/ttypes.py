@@ -1454,6 +1454,86 @@ class multi_get_response:
   def __ne__(self, other):
     return not (self == other)
 
+class full_key:
+  """
+  Attributes:
+   - hash_key
+   - sort_key
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'hash_key', (pypegasus.base.ttypes.blob, pypegasus.base.ttypes.blob.thrift_spec), None, ), # 1
+    (2, TType.STRUCT, 'sort_key', (pypegasus.base.ttypes.blob, pypegasus.base.ttypes.blob.thrift_spec), None, ), # 2
+  )
+
+  def __init__(self, hash_key=None, sort_key=None,):
+    self.hash_key = hash_key
+    self.sort_key = sort_key
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.hash_key = pypegasus.base.ttypes.blob()
+          self.hash_key.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.sort_key = pypegasus.base.ttypes.blob()
+          self.sort_key.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('full_key')
+    if self.hash_key is not None:
+      oprot.writeFieldBegin('hash_key', TType.STRUCT, 1)
+      self.hash_key.write(oprot)
+      oprot.writeFieldEnd()
+    if self.sort_key is not None:
+      oprot.writeFieldBegin('sort_key', TType.STRUCT, 2)
+      self.sort_key.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __hash__(self):
+    value = 17
+    value = (value * 31) ^ hash(self.hash_key)
+    value = (value * 31) ^ hash(self.sort_key)
+    return value
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class batch_get_request:
   """
   Attributes:
@@ -1528,22 +1608,25 @@ class batch_get_request:
   def __ne__(self, other):
     return not (self == other)
 
-class full_key:
+class full_data:
   """
   Attributes:
    - hash_key
    - sort_key
+   - value
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRUCT, 'hash_key', (pypegasus.base.ttypes.blob, pypegasus.base.ttypes.blob.thrift_spec), None, ), # 1
     (2, TType.STRUCT, 'sort_key', (pypegasus.base.ttypes.blob, pypegasus.base.ttypes.blob.thrift_spec), None, ), # 2
+    (3, TType.STRUCT, 'value', (pypegasus.base.ttypes.blob, pypegasus.base.ttypes.blob.thrift_spec), None, ), # 3
   )
 
-  def __init__(self, hash_key=None, sort_key=None,):
+  def __init__(self, hash_key=None, sort_key=None, value=None,):
     self.hash_key = hash_key
     self.sort_key = sort_key
+    self.value = value
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1566,6 +1649,12 @@ class full_key:
           self.sort_key.read(iprot)
         else:
           iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.value = pypegasus.base.ttypes.blob()
+          self.value.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1575,7 +1664,7 @@ class full_key:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('full_key')
+    oprot.writeStructBegin('full_data')
     if self.hash_key is not None:
       oprot.writeFieldBegin('hash_key', TType.STRUCT, 1)
       self.hash_key.write(oprot)
@@ -1583,6 +1672,10 @@ class full_key:
     if self.sort_key is not None:
       oprot.writeFieldBegin('sort_key', TType.STRUCT, 2)
       self.sort_key.write(oprot)
+      oprot.writeFieldEnd()
+    if self.value is not None:
+      oprot.writeFieldBegin('value', TType.STRUCT, 3)
+      self.value.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -1595,6 +1688,7 @@ class full_key:
     value = 17
     value = (value * 31) ^ hash(self.hash_key)
     value = (value * 31) ^ hash(self.sort_key)
+    value = (value * 31) ^ hash(self.value)
     return value
 
   def __repr__(self):
@@ -1722,100 +1816,6 @@ class batch_get_response:
     value = (value * 31) ^ hash(self.app_id)
     value = (value * 31) ^ hash(self.partition_index)
     value = (value * 31) ^ hash(self.server)
-    return value
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-class full_data:
-  """
-  Attributes:
-   - hash_key
-   - sort_key
-   - value
-  """
-
-  thrift_spec = (
-    None, # 0
-    (1, TType.STRUCT, 'hash_key', (pypegasus.base.ttypes.blob, pypegasus.base.ttypes.blob.thrift_spec), None, ), # 1
-    (2, TType.STRUCT, 'sort_key', (pypegasus.base.ttypes.blob, pypegasus.base.ttypes.blob.thrift_spec), None, ), # 2
-    (3, TType.STRUCT, 'value', (pypegasus.base.ttypes.blob, pypegasus.base.ttypes.blob.thrift_spec), None, ), # 3
-  )
-
-  def __init__(self, hash_key=None, sort_key=None, value=None,):
-    self.hash_key = hash_key
-    self.sort_key = sort_key
-    self.value = value
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.STRUCT:
-          self.hash_key = pypegasus.base.ttypes.blob()
-          self.hash_key.read(iprot)
-        else:
-          iprot.skip(ftype)
-      elif fid == 2:
-        if ftype == TType.STRUCT:
-          self.sort_key = pypegasus.base.ttypes.blob()
-          self.sort_key.read(iprot)
-        else:
-          iprot.skip(ftype)
-      elif fid == 3:
-        if ftype == TType.STRUCT:
-          self.value = pypegasus.base.ttypes.blob()
-          self.value.read(iprot)
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('full_data')
-    if self.hash_key is not None:
-      oprot.writeFieldBegin('hash_key', TType.STRUCT, 1)
-      self.hash_key.write(oprot)
-      oprot.writeFieldEnd()
-    if self.sort_key is not None:
-      oprot.writeFieldBegin('sort_key', TType.STRUCT, 2)
-      self.sort_key.write(oprot)
-      oprot.writeFieldEnd()
-    if self.value is not None:
-      oprot.writeFieldBegin('value', TType.STRUCT, 3)
-      self.value.write(oprot)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    return
-
-
-  def __hash__(self):
-    value = 17
-    value = (value * 31) ^ hash(self.hash_key)
-    value = (value * 31) ^ hash(self.sort_key)
-    value = (value * 31) ^ hash(self.value)
     return value
 
   def __repr__(self):

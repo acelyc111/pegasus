@@ -170,13 +170,19 @@ struct multi_get_response
     6:string        server;
 }
 
+struct full_key {
+    1:dsn.blob hash_key;
+    2:dsn.blob sort_key;
+}
+
 struct batch_get_request {
     1:list<full_key> keys;
 }
 
-struct full_key {
+struct full_data {
     1:dsn.blob hash_key;
     2:dsn.blob sort_key;
+    3:dsn.blob value;
 }
 
 struct batch_get_response {
@@ -185,12 +191,6 @@ struct batch_get_response {
     3:i32               app_id;
     4:i32               partition_index;
     6:string            server;
-}
-
-struct full_data {
-    1:dsn.blob hash_key;
-    2:dsn.blob sort_key;
-    3:dsn.blob value;
 }
 
 struct incr_request
