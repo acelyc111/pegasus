@@ -37,8 +37,11 @@ defaults:
 jobs:
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
+      - name: Install thrift
+        run:
+          sudo apt-get install -y thrift-compiler
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
