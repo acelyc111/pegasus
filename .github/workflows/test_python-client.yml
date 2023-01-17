@@ -37,7 +37,7 @@ defaults:
 jobs:
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     container:
       image: apache/pegasus:thirdparties-bin-ubuntu1804-master
     steps:
