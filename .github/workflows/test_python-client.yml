@@ -40,13 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: apache/pegasus:thirdparties-bin-ubuntu1804-master
-    defaults:
-      run:
-        working-directory: /root/incubator-pegasus
     steps:
+      - uses: actions/checkout@v3
       - name: Unpack prebuilt third-parties
         run: unzip /root/thirdparties-bin.zip -d ./thirdparty
-      - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: '3.8'
