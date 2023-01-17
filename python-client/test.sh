@@ -19,11 +19,12 @@
 set -e
 
 PY_CLIENT_DIR=`pwd`
+ROOT_DIR=`dirname ${PY_CLIENT_DIR}`
 PEGASUS_PKG="pegasus-tools-2.0.0-5d969e8-glibc2.12-release"
 PEGASUS_PKG_URL="https://github.com/apache/incubator-pegasus/releases/download/v2.0.0/pegasus-tools-2.0.0-5d969e8-glibc2.12-release.tar.gz"
 
-thrift --gen py -out . ../idl/rrdb.thrift
-thrift --gen py -out . ../idl/dsn.layer2.thrift
+${ROOT_DIR}/thirdparty/output/bin/thrift --gen py -out . ../idl/rrdb.thrift
+${ROOT_DIR}/thirdparty/output/bin/thrift --gen py -out . ../idl/dsn.layer2.thrift
 
 # start pegasus onebox environment
 if [ ! -f ${PEGASUS_PKG}.tar.gz ]; then

@@ -37,11 +37,15 @@ defaults:
 jobs:
   test:
     name: test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: apache/pegasus:thirdparties-bin-ubuntu1804-master
+    defaults:
+      run:
+        working-directory: /root/incubator-pegasus
     steps:
-      - name: Install thrift
-        run:
-          sudo apt-get install -y thrift-compiler
+      - name: Unpack prebuilt third-parties
+        run: unzip /root/thirdparties-bin.zip -d ./thirdparty
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
