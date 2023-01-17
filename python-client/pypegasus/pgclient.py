@@ -28,7 +28,6 @@ from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, succeed, fail
 from twisted.internet.protocol import ClientCreator
 
-from pypegasus import rrdb, replication
 from pypegasus.base.ttypes import *
 from pypegasus.operate.packet import *
 from pypegasus.replication.ttypes import query_cfg_request
