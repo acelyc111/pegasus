@@ -34,7 +34,14 @@
  */
 #include "meta_options.h"
 
+#include <stddef.h>
+#include <map>
+#include <utility>
+
+#include "utils/config_api.h"
 #include "utils/flags.h"
+#include "utils/fmt_logging.h"
+#include "utils/strings.h"
 
 namespace dsn {
 namespace replication {
