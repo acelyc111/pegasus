@@ -673,7 +673,7 @@ TEST_F(FDSClientTest, test_concurrent_upload_download)
 
     _service->initialize(init_str);
 
-    DSN_DEFINE_int32(fds_concurrent_test, total_files, 64, "");
+    DSN_DEFINE_int32("fds_concurrent_test", total_files, 64, "");
     int total_files = FLAGS_total_files;
     unsigned long min_size = dsn_config_get_value_uint64("fds_concurrent_test", "min_size", 64, "");
     unsigned long max_size = dsn_config_get_value_uint64("fds_concurrent_test", "min_size", 64, "");

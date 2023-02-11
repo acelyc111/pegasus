@@ -51,11 +51,11 @@
 namespace dsn {
 namespace replication {
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  staleness_for_commit,
                  10,
                  "how many concurrent two phase commit rounds are allowed");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  max_mutation_count_in_prepare_list,
                  110,
                  "maximum number of mutations in prepare list");

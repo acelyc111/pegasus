@@ -27,7 +27,7 @@
 
 namespace dsn {
 
-DSN_DEFINE_uint64(metrics,
+DSN_DEFINE_uint64("metrics",
                   entity_retirement_delay_ms,
                   10 * 60 * 1000,
                   "The retention internal (milliseconds) for an entity after it becomes stale.");

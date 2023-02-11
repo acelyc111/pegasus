@@ -108,8 +108,6 @@ public:
           _name(name),
           _desc(desc)
     {
-        // For historical reason, check the 'section' parameter doesn't start with '"'.
-        CHECK_NE_MSG(*section, '"', "config section({}) should not start with '\"'", section);
     }
 
     error_s update(const std::string &val)

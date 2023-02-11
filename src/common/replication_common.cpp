@@ -37,42 +37,42 @@
 namespace dsn {
 namespace replication {
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  max_concurrent_bulk_load_downloading_count,
                  5,
                  "concurrent bulk load downloading replica count");
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  mutation_2pc_min_replica_count,
                  2,
                  "minimum number of alive replicas under which write is allowed. it's valid if "
                  "larger than 0, otherwise, the final value is based on app_max_replica_count");
 DSN_DEFINE_int32(
-    replication,
+    "replication",
     gc_interval_ms,
     30 * 1000,
     "every what period (ms) we do garbage collection for dead replicas, on-disk state, log, etc.");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  fd_check_interval_seconds,
                  2,
                  "every this period(seconds) the FD will check healthness of remote peers");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  fd_beacon_interval_seconds,
                  3,
                  "every this period(seconds) the FD sends beacon message to remote peers");
-DSN_DEFINE_int32(replication, fd_lease_seconds, 9, "lease (seconds) get from remote FD master");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication", fd_lease_seconds, 9, "lease (seconds) get from remote FD master");
+DSN_DEFINE_int32("replication",
                  fd_grace_seconds,
                  10,
                  "grace (seconds) assigned to remote FD slaves (grace > lease)");
 
 // TODO(yingchun): useless any more, remove it from all config files later.
-// DSN_DEFINE_int32(replication,
+// DSN_DEFINE_int32("replication",
 //                     log_shared_batch_buffer_kb,
 //                     0,
 //                     "shared log buffer size (KB) for batching incoming logs");
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  cold_backup_checkpoint_reserve_minutes,
                  10,
                  "reserve minutes of cold backup checkpoint");
@@ -81,7 +81,7 @@ DSN_DEFINE_int32(replication,
  * Empty write is used for flushing WAL log entry which is submit asynchronously.
  * Make sure it can work well if you diable it.
  */
-DSN_DEFINE_bool(replication,
+DSN_DEFINE_bool("replication",
                 empty_write_disabled,
                 false,
                 "whether to disable empty write, default is false");

@@ -46,7 +46,7 @@
 namespace dsn {
 namespace replication {
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  learn_app_max_concurrent_count,
                  5,
                  "max count of learning app concurrently");

@@ -50,7 +50,7 @@
 namespace dsn {
 namespace replication {
 
-DSN_DEFINE_uint64(meta_server,
+DSN_DEFINE_uint64("meta_server",
                   min_live_node_count_for_unfreeze,
                   3,
                   "minimum live node count without which the state is freezed");
@@ -58,7 +58,7 @@ DSN_TAG_VARIABLE(min_live_node_count_for_unfreeze, FT_MUTABLE);
 DSN_DEFINE_validator(min_live_node_count_for_unfreeze,
                      [](uint64_t min_live_node_count) -> bool { return min_live_node_count > 0; });
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  lb_interval_ms,
                  10000,
                  "every this period(ms) the meta server will do load balance");

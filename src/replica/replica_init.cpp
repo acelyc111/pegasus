@@ -39,12 +39,12 @@
 namespace dsn {
 namespace replication {
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  checkpoint_interval_seconds,
                  100,
                  "every what period (seconds) we do checkpoints for replicated apps");
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  log_private_file_size_mb,
                  32,
                  "private log maximum segment file size (MB)");

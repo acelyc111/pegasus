@@ -38,29 +38,29 @@
 namespace dsn {
 namespace replication {
 
-DSN_DEFINE_bool(replication,
+DSN_DEFINE_bool("replication",
                 reject_write_when_disk_insufficient,
                 true,
                 "reject client write requests if disk status is space insufficient");
 DSN_TAG_VARIABLE(reject_write_when_disk_insufficient, FT_MUTABLE);
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  prepare_timeout_ms_for_secondaries,
                  1000,
                  "timeout (ms) for prepare message to secondaries in two phase commit");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  prepare_timeout_ms_for_potential_secondaries,
                  3000,
                  "timeout (ms) for prepare message to potential secondaries in two phase commit");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  prepare_decree_gap_for_debug_logging,
                  10000,
                  "if greater than 0, then print debug log every decree gap of preparing");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  log_shared_pending_size_throttling_threshold_kb,
                  0,
                  "log_shared_pending_size_throttling_threshold_kb");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  log_shared_pending_size_throttling_delay_ms,
                  0,
                  "log_shared_pending_size_throttling_delay_ms");

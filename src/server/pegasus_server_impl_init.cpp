@@ -35,43 +35,43 @@ namespace pegasus {
 namespace server {
 
 DSN_DEFINE_int64(
-    pegasus.server,
+    "pegasus.server",
     rocksdb_limiter_max_write_megabytes_per_sec,
     500,
     "max rate of rocksdb flush and compaction(MB/s), if less than or equal to 0 means close limit");
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server",
                  rocksdb_max_background_flushes,
                  4,
                  "rocksdb options.max_background_flushes, flush threads are shared among all "
                  "rocksdb instances in one process");
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server",
                  rocksdb_max_background_compactions,
                  12,
                  "rocksdb options.max_background_compactions, compaction threads are shared among "
                  "all rocksdb instances in one process");
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server",
                  rocksdb_max_write_buffer_number,
                  3,
                  "rocksdb options.max_write_buffer_number");
-DSN_DEFINE_int32(pegasus.server, rocksdb_num_levels, 6, "rocksdb options.num_levels");
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server", rocksdb_num_levels, 6, "rocksdb options.num_levels");
+DSN_DEFINE_int32("pegasus.server",
                  rocksdb_target_file_size_multiplier,
                  1,
                  "rocksdb options.target_file_size_multiplier");
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server",
                  rocksdb_level0_file_num_compaction_trigger,
                  4,
                  "rocksdb options.level0_file_num_compaction_trigger");
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server",
                  rocksdb_level0_slowdown_writes_trigger,
                  30,
                  "rocksdb options.level0_slowdown_writes_trigger, default 30");
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server",
                  rocksdb_level0_stop_writes_trigger,
                  60,
                  "rocksdb options.level0_stop_writes_trigger");
 DSN_DEFINE_int32(
-    pegasus.server,
+    "pegasus.server",
     rocksdb_block_cache_num_shard_bits,
     -1,
     "block cache will be sharded into 2^num_shard_bits shards, default value is -1(auto)");
@@ -83,7 +83,7 @@ DSN_DEFINE_int32(
 // option for early opt-in.
 // Reference from rocksdb commit:
 // https://github.com/facebook/rocksdb/commit/f059c7d9b96300091e07429a60f4ad55dac84859
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server",
                  rocksdb_format_version,
                  2,
                  "block based table data format version, only 2 and 5 is supported in Pegasus. 2 "
@@ -91,7 +91,7 @@ DSN_DEFINE_int32(pegasus.server,
 DSN_DEFINE_validator(rocksdb_format_version,
                      [](int32_t value) -> bool { return value == 2 || value == 5; });
 
-DSN_DEFINE_bool(pegasus.server,
+DSN_DEFINE_bool("pegasus.server",
                 rocksdb_limiter_enable_auto_tune,
                 false,
                 "whether to enable write rate auto tune when open rocksdb write limit");
@@ -118,7 +118,7 @@ DSN_DEFINE_bool(pegasus.server,
 //
 // Default: 0 (disabled)
 // see https://github.com/XiaoMi/pegasus-rocksdb/blob/v6.6.4-compatible/include/rocksdb/table.h#L247
-DSN_DEFINE_int32(pegasus.server,
+DSN_DEFINE_int32("pegasus.server",
                  read_amp_bytes_per_bit,
                  0,
                  "config for using to calculate the read amplification, must be a power of 2, zero "
@@ -130,7 +130,7 @@ DSN_DEFINE_validator(read_amp_bytes_per_bit, [](const int64_t read_amp_bytes_per
             (read_amp_bytes_per_bit & (read_amp_bytes_per_bit - 1)) == 0);
 });
 
-DSN_DEFINE_uint64(pegasus.server,
+DSN_DEFINE_uint64("pegasus.server",
                   rocksdb_abnormal_batch_get_bytes_threshold,
                   1e7,
                   "batch-get operation total key-value bytes size exceed this "
@@ -138,7 +138,7 @@ DSN_DEFINE_uint64(pegasus.server,
 DSN_TAG_VARIABLE(rocksdb_abnormal_batch_get_bytes_threshold, FT_MUTABLE);
 
 DSN_DEFINE_uint64(
-    pegasus.server,
+    "pegasus.server",
     rocksdb_abnormal_batch_get_count_threshold,
     2000,
     "batch-get operation iterate count exceed this threshold will be logged, 0 means no check");
@@ -155,14 +155,14 @@ DSN_TAG_VARIABLE(rocksdb_abnormal_batch_get_count_threshold, FT_MUTABLE);
 // On the other hand, the max size of a log file is restricted to 8MB. In practice, the size of
 // logs over a day tends to be less than 1MB; however, once errors are reported very frequently,
 // the log file will grow larger and go far beyond several hundreds of KB.
-DSN_DEFINE_uint64(pegasus.server,
+DSN_DEFINE_uint64("pegasus.server",
                   rocksdb_max_log_file_size,
                   8 * 1024 * 1024,
                   "specify the maximal size of the info log file: once the log file is larger "
                   "than this option, a new info log file will be created; if this option is set "
                   "to 0, all logs will be written to one log file.");
 
-DSN_DEFINE_uint64(pegasus.server,
+DSN_DEFINE_uint64("pegasus.server",
                   rocksdb_log_file_time_to_roll,
                   24 * 60 * 60,
                   "specify time for the info log file to roll (in seconds): if this option is "
@@ -170,7 +170,7 @@ DSN_DEFINE_uint64(pegasus.server,
                   "longer than this option; otherwise, if this options is set to 0, log file will "
                   "never be rolled by life time");
 
-DSN_DEFINE_uint64(pegasus.server,
+DSN_DEFINE_uint64("pegasus.server",
                   rocksdb_keep_log_file_num,
                   32,
                   "specify the maximal numbers of info log files to be kept: once the number of "

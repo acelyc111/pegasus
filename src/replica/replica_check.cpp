@@ -47,7 +47,7 @@
 
 namespace dsn {
 namespace replication {
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  group_check_interval_ms,
                  10000,
                  "every what period (ms) we check the replica healthness");

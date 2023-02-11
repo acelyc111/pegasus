@@ -66,47 +66,47 @@
 namespace dsn {
 namespace replication {
 
-DSN_DEFINE_bool(replication,
+DSN_DEFINE_bool("replication",
                 ignore_broken_disk,
                 true,
                 "true means ignore broken data disk when initialize");
 
-DSN_DEFINE_uint32(replication,
+DSN_DEFINE_uint32("replication",
                   max_concurrent_manual_emergency_checkpointing_count,
                   10,
                   "max concurrent manual emergency checkpoint running count");
 DSN_TAG_VARIABLE(max_concurrent_manual_emergency_checkpointing_count, FT_MUTABLE);
 
 DSN_DEFINE_uint32(
-    replication,
+    "replication",
     config_sync_interval_ms,
     30000,
     "The interval milliseconds of replica server to syncs replica configuration with meta server");
 DSN_TAG_VARIABLE(config_sync_interval_ms, FT_MUTABLE);
 DSN_DEFINE_validator(config_sync_interval_ms, [](uint32_t value) -> bool { return value > 0; });
 
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  disk_stat_interval_seconds,
                  600,
                  "every what period (ms) we do disk stat");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  gc_memory_replica_interval_ms,
                  10 * 60 * 1000,
                  "after closing a healthy replica (due to LB), the replica will remain in memory "
                  "for this long (ms) for quick recover");
-DSN_DEFINE_int32(replication,
+DSN_DEFINE_int32("replication",
                  log_shared_file_size_mb,
                  32,
                  "shared log maximum segment file size (MB)");
 
-DSN_DEFINE_int32(replication, log_shared_file_count_limit, 100, "shared log maximum file count");
+DSN_DEFINE_int32("replication", log_shared_file_count_limit, 100, "shared log maximum file count");
 DSN_DEFINE_int32(
-    replication,
+    "replication",
     mem_release_check_interval_ms,
     3600000,
     "the replica check if should release memory to the system every this period of time(ms)");
 DSN_DEFINE_int32(
-    replication,
+    "replication",
     mem_release_max_reserved_mem_percentage,
     10,
     "if tcmalloc reserved but not-used memory exceed this percentage of application allocated "

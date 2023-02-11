@@ -22,7 +22,7 @@
 #include "idl_utils.h"
 #include "utils/flags.h"
 
-DSN_DEFINE_int32(threadpool.THREAD_POOL_DEFAULT,
+DSN_DEFINE_int32("threadpool.THREAD_POOL_DEFAULT",
                  worker_count,
                  0,
                  "get THREAD_POOL_DEFAULT worker_count.");
