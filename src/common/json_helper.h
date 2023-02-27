@@ -104,8 +104,8 @@
 
 #define JSON_DECODE_ENTRY(in, prefix, T)                                                           \
     do {                                                                                           \
-        dverify(in.HasMember(#T));                                                                 \
-        dverify(::dsn::json::json_forwarder<std::decay<decltype((prefix).T)>::type>::decode(       \
+        RETURN_FALSE(in.HasMember(#T));                                                            \
+        RETURN_FALSE(::dsn::json::json_forwarder<std::decay<decltype((prefix).T)>::type>::decode(  \
             in[#T], (prefix).T));                                                                  \
     } while (0)
 
@@ -113,8 +113,9 @@
     do {                                                                                           \
         ++arguments_count;                                                                         \
         if (in.HasMember(#T)) {                                                                    \
-            dverify(::dsn::json::json_forwarder<std::decay<decltype((prefix).T)>::type>::decode(   \
-                in[#T], (prefix).T));                                                              \
+            RETURN_FALSE(                                                                          \
+                ::dsn::json::json_forwarder<std::decay<decltype((prefix).T)>::type>::decode(       \
+                    in[#T], (prefix).T));                                                          \
             ++parsed_count;                                                                        \
         }                                                                                          \
     } while (0)
@@ -187,7 +188,7 @@
     out.EndObject()
 
 #define JSON_DECODE_ENTRIES(in, prefix, ...)                                                       \
-    dverify(in.IsObject());                                                                        \
+    RETURN_FALSE(in.IsObject());                                                                   \
     int arguments_count = 0;                                                                       \
     int parsed_count = 0;                                                                          \
     JSON_ENTRIES_GET_MACRO_((__VA_ARGS__,                                                          \
@@ -259,7 +260,7 @@ inline void json_encode(Writer &out, const char *str)
 }
 inline bool json_decode(const JsonObject &in, std::string &str)
 {
-    dverify(in.IsString());
+    RETURN_FALSE(in.IsString());
     str = in.GetString();
     return true;
 }
@@ -271,7 +272,7 @@ inline void json_encode(JsonWriter &out, const error_code &err)
 }
 inline bool json_decode(const JsonObject &in, error_code &err)
 {
-    dverify(in.IsString());
+    RETURN_FALSE(in.IsString());
     err = error_code(in.GetString());
     return true;
 }
@@ -322,10 +323,10 @@ inline bool json_decode(const JsonObject &in, double &t)
     }                                                                                              \
     inline bool json_decode(const JsonObject &in, TName &t)                                        \
     {                                                                                              \
-        dverify(in.IsInt64());                                                                     \
+        RETURN_FALSE(in.IsInt64());                                                                \
         int64_t ans = in.GetInt64();                                                               \
-        dverify(ans >= std::numeric_limits<TName>::min() &&                                        \
-                ans <= std::numeric_limits<TName>::max());                                         \
+        RETURN_FALSE(ans >= std::numeric_limits<TName>::min() &&                                   \
+                     ans <= std::numeric_limits<TName>::max());                                    \
         t = (TName)ans;                                                                            \
         return true;                                                                               \
     }
@@ -344,10 +345,10 @@ INT_TYPE_SERIALIZATION(int64_t)
     }                                                                                              \
     inline bool json_decode(const JsonObject &in, TName &t)                                        \
     {                                                                                              \
-        dverify(in.IsUint64());                                                                    \
+        RETURN_FALSE(in.IsUint64());                                                               \
         int64_t ans = in.GetUint64();                                                              \
-        dverify(ans >= std::numeric_limits<TName>::min() &&                                        \
-                ans <= std::numeric_limits<TName>::max());                                         \
+        RETURN_FALSE(ans >= std::numeric_limits<TName>::min() &&                                   \
+                     ans <= std::numeric_limits<TName>::max());                                    \
         t = (TName)ans;                                                                            \
         return true;                                                                               \
     }
@@ -366,7 +367,7 @@ UINT_TYPE_SERIALIZATION(uint64_t)
     inline bool json_decode(const dsn::json::JsonObject &in, EnumType &enum_variable)              \
     {                                                                                              \
         std::string status_message;                                                                \
-        dverify(dsn::json::json_decode(in, status_message));                                       \
+        RETURN_FALSE(dsn::json::json_decode(in, status_message));                                  \
         enum_variable = enum_from_string(status_message.c_str(), InvalidEnum);                     \
         return true;                                                                               \
     }
@@ -385,7 +386,7 @@ inline void json_encode(JsonWriter &out, const dsn::gpid &pid)
 inline bool json_decode(const dsn::json::JsonObject &in, dsn::gpid &pid)
 {
     std::string gpid_message;
-    dverify(json_decode(in, gpid_message));
+    RETURN_FALSE(json_decode(in, gpid_message));
     return pid.parse_from(gpid_message.c_str());
 }
 
@@ -397,7 +398,7 @@ inline void json_encode(JsonWriter &out, const dsn::rpc_address &address)
 inline bool json_decode(const dsn::json::JsonObject &in, dsn::rpc_address &address)
 {
     std::string rpc_address_string;
-    dverify(json_decode(in, rpc_address_string));
+    RETURN_FALSE(json_decode(in, rpc_address_string));
     if (rpc_address_string == "invalid address") {
         return true;
     }
@@ -439,13 +440,14 @@ inline void json_encode_map(JsonWriter &out, const T &t)
 template <typename TMap>
 inline bool json_decode_map(const JsonObject &in, TMap &t)
 {
-    dverify(in.IsObject());
+    RETURN_FALSE(in.IsObject());
     t.clear();
     for (rapidjson::Value::ConstMemberIterator it = in.MemberBegin(); it != in.MemberEnd(); ++it) {
         typename TMap::key_type key;
-        dverify_exception(key = boost::lexical_cast<typename TMap::key_type>(it->name.GetString()));
+        RETURN_FALSE_ON_EXCEPTION(
+            key = boost::lexical_cast<typename TMap::key_type>(it->name.GetString()));
         typename TMap::mapped_type value;
-        dverify(json_forwarder<decltype(value)>::decode(it->value, value));
+        RETURN_FALSE(json_forwarder<decltype(value)>::decode(it->value, value));
         if (!t.emplace(key, value).second)
             return false;
     }
@@ -461,13 +463,13 @@ inline void json_encode(JsonWriter &out, const std::vector<T> &t)
 template <typename T>
 inline bool json_decode(const JsonObject &in, std::vector<T> &t)
 {
-    dverify(in.IsArray());
+    RETURN_FALSE(in.IsArray());
     t.clear();
     t.reserve(in.Size());
 
     for (rapidjson::Value::ConstValueIterator it = in.Begin(); it != in.End(); ++it) {
         T value;
-        dverify(json_forwarder<T>::decode(*it, value));
+        RETURN_FALSE(json_forwarder<T>::decode(*it, value));
         t.emplace_back(std::move(value));
     }
     return true;
@@ -482,13 +484,13 @@ inline void json_encode(JsonWriter &out, const std::set<T> &t)
 template <typename T>
 inline bool json_decode(const JsonObject &in, std::set<T> &t)
 {
-    dverify(in.IsArray());
+    RETURN_FALSE(in.IsArray());
     t.clear();
 
     for (rapidjson::Value::ConstValueIterator it = in.Begin(); it != in.End(); ++it) {
         T value;
-        dverify(json_forwarder<T>::decode(*it, value));
-        dverify(t.emplace(std::move(value)).second);
+        RETURN_FALSE(json_forwarder<T>::decode(*it, value));
+        RETURN_FALSE(t.emplace(std::move(value)).second);
     }
     return true;
 }
@@ -635,7 +637,7 @@ public:
     static bool decode(const dsn::blob &bb, T &t)
     {
         rapidjson::Document doc;
-        dverify(!doc.Parse(bb.data(), bb.length()).HasParseError());
+        RETURN_FALSE(!doc.Parse(bb.data(), bb.length()).HasParseError());
         return decode(doc, t);
     }
 

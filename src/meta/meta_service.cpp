@@ -311,10 +311,7 @@ error_code meta_service::start()
     CHECK(!_started, "meta service is already started");
     register_ctrl_commands();
 
-    error_code err;
-
-    err = remote_storage_initialize();
-    dreturn_not_ok_logged(err, "init remote storage failed, err = {}", err);
+    RETURN_NOT_OK_PREPEND(remote_storage_initialize(), "init remote storage failed");
     LOG_INFO("remote storage is successfully initialized");
 
     // start failure detector, and try to acquire the leader lock
@@ -323,13 +320,12 @@ error_code meta_service::start()
         _failure_detector->set_allow_list(_meta_opts.replica_white_list);
     _failure_detector->register_ctrl_commands();
 
-    err = _failure_detector->start(FLAGS_fd_check_interval_seconds,
-                                   FLAGS_fd_beacon_interval_seconds,
-                                   FLAGS_fd_lease_seconds,
-                                   FLAGS_fd_grace_seconds,
-                                   _meta_opts.enable_white_list);
-
-    dreturn_not_ok_logged(err, "start failure_detector failed, err = {}", err);
+    RETURN_NOT_OK_PREPEND(_failure_detector->start(FLAGS_fd_check_interval_seconds,
+                                                   FLAGS_fd_beacon_interval_seconds,
+                                                   FLAGS_fd_lease_seconds,
+                                                   FLAGS_fd_grace_seconds,
+                                                   _meta_opts.enable_white_list),
+                          "start failure_detector failed");
     LOG_INFO("meta service failure detector is successfully started {}",
              _meta_opts.enable_white_list ? "with whitelist enabled" : "");
 
@@ -374,6 +370,7 @@ error_code meta_service::start()
 
     // initialize the server_state
     _state->initialize(this, meta_options::concat_path_unix_style(_cluster_root, "apps"));
+    error_code err;
     while ((err = _state->initialize_data_structure()) != ERR_OK) {
         if (err == ERR_OBJECT_NOT_FOUND && _meta_opts.recover_from_replica_server) {
             LOG_INFO("can't find apps from remote storage, and "

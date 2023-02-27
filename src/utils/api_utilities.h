@@ -80,21 +80,6 @@ extern void dsn_log(const char *file,
                     const char *str);
 extern void dsn_coredump();
 
-// __FILENAME__ macro comes from the cmake, in which we calculate a filename without path.
-#define dlog(level, ...)                                                                           \
-    do {                                                                                           \
-        if (level >= dsn_log_start_level)                                                          \
-            dsn_logf(__FILENAME__, __FUNCTION__, __LINE__, level, __VA_ARGS__);                    \
-    } while (false)
-
-#define dreturn_not_ok_logged(err, ...)                                                            \
-    do {                                                                                           \
-        if (dsn_unlikely((err) != dsn::ERR_OK)) {                                                  \
-            LOG_ERROR(__VA_ARGS__);                                                                \
-            return err;                                                                            \
-        }                                                                                          \
-    } while (0)
-
 #ifdef DSN_MOCK_TEST
 #define mock_private public
 #define mock_virtual virtual
@@ -103,37 +88,16 @@ extern void dsn_coredump();
 #define mock_virtual
 #endif
 
-/*@}*/
-
-#define dverify(exp)                                                                               \
+#define RETURN_FALSE(exp)                                                                          \
     if (dsn_unlikely(!(exp)))                                                                      \
     return false
 
-#define dverify_exception(exp)                                                                     \
+#define RETURN_FALSE_ON_EXCEPTION(exp)                                                             \
     do {                                                                                           \
         try {                                                                                      \
             exp;                                                                                   \
         } catch (...) {                                                                            \
             return false;                                                                          \
-        }                                                                                          \
-    } while (0)
-
-#define dverify_logged(exp, level, ...)                                                            \
-    do {                                                                                           \
-        if (dsn_unlikely(!(exp))) {                                                                \
-            dlog(level, __VA_ARGS__);                                                              \
-            return false;                                                                          \
-        }                                                                                          \
-    } while (0)
-
-#define dstop_on_false(exp)                                                                        \
-    if (dsn_unlikely(!(exp)))                                                                      \
-    return
-#define dstop_on_false_logged(exp, level, ...)                                                     \
-    do {                                                                                           \
-        if (dsn_unlikely(!(exp))) {                                                                \
-            dlog(level, __VA_ARGS__);                                                              \
-            return;                                                                                \
         }                                                                                          \
     } while (0)
 /*@}*/

@@ -64,7 +64,7 @@ bool propose(command_executor *e, shell_context *sc, arguments args)
                                            {"node", required_argument, 0, 'n'},
                                            {0, 0, 0, 0}};
 
-    dverify(args.argc >= 9);
+    RETURN_FALSE(args.argc >= 9);
     dsn::replication::configuration_balancer_request request;
     request.gpid.set_app_id(-1);
     dsn::rpc_address target, node;

@@ -268,11 +268,11 @@ bool redis_parser::parse_stream()
     while (_total_length > 0) {
         switch (_status) {
         case kStartArray:
-            dverify(eat('*'));
+            RETURN_FALSE(eat('*'));
             _status = kInArraySize;
             break;
         case kStartBulkString:
-            dverify(eat('$'));
+            RETURN_FALSE(eat('$'));
             _status = kInBulkStringSize;
             break;
         case kInArraySize:
@@ -280,19 +280,19 @@ bool redis_parser::parse_stream()
             t = peek();
             if (t == CR) {
                 if (_total_length > 1) {
-                    dverify(eat(CR));
-                    dverify(eat(LF));
+                    RETURN_FALSE(eat(CR));
+                    RETURN_FALSE(eat(LF));
                     if (kInArraySize == _status) {
-                        dverify(end_array_size());
+                        RETURN_FALSE(end_array_size());
                     } else {
-                        dverify(end_bulk_string_size());
+                        RETURN_FALSE(end_bulk_string_size());
                     }
                 } else {
                     return true;
                 }
             } else {
                 _current_size.push_back(t);
-                dverify(eat(t));
+                RETURN_FALSE(eat(t));
             }
             break;
         case kStartBulkStringData:
@@ -303,8 +303,8 @@ bool redis_parser::parse_stream()
                     eat_all(const_cast<char *>(str_data.data()), _current_str.length);
                     _current_str.data = dsn::blob::create_from_bytes(std::move(str_data));
                 }
-                dverify(eat(CR));
-                dverify(eat(LF));
+                RETURN_FALSE(eat(CR));
+                RETURN_FALSE(eat(LF));
                 append_current_bulk_string();
             } else {
                 return true;

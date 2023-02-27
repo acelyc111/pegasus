@@ -92,7 +92,7 @@ static void libevent_log(int severity, const char *msg)
         level = LOG_LEVEL_WARNING;
     else
         level = LOG_LEVEL_ERROR;
-    dlog(level, msg);
+    dlog_f(level, msg);
 }
 
 pegasus_counter_reporter::pegasus_counter_reporter()

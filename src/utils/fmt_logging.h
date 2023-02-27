@@ -57,6 +57,15 @@
 #define LOG_ERROR_PREFIX(...) LOG_ERROR("[{}] {}", log_prefix(), fmt::format(__VA_ARGS__))
 #define LOG_FATAL_PREFIX(...) LOG_FATAL("[{}] {}", log_prefix(), fmt::format(__VA_ARGS__))
 
+#define RETURN_NOT_OK_PREPEND(exp, ...)                                                            \
+    do {                                                                                           \
+        error_code _v = (exp);                                                                     \
+        if (dsn_unlikely(_v != dsn::ERR_OK)) {                                                     \
+            LOG_ERROR("{}, error = {}", fmt::format(__VA_ARGS__), _v);                             \
+            return _v;                                                                             \
+        }                                                                                          \
+    } while (0)
+
 namespace {
 
 inline const char *null_str_printer(const char *s) { return s == nullptr ? "(null)" : s; }
