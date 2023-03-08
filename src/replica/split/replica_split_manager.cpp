@@ -427,15 +427,22 @@ replica_split_manager::child_apply_private_logs(std::vector<std::string> plog_fi
     error_code ec;
     int64_t offset;
     // temp prepare_list used for apply states
-    prepare_list plist(_replica,
-                       _replica->_app->last_committed_decree(),
-                       FLAGS_max_mutation_count_in_prepare_list,
-                       [this](mutation_ptr &mu) {
-                           if (mu->data.header.decree ==
-                               _replica->_app->last_committed_decree() + 1) {
-                               _replica->_app->apply_mutation(mu);
-                           }
-                       });
+    prepare_list plist(
+        _replica,
+        _replica->_app->last_committed_decree(),
+        FLAGS_max_mutation_count_in_prepare_list,
+        [this](mutation_ptr &mu) {
+            if (mu->data.header.decree != _replica->_app->last_committed_decree() + 1) {
+                return;
+            }
+
+            auto err = _replica->_app->apply_mutation(mu);
+            if (ERR_OK != err) {
+                // TODO(yingchun): handle the error
+                LOG_ERROR_PREFIX(
+                    "child_apply_private_logs encountered an error({}) but not handled", err);
+            }
+        });
 
     // replay private log
     ec = mutation_log::replay(plog_files,

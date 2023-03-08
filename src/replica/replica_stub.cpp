@@ -826,8 +826,8 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
     }
 }
 
-void replica_stub::initialize_fs_manager(std::vector<std::string> &data_dirs,
-                                         std::vector<std::string> &data_dir_tags)
+void replica_stub::initialize_fs_manager(const std::vector<std::string> &data_dirs,
+                                         const std::vector<std::string> &data_dir_tags)
 {
     std::string cdir;
     std::string err_msg;
@@ -835,7 +835,7 @@ void replica_stub::initialize_fs_manager(std::vector<std::string> &data_dirs,
     std::vector<std::string> available_dirs;
     std::vector<std::string> available_dir_tags;
     for (auto i = 0; i < data_dir_tags.size(); ++i) {
-        std::string &dir = data_dirs[i];
+        const std::string &dir = data_dirs[i];
         if (dsn_unlikely(!utils::filesystem::create_directory(dir, cdir, err_msg) ||
                          !utils::filesystem::check_dir_rw(dir, err_msg))) {
             if (FLAGS_ignore_broken_disk) {
@@ -1629,6 +1629,10 @@ void replica_stub::on_node_query_reply_scatter2(replica_stub_ptr this_, gpid id)
 void replica_stub::remove_replica_on_meta_server(const app_info &info,
                                                  const partition_configuration &config)
 {
+    if (FLAGS_fd_disabled) {
+        return;
+    }
+
     dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_UPDATE_PARTITION_CONFIGURATION);
 
     std::shared_ptr<configuration_update_request> request(new configuration_update_request);
@@ -2050,10 +2054,15 @@ task_ptr replica_stub::begin_open_replica(
         return nullptr;
     }
 
-    task_ptr task = tasking::enqueue(
-        LPC_OPEN_REPLICA,
-        &_tracker,
-        std::bind(&replica_stub::open_replica, this, app, id, group_check, configuration_update));
+    task_ptr task = tasking::enqueue(LPC_OPEN_REPLICA,
+                                     &_tracker,
+                                     std::bind(&replica_stub::open_replica,
+                                               this,
+                                               app,
+                                               id,
+                                               group_check,
+                                               configuration_update,
+                                               nullptr));
 
     _opening_replicas[id] = task;
     _counter_replicas_opening_count->increment();
@@ -2067,10 +2076,17 @@ void replica_stub::open_replica(
     const app_info &app,
     gpid id,
     const std::shared_ptr<group_check_request> &group_check,
-    const std::shared_ptr<configuration_update_request> &configuration_update)
+    const std::shared_ptr<configuration_update_request> &configuration_update,
+    replica_ptr *opened_replica)
 {
-    std::string dir = get_replica_dir(app.app_type.c_str(), id, false);
     replica_ptr rep = nullptr;
+    auto cleanup = dsn::defer([&opened_replica, &rep]() {
+        if (opened_replica != nullptr) {
+            opened_replica = &rep;
+        }
+    });
+
+    std::string dir = get_replica_dir(app.app_type.c_str(), id, false);
     if (!dir.empty()) {
         // NOTICE: if partition is DDD, and meta select one replica as primary, it will execute the
         // load-process because of a.b.pegasus is exist, so it will never execute the restore
@@ -2114,16 +2130,18 @@ void replica_stub::open_replica(
         // NOTICE: if dir a.b.pegasus does not exist, or .app-info does not exist, but the ballot >
         // 0, or the last_committed_decree > 0, start replica will fail
         if ((configuration_update != nullptr) && (configuration_update->info.is_stateful)) {
-            CHECK(configuration_update->config.ballot == 0 &&
-                      configuration_update->config.last_committed_decree == 0,
-                  "{}@{}: cannot load replica({}.{}), ballot = {}, "
-                  "last_committed_decree = {}, but it does not existed!",
-                  id.to_string(),
-                  _primary_address_str,
-                  id.to_string(),
-                  app.app_type.c_str(),
-                  configuration_update->config.ballot,
-                  configuration_update->config.last_committed_decree);
+            if (configuration_update->config.ballot == 0 &&
+                configuration_update->config.last_committed_decree == 0) {
+                LOG_ERROR("{}@{}: cannot load replica({}.{}), ballot = {}, last_committed_decree = "
+                          "{}, but it does not existed!",
+                          id,
+                          _primary_address_str,
+                          id,
+                          app.app_type,
+                          configuration_update->config.ballot,
+                          configuration_update->config.last_committed_decree);
+                return;
+            }
         }
 
         // NOTICE: only new_replica_group's assign_primary will execute this; if server restart when
@@ -2377,6 +2395,12 @@ void replica_stub::close_replica(replica_ptr r)
             id, std::make_pair(std::get<2>(find->second), std::get<3>(find->second)));
         _closing_replicas.erase(find);
         _counter_replicas_closing_count->decrement();
+    }
+
+    if (r->is_data_corrupted()) {
+        _fs_manager.remove_replica(id);
+        move_to_err_path(r->dir(), "trash replica");
+        _counter_replicas_recent_replica_move_error_count->increment();
     }
 
     LOG_INFO("{}: finish to close replica", name);
@@ -2818,24 +2842,10 @@ void replica_stub::close()
         _mem_release_timer_task = nullptr;
     }
 
+    wait_closing_replicas_finished();
+
     {
         zauto_write_lock l(_replicas_lock);
-        while (!_closing_replicas.empty()) {
-            task_ptr task = std::get<0>(_closing_replicas.begin()->second);
-            gpid tmp_gpid = _closing_replicas.begin()->first;
-            _replicas_lock.unlock_write();
-
-            task->wait();
-
-            _replicas_lock.lock_write();
-            // task will automatically remove this replica from _closing_replicas
-            if (!_closing_replicas.empty()) {
-                CHECK_NE_MSG(tmp_gpid,
-                             _closing_replicas.begin()->first,
-                             "this replica '{}' should has been removed",
-                             tmp_gpid.to_string());
-            }
-        }
 
         while (!_opening_replicas.empty()) {
             task_ptr task = _opening_replicas.begin()->second;
@@ -3198,6 +3208,28 @@ void replica_stub::update_config(const std::string &name)
     // The new value has been validated and FLAGS_* has been updated, it's safety to use it
     // directly.
     UPDATE_CONFIG(_config_sync_timer_task->update_interval, config_sync_interval_ms, name);
+}
+
+void replica_stub::wait_closing_replicas_finished()
+{
+    zauto_write_lock l(_replicas_lock);
+    while (!_closing_replicas.empty()) {
+        task_ptr task = std::get<0>(_closing_replicas.begin()->second);
+        gpid first_gpid = _closing_replicas.begin()->first;
+
+        // TODO(yingchun): improve the code
+        _replicas_lock.unlock_write();
+        task->wait();
+        _replicas_lock.lock_write();
+
+        // task will automatically remove this replica from '_closing_replicas'
+        if (!_closing_replicas.empty()) {
+            CHECK_NE_MSG(first_gpid,
+                         _closing_replicas.begin()->first,
+                         "this replica '{}' should has been removed",
+                         first_gpid);
+        }
+    }
 }
 
 } // namespace replication

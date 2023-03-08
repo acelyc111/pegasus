@@ -401,6 +401,8 @@ void replica::execute_mutation(mutation_ptr &mu)
 
     if (err != ERR_OK) {
         handle_local_failure(err);
+        // TODO(yingchun): _config.status has been changed to partition_status::PS_ERROR? can we
+        // return here?
     }
 
     if (status() == partition_status::PS_PRIMARY) {

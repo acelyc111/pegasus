@@ -79,12 +79,14 @@ int pegasus_server_write::on_batched_write_requests(dsn::message_ex **requests,
             CHECK_EQ(count, 1);
             return iter->second(requests[0]);
         }
+        // TODO(yingchun): what happen if handler not found?
     } catch (TTransportException &ex) {
+        // TODO(yingchun): when does this exception throw?
         _pfc_recent_corrupt_write_count->increment();
         LOG_ERROR_PREFIX("pegasus not batch write handler failed, from = {}, exception = {}",
                          requests[0]->header->from_address.to_string(),
                          ex.what());
-        return 0;
+        return rocksdb::Status::kOk;
     }
 
     return on_batched_writes(requests, count);
@@ -94,7 +96,7 @@ void pegasus_server_write::set_default_ttl(uint32_t ttl) { _write_svc->set_defau
 
 int pegasus_server_write::on_batched_writes(dsn::message_ex **requests, int count)
 {
-    int err = 0;
+    int err = rocksdb::Status::kOk;
     {
         _write_svc->batch_prepare(_decree);
 
@@ -104,7 +106,7 @@ int pegasus_server_write::on_batched_writes(dsn::message_ex **requests, int coun
             // Make sure all writes are batched even if they are failed,
             // since we need to record the total qps and rpc latencies,
             // and respond for all RPCs regardless of their result.
-            int local_err = 0;
+            int local_err = rocksdb::Status::kOk;
             try {
                 dsn::task_code rpc_code(requests[i]->rpc_code());
                 if (rpc_code == dsn::apps::RPC_RRDB_RRDB_PUT) {
@@ -130,13 +132,14 @@ int pegasus_server_write::on_batched_writes(dsn::message_ex **requests, int coun
                                  ex.what());
             }
 
-            if (!err && local_err) {
+            if (err == rocksdb::Status::kOk && local_err != rocksdb::Status::kOk) {
                 err = local_err;
             }
         }
 
-        if (dsn_unlikely(err != 0 || _put_rpc_batch.size() + _remove_rpc_batch.size() == 0)) {
-            _write_svc->batch_abort(_decree, err == 0 ? -1 : err);
+        if (dsn_unlikely(err != rocksdb::Status::kOk ||
+                         (_put_rpc_batch.empty() && _remove_rpc_batch.empty()))) {
+            _write_svc->batch_abort(_decree, err == rocksdb::Status::kOk ? -1 : err);
         } else {
             err = _write_svc->batch_commit(_decree);
         }

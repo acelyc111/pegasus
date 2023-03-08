@@ -98,10 +98,12 @@ public:
 
             std::shared_ptr<configuration_update_request> req2(new configuration_update_request);
             *req2 = fake_request;
+            replica_ptr rep;
+            stub->open_replica(app_info, gpid, nullptr, req2, &rep);
             if (tt.exec_failed) {
-                ASSERT_DEATH(stub->open_replica(app_info, gpid, nullptr, req2), "");
+                ASSERT_EQ(nullptr, rep);
             } else {
-                stub->open_replica(app_info, gpid, nullptr, req2);
+                ASSERT_NE(nullptr, rep);
             }
             ++i;
         }

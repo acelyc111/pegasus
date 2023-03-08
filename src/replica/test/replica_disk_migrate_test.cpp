@@ -137,7 +137,9 @@ public:
 
     void open_replica(const app_info &app, gpid id)
     {
-        stub->open_replica(app, id, nullptr, nullptr);
+        replica_ptr rep;
+        stub->open_replica(app, id, nullptr, nullptr, &rep);
+        ASSERT_NE(nullptr, rep);
     }
 
 private:

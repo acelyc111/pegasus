@@ -99,12 +99,11 @@ public:
         int err =
             _rocksdb_wrapper->write_batch_put(decree, dsn::string_view(), dsn::string_view(), 0);
         auto cleanup = dsn::defer([this]() { _rocksdb_wrapper->clear_up_write_batch(); });
-        if (err) {
+        if (err != rocksdb::Status::kOk) {
             return err;
         }
 
-        err = _rocksdb_wrapper->write(decree);
-        return err;
+        return _rocksdb_wrapper->write(decree);
     }
 
     int multi_put(const db_write_context &ctx,
@@ -170,7 +169,7 @@ public:
         }
 
         resp.error = _rocksdb_wrapper->write(decree);
-        if (resp.error == 0) {
+        if (resp.error == rocksdb::Status::kOk) {
             resp.count = update.sort_keys.size();
         }
         return resp.error;
@@ -188,7 +187,7 @@ public:
         uint32_t new_expire_ts = 0;
         db_get_context get_ctx;
         int err = _rocksdb_wrapper->get(raw_key, &get_ctx);
-        if (err != 0) {
+        if (err != rocksdb::Status::kOk) {
             resp.error = err;
             return err;
         }
@@ -252,7 +251,7 @@ public:
         }
 
         resp.error = _rocksdb_wrapper->write(decree);
-        if (resp.error == 0) {
+        if (resp.error == rocksdb::Status::kOk) {
             resp.new_value = new_value;
         }
         return resp.error;
@@ -283,7 +282,7 @@ public:
         db_get_context get_context;
         dsn::string_view check_raw_key(check_key.data(), check_key.length());
         int err = _rocksdb_wrapper->get(check_raw_key, &get_context);
-        if (err != 0) {
+        if (err != rocksdb::Status::kOk) {
             // read check value failed
             LOG_ERROR_ROCKSDB("Error to GetCheckValue for CheckAndSet decree: {}, hash_key: {}, "
                               "check_sort_key: {}",
@@ -352,7 +351,7 @@ public:
                 invalid_argument ? rocksdb::Status::kInvalidArgument : rocksdb::Status::kTryAgain;
         }
 
-        return 0;
+        return rocksdb::Status::kOk;
     }
 
     int check_and_mutate(int64_t decree,
@@ -404,7 +403,7 @@ public:
         db_get_context get_context;
         dsn::string_view check_raw_key(check_key.data(), check_key.length());
         int err = _rocksdb_wrapper->get(check_raw_key, &get_context);
-        if (err != 0) {
+        if (err != rocksdb::Status::kOk) {
             // read check value failed
             LOG_ERROR_ROCKSDB("Error to GetCheckValue for CheckAndMutate decree: {}, hash_key: {}, "
                               "check_sort_key: {}",
@@ -475,7 +474,7 @@ public:
             resp.error =
                 invalid_argument ? rocksdb::Status::kInvalidArgument : rocksdb::Status::kTryAgain;
         }
-        return 0;
+        return rocksdb::Status::kOk;
     }
 
     // \return ERR_INVALID_VERSION: replay or commit out-date ingest request
@@ -508,7 +507,7 @@ public:
 
         // ingest external files
         if (dsn_unlikely(_rocksdb_wrapper->ingest_files(decree, sst_file_list, req.ingest_behind) !=
-                         0)) {
+                         rocksdb::Status::kOk)) {
             return dsn::ERR_INGESTION_FAILED;
         }
         return dsn::ERR_OK;
