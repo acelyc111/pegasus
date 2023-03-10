@@ -46,7 +46,6 @@
 #include "checker.h"
 #include "common/replication_other_types.h"
 #include "dsn.layer2_types.h"
-#include "meta/meta_options.h"
 #include "meta/meta_server_failure_detector.h"
 #include "meta/meta_service.h"
 #include "meta/meta_service_app.h"
@@ -65,6 +64,7 @@
 #include "runtime/tool_api.h"
 #include "utils/autoref_ptr.h"
 #include "utils/factory_store.h"
+#include "utils/flags.h"
 #include "utils/fmt_logging.h"
 
 namespace dsn {

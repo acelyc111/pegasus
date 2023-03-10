@@ -32,6 +32,7 @@
 //   replica_stub(singleton) --> replica --> replication_app_base
 //
 
+#include <gtest/gtest_prod.h>
 #include <stdint.h>
 #include <atomic>
 #include <functional>

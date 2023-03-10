@@ -40,7 +40,6 @@
 #include "utils/fmt_logging.h"
 #include "utils/output_utils.h"
 #include "utils/strings.h"
-#include "utils/time_utils.h"
 
 namespace dsn {
 

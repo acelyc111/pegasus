@@ -36,9 +36,9 @@
 #include "runtime/task/async_calls.h"
 #include "runtime/task/task_code.h"
 #include "shell/command_executor.h"
-#include "utils/config_api.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
+#include "utils/strings.h"
 #include "utils/threadpool_code.h"
 
 namespace pegasus {

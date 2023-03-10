@@ -15,7 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <ctype.h>
 #include <fmt/core.h>
 #include <rapidjson/ostreamwrapper.h>
 #include <algorithm>
@@ -50,8 +49,8 @@
 #include "runtime/rpc/rpc_address.h"
 #include "server_load_balancer.h"
 #include "server_state.h"
-#include "utils/config_api.h"
 #include "utils/error_code.h"
+#include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/output_utils.h"
 #include "utils/time_utils.h"

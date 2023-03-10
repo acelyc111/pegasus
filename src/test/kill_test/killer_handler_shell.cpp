@@ -24,11 +24,10 @@
 #include <cstdlib>
 #include <sstream> // IWYU pragma: keep
 
-#include "utils/config_api.h"
+#include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/process_utils.h"
 #include "utils/safe_strerror_posix.h"
-#include "utils/flags.h"
 #include "utils/strings.h"
 
 namespace pegasus {

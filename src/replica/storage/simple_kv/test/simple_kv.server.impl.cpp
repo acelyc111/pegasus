@@ -37,12 +37,12 @@
 #include "consensus_types.h"
 #include "runtime/serverlet.h"
 #include "simple_kv_types.h"
-#include "utils/config_api.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
 
 namespace dsn {
 class blob;
+
 namespace replication {
 class replica;
 } // namespace replication

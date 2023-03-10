@@ -40,7 +40,6 @@
 #include "runtime/task/task.h"
 #include "runtime/task/task_code.h"
 #include "utils/blob.h"
-#include "utils/config_api.h"
 #include "utils/customizable_id.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"

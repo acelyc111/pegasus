@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <utility>
 
-#include "common/replication_common.h"
 #include "http/builtin_http_calls.h"
 #include "http/http_call_registry.h"
 #include "http/http_server.h"

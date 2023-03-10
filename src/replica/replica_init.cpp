@@ -25,26 +25,20 @@
  */
 
 #include <inttypes.h>
-#include <stdio.h>
 #include <chrono>
 #include <map>
 #include <memory>
 #include <string>
 
 #include "backup/replica_backup_manager.h"
-#include "common/fs_manager.h"
 #include "common/gpid.h"
 #include "common/replication.codes.h"
-#include "common/replication_common.h"
 #include "common/replication_other_types.h"
 #include "consensus_types.h"
 #include "dsn.layer2_types.h"
-#include "duplication/replica_follower.h"
 #include "metadata_types.h"
 #include "mutation.h"
 #include "mutation_log.h"
-#include "perf_counter/perf_counter.h"
-#include "perf_counter/perf_counter_wrapper.h"
 #include "replica.h"
 #include "replica/prepare_list.h"
 #include "replica/replication_app_base.h"
@@ -54,12 +48,9 @@
 #include "runtime/task/task.h"
 #include "utils/autoref_ptr.h"
 #include "utils/error_code.h"
-#include "utils/fail_point.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
-#include "utils/string_view.h"
-#include "utils/strings.h"
 #include "utils/uniq_timestamp_us.h"
 
 namespace dsn {

@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
-#include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -31,7 +30,6 @@
 #include "data_verifier.h"
 #include "pegasus/client.h"
 #include "pegasus/error.h"
-#include "utils/config_api.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/strings.h"

@@ -23,6 +23,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <algorithm>
+#include <string>
 #include <unordered_set>
 #include <utility>
 
@@ -32,7 +33,6 @@
 #include "common/replication_other_types.h"
 #include "kill_testor.h"
 #include "runtime/rpc/rpc_address.h"
-#include "utils/config_api.h"
 #include "utils/error_code.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"

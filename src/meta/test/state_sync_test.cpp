@@ -42,7 +42,6 @@
 #include "common/replication.codes.h"
 #include "dsn.layer2_types.h"
 #include "meta/meta_data.h"
-#include "meta/meta_options.h"
 #include "meta/meta_service.h"
 #include "meta/meta_state_service.h"
 #include "meta/server_state.h"
@@ -53,11 +52,14 @@
 #include "runtime/task/task.h"
 #include "utils/autoref_ptr.h"
 #include "utils/error_code.h"
+#include "utils/flags.h"
 #include "utils/strings.h"
 #include "utils/utils.h"
 
 namespace dsn {
 namespace replication {
+class meta_options;
+
 DSN_DECLARE_string(cluster_root);
 DSN_DECLARE_string(meta_state_service_type);
 

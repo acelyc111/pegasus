@@ -38,7 +38,6 @@
 #include "runtime/api_layer1.h"
 #include "runtime/task/task_spec.h"
 #include "utils/command_manager.h"
-#include "utils/config_api.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"

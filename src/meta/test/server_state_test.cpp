@@ -38,7 +38,6 @@
 #include "common/replication.codes.h"
 #include "dsn.layer2_types.h"
 #include "meta/meta_data.h"
-#include "meta/meta_options.h"
 #include "meta/meta_rpc_types.h"
 #include "meta/meta_service.h"
 #include "meta/server_state.h"
@@ -47,6 +46,7 @@
 #include "runtime/rpc/rpc_message.h"
 #include "runtime/rpc/serialization.h"
 #include "utils/error_code.h"
+#include "utils/flags.h"
 
 namespace dsn {
 namespace replication {

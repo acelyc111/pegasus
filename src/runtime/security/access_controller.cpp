@@ -20,6 +20,7 @@
 #include "meta_access_controller.h"
 #include "replica_access_controller.h"
 #include "utils/flags.h"
+#include "utils/fmt_logging.h"
 #include "utils/strings.h"
 
 namespace dsn {

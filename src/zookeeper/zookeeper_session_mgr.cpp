@@ -39,7 +39,6 @@
 #include <functional>
 
 #include "runtime/service_app.h"
-#include "utils/config_api.h"
 #include "utils/flags.h"
 #include "utils/singleton_store.h"
 #include "zookeeper_session.h"

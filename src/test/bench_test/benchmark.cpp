@@ -19,14 +19,16 @@
 
 #include "benchmark.h"
 
-#include <cstring>
 // IWYU pragma: no_include <ext/alloc_traits.h>
 #include <fmt/core.h>
 #include <pegasus/error.h>
 #include <rocksdb/env.h>
 #include <rocksdb/statistics.h>
 #include <stdio.h>
+#include <map>
+#include <set>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 #include "pegasus/client.h"

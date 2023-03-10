@@ -22,7 +22,6 @@
 #include "backup_types.h"
 #include "common/gpid.h"
 #include "common/replication.codes.h"
-#include "common/replication_common.h"
 #include "replica/replica.h"
 #include "replica/replica_stub.h"
 #include "replica_backup_manager.h"
@@ -30,7 +29,9 @@
 #include "runtime/rpc/serialization.h"
 #include "utils/autoref_ptr.h"
 #include "utils/error_code.h"
+#include "utils/flags.h"
 #include "utils/fmt_logging.h"
+#include "utils/strings.h"
 
 namespace dsn {
 class message_ex;

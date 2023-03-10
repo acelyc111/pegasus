@@ -19,12 +19,6 @@
 
 #include "replica_follower.h"
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/detail/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/iterator/iterator_facade.hpp>
-#include <boost/range/distance.hpp>
-#include <boost/type_index/type_index_facade.hpp>
 #include <stddef.h>
 #include <algorithm>
 #include <cstdint>
@@ -47,6 +41,7 @@
 #include "utils/fmt_logging.h"
 #include "utils/ports.h"
 #include "utils/string_view.h"
+#include "utils/strings.h"
 
 namespace dsn {
 namespace replication {

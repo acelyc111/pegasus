@@ -51,9 +51,9 @@
 #include "server/pegasus_read_service.h"
 #include "server/pegasus_server_write.h" // IWYU pragma: keep
 #include "server/range_read_limiter.h"
-#include "utils/config_api.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
+#include "utils/strings.h"
 #include "utils/token_bucket_throttling_controller.h"
 
 namespace dsn {

@@ -49,7 +49,6 @@
 #include "replica/storage/simple_kv/simple_kv.server.h"
 #include "runtime/serverlet.h"
 #include "simple_kv_types.h"
-#include "utils/config_api.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
 

@@ -38,7 +38,6 @@
 #include "block_service/block_service_manager.h"
 #include "common/gpid.h"
 #include "common/replication.codes.h"
-#include "common/replication_common.h"
 #include "common/replication_enums.h"
 #include "common/replication_other_types.h"
 #include "dsn.layer2_types.h"

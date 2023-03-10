@@ -38,7 +38,6 @@
 #include <map>
 #include <utility>
 
-#include "utils/config_api.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/strings.h"

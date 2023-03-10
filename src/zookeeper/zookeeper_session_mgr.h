@@ -33,10 +33,7 @@
  *     2015-12-04, @shengofsun (sunweijie@xiaomi.com)
  */
 
-#include <string>
-
 #include "utils/singleton.h"
-#include "utils/synchronize.h"
 
 #pragma once
 

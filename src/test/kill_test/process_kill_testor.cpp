@@ -30,10 +30,10 @@
 #include "process_kill_testor.h"
 #include "test/kill_test/job.h"
 #include "test/kill_test/kill_testor.h"
-#include "utils/config_api.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/process_utils.h"
+#include "utils/strings.h"
 
 namespace pegasus {
 namespace test {

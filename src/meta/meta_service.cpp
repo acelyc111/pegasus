@@ -29,7 +29,6 @@
 // IWYU pragma: no_include <ext/alloc_traits.h>
 #include <fmt/ostream.h>
 #include <algorithm> // for std::remove_if
-#include <cctype>    // for ::isspace
 #include <chrono>
 #include <functional>
 #include <ostream>
@@ -63,7 +62,6 @@
 #include "server_state.h"
 #include "utils/autoref_ptr.h"
 #include "utils/command_manager.h"
-#include "utils/config_api.h"
 #include "utils/factory_store.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"

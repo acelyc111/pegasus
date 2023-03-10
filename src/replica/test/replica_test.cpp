@@ -34,7 +34,6 @@
 #include "common/gpid.h"
 #include "common/replica_envs.h"
 #include "common/replication.codes.h"
-#include "common/replication_common.h"
 #include "consensus_types.h"
 #include "dsn.layer2_types.h"
 #include "http/http_server.h"
@@ -58,6 +57,7 @@
 #include "utils/defer.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
+#include "utils/flags.h"
 #include "utils/fmt_logging.h"
 
 namespace dsn {

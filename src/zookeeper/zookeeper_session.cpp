@@ -43,7 +43,6 @@
 #include "zookeeper/proto.h"
 #include "zookeeper/zookeeper.jute.h"
 #include "zookeeper_session.h"
-#include "zookeeper_session_mgr.h"
 
 namespace dsn {
 namespace security {

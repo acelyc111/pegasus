@@ -59,7 +59,6 @@
 #include "common/replication_other_types.h"
 #include "dump_file.h"
 #include "meta/meta_data.h"
-#include "meta/meta_options.h"
 #include "meta/meta_service.h"
 #include "meta/meta_state_service.h"
 #include "meta/partition_guardian.h"

@@ -25,9 +25,9 @@
 #include "app_balance_policy.h"
 #include "common/gpid.h"
 #include "meta/load_balance_policy.h"
-#include "meta/meta_options.h"
-#include "meta_service.h"
+#include "metadata_types.h"
 #include "utils/flags.h"
+#include "utils/fmt_logging.h"
 
 namespace dsn {
 class rpc_address;

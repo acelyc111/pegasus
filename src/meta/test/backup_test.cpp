@@ -38,7 +38,6 @@
 #include "dsn.layer2_types.h"
 #include "meta/meta_backup_service.h"
 #include "meta/meta_data.h"
-#include "meta/meta_options.h"
 #include "meta/meta_service.h"
 #include "meta/meta_state_service.h"
 #include "meta/server_state.h"
@@ -65,6 +64,7 @@
 
 namespace dsn {
 namespace replication {
+class meta_options;
 class mock_policy;
 
 DSN_DECLARE_int32(cold_backup_checkpoint_reserve_minutes);
