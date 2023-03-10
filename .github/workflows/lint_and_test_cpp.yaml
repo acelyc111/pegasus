@@ -64,7 +64,7 @@ jobs:
     container:
       image: apache/pegasus:thirdparties-bin-ubuntu2204-${{ github.base_ref }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: dorny/paths-filter@v2
         id: changes
         with:
@@ -80,10 +80,12 @@ jobs:
       - name: Rebuild third-parties
         if: steps.changes.outputs.thirdparty == 'true'
         working-directory: thirdparty
+        # Build thirdparties and leave some necessary libraries and source
         run: |
           mkdir build
           cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -B build/
           cmake --build build/ -j $(nproc)
+          rm -rf build/Build build/Download/[a-y]* build/Source/[a-g]* build/Source/[i-q]* build/Source/[s-z]*
           ../scripts/download_hadoop.sh hadoop-bin
           ../scripts/download_zk.sh zookeeper-bin
       - name: Build IWYU binary
