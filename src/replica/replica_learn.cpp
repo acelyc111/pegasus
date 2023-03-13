@@ -818,7 +818,12 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                                     mu->name(),
                                     existing_mutation->data.header.ballot);
                 } else {
-                    _prepare_list->prepare(mu, partition_status::PS_POTENTIAL_SECONDARY);
+                    // TODO(yingchun): here
+                    err = _prepare_list->prepare(mu, partition_status::PS_POTENTIAL_SECONDARY);
+                    if (err != ERR_OK) {
+                        LOG_ERROR_PREFIX("got an error({}) in prepare stage of prepare_list", err);
+                        return;
+                    }
                 }
 
                 if (cache_range.first == 0 || mu->data.header.decree < cache_range.first)
@@ -1236,6 +1241,10 @@ void replica::handle_learning_error(error_code err, bool is_local_error)
         err,
         is_local_error ? "local_error" : "remote error");
 
+    if (is_local_error && err == ERR_UNRECOVERABLE_DATA_ERROR) {
+        _data_corrupted = true;
+    }
+
     _stub->_counter_replicas_learning_recent_learn_fail_count->increment();
 
     update_local_configuration_with_no_ballot_change(
@@ -1435,7 +1444,7 @@ void replica::on_add_learner(const group_check_request &request)
 error_code replica::apply_learned_state_from_private_log(learn_state &state)
 {
     bool duplicating = is_duplication_master();
-    // if no dunplicate, learn_start_decree=last_commit decree, step_back means whether
+    // if no duplicate, learn_start_decree=last_commit decree, step_back means whether
     // `learn_start_decree`should be stepped back to include all the
     // unconfirmed when duplicating in this round of learn. default is false
     bool step_back = false;
@@ -1490,35 +1499,49 @@ error_code replica::apply_learned_state_from_private_log(learn_state &state)
                        _app->last_committed_decree(),
                        FLAGS_max_mutation_count_in_prepare_list,
                        [this, duplicating, step_back](mutation_ptr &mu) {
-                           if (mu->data.header.decree == _app->last_committed_decree() + 1) {
-                               // TODO: assign the returned error_code to err and check it
-                               _app->apply_mutation(mu);
-
-                               // appends logs-in-cache into plog to ensure them can be duplicated.
-                               // if current case is step back, it means the logs has been reserved
-                               // through `reset_form` above
-                               if (duplicating && !step_back) {
-                                   _private_log->append(
-                                       mu, LPC_WRITE_REPLICATION_LOG_COMMON, &_tracker, nullptr);
-                               }
+                           if (mu->data.header.decree != _app->last_committed_decree() + 1) {
+                               return ERR_OK;
                            }
+
+                           // TODO: assign the returned error_code to err and check it
+                           auto ec = _app->apply_mutation(mu);
+                           if (ec != ERR_OK) {
+                               handle_local_failure(ec);
+                               return ERR_OK;
+                           }
+
+                           // appends logs-in-cache into plog to ensure them can be duplicated.
+                           // if current case is step back, it means the logs has been reserved
+                           // through `reset_form` above
+                           if (duplicating && !step_back) {
+                               _private_log->append(
+                                   mu, LPC_WRITE_REPLICATION_LOG_COMMON, &_tracker, nullptr);
+                           }
+
+                           return ERR_OK;
                        });
 
-    err = mutation_log::replay(state.files,
-                               [&plist](int log_length, mutation_ptr &mu) {
-                                   auto d = mu->data.header.decree;
-                                   if (d <= plist.last_committed_decree())
-                                       return false;
+    err = mutation_log::replay(
+        state.files,
+        [this, &plist](int log_length, mutation_ptr &mu) {
+            auto d = mu->data.header.decree;
+            if (d <= plist.last_committed_decree()) {
+                return false;
+            }
 
-                                   auto old = plist.get_mutation_by_decree(d);
-                                   if (old != nullptr &&
-                                       old->data.header.ballot >= mu->data.header.ballot)
-                                       return false;
+            auto old = plist.get_mutation_by_decree(d);
+            if (old != nullptr && old->data.header.ballot >= mu->data.header.ballot) {
+                return false;
+            }
 
-                                   plist.prepare(mu, partition_status::PS_SECONDARY);
-                                   return true;
-                               },
-                               offset);
+            auto e = plist.prepare(mu, partition_status::PS_SECONDARY);
+            if (e != ERR_OK) {
+                LOG_ERROR_PREFIX("got an error({}) in prepare stage of prepare_list", e);
+                return false;
+            }
+            return true;
+        },
+        offset);
 
     // update first_learn_start_decree, the position where the first round of LT_LOG starts from.
     // we use this value to determine whether to learn back from min_confirmed_decree
@@ -1562,15 +1585,21 @@ error_code replica::apply_learned_state_from_private_log(learn_state &state)
         while (!reader.is_eof()) {
             auto mu = mutation::read_from(reader, nullptr);
             auto d = mu->data.header.decree;
-            if (d <= plist.last_committed_decree())
+            if (d <= plist.last_committed_decree()) {
                 continue;
+            }
 
             auto old = plist.get_mutation_by_decree(d);
-            if (old != nullptr && old->data.header.ballot >= mu->data.header.ballot)
+            if (old != nullptr && old->data.header.ballot >= mu->data.header.ballot) {
                 continue;
+            }
 
             mu->set_logged();
-            plist.prepare(mu, partition_status::PS_SECONDARY);
+            err = plist.prepare(mu, partition_status::PS_SECONDARY);
+            if (err != ERR_OK) {
+                LOG_ERROR_PREFIX("got an error({}) in prepare stage of prepare_list", err);
+                return err;
+            }
             ++replay_count;
         }
 

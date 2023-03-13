@@ -27,6 +27,7 @@
 #include "replica/mutation.h"
 #include "replica/prepare_list.h"
 #include "replica/replica_base.h"
+#include "utils/error_code.h"
 #include "utils/errors.h"
 
 namespace dsn {
@@ -42,7 +43,7 @@ public:
                     int max_count,
                     mutation_committer committer);
 
-    void commit(decree d, commit_type ct);
+    error_code commit(decree d, commit_type ct) override;
 
 private:
     perf_counter_wrapper _counter_dulication_mutation_loss_count;
@@ -59,7 +60,7 @@ public:
 
     error_s add(mutation_ptr mu);
 
-    void add_mutation_if_valid(mutation_ptr &, decree start_decree);
+    error_code add_mutation_if_valid(mutation_ptr &, decree start_decree);
 
     mutation_tuple_set move_all_mutations();
 

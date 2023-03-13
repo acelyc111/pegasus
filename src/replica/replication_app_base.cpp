@@ -26,6 +26,7 @@
 
 #include <alloca.h>
 #include <fcntl.h>
+#include <rocksdb/status.h>
 #include <algorithm>
 #include <fstream>
 #include <memory>
@@ -373,17 +374,16 @@ int replication_app_base::on_batched_write_requests(int64_t decree,
                                                     message_ex **requests,
                                                     int request_length)
 {
-    int storage_error = 0;
+    int se_err = rocksdb::Status::kOk;
     for (int i = 0; i < request_length; ++i) {
-        // TODO(yingchun): better to return error_code
-        int e = on_request(requests[i]);
-        if (e != 0) {
-            LOG_ERROR_PREFIX("got storage error when handler request({})",
+        int err = on_request(requests[i]);
+        if (err != rocksdb::Status::kOk) {
+            LOG_ERROR_PREFIX("got storage engine error when handler request({})",
                              requests[i]->header->rpc_name);
-            storage_error = e;
+            se_err = err;
         }
     }
-    return storage_error;
+    return se_err;
 }
 
 error_code replication_app_base::apply_mutation(const mutation *mu)
@@ -425,7 +425,7 @@ error_code replication_app_base::apply_mutation(const mutation *mu)
         }
     }
 
-    int perror = on_batched_write_requests(
+    int se_err = on_batched_write_requests(
         mu->data.header.decree, mu->data.header.timestamp, batched_requests, batched_count);
 
     // release faked requests
@@ -433,8 +433,8 @@ error_code replication_app_base::apply_mutation(const mutation *mu)
         faked_requests[i]->release_ref();
     }
 
-    if (perror != 0) {
-        LOG_ERROR_PREFIX("mutation {}: get internal error {}", mu->name(), perror);
+    if (se_err != rocksdb::Status::kOk) {
+        LOG_ERROR_PREFIX("mutation {}: get internal error {}", mu->name(), se_err);
         // For normal write requests, if got rocksdb error, this replica will be set error and evoke
         // learn.
         // For ingestion requests, should not do as normal write requests, there are two reasons:
@@ -445,7 +445,15 @@ error_code replication_app_base::apply_mutation(const mutation *mu)
         //      because the external sst files may not exist, in this case, we won't consider it as
         //      an error.
         if (!has_ingestion_request) {
-            return ERR_LOCAL_APP_FAILURE;
+            switch (se_err) {
+            // TODO(yingchun): Now we consider kIOError and kCorruption as UNRECOVERABLE_DATA_ERROR,
+            //  maybe we should add more storage engine errors as unrecoverable.
+            case rocksdb::Status::kIOError:
+            case rocksdb::Status::kCorruption:
+                return ERR_UNRECOVERABLE_DATA_ERROR;
+            default:
+                return ERR_LOCAL_APP_FAILURE;
+            }
         }
     }
 

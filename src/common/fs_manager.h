@@ -103,6 +103,7 @@ public:
         zauto_read_lock l(_lock);
         return _available_data_dirs;
     }
+    dir_node *get_dir_node(const std::string &subdir);
 
 private:
     void reset_disk_stat()
@@ -114,8 +115,6 @@ private:
         _max_available_ratio = 0;
         _status_updated_dir_nodes.clear();
     }
-
-    dir_node *get_dir_node(const std::string &subdir);
 
     // when visit the tag/storage of the _dir_nodes map, there's no need to protect by the lock.
     // but when visit the holding_replicas, you must take care.

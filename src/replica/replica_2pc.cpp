@@ -542,7 +542,10 @@ void replica::on_prepare(dsn::message_ex *request)
     }
 
     error_code err = _prepare_list->prepare(mu, status(), pop_all_committed_mutations);
-    CHECK_EQ_MSG(err, ERR_OK, "prepare mutation failed");
+    if (err != ERR_OK) {
+        LOG_ERROR_PREFIX("prepare mutation failed, error = {}", err);
+        return;
+    }
 
     if (partition_status::PS_POTENTIAL_SECONDARY == status() ||
         partition_status::PS_SECONDARY == status()) {

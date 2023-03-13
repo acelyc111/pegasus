@@ -56,10 +56,11 @@ mutation_buffer::mutation_buffer(replica_base *r,
         "eon.replica", counter_str.c_str(), COUNTER_TYPE_VOLATILE_NUMBER, counter_str.c_str());
 }
 
-void mutation_buffer::commit(decree d, commit_type ct)
+error_code mutation_buffer::commit(decree d, commit_type ct)
 {
-    if (d <= last_committed_decree())
-        return;
+    if (d <= last_committed_decree()) {
+        return ERR_OK;
+    }
 
     CHECK_EQ_PREFIX(ct, COMMIT_TO_DECREE_HARD);
 
@@ -92,7 +93,7 @@ void mutation_buffer::commit(decree d, commit_type ct)
             // if next_commit_mutation loss, let last_commit_decree catch up  with min_decree, and
             // the next loop will commit from min_decree
             _last_committed_decree = min_decree() - 1;
-            return;
+            return ERR_OK;
         }
 
         CHECK_GE_PREFIX(next_committed_mutation->data.header.ballot, last_bt);
@@ -100,6 +101,8 @@ void mutation_buffer::commit(decree d, commit_type ct)
         last_bt = next_committed_mutation->data.header.ballot;
         _committer(next_committed_mutation);
     }
+
+    return ERR_OK;
 }
 
 error_s mutation_batch::add(mutation_ptr mu)
@@ -154,19 +157,20 @@ mutation_batch::mutation_batch(replica_duplicator *r) : replica_base(r)
     _mutation_buffer =
         make_unique<mutation_buffer>(&base, 0, PREPARE_LIST_NUM_ENTRIES, [this](mutation_ptr &mu) {
             // committer
-            add_mutation_if_valid(mu, _start_decree);
+            return add_mutation_if_valid(mu, _start_decree);
         });
 
     // start duplication from confirmed_decree
     _mutation_buffer->reset(r->progress().confirmed_decree);
 }
 
-void mutation_batch::add_mutation_if_valid(mutation_ptr &mu, decree start_decree)
+error_code mutation_batch::add_mutation_if_valid(mutation_ptr &mu, decree start_decree)
 {
     if (mu->get_decree() < start_decree) {
         // ignore
-        return;
+        return ERR_OK;
     }
+
     for (mutation_update &update : mu->data.updates) {
         // ignore WRITE_EMPTY
         if (update.code == RPC_REPLICATION_WRITE_EMPTY) {
@@ -191,6 +195,8 @@ void mutation_batch::add_mutation_if_valid(mutation_ptr &mu, decree start_decree
         _loaded_mutations.emplace(
             std::make_tuple(mu->data.header.timestamp, update.code, std::move(bb)));
     }
+
+    return ERR_OK;
 }
 
 } // namespace replication

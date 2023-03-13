@@ -162,6 +162,7 @@ fs_manager::fs_manager(bool for_test)
 
 dir_node *fs_manager::get_dir_node(const std::string &subdir)
 {
+    // TODO(yingchun): need lock?
     std::string norm_subdir;
     utils::filesystem::get_normalized_path(subdir, norm_subdir);
     for (auto &n : _dir_nodes) {
