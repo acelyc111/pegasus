@@ -16,6 +16,7 @@
 // under the License.
 
 #include <ctype.h>
+#include <algorithm>
 #include <unordered_set>
 #include <utility>
 
