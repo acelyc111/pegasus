@@ -465,11 +465,13 @@ TEST_F(replica_test, test_query_last_checkpoint_info)
 
 TEST_F(replica_test, test_clear_on_failure)
 {
+    // Disable failure detector to avoid connecting with meta server which is not started.
+    FLAGS_fd_disabled = true;
+
     replica *rep =
         stub->generate_replica(_app_info, pid, partition_status::PS_PRIMARY, 1, false, true);
-    auto path = stub->get_replica_dir(_app_info.app_type.c_str(), pid);
+    auto path = rep->dir();
     dsn::utils::filesystem::create_directory(path);
-    ASSERT_TRUE(dsn::utils::filesystem::path_exists(path));
     ASSERT_TRUE(has_gpid(pid));
 
     stub->clear_on_failure(rep, path, pid);
