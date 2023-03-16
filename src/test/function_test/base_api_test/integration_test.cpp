@@ -17,17 +17,16 @@
  * under the License.
  */
 
+#include <fmt/core.h>
 #include <gtest/gtest-message.h>
 #include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
-#include <memory>
+#include <iostream>
 #include <string>
 
-#include "client/replication_ddl_client.h"
 #include "include/pegasus/client.h"
 #include "pegasus/error.h"
 #include "test/function_test/utils/test_util.h"
-#include "utils/error_code.h"
 
 using namespace ::pegasus;
 
