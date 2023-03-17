@@ -53,6 +53,7 @@ function(dsn_install_library)
   install(TARGETS ${MY_PROJ_NAME} DESTINATION "lib")
 endfunction()
 
+# TODO(yingchun): no need to install, remove this function
 # Install this target into ${CMAKE_INSTALL_PREFIX}/bin/${PROJ_NAME}
 function(dsn_install_executable)
   set(MY_PROJ_TYPE "EXECUTABLE")
@@ -67,7 +68,7 @@ function(dsn_install_executable)
   endif()
 endfunction()
 
-function(ms_add_project PROJ_TYPE PROJ_NAME PROJ_SRC PROJ_LIBS PROJ_BINPLACES)
+function(add_project_internal PROJ_TYPE PROJ_NAME PROJ_SRC PROJ_LIBS PROJ_BINPLACES)
   if(NOT((PROJ_TYPE STREQUAL "STATIC") OR (PROJ_TYPE STREQUAL "SHARED") OR
   (PROJ_TYPE STREQUAL "EXECUTABLE") OR (PROJ_TYPE STREQUAL "OBJECT")))
     message(FATAL_ERROR "Invalid project type.")
@@ -93,7 +94,7 @@ function(ms_add_project PROJ_TYPE PROJ_NAME PROJ_SRC PROJ_LIBS PROJ_BINPLACES)
     endif()
     target_link_libraries(${PROJ_NAME} "${LINK_MODE}" ${PROJ_LIBS})
   endif()
-endfunction(ms_add_project)
+endfunction(add_project_internal)
 
 
 # Parameters:
@@ -145,7 +146,7 @@ function(dsn_add_project)
   if((MY_PROJ_TYPE STREQUAL "SHARED") OR (MY_PROJ_TYPE STREQUAL "EXECUTABLE"))
     set(MY_PROJ_LIBS ${MY_PROJ_LIBS} ${DEFAULT_THIRDPARTY_LIBS} ${MY_BOOST_LIBS} ${DSN_SYSTEM_LIBS})
   endif()
-  ms_add_project("${MY_PROJ_TYPE}" "${MY_PROJ_NAME}" "${MY_PROJ_SRC}" "${MY_PROJ_LIBS}" "${MY_BINPLACES}")
+  add_project_internal("${MY_PROJ_TYPE}" "${MY_PROJ_NAME}" "${MY_PROJ_SRC}" "${MY_PROJ_LIBS}" "${MY_BINPLACES}")
   define_file_basename_for_sources(${MY_PROJ_NAME})
 endfunction(dsn_add_project)
 
@@ -173,8 +174,6 @@ endfunction(dsn_add_object)
 
 function(dsn_add_test)
   if(${BUILD_TEST})
-    add_definitions(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_USE_OWN_TR1_TUPLE=0)
-    set(MY_EXECUTABLE_IS_TEST TRUE)
     dsn_add_executable()
 
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -307,10 +306,6 @@ function(dsn_setup_system_libs)
           )
 endfunction(dsn_setup_system_libs)
 
-function(dsn_setup_include_path)#TODO(huangwei5): remove this
-  include_directories(${THIRDPARTY_INSTALL_DIR}/include)
-endfunction(dsn_setup_include_path)
-
 function(dsn_setup_thirdparty_libs)
   set(Boost_USE_MULTITHREADED ON)
   set(Boost_USE_STATIC_LIBS OFF)
@@ -382,12 +377,6 @@ function(dsn_common_setup)
     set(ENV{CCACHE_MAXSIZE} "1024M")
   endif(CCACHE)
 
-  if(NOT DEFINED DSN_BUILD_RUNTIME)
-    set(DSN_BUILD_RUNTIME FALSE)
-  endif()
-
-  set(BUILD_SHARED_LIBS OFF)
-
   include(CheckCXXCompilerFlag)
   CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
   if(NOT ${COMPILER_SUPPORTS_CXX1Y})
@@ -396,7 +385,6 @@ function(dsn_common_setup)
 
   dsn_setup_system_libs()
   dsn_setup_compiler_flags()
-  dsn_setup_include_path()
   dsn_setup_thirdparty_libs()
 
   include(ThriftUtils)
