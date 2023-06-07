@@ -15,22 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 
-project(pegasus C CXX)
-
-set(PEGASUS_PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-set(DSN_BUILD_RUNTIME TRUE)
+add_compile_options(-fPIC)
 
 dsn_common_setup()
 
-if(UNIX)
-    add_compile_options(-fPIC)
-endif()
-
-include_directories(${PEGASUS_PROJECT_DIR})
-include_directories(${PEGASUS_PROJECT_DIR}/common/serialization_helper)
-include_directories(${PEGASUS_PROJECT_DIR}/include)
-include_directories(${PEGASUS_PROJECT_DIR}/builder/output/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/common/serialization_helper)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/builder/output/include)
 
 add_subdirectory(aio)
 add_subdirectory(base)

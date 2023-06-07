@@ -53,7 +53,7 @@ function(dsn_install_library)
   install(TARGETS ${MY_PROJ_NAME} DESTINATION "lib")
 endfunction()
 
-# Install this target into ${CMAKE_INSTALL_PREFIX}/bin/${PROJ_NAME}
+# Install this target into ${CMAKE_INSTALL_PREFIX}/bin/${MY_PROJ_NAME}
 function(dsn_install_executable)
   set(MY_PROJ_TYPE "EXECUTABLE")
   set(INSTALL_DIR "bin/${MY_PROJ_NAME}")
@@ -67,58 +67,43 @@ function(dsn_install_executable)
   endif()
 endfunction()
 
-function(ms_add_project PROJ_TYPE PROJ_NAME PROJ_SRC PROJ_LIBS PROJ_BINPLACES)
-  if(NOT((PROJ_TYPE STREQUAL "STATIC") OR (PROJ_TYPE STREQUAL "SHARED") OR
-  (PROJ_TYPE STREQUAL "EXECUTABLE") OR (PROJ_TYPE STREQUAL "OBJECT")))
-    message(FATAL_ERROR "Invalid project type.")
-  endif()
-
-  if(PROJ_SRC STREQUAL "")
-    message(FATAL_ERROR "No source files.")
-  endif()
-
-  if((PROJ_TYPE STREQUAL "STATIC") OR (PROJ_TYPE STREQUAL "OBJECT"))
-    add_library(${PROJ_NAME} ${PROJ_TYPE} ${PROJ_SRC})
-  elseif(PROJ_TYPE STREQUAL "SHARED")
-    add_library(${PROJ_NAME} ${PROJ_TYPE} ${PROJ_SRC})
-  elseif(PROJ_TYPE STREQUAL "EXECUTABLE")
-    add_executable(${PROJ_NAME} ${PROJ_SRC})
-  endif()
-
-  if((PROJ_TYPE STREQUAL "SHARED") OR (PROJ_TYPE STREQUAL "EXECUTABLE"))
-    if(PROJ_TYPE STREQUAL "SHARED")
-      set(LINK_MODE PRIVATE)
-    else()
-      set(LINK_MODE PUBLIC)
-    endif()
-    target_link_libraries(${PROJ_NAME} "${LINK_MODE}" ${PROJ_LIBS})
-  endif()
-endfunction(ms_add_project)
-
-
 # Parameters:
-# - MY_PROJ_TYPE
-# - MY_PROJ_NAME
-# - MY_SRC_SEARCH_MODE
+# - MY_PROJ_TYPE: required: STATIC, SHARED, EXECUTABLE or OBJECT
+# - MY_PROJ_NAME: required: <string>
+# - MY_SRC_SEARCH_MODE: optional: GLOB_RECURSE or GLOB, default is GLOB
 #     Search mode for source files under current project directory
-#     "GLOB_RECURSE" for recursive search
-#     "GLOB" for non-recursive search
-# - MY_PROJ_SRC
-# - MY_PROJ_LIBS
-# - MY_BINPLACES
+#     GLOB_RECURSE: for recursive search
+#     GLOB: for non-recursive search
+# - MY_PROJ_SRC: optional: default is ""
+#     <empty>: includes all source files from the project directory
+#     <non-empty>: appends the specified files to all the source files from the project directory
+# - MY_PROJ_LIBS: optional: default is ""
+#     The libraries to link
+# - MY_BOOST_LIBS: optional: default is ""
+#     The boost libraries to link
+# - MY_BINPLACES: optional: default is ""
 #     Extra files that will be installed
-# - MY_BOOST_LIBS
 function(dsn_add_project)
+  # 1. validate MY_PROJ_TYPE
   if((NOT DEFINED MY_PROJ_TYPE) OR (MY_PROJ_TYPE STREQUAL ""))
     message(FATAL_ERROR "MY_PROJ_TYPE is empty.")
   endif()
+  if(NOT((MY_PROJ_TYPE STREQUAL "STATIC") OR (MY_PROJ_TYPE STREQUAL "SHARED") OR
+    (MY_PROJ_TYPE STREQUAL "EXECUTABLE") OR (MY_PROJ_TYPE STREQUAL "OBJECT")))
+    message(FATAL_ERROR "Invalid project type.")
+  endif()
+
+  # 2. validate MY_PROJ_NAME
   if((NOT DEFINED MY_PROJ_NAME) OR (MY_PROJ_NAME STREQUAL ""))
     message(FATAL_ERROR "MY_PROJ_NAME is empty.")
   endif()
+
+  # 3. update MY_SRC_SEARCH_MODE
   if(NOT DEFINED MY_SRC_SEARCH_MODE)
     set(MY_SRC_SEARCH_MODE "GLOB")
   endif()
 
+  # 4. update and validate MY_PROJ_SRC
   # find source files from current directory
   if(NOT DEFINED MY_PROJ_SRC)
     set(MY_PROJ_SRC "")
@@ -127,25 +112,47 @@ function(dsn_add_project)
   # We restrict the file suffix to keep our codes consistent.
   file(${MY_SRC_SEARCH_MODE} TEMP_SRC
           "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-          "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
           )
   set(MY_PROJ_SRC ${TEMP_SRC} ${MY_PROJ_SRC})
+  if(MY_PROJ_SRC STREQUAL "")
+    message(FATAL_ERROR "No source files.")
+  endif()
 
+  # 5. update MY_BOOST_LIBS and MY_PROJ_LIBS
+  if(NOT DEFINED MY_BOOST_LIBS)
+    set(MY_BOOST_LIBS "")
+  endif()
   if(NOT DEFINED MY_PROJ_LIBS)
     set(MY_PROJ_LIBS "")
   endif()
+  # TODO(yingchun): Link the libs explicitly in each projects.
+  if((MY_PROJ_TYPE STREQUAL "SHARED") OR (MY_PROJ_TYPE STREQUAL "EXECUTABLE"))
+    set(MY_PROJ_LIBS ${MY_PROJ_LIBS} ${DEFAULT_THIRDPARTY_LIBS} ${MY_BOOST_LIBS} ${DSN_SYSTEM_LIBS})
+  endif()
+
+  # 6. update MY_BINPLACES
   if(NOT DEFINED MY_BINPLACES)
     set(MY_BINPLACES "")
   endif()
 
-  if(NOT DEFINED MY_BOOST_LIBS)
-    set(MY_BOOST_LIBS "")
+  # 7. add executable or library
+  if(MY_PROJ_TYPE STREQUAL "EXECUTABLE")
+    add_executable(${MY_PROJ_NAME} ${MY_PROJ_SRC})
+  else()
+    add_library(${MY_PROJ_NAME} ${MY_PROJ_TYPE} ${MY_PROJ_SRC})
   endif()
 
+  # 8. link the libraries
   if((MY_PROJ_TYPE STREQUAL "SHARED") OR (MY_PROJ_TYPE STREQUAL "EXECUTABLE"))
-    set(MY_PROJ_LIBS ${MY_PROJ_LIBS} ${DEFAULT_THIRDPARTY_LIBS} ${MY_BOOST_LIBS} ${DSN_SYSTEM_LIBS})
+    if(MY_PROJ_TYPE STREQUAL "SHARED")
+      set(LINK_MODE PRIVATE)
+    else()
+      set(LINK_MODE PUBLIC)
+    endif()
+    target_link_libraries(${MY_PROJ_NAME} "${LINK_MODE}" ${MY_PROJ_LIBS})
   endif()
-  ms_add_project("${MY_PROJ_TYPE}" "${MY_PROJ_NAME}" "${MY_PROJ_SRC}" "${MY_PROJ_LIBS}" "${MY_BINPLACES}")
+
+  # 9. add -DFILE_BASENAME="filename"
   define_file_basename_for_sources(${MY_PROJ_NAME})
 endfunction(dsn_add_project)
 
@@ -174,7 +181,6 @@ endfunction(dsn_add_object)
 function(dsn_add_test)
   if(${BUILD_TEST})
     add_definitions(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_USE_OWN_TR1_TUPLE=0)
-    set(MY_EXECUTABLE_IS_TEST TRUE)
     dsn_add_executable()
 
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -363,10 +369,6 @@ function(dsn_setup_thirdparty_libs)
 endfunction(dsn_setup_thirdparty_libs)
 
 function(dsn_common_setup)
-  if(NOT (UNIX))
-    message(FATAL_ERROR "Only Unix are supported.")
-  endif()
-
   if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
     message(FATAL_ERROR "In-source builds are not allowed.")
   endif()
@@ -381,10 +383,6 @@ function(dsn_common_setup)
     set(ENV{CCACHE_COMPRESSLEVEL} "6")
     set(ENV{CCACHE_MAXSIZE} "1024M")
   endif(CCACHE)
-
-  if(NOT DEFINED DSN_BUILD_RUNTIME)
-    set(DSN_BUILD_RUNTIME FALSE)
-  endif()
 
   set(BUILD_SHARED_LIBS OFF)
 

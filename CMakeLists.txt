@@ -15,8 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 
-project(pegasus)
 cmake_minimum_required(VERSION 3.11.0)
+
+project(pegasus)
+
+if(NOT UNIX)
+    message(FATAL_ERROR "It's not supported yet to build Pegasus on non-UNIX or non-UNIX-like system!")
+endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # require at least gcc 5.4.0
@@ -38,9 +43,6 @@ set(PROJECT_ROOT ${CMAKE_CURRENT_LIST_DIR})
 set(THIRDPARTY_ROOT ${PROJECT_ROOT}/thirdparty)
 set(THIRDPARTY_INSTALL_DIR ${PROJECT_ROOT}/thirdparty/output)
 message(STATUS "THIRDPARTY_INSTALL_DIR = ${THIRDPARTY_INSTALL_DIR}")
-
-set(BUILD_DIR ${PROJECT_ROOT}/src/builder)
-message(STATUS "BUILD_DIR = ${BUILD_DIR}")
 
 option(BUILD_TEST "build unit test" ON)
 message(STATUS "BUILD_TEST = ${BUILD_TEST}")
