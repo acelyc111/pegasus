@@ -40,7 +40,7 @@
 #include "meta/meta_service.h"
 #include "meta/meta_state_service.h"
 #include "meta_service_test_app.h"
-#include "meta_test_base.h"
+#include "meta_test_utils/meta_test_base.h"
 #include "runtime/rpc/rpc_holder.h"
 #include "runtime/rpc/rpc_message.h"
 #include "runtime/task/task.h"

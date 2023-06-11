@@ -41,7 +41,7 @@
 #include "meta/server_load_balancer.h"
 #include "meta/server_state.h"
 #include "meta/test/misc/misc.h"
-#include "meta_service_test_app.h"
+#include "../test/meta_service_test_app.h"
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/rpc/rpc_message.h"
 #include "runtime/task/task_tracker.h"

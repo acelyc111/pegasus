@@ -33,7 +33,7 @@
 #include "meta/meta_data.h"
 #include "meta/server_state.h"
 #include "meta_admin_types.h"
-#include "meta_test_base.h"
+#include "meta_test_utils/meta_test_base.h"
 #include "metadata_types.h"
 #include "utils/error_code.h"
 

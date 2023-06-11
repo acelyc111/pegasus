@@ -22,14 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME sim_lb)
-set(MY_PROJ_LIBS
+set(MY_PROJ_NAME meta_test_utils)
+set(MY_PROJ_SRC "")
+set(MY_PROJ_LIBS 
     dsn_meta_server
     dsn_replication_common
     dsn_runtime
-    gtest
     hashtable
-    meta_test_utils)
+    gtest)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
-# TODO(yingchun): sim_lb need a 'config.ini', fix it later.
-dsn_add_executable()
+dsn_add_static_library()

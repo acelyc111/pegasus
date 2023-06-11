@@ -65,4 +65,5 @@ add_definitions(-DDSN_MOCK_TEST)
 
 dsn_add_shared_library()
 
+add_subdirectory(meta_test_utils)
 add_subdirectory(test)

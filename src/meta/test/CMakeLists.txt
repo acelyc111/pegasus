@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 set(MY_PROJ_NAME dsn.meta.test)
-set(MY_PROJ_SRC misc/misc.cpp)
+set(MY_PROJ_SRC "")
 set(MY_PROJ_LIBS
         dsn.replication.zookeeper_provider
         dsn_replication_common
@@ -53,5 +53,6 @@ set(MY_BINPLACES clear.sh run.sh config-test.ini suite1 suite2)
 
 dsn_add_test()
 
+add_subdirectory(backup_test)
 add_subdirectory(balancer_simulator)
 add_subdirectory(meta_state)
