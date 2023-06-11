@@ -39,7 +39,7 @@
 #include "meta/greedy_load_balancer.h"
 #include "meta/meta_data.h"
 #include "meta/server_load_balancer.h"
-#include "meta/test/misc/misc.h"
+#include "meta/meta_test_utils/misc.h"
 #include "meta_admin_types.h"
 #include "runtime/app_model.h"
 #include "runtime/rpc/rpc_address.h"

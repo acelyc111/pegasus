@@ -34,7 +34,7 @@
 #include "meta/meta_rpc_types.h"
 #include "meta/meta_service.h"
 #include "meta/server_state.h"
-#include "meta_test_utils/meta_test_base.h"
+#include "meta/meta_test_utils/meta_test_base.h"
 #include "runtime/rpc/rpc_message.h"
 #include "runtime/rpc/serialization.h"
 #include "utils/blob.h"

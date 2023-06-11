@@ -25,6 +25,7 @@
 set(MY_PROJ_NAME sim_lb)
 set(MY_PROJ_LIBS
     dsn_meta_server
+    dsn_replica_server
     dsn_replication_common
     dsn_runtime
     gtest

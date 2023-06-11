@@ -30,7 +30,8 @@ set(MY_PROJ_LIBS
     dsn_runtime
     hashtable
     gtest
-    meta_test_utils)
+    meta_test_utils
+    test_utils)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
 set(MY_BINPLACES
     "../run.sh"

@@ -26,6 +26,7 @@ set(MY_PROJ_NAME dsn.meta.test)
 set(MY_PROJ_SRC "")
 set(MY_PROJ_LIBS
         dsn.replication.zookeeper_provider
+        dsn_replica_server
         dsn_replication_common
         dsn.block_service
         dsn.block_service.local
@@ -47,7 +48,8 @@ set(MY_PROJ_LIBS
         crypto
         gtest
         ssl
-        hdfs)
+        hdfs
+        meta_test_utils)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
 set(MY_BINPLACES clear.sh run.sh config-test.ini suite1 suite2)
 

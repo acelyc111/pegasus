@@ -24,11 +24,14 @@
 
 set(MY_PROJ_NAME meta_test_utils)
 set(MY_PROJ_SRC "")
+set(MY_SRC_SEARCH_MODE "GLOB")
 set(MY_PROJ_LIBS 
     dsn_meta_server
+    dsn_replica_server
     dsn_replication_common
     dsn_runtime
     hashtable
     gtest)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
+set(MY_BINPLACES "")
 dsn_add_static_library()
