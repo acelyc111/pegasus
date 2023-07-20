@@ -45,7 +45,7 @@
 #include "meta/meta_service.h"
 #include "meta/meta_state_service.h"
 #include "meta/server_state.h"
-#include "meta/test/misc/misc.h"
+#include "meta/meta_test_utils/misc.h"
 #include "meta_admin_types.h"
 #include "meta_service_test_app.h"
 #include "runtime/rpc/rpc_address.h"

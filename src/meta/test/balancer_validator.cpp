@@ -43,7 +43,7 @@
 #include "meta/meta_service.h"
 #include "meta/partition_guardian.h"
 #include "meta/server_load_balancer.h"
-#include "meta/test/misc/misc.h"
+#include "meta/meta_test_utils/misc.h"
 #include "meta_admin_types.h"
 #include "meta_service_test_app.h"
 #include "metadata_types.h"

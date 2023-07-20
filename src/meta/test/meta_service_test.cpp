@@ -27,7 +27,7 @@
 #include "meta/meta_rpc_types.h"
 #include "meta/meta_service.h"
 #include "meta_admin_types.h"
-#include "meta_test_base.h"
+#include "meta/meta_test_utils/meta_test_base.h"
 #include "runtime/rpc/network.h"
 #include "runtime/rpc/network.sim.h"
 #include "runtime/rpc/rpc_address.h"

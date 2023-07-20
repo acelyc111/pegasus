@@ -17,10 +17,6 @@
 
 set(MY_PROJ_NAME "pegasus_base")
 
-if(UNIX)
-    add_compile_options(-fPIC)
-endif()
-
 # Search mode for source files under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search
 # "GLOB" for non-recursive search

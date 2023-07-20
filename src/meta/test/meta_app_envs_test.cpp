@@ -34,7 +34,7 @@
 #include "common/replica_envs.h"
 #include "meta/meta_data.h"
 #include "meta_admin_types.h"
-#include "meta_test_base.h"
+#include "meta/meta_test_utils/meta_test_base.h"
 #include "utils/error_code.h"
 
 namespace dsn {

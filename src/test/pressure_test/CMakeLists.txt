@@ -39,10 +39,8 @@ set(MY_BINPLACES "${CMAKE_CURRENT_SOURCE_DIR}/config-pressure.ini")
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
 
-if (UNIX)
-    SET(CMAKE_INSTALL_RPATH ".")
-    SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-endif()
+SET(CMAKE_INSTALL_RPATH ".")
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 dsn_add_executable()
 dsn_install_executable()
