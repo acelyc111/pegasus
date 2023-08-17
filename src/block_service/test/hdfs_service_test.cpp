@@ -118,6 +118,7 @@ void HDFSClientTest::write_test_files_async(task_tracker *tracker)
     }
 }
 
+// TODO(yingchun): add encryption test when HDFSClient supports encryption.
 TEST_F(HDFSClientTest, test_basic_operation)
 {
     if (name_node == example_name_node || backup_path == example_backup_path) {
@@ -132,8 +133,10 @@ TEST_F(HDFSClientTest, test_basic_operation)
     std::string remote_test_file = "hdfs_client_test/test_file";
     int64_t test_file_size = 0;
 
+    // TODO(yingchun): improve the tests to test operate on encrypted files.
     generate_test_file(local_test_file.c_str());
-    dsn::utils::filesystem::file_size(local_test_file, test_file_size);
+    dsn::utils::filesystem::file_size(
+        local_test_file, dsn::utils::filesystem::FileDataType::kNonSensitive, test_file_size);
 
     // fisrt clean up all old file in test directory.
     printf("clean up all old files.\n");
@@ -198,7 +201,8 @@ TEST_F(HDFSClientTest, test_basic_operation)
 
     // compare local_test_file and local_file_for_download.
     int64_t file_size = 0;
-    dsn::utils::filesystem::file_size(local_file_for_download, file_size);
+    dsn::utils::filesystem::file_size(
+        local_file_for_download, dsn::utils::filesystem::FileDataType::kNonSensitive, file_size);
     ASSERT_EQ(test_file_size, file_size);
     std::string test_file_md5sum;
     dsn::utils::filesystem::md5sum(local_test_file, test_file_md5sum);
@@ -284,7 +288,8 @@ TEST_F(HDFSClientTest, test_concurrent_upload_download)
         std::string file_name = "randomfile" + std::to_string(i);
         generate_test_file(file_name.c_str());
         int64_t file_size = 0;
-        dsn::utils::filesystem::file_size(file_name, file_size);
+        dsn::utils::filesystem::file_size(
+            file_name, dsn::utils::filesystem::FileDataType::kNonSensitive, file_size);
         std::string md5sum;
         dsn::utils::filesystem::md5sum(file_name, md5sum);
 

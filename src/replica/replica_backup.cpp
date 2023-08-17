@@ -389,7 +389,8 @@ statistic_file_infos_under_dir(const std::string &dir,
     for (std::string &file : sub_files) {
         std::pair<std::string, int64_t> file_info;
 
-        if (!utils::filesystem::file_size(file, file_info.second)) {
+        if (!utils::filesystem::file_size(
+                file, utils::filesystem::FileDataType::kSensitive, file_info.second)) {
             LOG_ERROR("get file size of {} failed", file);
             return false;
         }

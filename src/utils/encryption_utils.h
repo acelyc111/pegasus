@@ -17,29 +17,14 @@
 
 #pragma once
 
-#include "common/backup_common.h"
+namespace rocksdb {
+class Env;
+} // namespace rocksdb
 
 namespace dsn {
-namespace replication {
+namespace utils {
 
-class backup_clear_request;
-class replica_stub;
+rocksdb::Env *PegasusEnv();
 
-// A server distributes the cold-backup task to the targeted replica.
-class replica_backup_server
-{
-public:
-    explicit replica_backup_server(const replica_stub *rs);
-    ~replica_backup_server();
-
-private:
-    void on_cold_backup(backup_rpc rpc);
-
-    void on_clear_cold_backup(const backup_clear_request &request);
-
-private:
-    const replica_stub *_stub;
-};
-
-} // namespace replication
 } // namespace dsn
+} // namespace utils

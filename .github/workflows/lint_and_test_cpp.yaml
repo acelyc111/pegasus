@@ -91,7 +91,7 @@ jobs:
         # Build thirdparties and leave some necessary libraries and source
         run: |
           mkdir build
-          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -B build/
+          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=1 -B build/
           cmake --build build/ -j $(nproc)
           rm -rf build/Build build/Download/[a-y]* build/Source/[a-g]* build/Source/[i-q]* build/Source/[s-z]*
           ../scripts/download_hadoop.sh hadoop-bin
@@ -151,7 +151,7 @@ jobs:
         run: |
           rm -f /root/thirdparties-src.zip
           mkdir build
-          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -B build/
+          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=1 -B build/
           cmake --build build/ -j $(nproc)
           rm -rf build/Build build/Download/[a-y]* build/Source/[a-g]* build/Source/[i-q]* build/Source/[s-z]*
           find ./ -name '*CMakeFiles*' -type d -exec rm -rf "{}" +
@@ -196,26 +196,26 @@ jobs:
         test_module:
           - backup_restore_test
           - base_api_test
-          - base_test
+          - base_test # ok
           - bulk_load_test
           - detect_hotspot_test
-          - dsn_aio_test
-          - dsn_block_service_test
-          - dsn_client_test
-          - dsn.failure_detector.tests
-          - dsn_http_test
-          - dsn_meta_state_tests
-          - dsn.meta.test
-          - dsn_nfs_test
-          - dsn_perf_counter_test
-          - dsn_replica_backup_test
-          - dsn_replica_bulk_load_test
-          - dsn_replica_dup_test
-          - dsn_replica_split_test
-          - dsn.replica.test
+          - dsn_aio_test # added enc, ok
+          - dsn_block_service_test # partial added enc, ok
+          - dsn_client_test # ok
+          - dsn.failure_detector.tests # ok
+          - dsn_http_test # ok
+          - dsn_meta_state_tests # added enc, ok
+          - dsn.meta.test # need add enc, ok
+          - dsn_nfs_test # ok, need encrypted test files
+          - dsn_perf_counter_test # ok
+          - dsn_replica_backup_test # bad replica enc test
+          - dsn_replica_bulk_load_test # bad replica enc test
+          - dsn_replica_dup_test # bad replica enc test
+          - dsn_replica_split_test # bad replica enc test
+          - dsn.replica.test # bad replica enc test
           - dsn_replication_common_test
           - dsn.replication.simple_kv
-          - dsn.rep_tests.simple_kv
+          - dsn.rep_tests.simple_kv -
           - dsn_runtime_tests
           - dsn_utils_tests
           - dsn.zookeeper.tests
@@ -225,9 +225,9 @@ jobs:
           - pegasus_geo_test
           - pegasus_rproxy_test
           - pegasus_unit_test
-          - recovery_test
-          - restore_test
-          - throttle_test
+          - recovery_test -
+          - restore_test -
+          - throttle_test -
     needs: build_Release
     runs-on: ubuntu-latest
     container:
@@ -296,7 +296,7 @@ jobs:
         run: |
           rm -f /root/thirdparties-src.zip
           mkdir build
-          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -B build/
+          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=1 -B build/
           cmake --build build/ -j $(nproc)
           rm -rf build/Build build/Download/[a-y]* build/Source/[a-g]* build/Source/[i-q]* build/Source/[s-z]*
           find ./ -name '*CMakeFiles*' -type d -exec rm -rf "{}" +
@@ -438,7 +438,7 @@ jobs:
 #        run: |
 #          rm -f /root/thirdparties-src.zip
 #          mkdir build
-#          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -B build/
+#          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=1 -B build/
 #          cmake --build build/ -j $(nproc)
 #          rm -rf build/Build build/Download/[a-y]* build/Source/[a-g]* build/Source/[i-q]* build/Source/[s-z]*
 #          find ./ -name '*CMakeFiles*' -type d -exec rm -rf "{}" +
@@ -576,7 +576,7 @@ jobs:
         run: |
           rm -f /root/thirdparties-src.zip
           mkdir build
-          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=ON -DUSE_JEMALLOC=ON -B build/
+          cmake -DCMAKE_BUILD_TYPE=Release -DROCKSDB_PORTABLE=1 -DUSE_JEMALLOC=ON -B build/
           cmake --build build/ -j $(nproc)
           rm -rf build/Build build/Download/[a-y]* build/Source/[a-g]* build/Source/[i-q]* build/Source/[s-z]*
           find ./ -name '*CMakeFiles*' -type d -exec rm -rf "{}" +

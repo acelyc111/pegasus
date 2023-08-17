@@ -497,7 +497,8 @@ void replica_bulk_loader::download_sst_file(const std::string &remote_dir,
         // We are not sure if the file was cached by system. And we couldn't
         // afford the io overhead which is cased by reading file in verify_file(),
         // so if file exist we just verify file size
-        if (utils::filesystem::verify_file_size(file_name, f_meta.size)) {
+        if (utils::filesystem::verify_file_size(
+                file_name, utils::filesystem::FileDataType::kSensitive, f_meta.size)) {
             // local file exist and is verified
             ec = ERR_OK;
             f_size = f_meta.size;
@@ -520,7 +521,8 @@ void replica_bulk_loader::download_sst_file(const std::string &remote_dir,
     if (ec == ERR_OK && !verified) {
         if (!f_meta.md5.empty() && f_md5 != f_meta.md5) {
             ec = ERR_CORRUPTION;
-        } else if (!utils::filesystem::verify_file_size(file_name, f_meta.size)) {
+        } else if (!utils::filesystem::verify_file_size(
+                       file_name, utils::filesystem::FileDataType::kSensitive, f_meta.size)) {
             ec = ERR_CORRUPTION;
         }
     }

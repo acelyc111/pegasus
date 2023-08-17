@@ -35,6 +35,9 @@
 
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
+#include "utils/flags.h"
+
+DSN_DECLARE_bool(encrypt_data_at_rest);
 
 static void file_utils_test_setup()
 {
@@ -683,12 +686,14 @@ static void file_utils_test_file_size()
     bool ret;
 
     path = "./file_utils_temp.txt";
-    ret = dsn::utils::filesystem::file_size(path, sz);
+    ret = dsn::utils::filesystem::file_size(
+        path, dsn::utils::filesystem::FileDataType::kNonSensitive, sz);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(sz == 12);
 
     path = "./file_utils_temp2.txt";
-    ret = dsn::utils::filesystem::file_size(path, sz);
+    ret = dsn::utils::filesystem::file_size(
+        path, dsn::utils::filesystem::FileDataType::kNonSensitive, sz);
     EXPECT_FALSE(ret);
 }
 

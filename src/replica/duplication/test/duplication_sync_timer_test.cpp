@@ -35,6 +35,7 @@
 #include "replica/test/mock_utils.h"
 #include "runtime/rpc/rpc_holder.h"
 #include "runtime/rpc/rpc_message.h"
+#include "test_util/test_util.h"
 #include "utils/error_code.h"
 
 namespace dsn {
@@ -376,19 +377,21 @@ protected:
     std::unique_ptr<duplication_sync_timer> dup_sync;
 };
 
-TEST_F(duplication_sync_timer_test, duplication_sync) { test_duplication_sync(); }
+INSTANTIATE_TEST_CASE_P(, duplication_sync_timer_test, ::testing::Values(false, true));
 
-TEST_F(duplication_sync_timer_test, update_duplication_map) { test_update_duplication_map(); }
+TEST_P(duplication_sync_timer_test, duplication_sync) { test_duplication_sync(); }
 
-TEST_F(duplication_sync_timer_test, update_on_non_primary) { test_update_on_non_primary(); }
+TEST_P(duplication_sync_timer_test, update_duplication_map) { test_update_duplication_map(); }
 
-TEST_F(duplication_sync_timer_test, update_confirmed_points) { test_update_confirmed_points(); }
+TEST_P(duplication_sync_timer_test, update_on_non_primary) { test_update_on_non_primary(); }
 
-TEST_F(duplication_sync_timer_test, on_duplication_sync_reply) { test_on_duplication_sync_reply(); }
+TEST_P(duplication_sync_timer_test, update_confirmed_points) { test_update_confirmed_points(); }
 
-TEST_F(duplication_sync_timer_test, replica_status_transition) { test_replica_status_transition(); }
+TEST_P(duplication_sync_timer_test, on_duplication_sync_reply) { test_on_duplication_sync_reply(); }
 
-TEST_F(duplication_sync_timer_test, receive_illegal_duplication_status)
+TEST_P(duplication_sync_timer_test, replica_status_transition) { test_replica_status_transition(); }
+
+TEST_P(duplication_sync_timer_test, receive_illegal_duplication_status)
 {
     test_receive_illegal_duplication_status();
 }

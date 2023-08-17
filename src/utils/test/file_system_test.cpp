@@ -21,24 +21,31 @@
 #include <stdint.h>
 #include <string>
 
+#include "test_util/test_util.h"
 #include "utils/filesystem.h"
 
 namespace dsn {
 namespace utils {
 namespace filesystem {
 
-TEST(verify_file, verify_file_test)
+class filesystem_test : public pegasus::encrypt_data_test_base
+{
+};
+
+INSTANTIATE_TEST_CASE_P(, filesystem_test, ::testing::Values(false, true));
+
+TEST_P(filesystem_test, verify_file_test)
 {
     const std::string &fname = "test_file";
     std::string expected_md5;
     int64_t expected_fsize;
     create_file(fname);
     md5sum(fname, expected_md5);
-    file_size(fname, expected_fsize);
+    ASSERT_TRUE(file_size(fname, FileDataType::kNonSensitive, expected_fsize));
 
-    ASSERT_TRUE(verify_file(fname, expected_md5, expected_fsize));
-    ASSERT_FALSE(verify_file(fname, "wrong_md5", 10086));
-    ASSERT_FALSE(verify_file("file_not_exists", "wrong_md5", 10086));
+    ASSERT_TRUE(verify_file(fname, FileDataType::kNonSensitive, expected_md5, expected_fsize));
+    ASSERT_FALSE(verify_file(fname, FileDataType::kNonSensitive, "wrong_md5", 10086));
+    ASSERT_FALSE(verify_file("file_not_exists", FileDataType::kNonSensitive, "wrong_md5", 10086));
 
     remove_path(fname);
 }

@@ -108,7 +108,9 @@ public:
             cold_backup::get_app_metadata_file(backup_root, app->app_name, app_id, backup_id);
 
         int64_t metadata_file_size = 0;
-        if (!dsn::utils::filesystem::file_size(metadata_file, metadata_file_size)) {
+        if (!dsn::utils::filesystem::file_size(metadata_file,
+                                               dsn::utils::filesystem::FileDataType::kNonSensitive,
+                                               metadata_file_size)) {
             return false;
         }
         return metadata_file_size > 0;

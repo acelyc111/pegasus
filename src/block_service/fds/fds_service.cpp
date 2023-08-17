@@ -606,7 +606,8 @@ dsn::task_ptr fds_file_object::upload(const upload_request &req,
         const std::string &local_file = req.input_local_name;
         // get file size
         int64_t file_sz = 0;
-        dsn::utils::filesystem::file_size(local_file, file_sz);
+        dsn::utils::filesystem::file_size(
+            local_file, dsn::utils::filesystem::FileDataType::kSensitive, file_sz);
 
         upload_response resp;
         // TODO: we can cache the whole file in buffer, then upload the buffer rather than the

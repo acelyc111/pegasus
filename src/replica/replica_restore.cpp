@@ -102,7 +102,8 @@ bool replica::read_cold_backup_metadata(const std::string &file,
         return false;
     }
     int64_t file_sz = 0;
-    if (!::dsn::utils::filesystem::file_size(file, file_sz)) {
+    if (!::dsn::utils::filesystem::file_size(
+            file, utils::filesystem::FileDataType::kNonSensitive, file_sz)) {
         LOG_ERROR_PREFIX("get file({}) size failed", file);
         return false;
     }
@@ -160,7 +161,10 @@ error_code replica::download_checkpoint(const configuration_restore_request &req
                 const std::string file_name =
                     utils::filesystem::path_combine(local_chkpt_dir, f_meta.name);
                 if (download_err == ERR_OK || download_err == ERR_PATH_ALREADY_EXIST) {
-                    if (!utils::filesystem::verify_file(file_name, f_meta.md5, f_meta.size)) {
+                    if (!utils::filesystem::verify_file(file_name,
+                                                        utils::filesystem::FileDataType::kSensitive,
+                                                        f_meta.md5,
+                                                        f_meta.size)) {
                         download_err = ERR_CORRUPTION;
                     } else if (download_err == ERR_PATH_ALREADY_EXIST) {
                         download_err = ERR_OK;

@@ -50,7 +50,10 @@
 #include <algorithm>
 #include <fstream>
 
+#include "rocksdb/env.h"
+#include "rocksdb/status.h"
 #include "utils/defer.h"
+#include "utils/encryption_utils.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
@@ -389,32 +392,43 @@ bool rename_path(const std::string &path1, const std::string &path2)
     return ret;
 }
 
-bool file_size(const std::string &path, int64_t &sz)
+// TODO(yingchun): refactor to use uint64_t.
+bool file_size(const std::string &path, FileDataType type, int64_t &sz)
 {
-    struct stat_ st;
-    std::string npath;
-    int err;
+    if (type == FileDataType::kSensitive) {
+        uint64_t file_size = 0;
+        auto s = dsn::utils::PegasusEnv()->GetFileSize(path, &file_size);
+        if (!s.ok()) {
+            LOG_ERROR("GetFileSize failed, file '{}', err = {}", path, s.ToString());
+            return false;
+        }
+        sz = file_size;
+    } else {
+        CHECK(FileDataType::kNonSensitive == type, "");
+        struct stat_ st;
+        std::string npath;
+        int err;
 
-    if (path.empty()) {
-        return false;
+        if (path.empty()) {
+            return false;
+        }
+
+        err = get_normalized_path(path, npath);
+        if (err != 0) {
+            return false;
+        }
+
+        err = dsn::utils::filesystem::get_stat_internal(npath, st);
+        if (err != 0) {
+            return false;
+        }
+
+        if (!S_ISREG(st.st_mode)) {
+            return false;
+        }
+
+        sz = st.st_size;
     }
-
-    err = get_normalized_path(path, npath);
-    if (err != 0) {
-        return false;
-    }
-
-    err = dsn::utils::filesystem::get_stat_internal(npath, st);
-    if (err != 0) {
-        return false;
-    }
-
-    if (!S_ISREG(st.st_mode)) {
-        return false;
-    }
-
-    sz = st.st_size;
-
     return true;
 }
 
@@ -798,7 +812,7 @@ error_code read_file(const std::string &fname, std::string &buf)
     }
 
     int64_t file_sz = 0;
-    if (!file_size(fname, file_sz)) {
+    if (!file_size(fname, FileDataType::kNonSensitive, file_sz)) {
         LOG_ERROR("get file({}) size failed", fname);
         return ERR_FILE_OPERATION_FAILED;
     }
@@ -821,6 +835,7 @@ error_code read_file(const std::string &fname, std::string &buf)
 }
 
 bool verify_file(const std::string &fname,
+                 FileDataType type,
                  const std::string &expected_md5,
                  const int64_t &expected_fsize)
 {
@@ -829,7 +844,7 @@ bool verify_file(const std::string &fname,
         return false;
     }
     int64_t f_size = 0;
-    if (!file_size(fname, f_size)) {
+    if (!file_size(fname, type, f_size)) {
         LOG_ERROR("verify file({}) failed, becaused failed to get file size", fname);
         return false;
     }
@@ -850,14 +865,14 @@ bool verify_file(const std::string &fname,
     return true;
 }
 
-bool verify_file_size(const std::string &fname, const int64_t &expected_fsize)
+bool verify_file_size(const std::string &fname, FileDataType type, const int64_t &expected_fsize)
 {
     if (!file_exists(fname)) {
         LOG_ERROR("file({}) is not existed", fname);
         return false;
     }
     int64_t f_size = 0;
-    if (!file_size(fname, f_size)) {
+    if (!file_size(fname, type, f_size)) {
         LOG_ERROR("verify file({}) size failed, becaused failed to get file size", fname);
         return false;
     }

@@ -99,7 +99,7 @@ log_file::~log_file() { close(); }
         return nullptr;
     }
 
-    disk_file *hfile = file::open(path, O_RDONLY | O_BINARY, 0);
+    disk_file *hfile = file::open(path, file::FileOpenType::kReadOnly);
     if (!hfile) {
         err = ERR_FILE_OPERATION_FAILED;
         LOG_WARNING("open log file {} failed", path);
@@ -155,7 +155,7 @@ log_file::~log_file() { close(); }
         return nullptr;
     }
 
-    disk_file *hfile = file::open(path, O_RDWR | O_CREAT | O_BINARY, 0666);
+    disk_file *hfile = file::open(path, file::FileOpenType::kWriteOnly);
     if (!hfile) {
         LOG_WARNING("create log {} failed", path);
         return nullptr;
@@ -179,7 +179,10 @@ log_file::log_file(
 
     if (is_read) {
         int64_t sz;
-        CHECK(dsn::utils::filesystem::file_size(_path, sz), "fail to get file size of {}.", _path);
+        CHECK(dsn::utils::filesystem::file_size(
+                  _path, dsn::utils::filesystem::FileDataType::kSensitive, sz),
+              "fail to get file size of {}.",
+              _path);
         _end_offset += sz;
     }
 }

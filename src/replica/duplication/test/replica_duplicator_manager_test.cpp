@@ -33,6 +33,7 @@
 #include "replica/duplication/replica_duplicator.h"
 #include "replica/duplication/replica_duplicator_manager.h"
 #include "replica/test/mock_utils.h"
+#include "test_util/test_util.h"
 
 namespace dsn {
 namespace replication {
@@ -184,24 +185,26 @@ public:
     }
 };
 
-TEST_F(replica_duplicator_manager_test, get_duplication_confirms)
+INSTANTIATE_TEST_CASE_P(, replica_duplicator_manager_test, ::testing::Values(false, true));
+
+TEST_P(replica_duplicator_manager_test, get_duplication_confirms)
 {
     test_get_duplication_confirms();
 }
 
-TEST_F(replica_duplicator_manager_test, set_confirmed_decree_non_primary)
+TEST_P(replica_duplicator_manager_test, set_confirmed_decree_non_primary)
 {
     test_set_confirmed_decree_non_primary();
 }
 
-TEST_F(replica_duplicator_manager_test, remove_non_existed_duplications)
+TEST_P(replica_duplicator_manager_test, remove_non_existed_duplications)
 {
     test_remove_non_existed_duplications();
 }
 
-TEST_F(replica_duplicator_manager_test, min_confirmed_decree) { test_min_confirmed_decree(); }
+TEST_P(replica_duplicator_manager_test, min_confirmed_decree) { test_min_confirmed_decree(); }
 
-TEST_F(replica_duplicator_manager_test, update_checkpoint_prepared)
+TEST_P(replica_duplicator_manager_test, update_checkpoint_prepared)
 {
     auto r = stub->add_primary_replica(2, 1);
     duplication_entry ent;

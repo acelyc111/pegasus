@@ -22,10 +22,9 @@
 #include <fmt/core.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <rocksdb/cache.h>
+#include <rocksdb/advanced_cache.h>
 #include <rocksdb/convenience.h>
 #include <rocksdb/db.h>
-#include <rocksdb/env.h>
 #include <rocksdb/iterator.h>
 #include <rocksdb/rate_limiter.h>
 #include <rocksdb/statistics.h>
@@ -76,6 +75,7 @@
 #include "utils/blob.h"
 #include "utils/chrono_literals.h"
 #include "utils/defer.h"
+#include "utils/encryption_utils.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
@@ -1635,11 +1635,11 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
         std::vector<rocksdb::ColumnFamilyDescriptor> loaded_cf_descs;
         rocksdb::ColumnFamilyOptions loaded_data_cf_opts;
         // Set `ignore_unknown_options` true for forward compatibility.
-        auto status = rocksdb::LoadLatestOptions(rdb_path,
-                                                 rocksdb::Env::Default(),
-                                                 &loaded_db_opt,
-                                                 &loaded_cf_descs,
-                                                 /*ignore_unknown_options=*/true);
+        rocksdb::ConfigOptions config_options;
+        config_options.ignore_unknown_options = true;
+        config_options.env = dsn::utils::PegasusEnv();
+        auto status =
+            rocksdb::LoadLatestOptions(config_options, rdb_path, &loaded_db_opt, &loaded_cf_descs);
         if (!status.ok()) {
             // Here we ignore an invalid argument error related to `pegasus_data_version` and
             // `pegasus_data` options, which were used in old version rocksdbs (before 2.1.0).
@@ -1677,11 +1677,11 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
 
     std::vector<rocksdb::ColumnFamilyDescriptor> column_families(
         {{DATA_COLUMN_FAMILY_NAME, _table_data_cf_opts}, {META_COLUMN_FAMILY_NAME, _meta_cf_opts}});
-    auto s = rocksdb::CheckOptionsCompatibility(rdb_path,
-                                                rocksdb::Env::Default(),
-                                                _db_opts,
-                                                column_families,
-                                                /*ignore_unknown_options=*/true);
+    rocksdb::ConfigOptions config_options;
+    config_options.ignore_unknown_options = true;
+    config_options.env = dsn::utils::PegasusEnv();
+    auto s =
+        rocksdb::CheckOptionsCompatibility(config_options, rdb_path, _db_opts, column_families);
     if (!s.ok() && !s.IsNotFound() && !has_incompatible_db_options) {
         LOG_ERROR_PREFIX("rocksdb::CheckOptionsCompatibility failed, error = {}", s.ToString());
         return dsn::ERR_LOCAL_APP_FAILURE;

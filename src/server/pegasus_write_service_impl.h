@@ -75,7 +75,10 @@ inline dsn::error_code get_external_files_path(const std::string &bulk_load_dir,
     for (const auto &f_meta : metadata.files) {
         const auto &file_name = dsn::utils::filesystem::path_combine(bulk_load_dir, f_meta.name);
         if (verify_before_ingest &&
-            !dsn::utils::filesystem::verify_file(file_name, f_meta.md5, f_meta.size)) {
+            !dsn::utils::filesystem::verify_file(file_name,
+                                                 dsn::utils::filesystem::FileDataType::kSensitive,
+                                                 f_meta.md5,
+                                                 f_meta.size)) {
             break;
         }
         files_path.emplace_back(file_name);

@@ -40,10 +40,14 @@
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/task/task_code.h"
 #include "runtime/tool_api.h"
+#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
+#include "utils/flags.h"
 #include "utils/threadpool_code.h"
+
+DSN_DECLARE_bool(encrypt_data_at_rest);
 
 using namespace dsn;
 
@@ -54,7 +58,14 @@ struct aio_result
     size_t sz;
 };
 
-TEST(nfs, basic)
+class nfs_test : public pegasus::encrypt_data_test_base
+{
+};
+
+// The test file "nfs_test_file1" and "nfs_test_file2" are not encrypted.
+INSTANTIATE_TEST_CASE_P(, nfs_test, ::testing::Values(false));
+
+TEST_P(nfs_test, basic)
 {
     std::unique_ptr<dsn::nfs_node> nfs(dsn::nfs_node::create());
     nfs->start();
@@ -103,12 +114,17 @@ TEST(nfs, basic)
         ASSERT_TRUE(utils::filesystem::file_exists("nfs_test_dir/nfs_test_file1"));
         ASSERT_TRUE(utils::filesystem::file_exists("nfs_test_dir/nfs_test_file2"));
 
+        // TODO(yingchun): improve the tests to test operate on encrypted files.
         int64_t sz1, sz2;
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_file1", sz1));
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir/nfs_test_file1", sz2));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            "nfs_test_file1", utils::filesystem::FileDataType::kNonSensitive, sz1));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            "nfs_test_dir/nfs_test_file1", utils::filesystem::FileDataType::kNonSensitive, sz2));
         ASSERT_EQ(sz1, sz2);
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_file2", sz1));
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir/nfs_test_file2", sz2));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            "nfs_test_file2", utils::filesystem::FileDataType::kNonSensitive, sz1));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            "nfs_test_dir/nfs_test_file2", utils::filesystem::FileDataType::kNonSensitive, sz2));
         ASSERT_EQ(sz1, sz2);
     }
 
@@ -183,11 +199,17 @@ TEST(nfs, basic)
         ASSERT_EQ(sub1.size(), sub2.size());
 
         int64_t sz1, sz2;
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir/nfs_test_file1", sz1));
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir_copy/nfs_test_file1", sz2));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            "nfs_test_dir/nfs_test_file1", utils::filesystem::FileDataType::kNonSensitive, sz1));
+        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir_copy/nfs_test_file1",
+                                                 utils::filesystem::FileDataType::kNonSensitive,
+                                                 sz2));
         ASSERT_EQ(sz1, sz2);
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir/nfs_test_file2", sz1));
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir_copy/nfs_test_file2", sz2));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            "nfs_test_dir/nfs_test_file2", utils::filesystem::FileDataType::kNonSensitive, sz1));
+        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir_copy/nfs_test_file2",
+                                                 utils::filesystem::FileDataType::kNonSensitive,
+                                                 sz2));
         ASSERT_EQ(sz1, sz2);
     }
 

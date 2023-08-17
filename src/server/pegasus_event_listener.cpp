@@ -23,6 +23,7 @@
 #include <fmt/ostream.h>
 #include <rocksdb/compaction_job_stats.h>
 #include <rocksdb/table_properties.h>
+#include <rocksdb/types.h>
 #include <iosfwd>
 #include <string>
 

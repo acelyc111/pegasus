@@ -42,6 +42,7 @@
 #include "replica/mutation.h"
 #include "replica/test/mock_utils.h"
 #include "replica_test_base.h"
+#include "test_util/test_util.h"
 #include "utils/binary_reader.h"
 #include "utils/binary_writer.h"
 #include "utils/blob.h"
@@ -56,43 +57,74 @@ class message_ex;
 using namespace ::dsn;
 using namespace ::dsn::replication;
 
+// TODO(yingchun): improve the tests to test operate on encrypted files.
 static void copy_file(const char *from_file, const char *to_file, int64_t to_size = -1)
 {
     int64_t from_size;
-    ASSERT_TRUE(dsn::utils::filesystem::file_size(from_file, from_size));
+    ASSERT_TRUE(dsn::utils::filesystem::file_size(
+        from_file, utils::filesystem::FileDataType::kSensitive, from_size));
     ASSERT_LE(to_size, from_size);
-    FILE *from = fopen(from_file, "rb");
-    ASSERT_TRUE(from != nullptr);
-    FILE *to = fopen(to_file, "wb");
-    ASSERT_TRUE(to != nullptr);
-    if (to_size == -1)
+    auto rfile = file::open(from_file, file::FileOpenType::kReadOnly);
+    ASSERT_NE(rfile, nullptr);
+    auto wfile = file::open(to_file, file::FileOpenType::kWriteOnly);
+    ASSERT_NE(wfile, nullptr);
+    if (to_size == -1) {
         to_size = from_size;
+    }
     if (to_size > 0) {
         std::unique_ptr<char[]> buf(new char[to_size]);
-        auto n = fread(buf.get(), 1, to_size, from);
-        ASSERT_EQ(to_size, n);
-        n = fwrite(buf.get(), 1, to_size, to);
-        ASSERT_EQ(to_size, n);
+        auto t = ::dsn::file::read(rfile,
+                                   buf.get(),
+                                   to_size,
+                                   0,
+                                   LPC_AIO_IMMEDIATE_CALLBACK,
+                                   nullptr,
+                                   [=](::dsn::error_code err, size_t n) {
+                                       CHECK_EQ(ERR_OK, err);
+                                       CHECK_EQ(to_size, n);
+                                   });
+        t->wait();
+
+        t = ::dsn::file::write(wfile,
+                               buf.get(),
+                               to_size,
+                               0,
+                               LPC_AIO_IMMEDIATE_CALLBACK,
+                               nullptr,
+                               [=](::dsn::error_code err, size_t n) {
+                                   CHECK_EQ(ERR_OK, err);
+                                   CHECK_EQ(to_size, n);
+                               });
+        t->wait();
+        ASSERT_EQ(ERR_OK, file::flush(wfile));
     }
-    int r = fclose(from);
-    ASSERT_EQ(0, r);
-    r = fclose(to);
-    ASSERT_EQ(0, r);
 }
 
 static void overwrite_file(const char *file, int offset, const void *buf, int size)
 {
-    FILE *f = fopen(file, "r+b");
-    ASSERT_TRUE(f != nullptr);
-    int r = fseek(f, offset, SEEK_SET);
-    ASSERT_EQ(0, r);
-    size_t n = fwrite(buf, 1, size, f);
-    ASSERT_EQ(size, n);
-    r = fclose(f);
-    ASSERT_EQ(0, r);
+    auto wfile = file::open(file, file::FileOpenType::kWriteOnly);
+    ASSERT_NE(wfile, nullptr);
+    auto t = ::dsn::file::write(wfile,
+                                (const char *)buf,
+                                size,
+                                offset,
+                                LPC_AIO_IMMEDIATE_CALLBACK,
+                                nullptr,
+                                [=](::dsn::error_code err, size_t n) {
+                                    CHECK_EQ(ERR_OK, err);
+                                    CHECK_EQ(size, n);
+                                });
+    t->wait();
+    ASSERT_EQ(ERR_OK, file::flush(wfile));
 }
 
-TEST(replication, log_file)
+class replication_test : public pegasus::encrypt_data_test_base
+{
+};
+
+INSTANTIATE_TEST_CASE_P(, replication_test, ::testing::Values(false, true));
+
+TEST_P(replication_test, log_file)
 {
     replica_log_info_map mdecrees;
     gpid gpid(1, 0);
@@ -249,7 +281,8 @@ TEST(replication, log_file)
     ASSERT_EQ(1, lf->index());
     ASSERT_EQ(100, lf->start_offset());
     int64_t sz;
-    ASSERT_TRUE(dsn::utils::filesystem::file_size(fpath, sz));
+    ASSERT_TRUE(
+        dsn::utils::filesystem::file_size(fpath, utils::filesystem::FileDataType::kSensitive, sz));
     ASSERT_EQ(lf->start_offset() + sz, lf->end_offset());
 
     // read data
@@ -452,20 +485,22 @@ public:
     }
 };
 
-TEST_F(mutation_log_test, replay_single_file_1000) { test_replay_single_file(1000); }
+INSTANTIATE_TEST_CASE_P(, mutation_log_test, ::testing::Values(false, true));
 
-TEST_F(mutation_log_test, replay_single_file_2000) { test_replay_single_file(2000); }
+TEST_P(mutation_log_test, replay_single_file_1000) { test_replay_single_file(1000); }
 
-TEST_F(mutation_log_test, replay_single_file_5000) { test_replay_single_file(5000); }
+TEST_P(mutation_log_test, replay_single_file_2000) { test_replay_single_file(2000); }
 
-TEST_F(mutation_log_test, replay_single_file_10000) { test_replay_single_file(10000); }
+TEST_P(mutation_log_test, replay_single_file_5000) { test_replay_single_file(5000); }
 
-TEST_F(mutation_log_test, replay_single_file_1) { test_replay_single_file(1); }
+TEST_P(mutation_log_test, replay_single_file_10000) { test_replay_single_file(10000); }
 
-TEST_F(mutation_log_test, replay_single_file_10) { test_replay_single_file(10); }
+TEST_P(mutation_log_test, replay_single_file_1) { test_replay_single_file(1); }
+
+TEST_P(mutation_log_test, replay_single_file_10) { test_replay_single_file(10); }
 
 // mutation_log::open
-TEST_F(mutation_log_test, open)
+TEST_P(mutation_log_test, open)
 {
     std::vector<mutation_ptr> mutations;
 
@@ -498,13 +533,13 @@ TEST_F(mutation_log_test, open)
     }
 }
 
-TEST_F(mutation_log_test, replay_multiple_files_10000_1mb) { test_replay_multiple_files(10000, 1); }
+TEST_P(mutation_log_test, replay_multiple_files_10000_1mb) { test_replay_multiple_files(10000, 1); }
 
-TEST_F(mutation_log_test, replay_multiple_files_20000_1mb) { test_replay_multiple_files(20000, 1); }
+TEST_P(mutation_log_test, replay_multiple_files_20000_1mb) { test_replay_multiple_files(20000, 1); }
 
-TEST_F(mutation_log_test, replay_multiple_files_50000_1mb) { test_replay_multiple_files(50000, 1); }
+TEST_P(mutation_log_test, replay_multiple_files_50000_1mb) { test_replay_multiple_files(50000, 1); }
 
-TEST_F(mutation_log_test, replay_start_decree)
+TEST_P(mutation_log_test, replay_start_decree)
 {
     // decree ranges from [1, 30)
     generate_multiple_log_files(3);
@@ -517,7 +552,7 @@ TEST_F(mutation_log_test, replay_start_decree)
     ASSERT_EQ(mlog->get_log_file_map().size(), 3);
 }
 
-TEST_F(mutation_log_test, reset_from)
+TEST_P(mutation_log_test, reset_from)
 {
     std::vector<mutation_ptr> expected;
     { // writing logs
@@ -565,7 +600,7 @@ TEST_F(mutation_log_test, reset_from)
 
 // multi-threaded testing. ensure reset_from will wait until
 // all previous writes complete.
-TEST_F(mutation_log_test, reset_from_while_writing)
+TEST_P(mutation_log_test, reset_from_while_writing)
 {
     std::vector<mutation_ptr> expected;
     { // writing logs

@@ -86,7 +86,9 @@ private:
     std::unique_ptr<replica_http_service> _http_svc;
 };
 
-TEST_F(replica_http_service_test, update_config_handler)
+INSTANTIATE_TEST_CASE_P(, replica_http_service_test, ::testing::Values(false, true));
+
+TEST_P(replica_http_service_test, update_config_handler)
 {
     // Test the default value.
     test_check_config("config_sync_interval_ms", "30000");

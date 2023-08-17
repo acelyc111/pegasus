@@ -37,6 +37,7 @@ namespace block_service {
 
 // Simple tests for nlohmann::json serialization, via NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE.
 
+// TODO(yingchun): add encryption test when FDSClient supports encryption.
 TEST(local_service, store_metadata)
 {
     local_file_object file("a.txt");

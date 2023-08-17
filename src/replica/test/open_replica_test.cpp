@@ -34,6 +34,7 @@
 #include "replica_test_base.h"
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/task/task.h"
+#include "test_util/test_util.h"
 #include "utils/filesystem.h"
 
 namespace dsn {
@@ -46,7 +47,9 @@ public:
     ~open_replica_test() { dsn::utils::filesystem::remove_path("./tmp_dir"); }
 };
 
-TEST_F(open_replica_test, open_replica_add_decree_and_ballot_check)
+INSTANTIATE_TEST_CASE_P(, open_replica_test, ::testing::Values(false, true));
+
+TEST_P(open_replica_test, open_replica_add_decree_and_ballot_check)
 {
     app_info ai;
     ai.app_type = "replica";

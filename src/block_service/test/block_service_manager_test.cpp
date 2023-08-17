@@ -29,6 +29,7 @@
 #include "block_service/local/local_service.h"
 #include "block_service_mock.h"
 #include "metadata_types.h"
+#include "test_util/test_util.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 
@@ -36,7 +37,7 @@ namespace dsn {
 namespace dist {
 namespace block_service {
 
-class block_service_manager_test : public ::testing::Test
+class block_service_manager_test : public pegasus::encrypt_data_test_base
 {
 public:
     block_service_manager_test()
@@ -54,6 +55,7 @@ public:
             PROVIDER, LOCAL_DIR, FILE_NAME, _fs.get(), download_size);
     }
 
+    // TODO(yingchun): improve the tests to test operate on encrypted files.
     void create_local_file(const std::string &file_name)
     {
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, file_name);
@@ -65,7 +67,8 @@ public:
 
         _file_meta.name = whole_name;
         utils::filesystem::md5sum(whole_name, _file_meta.md5);
-        utils::filesystem::file_size(whole_name, _file_meta.size);
+        utils::filesystem::file_size(
+            whole_name, utils::filesystem::FileDataType::kNonSensitive, _file_meta.size);
     }
 
     void create_remote_file(const std::string &file_name, int64_t size, const std::string &md5)
@@ -84,8 +87,10 @@ public:
     std::string FILE_NAME = "test_file";
 };
 
+INSTANTIATE_TEST_CASE_P(, block_service_manager_test, ::testing::Values(false, true));
+
 // download_file unit tests
-TEST_F(block_service_manager_test, do_download_remote_file_not_exist)
+TEST_P(block_service_manager_test, do_download_remote_file_not_exist)
 {
     utils::filesystem::remove_path(LOCAL_DIR);
     auto fs = std::make_unique<local_service>();
@@ -96,7 +101,7 @@ TEST_F(block_service_manager_test, do_download_remote_file_not_exist)
     ASSERT_EQ(err, ERR_CORRUPTION); // file does not exist
 }
 
-TEST_F(block_service_manager_test, do_download_same_name_file)
+TEST_P(block_service_manager_test, do_download_same_name_file)
 {
     // local file exists, but md5 not matched with remote file
     create_local_file(FILE_NAME);
@@ -106,7 +111,7 @@ TEST_F(block_service_manager_test, do_download_same_name_file)
     ASSERT_EQ(download_size, 0);
 }
 
-TEST_F(block_service_manager_test, do_download_file_exist)
+TEST_P(block_service_manager_test, do_download_file_exist)
 {
     create_local_file(FILE_NAME);
     create_remote_file(FILE_NAME, _file_meta.size, _file_meta.md5);
@@ -115,7 +120,7 @@ TEST_F(block_service_manager_test, do_download_file_exist)
     ASSERT_EQ(download_size, 0);
 }
 
-TEST_F(block_service_manager_test, do_download_succeed)
+TEST_P(block_service_manager_test, do_download_succeed)
 {
     create_local_file(FILE_NAME);
     create_remote_file(FILE_NAME, _file_meta.size, _file_meta.md5);

@@ -36,6 +36,7 @@
 #include "replica/test/mock_utils.h"
 #include "runtime/pipeline.h"
 #include "runtime/task/task_code.h"
+#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/error_code.h"
 #include "utils/errors.h"
@@ -138,11 +139,13 @@ public:
     }
 };
 
-TEST_F(replica_duplicator_test, new_duplicator) { test_new_duplicator(); }
+INSTANTIATE_TEST_CASE_P(, replica_duplicator_test, ::testing::Values(false, true));
 
-TEST_F(replica_duplicator_test, pause_start_duplication) { test_pause_start_duplication(); }
+TEST_P(replica_duplicator_test, new_duplicator) { test_new_duplicator(); }
 
-TEST_F(replica_duplicator_test, duplication_progress)
+TEST_P(replica_duplicator_test, pause_start_duplication) { test_pause_start_duplication(); }
+
+TEST_P(replica_duplicator_test, duplication_progress)
 {
     auto duplicator = create_test_duplicator();
     ASSERT_EQ(duplicator->progress().last_decree, 0); // start duplication from empty plog
@@ -171,7 +174,7 @@ TEST_F(replica_duplicator_test, duplication_progress)
     ASSERT_TRUE(duplicator_for_checkpoint->progress().checkpoint_has_prepared);
 }
 
-TEST_F(replica_duplicator_test, prapre_dup)
+TEST_P(replica_duplicator_test, prapre_dup)
 {
     auto duplicator = create_test_duplicator(invalid_decree, 100);
     replica()->update_expect_last_durable_decree(100);

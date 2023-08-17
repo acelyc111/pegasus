@@ -460,8 +460,7 @@ void nfs_client_impl::continue_write()
         // double check
         zauto_lock l(fc->user_req->user_req_lock);
         if (!fc->file_holder->file_handle) {
-            fc->file_holder->file_handle =
-                file::open(file_path.c_str(), O_RDWR | O_CREAT | O_BINARY, 0666);
+            fc->file_holder->file_handle = file::open(file_path, file::FileOpenType::kWriteOnly);
         }
     }
 

@@ -381,7 +381,8 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
         std::ifstream is(req.input_local_name, std::ios::binary | std::ios::in);
         if (is.is_open()) {
             int64_t file_sz = 0;
-            dsn::utils::filesystem::file_size(req.input_local_name, file_sz);
+            dsn::utils::filesystem::file_size(
+                req.input_local_name, dsn::utils::filesystem::FileDataType::kSensitive, file_sz);
             std::unique_ptr<char[]> buffer(new char[file_sz]);
             is.read(buffer.get(), file_sz);
             is.close();

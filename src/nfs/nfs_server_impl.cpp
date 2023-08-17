@@ -95,7 +95,7 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
         auto it = _handles_map.find(file_path); // find file handle cache first
 
         if (it == _handles_map.end()) {
-            dfile = file::open(file_path.c_str(), O_RDONLY | O_BINARY, 0);
+            dfile = file::open(file_path, file::FileOpenType::kReadOnly);
             if (dfile != nullptr) {
                 auto fh = std::make_shared<file_handle_info_on_server>();
                 fh->file_handle = dfile;
@@ -198,7 +198,8 @@ void nfs_service_impl::on_get_file_size(
                     // TODO: using uint64 instead as file ma
                     // Done
                     int64_t sz;
-                    if (!dsn::utils::filesystem::file_size(fpath, sz)) {
+                    if (!dsn::utils::filesystem::file_size(
+                            fpath, dsn::utils::filesystem::FileDataType::kSensitive, sz)) {
                         LOG_ERROR("[nfs_service] get size of file {} failed", fpath);
                         err = ERR_FILE_OPERATION_FAILED;
                         break;

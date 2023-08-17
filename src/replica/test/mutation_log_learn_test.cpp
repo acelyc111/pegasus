@@ -45,6 +45,7 @@
 #include "replica/test/mock_utils.h"
 #include "replica_test_base.h"
 #include "runtime/task/task_code.h"
+#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/binary_writer.h"
 #include "utils/blob.h"
@@ -56,11 +57,13 @@ class message_ex;
 
 namespace replication {
 
-class mutation_log_test : public replica_test_base
+class mutation_log_learn_test : public replica_test_base
 {
 };
 
-TEST_F(mutation_log_test, learn)
+INSTANTIATE_TEST_CASE_P(, mutation_log_learn_test, ::testing::Values(false, true));
+
+TEST_P(mutation_log_learn_test, learn)
 {
     std::chrono::steady_clock clock;
     gpid gpid(1, 1);

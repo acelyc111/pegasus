@@ -31,21 +31,26 @@
 #include <gtest/gtest.h>
 #include <stdint.h>
 #include <string.h>
+#include <algorithm>
 #include <list>
 #include <memory>
+#include <random>
 #include <string>
 
 #include "aio/aio_task.h"
 #include "aio/file_io.h"
 #include "runtime/task/task_code.h"
 #include "runtime/tool_api.h"
+#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/error_code.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
+#include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/ports.h"
 #include "utils/strings.h"
+#include "utils/test_macros.h"
 #include "utils/threadpool_code.h"
 
 namespace dsn {
@@ -57,123 +62,218 @@ using namespace ::dsn;
 DEFINE_THREAD_POOL_CODE(THREAD_POOL_TEST_SERVER)
 DEFINE_TASK_CODE_AIO(LPC_AIO_TEST, TASK_PRIORITY_COMMON, THREAD_POOL_TEST_SERVER);
 
-TEST(core, aio)
+class aio_test : public pegasus::encrypt_data_test_base
 {
-    fail::setup();
-    fail::cfg("aio_pwrite_incomplete", "void()");
-    const char *buffer = "hello, world";
-    int len = (int)strlen(buffer);
+public:
+    void SetUp() override { utils::filesystem::remove_path(_test_file_name); }
 
-    // write
-    auto fp = file::open("tmp", O_RDWR | O_CREAT | O_BINARY, 0666);
+    void TearDown() override { utils::filesystem::remove_path(_test_file_name); }
 
-    std::list<aio_task_ptr> tasks;
-    uint64_t offset = 0;
+    std::string _test_file_name = "tmp";
+};
+
+INSTANTIATE_TEST_CASE_P(, aio_test, ::testing::Values(false, true));
+
+TEST_P(aio_test, basic)
+{
+    const char *kUnitBuffer = "hello, world";
+    size_t kUnitBufferLength = strlen(kUnitBuffer);
+    int kTotalBufferCount = 100;
+    int kBufferCountPerBatch = 10;
+    ASSERT_EQ(0, kTotalBufferCount % kBufferCountPerBatch);
+
+    // write file
+    auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+    ASSERT_NE(wfile, nullptr);
+
+    // read file
+    auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
+    ASSERT_NE(rfile, nullptr);
+
+    auto check_callback = [kUnitBufferLength](::dsn::error_code err, size_t n) {
+        CHECK_EQ(ERR_OK, err);
+        CHECK_EQ(kUnitBufferLength, n);
+    };
+    auto verify_data = [=]() {
+        // sequential read
+        {
+            uint64_t offset = 0;
+            std::list<aio_task_ptr> tasks;
+            for (int i = 0; i < kTotalBufferCount; i++) {
+                char read_buffer[kUnitBufferLength + 1];
+                read_buffer[kUnitBufferLength] = 0;
+                auto t = ::dsn::file::read(rfile,
+                                           read_buffer,
+                                           kUnitBufferLength,
+                                           offset,
+                                           LPC_AIO_TEST,
+                                           nullptr,
+                                           check_callback);
+                offset += kUnitBufferLength;
+
+                t->wait();
+                ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
+                if (strcmp(kUnitBuffer, read_buffer) != 0) {
+                    assert(false);
+                }
+                ASSERT_STREQ(kUnitBuffer, read_buffer) << i;
+            }
+        }
+
+        // concurrent read
+        {
+            uint64_t offset = 0;
+            std::list<aio_task_ptr> tasks;
+            char read_buffers[kTotalBufferCount][kUnitBufferLength + 1];
+            for (int i = 0; i < kTotalBufferCount; i++) {
+                read_buffers[i][kUnitBufferLength] = 0;
+                auto t = ::dsn::file::read(rfile,
+                                           read_buffers[i],
+                                           kUnitBufferLength,
+                                           offset,
+                                           LPC_AIO_TEST,
+                                           nullptr,
+                                           check_callback);
+                offset += kUnitBufferLength;
+                tasks.push_back(t);
+            }
+            for (auto &t : tasks) {
+                t->wait();
+                ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
+            }
+            for (int i = 0; i < kTotalBufferCount; i++) {
+                if (strcmp(kUnitBuffer, read_buffers[i]) != 0) {
+                    ASSERT_STREQ(kUnitBuffer, read_buffers[i]) << i;
+                }
+                ASSERT_STREQ(kUnitBuffer, read_buffers[i]) << i;
+            }
+        }
+    };
 
     // new write
-    for (int i = 0; i < 100; i++) {
-        auto t = ::dsn::file::write(fp, buffer, len, offset, LPC_AIO_TEST, nullptr, nullptr);
-        tasks.push_back(t);
-        offset += len;
+    {
+        uint64_t offset = 0;
+        std::list<aio_task_ptr> tasks;
+        for (int i = 0; i < kTotalBufferCount; i++) {
+            auto t = ::dsn::file::write(wfile,
+                                        kUnitBuffer,
+                                        kUnitBufferLength,
+                                        offset,
+                                        LPC_AIO_TEST,
+                                        nullptr,
+                                        check_callback);
+            offset += kUnitBufferLength;
+            tasks.push_back(t);
+        }
+        for (auto &t : tasks) {
+            t->wait();
+            ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
+        }
+        ASSERT_EQ(ERR_OK, file::flush(wfile));
     }
+    NO_FATALS(verify_data());
 
-    for (auto &t : tasks) {
-        t->wait();
+    // un-sequential write
+    {
+        std::vector<uint64_t> offsets;
+        offsets.reserve(kTotalBufferCount);
+        for (int i = 0; i < kTotalBufferCount; i++) {
+            offsets.push_back(i * kUnitBufferLength);
+        }
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::shuffle(offsets.begin(), offsets.end(), gen);
+
+        std::list<aio_task_ptr> tasks;
+        for (const auto &offset : offsets) {
+            auto t = ::dsn::file::write(wfile,
+                                        kUnitBuffer,
+                                        kUnitBufferLength,
+                                        offset,
+                                        LPC_AIO_TEST,
+                                        nullptr,
+                                        check_callback);
+            tasks.push_back(t);
+        }
+        for (auto &t : tasks) {
+            t->wait();
+            ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
+        }
+        ASSERT_EQ(ERR_OK, file::flush(wfile));
     }
+    NO_FATALS(verify_data());
 
     // overwrite
-    offset = 0;
-    tasks.clear();
-    for (int i = 0; i < 100; i++) {
-        auto t = ::dsn::file::write(fp, buffer, len, offset, LPC_AIO_TEST, nullptr, nullptr);
-        tasks.push_back(t);
-        offset += len;
+    {
+        uint64_t offset = 0;
+        std::list<aio_task_ptr> tasks;
+        for (int i = 0; i < kTotalBufferCount; i++) {
+            auto t = ::dsn::file::write(wfile,
+                                        kUnitBuffer,
+                                        kUnitBufferLength,
+                                        offset,
+                                        LPC_AIO_TEST,
+                                        nullptr,
+                                        check_callback);
+            offset += kUnitBufferLength;
+            tasks.push_back(t);
+        }
+        for (auto &t : tasks) {
+            t->wait();
+            ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
+        }
+        ASSERT_EQ(ERR_OK, file::flush(wfile));
     }
-
-    for (auto &t : tasks) {
-        t->wait();
-        EXPECT_TRUE(t->get_transferred_size() == (size_t)len);
-    }
+    NO_FATALS(verify_data());
 
     // vector write
-    tasks.clear();
-    std::unique_ptr<dsn_file_buffer_t[]> buffers(new dsn_file_buffer_t[100]);
-    for (int i = 0; i < 10; i++) {
-        buffers[i].buffer = static_cast<void *>(const_cast<char *>(buffer));
-        buffers[i].size = len;
+    {
+        uint64_t offset = 0;
+        std::list<aio_task_ptr> tasks;
+        std::unique_ptr<dsn_file_buffer_t[]> buffers(new dsn_file_buffer_t[kBufferCountPerBatch]);
+        for (int i = 0; i < kBufferCountPerBatch; i++) {
+            buffers[i].buffer = static_cast<void *>(const_cast<char *>(kUnitBuffer));
+            buffers[i].size = kUnitBufferLength;
+        }
+        for (int i = 0; i < kTotalBufferCount / kBufferCountPerBatch; i++) {
+            tasks.push_back(
+                ::dsn::file::write_vector(wfile,
+                                          buffers.get(),
+                                          kBufferCountPerBatch,
+                                          offset,
+                                          LPC_AIO_TEST,
+                                          nullptr,
+                                          [=](::dsn::error_code err, size_t n) {
+                                              CHECK_EQ(ERR_OK, err);
+                                              CHECK_EQ(kBufferCountPerBatch * kUnitBufferLength, n);
+                                          }));
+            offset += kBufferCountPerBatch * kUnitBufferLength;
+        }
+        for (auto &t : tasks) {
+            t->wait();
+            ASSERT_EQ(kBufferCountPerBatch * kUnitBufferLength, t->get_transferred_size());
+        }
+        ASSERT_EQ(ERR_OK, file::flush(wfile));
     }
-    for (int i = 0; i < 10; i++) {
-        tasks.push_back(::dsn::file::write_vector(
-            fp, buffers.get(), 10, offset, LPC_AIO_TEST, nullptr, nullptr));
-        offset += 10 * len;
-    }
-    for (auto &t : tasks) {
-        t->wait();
-        EXPECT_TRUE(t->get_transferred_size() == 10 * len);
-    }
-    auto err = file::close(fp);
-    EXPECT_TRUE(err == ERR_OK);
-
-    // read
-    char *buffer2 = (char *)alloca((size_t)len);
-    fp = file::open("tmp", O_RDONLY | O_BINARY, 0);
-
-    // concurrent read
-    offset = 0;
-    tasks.clear();
-    for (int i = 0; i < 100; i++) {
-        auto t = ::dsn::file::read(fp, buffer2, len, offset, LPC_AIO_TEST, nullptr, nullptr);
-        tasks.push_back(t);
-        offset += len;
-    }
-
-    for (auto &t : tasks) {
-        t->wait();
-        EXPECT_TRUE(t->get_transferred_size() == (size_t)len);
-    }
-
-    // sequential read
-    offset = 0;
-    tasks.clear();
-    for (int i = 0; i < 200; i++) {
-        buffer2[0] = 'x';
-        auto t = ::dsn::file::read(fp, buffer2, len, offset, LPC_AIO_TEST, nullptr, nullptr);
-        offset += len;
-
-        t->wait();
-        EXPECT_TRUE(t->get_transferred_size() == (size_t)len);
-        EXPECT_TRUE(dsn::utils::mequals(buffer, buffer2, len));
-    }
-
-    err = file::close(fp);
-    fail::teardown();
-    EXPECT_TRUE(err == ERR_OK);
-
-    utils::filesystem::remove_path("tmp");
+    NO_FATALS(verify_data());
+    ASSERT_EQ(ERR_OK, file::close(wfile));
 }
 
-TEST(core, aio_share)
+TEST_P(aio_test, aio_share)
 {
-    auto fp = file::open("tmp", O_WRONLY | O_CREAT | O_BINARY, 0666);
-    EXPECT_TRUE(fp != nullptr);
+    auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+    ASSERT_NE(wfile, nullptr);
 
-    auto fp2 = file::open("tmp", O_RDONLY | O_BINARY, 0);
-    EXPECT_TRUE(fp2 != nullptr);
+    auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
+    ASSERT_NE(rfile, nullptr);
 
-    file::close(fp);
-    file::close(fp2);
-
-    utils::filesystem::remove_path("tmp");
+    file::close(wfile);
+    file::close(rfile);
 }
 
-TEST(core, operation_failed)
+TEST_P(aio_test, operation_failed)
 {
-    fail::setup();
-    fail::cfg("aio_pwrite_incomplete", "void()");
-
-    auto fp = file::open("tmp_test_file", O_WRONLY, 0600);
-    EXPECT_TRUE(fp == nullptr);
-
     auto err = std::make_unique<dsn::error_code>();
     auto count = std::make_unique<size_t>();
     auto io_callback = [&err, &count](::dsn::error_code e, size_t n) {
@@ -181,39 +281,42 @@ TEST(core, operation_failed)
         *count = n;
     };
 
-    fp = file::open("tmp_test_file", O_WRONLY | O_CREAT | O_BINARY, 0666);
-    EXPECT_TRUE(fp != nullptr);
-    char buffer[512];
-    const char *str = "hello file";
-    auto t = ::dsn::file::write(fp, str, strlen(str), 0, LPC_AIO_TEST, nullptr, io_callback, 0);
+    auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+    ASSERT_NE(wfile, nullptr);
+
+    char buff[512] = {0};
+    const char *kUnitBuffer = "hello file";
+    const size_t kUnitBufferLength = strlen(kUnitBuffer);
+    auto t = ::dsn::file::write(
+        wfile, kUnitBuffer, kUnitBufferLength, 0, LPC_AIO_TEST, nullptr, io_callback, 0);
     t->wait();
-    EXPECT_TRUE(*err == ERR_OK && *count == strlen(str));
+    ASSERT_EQ(ERR_OK, *err);
+    ASSERT_EQ(kUnitBufferLength, *count);
 
-    t = ::dsn::file::read(fp, buffer, 512, 0, LPC_AIO_TEST, nullptr, io_callback, 0);
+    t = ::dsn::file::read(wfile, buff, 512, 0, LPC_AIO_TEST, nullptr, io_callback, 0);
     t->wait();
-    EXPECT_TRUE(*err == ERR_FILE_OPERATION_FAILED);
+    ASSERT_EQ(ERR_FILE_OPERATION_FAILED, *err);
 
-    auto fp2 = file::open("tmp_test_file", O_RDONLY | O_BINARY, 0);
-    EXPECT_TRUE(fp2 != nullptr);
+    auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
+    ASSERT_NE(nullptr, rfile);
 
-    t = ::dsn::file::read(fp2, buffer, 512, 0, LPC_AIO_TEST, nullptr, io_callback, 0);
+    t = ::dsn::file::read(rfile, buff, 512, 0, LPC_AIO_TEST, nullptr, io_callback, 0);
     t->wait();
-    EXPECT_TRUE(*err == ERR_OK && *count == strlen(str));
-    EXPECT_TRUE(dsn::utils::equals(buffer, str, 10));
+    ASSERT_EQ(ERR_OK, *err);
+    ASSERT_EQ(kUnitBufferLength, *count);
+    ASSERT_STREQ(kUnitBuffer, buff);
 
-    t = ::dsn::file::read(fp2, buffer, 5, 0, LPC_AIO_TEST, nullptr, io_callback, 0);
+    t = ::dsn::file::read(rfile, buff, 5, 0, LPC_AIO_TEST, nullptr, io_callback, 0);
     t->wait();
-    EXPECT_TRUE(*err == ERR_OK && *count == 5);
-    EXPECT_TRUE(dsn::utils::equals(buffer, str, 5));
+    ASSERT_EQ(ERR_OK, *err);
+    ASSERT_EQ(5, *count);
+    ASSERT_STREQ(kUnitBuffer, buff);
 
-    t = ::dsn::file::read(fp2, buffer, 512, 100, LPC_AIO_TEST, nullptr, io_callback, 0);
+    t = ::dsn::file::read(rfile, buff, 512, 100, LPC_AIO_TEST, nullptr, io_callback, 0);
     t->wait();
     LOG_INFO("error code: {}", *err);
-    file::close(fp);
-    file::close(fp2);
-    fail::teardown();
-
-    EXPECT_TRUE(utils::filesystem::remove_path("tmp_test_file"));
+    file::close(wfile);
+    file::close(rfile);
 }
 
 DEFINE_TASK_CODE_AIO(LPC_AIO_TEST_READ, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
@@ -223,22 +326,29 @@ struct aio_result
     dsn::error_code err;
     size_t sz;
 };
-TEST(core, dsn_file)
+
+TEST_P(aio_test, dsn_file)
 {
+    if (FLAGS_encrypt_data_at_rest) {
+        // The testfiles copy_source.txt and copy_dest.txt are not encrypted.
+        return;
+    }
+
     int64_t fin_size, fout_size;
-    ASSERT_TRUE(utils::filesystem::file_size("copy_source.txt", fin_size));
+    ASSERT_TRUE(utils::filesystem::file_size(
+        "copy_source.txt", utils::filesystem::FileDataType::kNonSensitive, fin_size));
     ASSERT_LT(0, fin_size);
 
-    dsn::disk_file *fin = file::open("copy_source.txt", O_RDONLY, 0);
+    dsn::disk_file *fin = file::open("copy_source.txt", file::FileOpenType::kReadOnly);
     ASSERT_NE(nullptr, fin);
-    dsn::disk_file *fout = file::open("copy_dest.txt", O_RDWR | O_CREAT | O_TRUNC, 0666);
+    dsn::disk_file *fout = file::open("copy_dest.txt", file::FileOpenType::kWriteOnly);
     ASSERT_NE(nullptr, fout);
-    char buffer[1024];
+    char kUnitBuffer[1024];
     uint64_t offset = 0;
     while (true) {
         aio_result rin;
         aio_task_ptr tin = file::read(fin,
-                                      buffer,
+                                      kUnitBuffer,
                                       1024,
                                       offset,
                                       LPC_AIO_TEST_READ,
@@ -270,7 +380,7 @@ TEST(core, dsn_file)
 
         aio_result rout;
         aio_task_ptr tout = file::write(fout,
-                                        buffer,
+                                        kUnitBuffer,
                                         rin.sz,
                                         offset,
                                         LPC_AIO_TEST_WRITE,
@@ -300,6 +410,7 @@ TEST(core, dsn_file)
     ASSERT_EQ(ERR_OK, file::close(fout));
     ASSERT_EQ(ERR_OK, file::close(fin));
 
-    ASSERT_TRUE(utils::filesystem::file_size("copy_dest.txt", fout_size));
+    ASSERT_TRUE(utils::filesystem::file_size(
+        "copy_dest.txt", utils::filesystem::FileDataType::kNonSensitive, fout_size));
     ASSERT_EQ(fin_size, fout_size);
 }

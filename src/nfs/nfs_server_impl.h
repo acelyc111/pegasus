@@ -66,7 +66,6 @@ public:
 
     void register_cli_commands();
 
-    // TODO(yingchun): seems nobody call it, can be removed?
     void close_service()
     {
         unregister_rpc_handler(RPC_NFS_COPY);

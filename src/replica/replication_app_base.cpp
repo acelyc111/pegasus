@@ -79,7 +79,7 @@ namespace {
 error_code write_blob_to_file(const std::string &file, const blob &data)
 {
     std::string tmp_file = file + ".tmp";
-    disk_file *hfile = file::open(tmp_file.c_str(), O_WRONLY | O_CREAT | O_BINARY | O_TRUNC, 0666);
+    disk_file *hfile = file::open(tmp_file, file::FileOpenType::kWriteOnly);
     LOG_AND_RETURN_NOT_TRUE(
         ERROR, hfile, ERR_FILE_OPERATION_FAILED, "open file {} failed", tmp_file);
     auto cleanup = defer([tmp_file]() { utils::filesystem::remove_path(tmp_file); });
@@ -154,7 +154,8 @@ error_code replica_init_info::load_json(const std::string &file)
 
     int64_t sz = 0;
     LOG_AND_RETURN_NOT_TRUE(ERROR,
-                            utils::filesystem::file_size(std::string(file), sz),
+                            utils::filesystem::file_size(
+                                std::string(file), utils::filesystem::FileDataType::kSensitive, sz),
                             ERR_FILE_OPERATION_FAILED,
                             "get file size of {} failed",
                             file);
@@ -198,7 +199,8 @@ error_code replica_app_info::load(const std::string &file)
 
     int64_t sz = 0;
     LOG_AND_RETURN_NOT_TRUE(ERROR,
-                            utils::filesystem::file_size(std::string(file), sz),
+                            utils::filesystem::file_size(
+                                std::string(file), utils::filesystem::FileDataType::kSensitive, sz),
                             ERR_FILE_OPERATION_FAILED,
                             "get file size of {} failed",
                             file);

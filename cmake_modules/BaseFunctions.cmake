@@ -204,7 +204,7 @@ function(dsn_setup_compiler_flags)
   # We want access to the PRI* print format macros.
   add_definitions(-D__STDC_FORMAT_MACROS)
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -gdwarf-4" CACHE STRING "" FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -gdwarf-4" CACHE STRING "" FORCE)
 
   #  -Wall: Enable all warnings.
   add_compile_options(-Wall)
@@ -217,6 +217,7 @@ function(dsn_setup_compiler_flags)
   add_compile_options(-Wno-deprecated-declarations)
   add_compile_options(-Wno-inconsistent-missing-override)
   add_compile_options(-Wno-attributes)
+  add_compile_options(-Wno-register)  # kbr5.h uses the legacy 'register' keyword.
   # -fno-omit-frame-pointer
   #   use frame pointers to allow simple stack frame walking for backtraces.
   #   This has a small perf hit but worth it for the ability to profile in production
@@ -389,10 +390,13 @@ function(dsn_common_setup)
   set(BUILD_SHARED_LIBS OFF)
 
   include(CheckCXXCompilerFlag)
-  CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
-  if(NOT ${COMPILER_SUPPORTS_CXX1Y})
-    message(FATAL_ERROR "You need a compiler with C++1y support.")
+  CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+  if(NOT ${COMPILER_SUPPORTS_CXX17})
+    message(FATAL_ERROR "You need a compiler with C++17 support.")
   endif()
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 
   dsn_setup_system_libs()
   dsn_setup_compiler_flags()

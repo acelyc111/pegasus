@@ -96,7 +96,12 @@ bool remove_path(const std::string &path);
 // this will always remove target path if exist
 bool rename_path(const std::string &path1, const std::string &path2);
 
-bool file_size(const std::string &path, int64_t &sz);
+enum class FileDataType
+{
+    kSensitive = 0,
+    kNonSensitive = 1
+};
+bool file_size(const std::string &path, FileDataType type, int64_t &sz);
 
 bool create_directory(const std::string &path);
 
@@ -137,10 +142,11 @@ error_code read_file(const std::string &fname, /*out*/ std::string &buf);
 
 // compare file metadata calculated by fname with expected md5 and file_size
 bool verify_file(const std::string &fname,
+                 FileDataType type,
                  const std::string &expected_md5,
                  const int64_t &expected_fsize);
 
-bool verify_file_size(const std::string &fname, const int64_t &expected_fsize);
+bool verify_file_size(const std::string &fname, FileDataType type, const int64_t &expected_fsize);
 
 bool verify_data_md5(const std::string &fname,
                      const char *data,

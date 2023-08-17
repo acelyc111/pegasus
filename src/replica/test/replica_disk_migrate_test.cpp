@@ -46,6 +46,7 @@
 #include "runtime/rpc/rpc_holder.h"
 #include "runtime/task/task.h"
 #include "runtime/task/task_tracker.h"
+#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/error_code.h"
 #include "utils/fail_point.h"
@@ -151,7 +152,9 @@ private:
     }
 };
 
-TEST_F(replica_disk_migrate_test, on_migrate_replica)
+INSTANTIATE_TEST_CASE_P(, replica_disk_migrate_test, ::testing::Values(false, true));
+
+TEST_P(replica_disk_migrate_test, on_migrate_replica)
 {
     auto &request = *fake_migrate_rpc.mutable_request();
     auto &response = fake_migrate_rpc.response();
@@ -171,7 +174,7 @@ TEST_F(replica_disk_migrate_test, on_migrate_replica)
     ASSERT_EQ(response.err, ERR_OK);
 }
 
-TEST_F(replica_disk_migrate_test, migrate_disk_replica_check)
+TEST_P(replica_disk_migrate_test, migrate_disk_replica_check)
 {
     auto &request = *fake_migrate_rpc.mutable_request();
     auto &response = fake_migrate_rpc.response();
@@ -230,7 +233,7 @@ TEST_F(replica_disk_migrate_test, migrate_disk_replica_check)
     ASSERT_EQ(response.err, ERR_OK);
 }
 
-TEST_F(replica_disk_migrate_test, disk_migrate_replica_run)
+TEST_P(replica_disk_migrate_test, disk_migrate_replica_run)
 {
     auto &request = *fake_migrate_rpc.mutable_request();
 
@@ -295,7 +298,7 @@ TEST_F(replica_disk_migrate_test, disk_migrate_replica_run)
     ASSERT_EQ(replica_ptr->disk_migrator()->status(), disk_migration_status::IDLE);
 }
 
-TEST_F(replica_disk_migrate_test, disk_migrate_replica_close)
+TEST_P(replica_disk_migrate_test, disk_migrate_replica_close)
 {
     auto &request = *fake_migrate_rpc.mutable_request();
     request.pid = dsn::gpid(app_info_1.app_id, 2);
@@ -310,7 +313,7 @@ TEST_F(replica_disk_migrate_test, disk_migrate_replica_close)
     ASSERT_TRUE(close_current_replica(fake_migrate_rpc));
 }
 
-TEST_F(replica_disk_migrate_test, disk_migrate_replica_update)
+TEST_P(replica_disk_migrate_test, disk_migrate_replica_update)
 {
     auto &request = *fake_migrate_rpc.mutable_request();
     request.pid = dsn::gpid(app_info_1.app_id, 3);
@@ -366,7 +369,7 @@ TEST_F(replica_disk_migrate_test, disk_migrate_replica_update)
 
 // Test load from new replica dir failed, then fall back to load from origin dir succeed,
 // and then mark the "new" replica dir as ".gar".
-TEST_F(replica_disk_migrate_test, disk_migrate_replica_open)
+TEST_P(replica_disk_migrate_test, disk_migrate_replica_open)
 {
     gpid test_pid(app_info_1.app_id, 4);
 

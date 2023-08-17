@@ -392,15 +392,11 @@ ExternalProject_Add(jemalloc
         BUILD_IN_SOURCE 1
         )
 
-option(ROCKSDB_PORTABLE "build a portable binary" OFF)
+option(ROCKSDB_PORTABLE "Minimum CPU arch to support, or 0 = current CPU, 1 = baseline CPU" 0)
 
-# The patch name '0879c240' means the patch of rocksdb:
-# https://github.com/facebook/rocksdb/commit/0879c240404b00142ba4718f36cd3f2bd537192d
 ExternalProject_Add(rocksdb
-        URL ${OSS_URL_PREFIX}/rocksdb-6.6.4.tar.gz
-        https://github.com/facebook/rocksdb/archive/refs/tags/v6.6.4.tar.gz
-        URL_MD5 7f7fcca3e96b7d83ef332804c90070c8
-        PATCH_COMMAND patch -p1 < ${TP_DIR}/rocksdb_fix_atomic_flush_0879c240.patch
+        URL https://github.com/acelyc111/rocksdb/archive/62936c90ff93a8430cdf06b0b953dd70be81faea.zip
+        URL_MD5 3366c1161808b960cc6d2b37dab9b1e4
         DEPENDS jemalloc
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TP_OUTPUT}
         -DFAIL_ON_WARNINGS=OFF
@@ -412,6 +408,7 @@ ExternalProject_Add(rocksdb
         -DWITH_BZ2=OFF
         -DWITH_TESTS=OFF
         -DWITH_GFLAGS=OFF
+        -DWITH_OPENSSL=ON
         -DUSE_RTTI=ON
         -DCMAKE_BUILD_TYPE=Release
         -DWITH_JEMALLOC=${USE_JEMALLOC}

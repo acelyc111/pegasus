@@ -68,6 +68,7 @@
 #include "duplication_test_base.h"
 #include "replica/duplication/load_from_private_log.h"
 #include "replica/mutation_log_utils.h"
+#include "test_util/test_util.h"
 
 namespace dsn {
 namespace replication {
@@ -273,35 +274,37 @@ public:
     std::unique_ptr<replica_duplicator> duplicator;
 };
 
-TEST_F(load_from_private_log_test, find_log_file_to_start) { test_find_log_file_to_start(); }
+INSTANTIATE_TEST_CASE_P(, load_from_private_log_test, ::testing::Values(false, true));
 
-TEST_F(load_from_private_log_test, start_duplication_10000_4MB)
+TEST_P(load_from_private_log_test, find_log_file_to_start) { test_find_log_file_to_start(); }
+
+TEST_P(load_from_private_log_test, start_duplication_10000_4MB)
 {
     test_start_duplication(10000, 4);
 }
 
-TEST_F(load_from_private_log_test, start_duplication_50000_4MB)
+TEST_P(load_from_private_log_test, start_duplication_50000_4MB)
 {
     test_start_duplication(50000, 4);
 }
 
-TEST_F(load_from_private_log_test, start_duplication_10000_1MB)
+TEST_P(load_from_private_log_test, start_duplication_10000_1MB)
 {
     test_start_duplication(10000, 1);
 }
 
-TEST_F(load_from_private_log_test, start_duplication_50000_1MB)
+TEST_P(load_from_private_log_test, start_duplication_50000_1MB)
 {
     test_start_duplication(50000, 1);
 }
 
-TEST_F(load_from_private_log_test, start_duplication_100000_4MB)
+TEST_P(load_from_private_log_test, start_duplication_100000_4MB)
 {
     test_start_duplication(100000, 4);
 }
 
 // Ensure replica_duplicator can correctly handle real-world log file
-TEST_F(load_from_private_log_test, handle_real_private_log)
+TEST_P(load_from_private_log_test, handle_real_private_log)
 {
     struct test_data
     {
@@ -342,9 +345,9 @@ TEST_F(load_from_private_log_test, handle_real_private_log)
     }
 }
 
-TEST_F(load_from_private_log_test, restart_duplication) { test_restart_duplication(); }
+TEST_P(load_from_private_log_test, restart_duplication) { test_restart_duplication(); }
 
-TEST_F(load_from_private_log_test, ignore_useless)
+TEST_P(load_from_private_log_test, ignore_useless)
 {
     utils::filesystem::remove_path(_log_dir);
 
@@ -410,7 +413,9 @@ public:
     std::unique_ptr<end_stage_t> end_stage;
 };
 
-TEST_F(load_fail_mode_test, fail_skip)
+INSTANTIATE_TEST_CASE_P(, load_fail_mode_test, ::testing::Values(false, true));
+
+TEST_P(load_fail_mode_test, fail_skip)
 {
     duplicator->update_fail_mode(duplication_fail_mode::FAIL_SKIP);
     ASSERT_EQ(load->_counter_dup_load_skipped_bytes_count->get_integer_value(), 0);
@@ -428,7 +433,7 @@ TEST_F(load_fail_mode_test, fail_skip)
     ASSERT_GT(load->_counter_dup_load_skipped_bytes_count->get_integer_value(), 0);
 }
 
-TEST_F(load_fail_mode_test, fail_slow)
+TEST_P(load_fail_mode_test, fail_slow)
 {
     duplicator->update_fail_mode(duplication_fail_mode::FAIL_SLOW);
     ASSERT_EQ(load->_counter_dup_load_skipped_bytes_count->get_integer_value(), 0);
@@ -447,7 +452,7 @@ TEST_F(load_fail_mode_test, fail_slow)
     ASSERT_EQ(load->_counter_dup_load_skipped_bytes_count->get_integer_value(), 0);
 }
 
-TEST_F(load_fail_mode_test, fail_skip_real_corrupted_file)
+TEST_P(load_fail_mode_test, fail_skip_real_corrupted_file)
 {
     { // inject some bad data in the middle of the first file
         std::string log_path = _log_dir + "/log.1.0";
