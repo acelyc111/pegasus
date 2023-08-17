@@ -130,6 +130,7 @@ public:
     error_code get_file_meta();
 
 private:
+    // TODO(yingchun): remove transfered_bytes
     error_code get_content_in_batches(uint64_t start,
                                       int64_t length,
                                       /*out*/ std::ostream &os,

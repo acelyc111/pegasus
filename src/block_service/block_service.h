@@ -238,8 +238,8 @@ struct upload_request
  */
 struct upload_response
 {
-    dsn::error_code err;
-    uint64_t uploaded_size;
+    dsn::error_code err = ERR_OK;
+    uint64_t uploaded_size = 0;
 };
 typedef std::function<void(const upload_response &)> upload_callback;
 typedef future_task<upload_response> upload_future;

@@ -26,8 +26,9 @@
 
 #include <alloca.h>
 #include <fcntl.h>
+#include <rocksdb/env.h>
+#include <rocksdb/slice.h>
 #include <rocksdb/status.h>
-#include <algorithm>
 #include <fstream>
 #include <memory>
 #include <utility>
@@ -56,6 +57,7 @@
 #include "utils/binary_writer.h"
 #include "utils/blob.h"
 #include "utils/defer.h"
+#include "utils/encryption_utils.h"
 #include "utils/factory_store.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
@@ -64,7 +66,6 @@
 #include "utils/ports.h"
 #include "utils/string_view.h"
 #include "utils/threadpool_code.h"
-#include "utils/utils.h"
 
 namespace dsn {
 class disk_file;
@@ -76,18 +77,22 @@ const std::string replica_init_info::kInitInfo = ".init-info";
 DEFINE_TASK_CODE_AIO(LPC_AIO_INFO_WRITE, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
 
 namespace {
-error_code write_blob_to_file(const std::string &file, const blob &data)
+error_code write_blob_to_file(const std::string &fname, const blob &data)
 {
-    std::string tmp_file = file + ".tmp";
-    disk_file *hfile = file::open(tmp_file, file::FileOpenType::kWriteOnly);
+    std::string tmp_fname = fname + ".tmp";
+    disk_file *dfile = file::open(tmp_fname, file::FileOpenType::kWriteOnly);
     LOG_AND_RETURN_NOT_TRUE(
-        ERROR, hfile, ERR_FILE_OPERATION_FAILED, "open file {} failed", tmp_file);
-    auto cleanup = defer([tmp_file]() { utils::filesystem::remove_path(tmp_file); });
+        ERROR, dfile, ERR_FILE_OPERATION_FAILED, "open file {} failed", tmp_fname);
+    auto cleanup = defer([tmp_fname]() {
+        auto s = dsn::utils::PegasusEnv()->DeleteFile(tmp_fname);
+        // TODO(yingchun): add macro for rocksdb::Status
+        LOG_WARNING_IF(!s.ok(), "delete file {} failed, error = {}", tmp_fname, s.ToString());
+    });
 
     error_code err;
     size_t sz = 0;
     task_tracker tracker;
-    aio_task_ptr tsk = file::write(hfile,
+    aio_task_ptr tsk = file::write(dfile,
                                    data.data(),
                                    data.length(),
                                    0,
@@ -100,17 +105,16 @@ error_code write_blob_to_file(const std::string &file, const blob &data)
                                    0);
     CHECK_NOTNULL(tsk, "create file::write task failed");
     tracker.wait_outstanding_tasks();
-    file::flush(hfile);
-    file::close(hfile);
-    LOG_AND_RETURN_NOT_OK(ERROR, err, "write file {} failed", tmp_file);
+    LOG_AND_RETURN_NOT_OK(ERROR, file::flush(dfile), "file::flush failed");
+    LOG_AND_RETURN_NOT_OK(ERROR, file::close(dfile), "file::close failed");
+    LOG_AND_RETURN_NOT_OK(ERROR, err, "write file {} failed", tmp_fname);
     CHECK_EQ(data.length(), sz);
-    // TODO(yingchun): need fsync too？
     LOG_AND_RETURN_NOT_TRUE(ERROR,
-                            utils::filesystem::rename_path(tmp_file, file),
+                            utils::filesystem::rename_path(tmp_fname, fname),
                             ERR_FILE_OPERATION_FAILED,
                             "move file from {} to {} failed",
-                            tmp_file,
-                            file);
+                            tmp_fname,
+                            fname);
 
     return ERR_OK;
 }
@@ -146,39 +150,44 @@ error_code replica_init_info::store(const std::string &dir)
     return ERR_OK;
 }
 
-error_code replica_init_info::load_json(const std::string &file)
+error_code replica_init_info::load_json(const std::string &fname)
 {
-    std::ifstream is(file, std::ios::binary);
-    LOG_AND_RETURN_NOT_TRUE(
-        ERROR, is.is_open(), ERR_FILE_OPERATION_FAILED, "open file {} failed", file);
+    std::unique_ptr<rocksdb::SequentialFile> sfile;
+    auto s = dsn::utils::PegasusEnv()->NewSequentialFile(fname, &sfile, rocksdb::EnvOptions());
+    if (!s.ok()) {
+        LOG_ERROR("open file '{}' failed, err = {}", fname, s.ToString());
+        return ERR_FILE_OPERATION_FAILED;
+    }
 
     int64_t sz = 0;
-    LOG_AND_RETURN_NOT_TRUE(ERROR,
-                            utils::filesystem::file_size(
-                                std::string(file), utils::filesystem::FileDataType::kSensitive, sz),
-                            ERR_FILE_OPERATION_FAILED,
-                            "get file size of {} failed",
-                            file);
-
-    std::shared_ptr<char> buffer(utils::make_shared_array<char>(sz));
-    is.read((char *)buffer.get(), sz);
-    LOG_AND_RETURN_NOT_TRUE(
-        ERROR, !is.bad(), ERR_FILE_OPERATION_FAILED, "read file {} failed", file);
-    is.close();
-
     LOG_AND_RETURN_NOT_TRUE(
         ERROR,
-        json::json_forwarder<replica_init_info>::decode(blob(buffer, sz), *this),
+        utils::filesystem::file_size(fname, utils::filesystem::FileDataType::kSensitive, sz),
         ERR_FILE_OPERATION_FAILED,
-        "decode json from file {} failed",
-        file);
+        "get file size of {} failed",
+        fname);
+
+    rocksdb::Slice result;
+    char scratch[sz];
+    s = sfile->Read(sz, &result, scratch);
+    if (!s.ok()) {
+        LOG_ERROR("read file '{}' failed, err = {}", fname, s.ToString());
+        return ERR_FILE_OPERATION_FAILED;
+    }
+
+    LOG_AND_RETURN_NOT_TRUE(ERROR,
+                            json::json_forwarder<replica_init_info>::decode(
+                                blob(result.data(), 0, result.size()), *this),
+                            ERR_FILE_OPERATION_FAILED,
+                            "decode json from file {} failed",
+                            fname);
 
     return ERR_OK;
 }
 
-error_code replica_init_info::store_json(const std::string &file)
+error_code replica_init_info::store_json(const std::string &fname)
 {
-    return write_blob_to_file(file, json::json_forwarder<replica_init_info>::encode(*this));
+    return write_blob_to_file(fname, json::json_forwarder<replica_init_info>::encode(*this));
 }
 
 std::string replica_init_info::to_string()
@@ -191,36 +200,43 @@ std::string replica_init_info::to_string()
     return oss.str();
 }
 
-error_code replica_app_info::load(const std::string &file)
+error_code replica_app_info::load(const std::string &fname)
 {
-    std::ifstream is(file, std::ios::binary);
-    LOG_AND_RETURN_NOT_TRUE(
-        ERROR, is.is_open(), ERR_FILE_OPERATION_FAILED, "open file {} failed", file);
+    std::unique_ptr<rocksdb::SequentialFile> sfile;
+    auto s = dsn::utils::PegasusEnv()->NewSequentialFile(fname, &sfile, rocksdb::EnvOptions());
+    if (!s.ok()) {
+        LOG_ERROR("open file '{}' failed, err = {}", fname, s.ToString());
+        return ERR_FILE_OPERATION_FAILED;
+    }
 
     int64_t sz = 0;
-    LOG_AND_RETURN_NOT_TRUE(ERROR,
-                            utils::filesystem::file_size(
-                                std::string(file), utils::filesystem::FileDataType::kSensitive, sz),
-                            ERR_FILE_OPERATION_FAILED,
-                            "get file size of {} failed",
-                            file);
+    LOG_AND_RETURN_NOT_TRUE(
+        ERROR,
+        utils::filesystem::file_size(fname, utils::filesystem::FileDataType::kSensitive, sz),
+        ERR_FILE_OPERATION_FAILED,
+        "get file size of {} failed",
+        fname);
 
-    std::shared_ptr<char> buffer(utils::make_shared_array<char>(sz));
-    is.read((char *)buffer.get(), sz);
-    is.close();
+    rocksdb::Slice result;
+    char scratch[sz];
+    s = sfile->Read(sz, &result, scratch);
+    if (!s.ok()) {
+        LOG_ERROR("read file '{}' failed, err = {}", fname, s.ToString());
+        return ERR_FILE_OPERATION_FAILED;
+    }
 
-    binary_reader reader(blob(buffer, sz));
-    int magic;
+    binary_reader reader(blob(result.data(), 0, result.size()));
+    int magic = 0;
     unmarshall(reader, magic, DSF_THRIFT_BINARY);
 
     LOG_AND_RETURN_NOT_TRUE(
-        ERROR, magic == 0xdeadbeef, ERR_INVALID_DATA, "data in file {} is invalid (magic)", file);
+        ERROR, magic == 0xdeadbeef, ERR_INVALID_DATA, "data in file {} is invalid (magic)", fname);
 
     unmarshall(reader, *_app, DSF_THRIFT_JSON);
     return ERR_OK;
 }
 
-error_code replica_app_info::store(const std::string &file)
+error_code replica_app_info::store(const std::string &fname)
 {
     binary_writer writer;
     int magic = 0xdeadbeef;
@@ -240,7 +256,7 @@ error_code replica_app_info::store(const std::string &file)
         marshall(writer, tmp, DSF_THRIFT_JSON);
     }
 
-    return write_blob_to_file(file, writer.get_buffer());
+    return write_blob_to_file(fname, writer.get_buffer());
 }
 
 /*static*/

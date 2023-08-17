@@ -17,25 +17,30 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <rocksdb/env.h>
 #include <algorithm>
 #include <fstream>
 #include <type_traits>
 #include <utility>
 
-#include "block_service/directio_writable_file.h"
 #include "hdfs/hdfs.h"
 #include "hdfs_service.h"
+#include "rocksdb/slice.h"
+#include "rocksdb/status.h"
 #include "runtime/task/async_calls.h"
 #include "runtime/task/task.h"
 #include "utils/TokenBucket.h"
 #include "utils/autoref_ptr.h"
 #include "utils/blob.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/safe_strerror_posix.h"
 #include "utils/strings.h"
+
+DSN_DECLARE_bool(enable_direct_io);
 
 struct hdfsBuilder;
 
@@ -64,8 +69,6 @@ DSN_DEFINE_uint64(replication,
                   64 << 20,
                   "hdfs write batch size, the default value is 64MB");
 DSN_TAG_VARIABLE(hdfs_write_batch_size_bytes, FT_MUTABLE);
-
-DSN_DECLARE_bool(enable_direct_io);
 
 hdfs_service::hdfs_service()
 {
@@ -377,23 +380,37 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
     add_ref();
     auto upload_background = [this, req, t]() {
         upload_response resp;
-        resp.uploaded_size = 0;
-        std::ifstream is(req.input_local_name, std::ios::binary | std::ios::in);
-        if (is.is_open()) {
-            int64_t file_sz = 0;
-            dsn::utils::filesystem::file_size(
-                req.input_local_name, dsn::utils::filesystem::FileDataType::kSensitive, file_sz);
-            std::unique_ptr<char[]> buffer(new char[file_sz]);
-            is.read(buffer.get(), file_sz);
-            is.close();
-            resp.err = write_data_in_batches(buffer.get(), file_sz, resp.uploaded_size);
-        } else {
-            LOG_ERROR("HDFS upload failed: open local file {} failed when upload to {}, error: {}",
-                      req.input_local_name,
-                      file_name(),
-                      utils::safe_strerror(errno));
-            resp.err = dsn::ERR_FILE_OPERATION_FAILED;
-        }
+        do {
+            std::unique_ptr<rocksdb::SequentialFile> sfile;
+            auto s = dsn::utils::PegasusEnv()->NewSequentialFile(
+                req.input_local_name, &sfile, rocksdb::EnvOptions());
+            if (!s.ok()) {
+                LOG_ERROR("open file '{}' failed, err = {}", file_name(), s.ToString());
+                resp.err = ERR_FS_INTERNAL;
+                break;
+            }
+
+            uint64_t file_size;
+            // dsn::utils::filesystem::file_size(
+            //     req.input_local_name, dsn::utils::filesystem::FileDataType::kSensitive, file_sz);
+            s = dsn::utils::PegasusEnv()->GetFileSize(req.input_local_name, &file_size);
+            if (!s.ok()) {
+                LOG_ERROR(
+                    "get file size for '{}' failed, err = {}", req.input_local_name, s.ToString());
+                resp.err = ERR_FILE_OPERATION_FAILED;
+                break;
+            }
+
+            rocksdb::Slice result;
+            char scratch[file_size];
+            s = sfile->Read(file_size, &result, scratch);
+            if (!s.ok()) {
+                LOG_ERROR("read file '{}' failed, err = {}", req.input_local_name, s.ToString());
+                resp.err = ERR_FILE_OPERATION_FAILED;
+            }
+
+            resp.err = write_data_in_batches(result.data(), result.size(), resp.uploaded_size);
+        } while (false);
         t->enqueue_with(resp);
         release_ref();
     };
@@ -511,39 +528,41 @@ dsn::task_ptr hdfs_file_object::download(const download_request &req,
             read_data_in_batches(req.remote_pos, req.remote_length, read_buffer, read_length);
         if (resp.err == ERR_OK) {
             bool write_succ = false;
-            if (FLAGS_enable_direct_io) {
-                auto dio_file = std::make_unique<direct_io_writable_file>(req.output_local_name);
-                do {
-                    if (!dio_file->initialize()) {
-                        break;
-                    }
-                    bool wr_ret = dio_file->write(read_buffer.c_str(), read_length);
-                    if (!wr_ret) {
-                        break;
-                    }
-                    if (dio_file->finalize()) {
-                        resp.downloaded_size = read_length;
-                        resp.file_md5 = utils::string_md5(read_buffer.c_str(), read_length);
-                        write_succ = true;
-                    }
-                } while (0);
-            } else {
-                std::ofstream out(req.output_local_name,
-                                  std::ios::binary | std::ios::out | std::ios::trunc);
-                if (out.is_open()) {
-                    out.write(read_buffer.c_str(), read_length);
-                    out.close();
-                    resp.downloaded_size = read_length;
-                    resp.file_md5 = utils::string_md5(read_buffer.c_str(), read_length);
-                    write_succ = true;
+            do {
+                // TODO(yingchun): enplasulate this into a function.
+                rocksdb::EnvOptions env_options;
+                env_options.use_direct_writes = FLAGS_enable_direct_io;
+                std::unique_ptr<rocksdb::WritableFile> rw_file;
+                auto s = dsn::utils::PegasusEnv()->NewWritableFile(
+                    req.output_local_name, &rw_file, env_options);
+                if (!s.ok()) {
+                    LOG_ERROR(
+                        "create file '{}' failed, err = {}", req.output_local_name, s.ToString());
+                    break;
                 }
-            }
+
+                s = rw_file->Append(rocksdb::Slice(read_buffer.data(), read_length));
+                if (!s.ok()) {
+                    LOG_ERROR(
+                        "append file '{}' failed, err = {}", req.output_local_name, s.ToString());
+                    break;
+                }
+
+                s = rw_file->Sync();
+                if (!s.ok()) {
+                    LOG_ERROR(
+                        "sync file '{}' failed, err = {}", req.output_local_name, s.ToString());
+                    break;
+                }
+
+                resp.downloaded_size = read_length;
+                resp.file_md5 = utils::string_md5(read_buffer.c_str(), read_length);
+                write_succ = true;
+            } while (false);
             if (!write_succ) {
-                LOG_ERROR("HDFS download failed: fail to open localfile {} when download {}, "
-                          "error: {}",
+                LOG_ERROR("HDFS download failed: fail to write local file {} when download {}",
                           req.output_local_name,
-                          file_name(),
-                          utils::safe_strerror(errno));
+                          file_name());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 resp.downloaded_size = 0;
             }

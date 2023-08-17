@@ -27,6 +27,8 @@ namespace dsn {
 namespace dist {
 namespace block_service {
 
+// TODO(yingchun): consider remove it and use rocksdb::WritableFile, i.e. FSWritableFile, and enable
+// EnvOptions.use_direct_writes.
 class direct_io_writable_file
 {
 public:

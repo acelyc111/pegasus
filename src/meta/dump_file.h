@@ -63,6 +63,7 @@ struct block_header
     uint32_t crc32;
 };
 
+// TODO(yingchun): use rocksdb::WritableFile
 class dump_file
 {
 public:

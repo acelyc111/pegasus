@@ -248,6 +248,7 @@ error_code meta_state_service_simple::initialize(const std::vector<std::string> 
         args.empty() ? service_app::current_service_app_info().data_dir.c_str() : args[0].c_str();
 
     _offset = 0;
+    // TODO(yingchun): refactor by using rocksdb::Env, low priority, this class is just for test.
     std::string log_path = dsn::utils::filesystem::path_combine(work_dir, "meta_state_service.log");
     if (utils::filesystem::file_exists(log_path)) {
         std::unique_ptr<rocksdb::SequentialFile> log_file;

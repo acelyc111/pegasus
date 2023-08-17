@@ -34,6 +34,10 @@
 #include "aio_provider.h"
 #include "utils/error_code.h"
 
+namespace rocksdb {
+class RandomRWFile;
+} // namespace rocksdb
+
 namespace dsn {
 class disk_engine;
 

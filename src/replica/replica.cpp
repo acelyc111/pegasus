@@ -29,10 +29,9 @@
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <inttypes.h>
-#include <algorithm>
+#include <rocksdb/status.h>
 #include <functional>
 #include <iosfwd>
-#include <rocksdb/status.h>
 #include <set>
 
 #include "backup/replica_backup_manager.h"

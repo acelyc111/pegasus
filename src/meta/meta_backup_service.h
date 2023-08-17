@@ -18,6 +18,7 @@
 #pragma once
 
 #include <gtest/gtest_prod.h>
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -46,6 +47,7 @@
 namespace dsn {
 class message_ex;
 class rpc_address;
+
 namespace dist {
 namespace block_service {
 class block_filesystem;

@@ -26,23 +26,24 @@
 
 #include "nfs/nfs_server_impl.h"
 
-#include <errno.h>
 #include <fcntl.h>
-#include <sys/stat.h>
+#include <rocksdb/env.h>
 #include <chrono>
 #include <cstdint>
 #include <mutex>
+#include <type_traits>
 #include <vector>
 
 #include "nfs/nfs_code_definition.h"
 #include "perf_counter/perf_counter.h"
+#include "rocksdb/status.h"
 #include "runtime/api_layer1.h"
 #include "runtime/task/async_calls.h"
 #include "utils/TokenBucket.h"
+#include "utils/encryption_utils.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/ports.h"
-#include "utils/safe_strerror_posix.h"
 #include "utils/string_conv.h"
 #include "utils/utils.h"
 
@@ -90,10 +91,9 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
         dsn::utils::filesystem::path_combine(request.source_dir, request.file_name);
     disk_file *dfile = nullptr;
 
-    {
+    do {
         zauto_lock l(_handles_map_lock);
         auto it = _handles_map.find(file_path); // find file handle cache first
-
         if (it == _handles_map.end()) {
             dfile = file::open(file_path, file::FileOpenType::kReadOnly);
             if (dfile != nullptr) {
@@ -101,14 +101,13 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
                 fh->file_handle = dfile;
                 fh->file_access_count = 1;
                 fh->last_access_time = dsn_now_ms();
-                _handles_map.insert(std::make_pair(file_path, std::move(fh)));
+                it = _handles_map.insert(std::make_pair(file_path, std::move(fh))).first;
             }
-        } else {
-            dfile = it->second->file_handle;
-            it->second->file_access_count++;
-            it->second->last_access_time = dsn_now_ms();
         }
-    }
+        dfile = it->second->file_handle;
+        it->second->file_access_count++;
+        it->second->last_access_time = dsn_now_ms();
+    } while (false);
 
     LOG_DEBUG(
         "nfs: copy file {} [{}, {}]", file_path, request.offset, request.offset + request.size);
@@ -121,7 +120,7 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
         return;
     }
 
-    std::shared_ptr<callback_para> cp = std::make_shared<callback_para>(std::move(reply));
+    auto cp = std::make_shared<callback_para>(std::move(reply));
     cp->bb = blob(dsn::utils::make_shared_array<char>(request.size), request.size);
     cp->dst_dir = request.dst_dir;
     cp->source_disk_tag = request.source_disk_tag;
@@ -182,7 +181,6 @@ void nfs_service_impl::on_get_file_size(
 {
     get_file_size_response resp;
     error_code err = ERR_OK;
-    std::vector<std::string> file_list;
     std::string folder = request.source_dir;
     if (request.file_list.size() == 0) // return all file size in the destination file folder
     {
@@ -190,13 +188,12 @@ void nfs_service_impl::on_get_file_size(
             LOG_ERROR("[nfs_service] directory {} not exist", folder);
             err = ERR_OBJECT_NOT_FOUND;
         } else {
+            std::vector<std::string> file_list;
             if (!dsn::utils::filesystem::get_subfiles(folder, file_list, true)) {
                 LOG_ERROR("[nfs_service] get subfiles of directory {} failed", folder);
                 err = ERR_FILE_OPERATION_FAILED;
             } else {
-                for (auto &fpath : file_list) {
-                    // TODO: using uint64 instead as file ma
-                    // Done
+                for (const auto &fpath : file_list) {
                     int64_t sz;
                     if (!dsn::utils::filesystem::file_size(
                             fpath, dsn::utils::filesystem::FileDataType::kSensitive, sz)) {
@@ -205,36 +202,32 @@ void nfs_service_impl::on_get_file_size(
                         break;
                     }
 
-                    resp.size_list.push_back((uint64_t)sz);
+                    resp.size_list.push_back(sz);
+                    // TODO(yingchun): refactor the code
                     resp.file_list.push_back(
                         fpath.substr(request.source_dir.length(), fpath.length() - 1));
                 }
-                file_list.clear();
             }
         }
     } else // return file size in the request file folder
     {
-        for (size_t i = 0; i < request.file_list.size(); i++) {
-            std::string file_path =
-                dsn::utils::filesystem::path_combine(folder, request.file_list[i]);
-
-            struct stat st;
-            if (0 != ::stat(file_path.c_str(), &st)) {
-                LOG_ERROR("[nfs_service] get stat of file {} failed, err = {}",
-                          file_path,
-                          dsn::utils::safe_strerror(errno));
+        for (const auto &file_name : request.file_list) {
+            std::string file_path = dsn::utils::filesystem::path_combine(folder, file_name);
+            uint64_t sz;
+            auto s = dsn::utils::PegasusEnv()->GetFileSize(file_path, &sz);
+            if (!s.ok()) {
+                LOG_ERROR(
+                    "[nfs_service] get size of file {} failed, err = ", file_path, s.ToString());
+                // TODO(yingchun): change the legacy error code
                 err = ERR_OBJECT_NOT_FOUND;
                 break;
             }
 
-            // TODO: using int64 instead as file may exceed the size of 32bit
-            // Done
-            uint64_t size = st.st_size;
-
-            resp.size_list.push_back(size);
-            resp.file_list.push_back((folder + request.file_list[i])
-                                         .substr(request.source_dir.length(),
-                                                 (folder + request.file_list[i]).length() - 1));
+            resp.size_list.push_back(sz);
+            // TODO(yingchun): refactor the code
+            resp.file_list.push_back(
+                (folder + file_name)
+                    .substr(request.source_dir.length(), (folder + file_name).length() - 1));
         }
     }
 
@@ -254,8 +247,9 @@ void nfs_service_impl::close_file() // release out-of-date file handle
             dsn_now_ms() - fptr->last_access_time > (uint64_t)FLAGS_file_close_expire_time_ms) {
             LOG_DEBUG("nfs: close file handle {}", it->first);
             it = _handles_map.erase(it);
-        } else
+        } else {
             it++;
+        }
     }
 }
 

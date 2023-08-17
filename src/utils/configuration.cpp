@@ -67,6 +67,7 @@ bool configuration::load(const char *file_name, const char *arguments)
 {
     _file_name = std::string(file_name);
 
+    // TODO(yingchun): use rocksdb::Env
     FILE *fd = ::fopen(file_name, "rb");
     if (fd == nullptr) {
         std::string cdir;

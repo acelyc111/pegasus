@@ -28,6 +28,7 @@ set(MY_PROJ_LIBS
     dsn.block_service.fds
     dsn.block_service.hdfs
     dsn_runtime
+    dsn_utils
     galaxy-fds-sdk-cpp
     PocoNet
     PocoFoundation
@@ -36,7 +37,7 @@ set(MY_PROJ_LIBS
     gtest
     gtest_main
     hdfs
-    )
+    rocksdb)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
 

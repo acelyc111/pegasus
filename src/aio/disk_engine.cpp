@@ -45,6 +45,10 @@
 #include "utils/link.h"
 #include "utils/threadpool_code.h"
 
+namespace rocksdb {
+class RandomRWFile;
+} // namespace rocksdb
+
 namespace dsn {
 DEFINE_TASK_CODE_AIO(LPC_AIO_BATCH_WRITE, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
 

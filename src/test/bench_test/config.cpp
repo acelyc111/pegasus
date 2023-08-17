@@ -19,11 +19,11 @@
 
 #include "config.h"
 
-#include <rocksdb/env.h>
+#include "utils/encryption_utils.h"
 
 namespace pegasus {
 namespace test {
 
-config::config() { env = rocksdb::Env::Default(); }
+config::config() { env = dsn::utils::PegasusEnv(); }
 } // namespace test
 } // namespace pegasus

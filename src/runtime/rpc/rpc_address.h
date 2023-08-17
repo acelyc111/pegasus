@@ -27,12 +27,12 @@
 #pragma once
 
 #include <arpa/inet.h> // IWYU pragma: keep
-
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 namespace apache {
 namespace thrift {

@@ -40,12 +40,6 @@ DSN_DEFINE_uint32(replication,
                   "Number of pages we need to set to direct io buffer");
 DSN_TAG_VARIABLE(direct_io_buffer_pages, FT_MUTABLE);
 
-DSN_DEFINE_bool(replication,
-                enable_direct_io,
-                false,
-                "Whether to enable direct I/O when download files");
-DSN_TAG_VARIABLE(enable_direct_io, FT_MUTABLE);
-
 const uint32_t g_page_size = getpagesize();
 
 direct_io_writable_file::direct_io_writable_file(const std::string &file_path)

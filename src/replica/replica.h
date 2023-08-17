@@ -450,7 +450,7 @@ private:
 
     /////////////////////////////////////////////////////////////////
     // replica restore from backup
-    bool read_cold_backup_metadata(const std::string &file, cold_backup_metadata &backup_metadata);
+    bool read_cold_backup_metadata(const std::string &fname, cold_backup_metadata &backup_metadata);
     // checkpoint on cold backup media maybe contain useless file,
     // we should abandon these file base cold_backup_metadata
     bool remove_useless_file_under_chkpt(const std::string &chkpt_dir,

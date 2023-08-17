@@ -63,6 +63,9 @@ namespace dsn {
 namespace utils {
 namespace filesystem {
 
+// TODO(yingchun): pre refactor: consider to use rocksdb/file_system.h to replace functions in this
+// file.
+
 int get_normalized_path(const std::string &path, std::string &npath);
 
 bool get_absolute_path(const std::string &path1, std::string &path2);
