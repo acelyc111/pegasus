@@ -54,6 +54,7 @@ enum class FileOpenType
     kWriteOnly
 };
 
+// TODO(yingchun): consider to return a smart pointer
 /// open file
 ///
 /// \param file_name filename of the file.
