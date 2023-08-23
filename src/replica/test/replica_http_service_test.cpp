@@ -86,7 +86,8 @@ private:
     std::unique_ptr<replica_http_service> _http_svc;
 };
 
-INSTANTIATE_TEST_CASE_P(, replica_http_service_test, ::testing::Values(false, true));
+// Non-encryption related, just test the 'false' parameter.
+INSTANTIATE_TEST_CASE_P(, replica_http_service_test, ::testing::Values(false));
 
 TEST_P(replica_http_service_test, update_config_handler)
 {

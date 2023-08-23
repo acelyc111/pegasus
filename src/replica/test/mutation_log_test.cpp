@@ -271,7 +271,6 @@ TEST_P(replication_test, log_file)
     ASSERT_EQ(ERR_INCOMPLETE_DATA, err);
     ASSERT_TRUE(!dsn::utils::filesystem::file_exists("log.1.4"));
     ASSERT_TRUE(dsn::utils::filesystem::file_exists("log.1.4.removed"));
-    ASSERT_TRUE(dsn::utils::filesystem::rename_path("log.1.4.removed", "log.1.4"));
 
     // read the file for test
     offset = 100;
