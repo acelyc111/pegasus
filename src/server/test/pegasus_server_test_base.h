@@ -24,8 +24,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "common/fs_manager.h"
+#include "utils/flags.h"
 #include "replica/replica_stub.h"
 #include "utils/filesystem.h"
+
+DSN_DECLARE_bool(encrypt_data_at_rest);
 
 namespace pegasus {
 namespace server {
@@ -44,6 +47,7 @@ class pegasus_server_test_base : public ::testing::Test
 public:
     pegasus_server_test_base()
     {
+        FLAGS_encrypt_data_at_rest = false;
         // Remove rdb to prevent rocksdb recovery from last test.
         dsn::utils::filesystem::remove_path("./test_dir");
         _replica_stub = new dsn::replication::replica_stub();

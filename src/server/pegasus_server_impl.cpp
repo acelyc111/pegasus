@@ -1679,7 +1679,11 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
         {{DATA_COLUMN_FAMILY_NAME, _table_data_cf_opts}, {META_COLUMN_FAMILY_NAME, _meta_cf_opts}});
     rocksdb::ConfigOptions config_options;
     config_options.ignore_unknown_options = true;
+    config_options.ignore_unsupported_options = true;
+    config_options.sanity_level =
+        rocksdb::ConfigOptions::SanityLevel::kSanityLevelLooselyCompatible;
     config_options.env = dsn::utils::PegasusEnv();
+    // TODO(yingchun): CheckOptionsCompatibility cause many issues!
     auto s =
         rocksdb::CheckOptionsCompatibility(config_options, rdb_path, _db_opts, column_families);
     if (!s.ok() && !s.IsNotFound() && !has_incompatible_db_options) {

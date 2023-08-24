@@ -215,7 +215,7 @@ jobs:
           - dsn.replica.test # added enc, ok
           - dsn_replication_common_test # added enc, ok
           - dsn.replication.simple_kv # ok
-          - dsn.rep_tests.simple_kv -
+          - dsn.rep_tests.simple_kv # need add enc, ok
           - dsn_runtime_tests # ok
           - dsn_utils_tests # ok
           - dsn.zookeeper.tests # ok
@@ -223,7 +223,7 @@ jobs:
           # it has been optimized.
 #          - partition_split_test
           - pegasus_geo_test
-          - pegasus_rproxy_test
+          - pegasus_rproxy_test # ok
           - pegasus_unit_test
           - recovery_test -
           - restore_test -
