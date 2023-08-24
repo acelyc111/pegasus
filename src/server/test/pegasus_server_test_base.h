@@ -53,7 +53,14 @@ public:
         _replica_stub = new dsn::replication::replica_stub();
         _replica_stub->get_fs_manager()->initialize({"test_dir"}, {"test_tag"});
 
-        _gpid = dsn::gpid(100, 1);
+        // Use different gpid for encryption and non-encryption test to avoid reopening a rocksdb
+        // instance with different encryption option.
+        if (FLAGS_encrypt_data_at_rest) {
+            _gpid = dsn::gpid(100, 0);
+        } else {
+            _gpid = dsn::gpid(100, 1);
+        }
+
         dsn::app_info app_info;
         app_info.app_type = "pegasus";
 

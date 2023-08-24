@@ -122,7 +122,7 @@ public:
     dsn::task_tracker _tracker;
 };
 
-TEST_F(coarse_collector_test, coarse_collector)
+TEST_P(coarse_collector_test, coarse_collector)
 {
     detect_hotkey_result result;
 
@@ -177,7 +177,7 @@ public:
     dsn::task_tracker _tracker;
 };
 
-TEST_F(fine_collector_test, fine_collector)
+TEST_P(fine_collector_test, fine_collector)
 {
     detect_hotkey_result result;
 
@@ -285,13 +285,13 @@ public:
     dsn::task_tracker _tracker;
 };
 
-TEST_F(hotkey_collector_test, hotkey_type)
+TEST_P(hotkey_collector_test, hotkey_type)
 {
     ASSERT_EQ(get_collector_type(get_read_collector()), dsn::replication::hotkey_type::READ);
     ASSERT_EQ(get_collector_type(get_write_collector()), dsn::replication::hotkey_type::WRITE);
 }
 
-TEST_F(hotkey_collector_test, state_transform)
+TEST_P(hotkey_collector_test, state_transform)
 {
     auto collector = get_read_collector();
     ASSERT_EQ(get_collector_stat(collector), hotkey_collector_state::STOPPED);
@@ -359,7 +359,7 @@ TEST_F(hotkey_collector_test, state_transform)
     _tracker.wait_outstanding_tasks();
 }
 
-TEST_F(hotkey_collector_test, data_completeness)
+TEST_P(hotkey_collector_test, data_completeness)
 {
     dsn::replication::detect_hotkey_response resp;
     on_detect_hotkey(generate_control_rpc(dsn::replication::hotkey_type::READ,

@@ -139,7 +139,7 @@ public:
     }
 };
 
-TEST_F(pegasus_server_write_test, batch_writes) { test_batch_writes(); }
+TEST_P(pegasus_server_write_test, batch_writes) { test_batch_writes(); }
 
 } // namespace server
 } // namespace pegasus

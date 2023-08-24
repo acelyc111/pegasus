@@ -122,7 +122,7 @@ public:
     void clear_calculator_histories() { calculator._partitions_stat_histories.clear(); }
 };
 
-TEST_F(hotspot_partition_test, hotspot_partition_policy)
+TEST_P(hotspot_partition_test, hotspot_partition_policy)
 {
     // Insert normal scenario data to test
     std::vector<row_data> test_rows = generate_row_data();
@@ -175,7 +175,7 @@ TEST_F(hotspot_partition_test, hotspot_partition_policy)
     clear_calculator_histories();
 }
 
-TEST_F(hotspot_partition_test, send_detect_hotkey_request)
+TEST_P(hotspot_partition_test, send_detect_hotkey_request)
 {
     const int READ_HOT_PARTITION = 7;
     const int WRITE_HOT_PARTITION = 0;

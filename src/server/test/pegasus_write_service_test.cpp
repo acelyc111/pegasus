@@ -223,13 +223,13 @@ public:
     }
 };
 
-TEST_F(pegasus_write_service_test, multi_put) { test_multi_put(); }
+TEST_P(pegasus_write_service_test, multi_put) { test_multi_put(); }
 
-TEST_F(pegasus_write_service_test, multi_remove) { test_multi_remove(); }
+TEST_P(pegasus_write_service_test, multi_remove) { test_multi_remove(); }
 
-TEST_F(pegasus_write_service_test, batched_writes) { test_batched_writes(); }
+TEST_P(pegasus_write_service_test, batched_writes) { test_batched_writes(); }
 
-TEST_F(pegasus_write_service_test, duplicate_not_batched)
+TEST_P(pegasus_write_service_test, duplicate_not_batched)
 {
     std::string hash_key = "hash_key";
     constexpr int kv_num = 100;
@@ -279,7 +279,7 @@ TEST_F(pegasus_write_service_test, duplicate_not_batched)
     }
 }
 
-TEST_F(pegasus_write_service_test, duplicate_batched)
+TEST_P(pegasus_write_service_test, duplicate_batched)
 {
     std::string hash_key = "hash_key";
     constexpr int kv_num = 100;
@@ -313,7 +313,7 @@ TEST_F(pegasus_write_service_test, duplicate_batched)
     }
 }
 
-TEST_F(pegasus_write_service_test, illegal_duplicate_request)
+TEST_P(pegasus_write_service_test, illegal_duplicate_request)
 {
     std::string hash_key = "hash_key";
     std::string sort_key = "sort_key";

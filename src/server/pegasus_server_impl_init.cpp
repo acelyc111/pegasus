@@ -51,6 +51,7 @@
 #include "server/pegasus_read_service.h"
 #include "server/pegasus_server_write.h" // IWYU pragma: keep
 #include "server/range_read_limiter.h"
+#include "utils/encryption_utils.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/strings.h"
@@ -422,6 +423,7 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     _rng_rd_opts.rocksdb_iteration_threshold_time_ms = FLAGS_rocksdb_iteration_threshold_time_ms;
 
     // init rocksdb::DBOptions
+    _db_opts.env = dsn::utils::PegasusEnv();
     _db_opts.create_if_missing = true;
     // atomic flush data CF and meta CF, aim to keep consistency of 'last flushed decree' in meta CF
     // and data in data CF.
