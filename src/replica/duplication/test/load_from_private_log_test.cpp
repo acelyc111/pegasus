@@ -306,6 +306,11 @@ TEST_P(load_from_private_log_test, start_duplication_100000_4MB)
 // Ensure replica_duplicator can correctly handle real-world log file
 TEST_P(load_from_private_log_test, handle_real_private_log)
 {
+    if (FLAGS_encrypt_data_at_rest) {
+        // The testfiles log.1.0.* are not encrypted.
+        return;
+    }
+
     struct test_data
     {
         std::string fname;
@@ -456,12 +461,27 @@ TEST_P(load_fail_mode_test, fail_skip_real_corrupted_file)
 {
     { // inject some bad data in the middle of the first file
         std::string log_path = _log_dir + "/log.1.0";
-        auto file_size = boost::filesystem::file_size(log_path);
-        int fd = open(log_path.c_str(), O_WRONLY);
+        int64_t file_size;
+        ASSERT_TRUE(utils::filesystem::file_size(
+            log_path, utils::filesystem::FileDataType::kSensitive, file_size));
+        auto wfile = file::open(log_path, file::FileOpenType::kWriteOnly);
+        ASSERT_NE(wfile, nullptr);
+
         const char buf[] = "xxxxxx";
-        auto written_size = pwrite(fd, buf, sizeof(buf), file_size / 2);
-        ASSERT_EQ(written_size, sizeof(buf));
-        close(fd);
+        auto buff_len = sizeof(buf);
+        auto t = ::dsn::file::write(wfile,
+                                    buf,
+                                    buff_len,
+                                    file_size / 2,
+                                    LPC_AIO_IMMEDIATE_CALLBACK,
+                                    nullptr,
+                                    [=](::dsn::error_code err, size_t n) {
+                                        CHECK_EQ(ERR_OK, err);
+                                        CHECK_EQ(buff_len, n);
+                                    });
+        t->wait();
+        ASSERT_EQ(ERR_OK, ::dsn::file::flush(wfile));
+        ASSERT_EQ(ERR_OK, ::dsn::file::close(wfile));
     }
 
     duplicator->update_fail_mode(duplication_fail_mode::FAIL_SKIP);

@@ -208,17 +208,17 @@ jobs:
           - dsn.meta.test # need add enc, ok
           - dsn_nfs_test # ok, need encrypted test files
           - dsn_perf_counter_test # ok
-          - dsn_replica_backup_test # bad replica enc test
-          - dsn_replica_bulk_load_test # bad replica enc test
-          - dsn_replica_dup_test # bad replica enc test
-          - dsn_replica_split_test # bad replica enc test
-          - dsn.replica.test # bad replica enc test
-          - dsn_replication_common_test
-          - dsn.replication.simple_kv
+          - dsn_replica_backup_test # added enc, ok
+          - dsn_replica_bulk_load_test # added enc, ok
+          - dsn_replica_dup_test # added enc, ok
+          - dsn_replica_split_test # added enc, ok
+          - dsn.replica.test # added enc, ok
+          - dsn_replication_common_test # added enc, ok
+          - dsn.replication.simple_kv # ok
           - dsn.rep_tests.simple_kv -
-          - dsn_runtime_tests
-          - dsn_utils_tests
-          - dsn.zookeeper.tests
+          - dsn_runtime_tests # ok
+          - dsn_utils_tests # ok
+          - dsn.zookeeper.tests # ok
           # TODO(yingchun): Disable it because we find it's too flaky, we will re-enable it after
           # it has been optimized.
 #          - partition_split_test
