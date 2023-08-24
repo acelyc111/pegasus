@@ -86,7 +86,9 @@ public:
     dsn::apps::incr_response resp;
 };
 
-TEST_F(incr_test, incr_on_absent_record)
+INSTANTIATE_TEST_CASE_P(, incr_test, ::testing::Values(false, true));
+
+TEST_P(incr_test, incr_on_absent_record)
 {
     // ensure key is absent
     db_get_context get_ctx;
@@ -101,7 +103,7 @@ TEST_F(incr_test, incr_on_absent_record)
     ASSERT_TRUE(get_ctx.found);
 }
 
-TEST_F(incr_test, negative_incr_and_zero_incr)
+TEST_P(incr_test, negative_incr_and_zero_incr)
 {
     req.increment = -100;
     ASSERT_EQ(0, _write_impl->incr(0, req, resp));
@@ -116,7 +118,7 @@ TEST_F(incr_test, negative_incr_and_zero_incr)
     ASSERT_EQ(resp.new_value, -101);
 }
 
-TEST_F(incr_test, invalid_incr)
+TEST_P(incr_test, invalid_incr)
 {
     single_set(req.key, dsn::blob::create_from_bytes("abc"));
 
@@ -133,7 +135,7 @@ TEST_F(incr_test, invalid_incr)
     ASSERT_EQ(resp.new_value, 100);
 }
 
-TEST_F(incr_test, fail_on_get)
+TEST_P(incr_test, fail_on_get)
 {
     dsn::fail::setup();
     dsn::fail::cfg("db_get", "100%1*return()");
@@ -146,7 +148,7 @@ TEST_F(incr_test, fail_on_get)
     dsn::fail::teardown();
 }
 
-TEST_F(incr_test, fail_on_put)
+TEST_P(incr_test, fail_on_put)
 {
     dsn::fail::setup();
     dsn::fail::cfg("db_write_batch_put", "100%1*return()");
@@ -159,7 +161,7 @@ TEST_F(incr_test, fail_on_put)
     dsn::fail::teardown();
 }
 
-TEST_F(incr_test, incr_on_expire_record)
+TEST_P(incr_test, incr_on_expire_record)
 {
     // make the key expired
     req.expire_ts_seconds = 1;
