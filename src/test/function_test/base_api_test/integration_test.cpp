@@ -37,7 +37,9 @@ class integration_test : public test_util
 {
 };
 
-TEST_F(integration_test, write_corrupt_db)
+INSTANTIATE_TEST_CASE_P(, integration_test, ::testing::Values(false, true));
+
+TEST_P(integration_test, write_corrupt_db)
 {
     // Make best effort to rebalance the cluster,
     ASSERT_NO_FATAL_FAILURE(
@@ -140,7 +142,7 @@ TEST_F(integration_test, write_corrupt_db)
     ASSERT_IN_TIME([&] { ASSERT_EQ(3, get_alive_replica_server_count()); }, 60);
 }
 
-TEST_F(integration_test, read_corrupt_db)
+TEST_P(integration_test, read_corrupt_db)
 {
     // Make best effort to rebalance the cluster,
     ASSERT_NO_FATAL_FAILURE(

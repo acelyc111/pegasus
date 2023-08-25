@@ -169,7 +169,9 @@ protected:
 const char copy_data_test::CCH[] =
     "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-TEST_F(copy_data_test, EMPTY_HASH_KEY_COPY)
+INSTANTIATE_TEST_CASE_P(, copy_data_test, ::testing::Values(false, true));
+
+TEST_P(copy_data_test, EMPTY_HASH_KEY_COPY)
 {
     LOG_INFO("TESTING_COPY_DATA, EMPTY HASH_KEY COPY ....");
 

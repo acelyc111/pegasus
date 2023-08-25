@@ -35,7 +35,9 @@ class incr : public test_util
 {
 };
 
-TEST_F(incr, unexist_key)
+INSTANTIATE_TEST_CASE_P(, incr, ::testing::Values(false, true));
+
+TEST_P(incr, unexist_key)
 {
     ASSERT_EQ(PERR_OK, client_->del("incr_test_unexist_key", ""));
 
@@ -50,7 +52,7 @@ TEST_F(incr, unexist_key)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_unexist_key", ""));
 }
 
-TEST_F(incr, empty_key)
+TEST_P(incr, empty_key)
 {
     ASSERT_EQ(PERR_OK, client_->set("incr_test_empty_key", "", ""));
 
@@ -65,7 +67,7 @@ TEST_F(incr, empty_key)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_empty_key", ""));
 }
 
-TEST_F(incr, negative_value)
+TEST_P(incr, negative_value)
 {
     ASSERT_EQ(PERR_OK, client_->set("incr_test_negative_value", "", "-100"));
 
@@ -80,7 +82,7 @@ TEST_F(incr, negative_value)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_negative_value", ""));
 }
 
-TEST_F(incr, increase_zero)
+TEST_P(incr, increase_zero)
 {
     ASSERT_EQ(PERR_OK, client_->set("incr_test_increase_zero", "", "100"));
 
@@ -95,7 +97,7 @@ TEST_F(incr, increase_zero)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_increase_zero", ""));
 }
 
-TEST_F(incr, multiple_increment)
+TEST_P(incr, multiple_increment)
 {
     ASSERT_EQ(PERR_OK, client_->set("incr_test_multiple_increment", "", "100"));
 
@@ -116,7 +118,7 @@ TEST_F(incr, multiple_increment)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_multiple_increment", ""));
 }
 
-TEST_F(incr, invalid_old_data)
+TEST_P(incr, invalid_old_data)
 {
     ASSERT_EQ(PERR_OK, client_->set("incr_test_invalid_old_data", "", "aaa"));
 
@@ -132,7 +134,7 @@ TEST_F(incr, invalid_old_data)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_invalid_old_data", ""));
 }
 
-TEST_F(incr, out_of_range_old_data)
+TEST_P(incr, out_of_range_old_data)
 {
     ASSERT_EQ(PERR_OK,
               client_->set(
@@ -150,7 +152,7 @@ TEST_F(incr, out_of_range_old_data)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_out_of_range_old_data", ""));
 }
 
-TEST_F(incr, up_overflow)
+TEST_P(incr, up_overflow)
 {
     ASSERT_EQ(PERR_OK, client_->set("incr_test_up_overflow", "", "1"));
 
@@ -166,7 +168,7 @@ TEST_F(incr, up_overflow)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_up_overflow", ""));
 }
 
-TEST_F(incr, down_overflow)
+TEST_P(incr, down_overflow)
 {
     ASSERT_EQ(PERR_OK, client_->set("incr_test_down_overflow", "", "-1"));
 
@@ -182,7 +184,7 @@ TEST_F(incr, down_overflow)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_down_overflow", ""));
 }
 
-TEST_F(incr, preserve_ttl)
+TEST_P(incr, preserve_ttl)
 {
     ASSERT_EQ(PERR_OK, client_->set("incr_test_preserve_ttl", "", "100", 5000, 3));
 
@@ -202,7 +204,7 @@ TEST_F(incr, preserve_ttl)
     ASSERT_EQ(PERR_OK, client_->del("incr_test_preserve_ttl", ""));
 }
 
-TEST_F(incr, reset_ttl)
+TEST_P(incr, reset_ttl)
 {
     /// reset after old value ttl timeout
     ASSERT_EQ(PERR_OK, client_->set("incr_test_reset_ttl", "", "100", 5000, 3));

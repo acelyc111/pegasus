@@ -136,8 +136,6 @@ TEST_P(rocksdb_wrapper_test, get)
     ASSERT_EQ(user_value, value);
 }
 
-// E2023-08-24 16:10:05.653 (1692893405653379281 65522) replica.default0.0000ffc500010001: pegasus_server_impl.cpp:3294:check_column_families(): [100.0@] rocksdb::DB::ListColumnFamilies failed, error = Corruption: CURRENT file does not end with newline
-// E2023-08-24 16:10:05.653 (1692893405653443074 65522) replica.default0.0000ffc500010001: pegasus_server_impl.cpp:1627:start(): [100.0@] check column families failed
 TEST_P(rocksdb_wrapper_test, put_verify_timetag)
 {
     set_app_duplicating();

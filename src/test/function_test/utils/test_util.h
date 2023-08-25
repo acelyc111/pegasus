@@ -28,6 +28,7 @@
 
 #include "dsn.layer2_types.h"
 #include "runtime/rpc/rpc_address.h"
+#include "test_util/test_util.h"
 
 // TODO(yingchun): it's too tricky, but I don't know how does it happen, we can fix it later.
 #define TRICKY_CODE_TO_AVOID_LINK_ERROR                                                            \
@@ -45,7 +46,7 @@ class replication_ddl_client;
 namespace pegasus {
 class pegasus_client;
 
-class test_util : public ::testing::Test
+class test_util : public pegasus::encrypt_data_test_base
 {
 public:
     test_util(std::map<std::string, std::string> create_envs = {});

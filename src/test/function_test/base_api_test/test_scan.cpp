@@ -166,7 +166,9 @@ protected:
 };
 const char scan_test::CCH[] = "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-TEST_F(scan_test, OVERALL_COUNT_ONLY)
+INSTANTIATE_TEST_CASE_P(, scan_test, ::testing::Values(false, true));
+
+TEST_P(scan_test, OVERALL_COUNT_ONLY)
 {
     pegasus_client::scan_options options;
     options.only_return_count = true;
@@ -196,7 +198,7 @@ TEST_F(scan_test, OVERALL_COUNT_ONLY)
     ASSERT_EQ(base_data_count, data_count);
 }
 
-TEST_F(scan_test, ALL_SORT_KEY)
+TEST_P(scan_test, ALL_SORT_KEY)
 {
     pegasus_client::scan_options options;
     std::map<std::string, std::string> data;
@@ -218,7 +220,7 @@ TEST_F(scan_test, ALL_SORT_KEY)
     ASSERT_NO_FATAL_FAILURE(compare(expect_kvs_[expected_hash_key_], data, expected_hash_key_));
 }
 
-TEST_F(scan_test, BOUND_INCLUSIVE)
+TEST_P(scan_test, BOUND_INCLUSIVE)
 {
     auto it1 = expect_kvs_[expected_hash_key_].begin();
     std::advance(it1, random() % 500); // [0,499]
@@ -251,7 +253,7 @@ TEST_F(scan_test, BOUND_INCLUSIVE)
         compare(data, std::map<std::string, std::string>(it1, it2), expected_hash_key_));
 }
 
-TEST_F(scan_test, BOUND_EXCLUSIVE)
+TEST_P(scan_test, BOUND_EXCLUSIVE)
 {
     auto it1 = expect_kvs_[expected_hash_key_].begin();
     std::advance(it1, random() % 500); // [0,499]
@@ -285,7 +287,7 @@ TEST_F(scan_test, BOUND_EXCLUSIVE)
         compare(data, std::map<std::string, std::string>(it1, it2), expected_hash_key_));
 }
 
-TEST_F(scan_test, ONE_POINT)
+TEST_P(scan_test, ONE_POINT)
 {
     auto it1 = expect_kvs_[expected_hash_key_].begin();
     std::advance(it1, random() % 800); // [0,799]
@@ -309,7 +311,7 @@ TEST_F(scan_test, ONE_POINT)
     delete scanner;
 }
 
-TEST_F(scan_test, HALF_INCLUSIVE)
+TEST_P(scan_test, HALF_INCLUSIVE)
 {
     auto it1 = expect_kvs_[expected_hash_key_].begin();
     std::advance(it1, random() % 800); // [0,799]
@@ -329,7 +331,7 @@ TEST_F(scan_test, HALF_INCLUSIVE)
     delete scanner;
 }
 
-TEST_F(scan_test, VOID_SPAN)
+TEST_P(scan_test, VOID_SPAN)
 {
     auto it1 = expect_kvs_[expected_hash_key_].begin();
     std::advance(it1, random() % 500); // [0,499]
@@ -353,7 +355,7 @@ TEST_F(scan_test, VOID_SPAN)
     delete scanner;
 }
 
-TEST_F(scan_test, OVERALL)
+TEST_P(scan_test, OVERALL)
 {
     pegasus_client::scan_options options;
     std::vector<pegasus_client::pegasus_scanner *> scanners;
@@ -377,7 +379,7 @@ TEST_F(scan_test, OVERALL)
     ASSERT_NO_FATAL_FAILURE(compare(expect_kvs_, data));
 }
 
-TEST_F(scan_test, REQUEST_EXPIRE_TS)
+TEST_P(scan_test, REQUEST_EXPIRE_TS)
 {
     pegasus_client::scan_options options;
     options.return_expire_ts = true;
@@ -426,7 +428,7 @@ TEST_F(scan_test, REQUEST_EXPIRE_TS)
     ASSERT_NO_FATAL_FAILURE(compare(expect_kvs_with_ttl_, ttl_data));
 }
 
-TEST_F(scan_test, ITERATION_TIME_LIMIT)
+TEST_P(scan_test, ITERATION_TIME_LIMIT)
 {
     // update iteration threshold to 1ms
     auto response = ddl_client_->set_app_envs(

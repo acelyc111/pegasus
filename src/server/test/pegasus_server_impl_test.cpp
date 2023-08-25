@@ -169,7 +169,7 @@ TEST_P(pegasus_server_impl_test, test_open_db_with_latest_options)
     ASSERT_EQ(1000000000, opts.level0_file_num_compaction_trigger);
     ASSERT_EQ(true, opts.disable_auto_compactions);
     // reopen the db.
-    _server->stop(false);
+    ASSERT_EQ(dsn::ERR_OK, _server->stop(false));
     ASSERT_EQ(dsn::ERR_OK, start());
     ASSERT_EQ(ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD, _server->_usage_scenario);
     ASSERT_EQ(opts.level0_file_num_compaction_trigger,

@@ -2162,7 +2162,7 @@ private:
             {{DATA_COLUMN_FAMILY_NAME, rocksdb::ColumnFamilyOptions()},
              {META_COLUMN_FAMILY_NAME, rocksdb::ColumnFamilyOptions()}});
         status = rocksdb::DB::OpenForReadOnly(
-            rocksdb::DBOptions(), checkpoint_dir, column_families, &handles_opened, &snapshot_db);
+            _db_opts, checkpoint_dir, column_families, &handles_opened, &snapshot_db);
         if (!status.ok()) {
             LOG_ERROR_PREFIX(
                 "OpenForReadOnly from {} failed, error = {}", checkpoint_dir, status.ToString());
@@ -3289,7 +3289,7 @@ bool pegasus_server_impl::set_options(
     *missing_meta_cf = true;
     *missing_data_cf = true;
     std::vector<std::string> column_families;
-    auto s = rocksdb::DB::ListColumnFamilies(rocksdb::DBOptions(), path, &column_families);
+    auto s = rocksdb::DB::ListColumnFamilies(_db_opts, path, &column_families);
     if (!s.ok()) {
         LOG_ERROR_PREFIX("rocksdb::DB::ListColumnFamilies failed, error = {}", s.ToString());
         if (s.IsCorruption() &&

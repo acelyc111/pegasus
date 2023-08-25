@@ -43,7 +43,9 @@ class basic : public test_util
 {
 };
 
-TEST_F(basic, set_get_del)
+INSTANTIATE_TEST_CASE_P(, basic, ::testing::Values(false, true));
+
+TEST_P(basic, set_get_del)
 {
     // set
     ASSERT_EQ(PERR_OK,
@@ -81,7 +83,7 @@ TEST_F(basic, set_get_del)
               client_->get("basic_test_hash_key_1", "basic_test_sort_key_1", new_value));
 }
 
-TEST_F(basic, multi_get)
+TEST_P(basic, multi_get)
 {
     const std::map<std::string, std::string> kvs({{"", "0"},
                                                   {"1", "1"},
@@ -604,7 +606,7 @@ TEST_F(basic, multi_get)
     ASSERT_EQ(0, count);
 }
 
-TEST_F(basic, multi_get_reverse)
+TEST_P(basic, multi_get_reverse)
 {
     // multi_set
     const std::map<std::string, std::string> kvs({{"", "0"},
@@ -1189,7 +1191,7 @@ TEST_F(basic, multi_get_reverse)
     ASSERT_EQ(0, count);
 }
 
-TEST_F(basic, multi_set_get_del)
+TEST_P(basic, multi_set_get_del)
 {
     // multi_set
     const std::map<std::string, std::string> kvs({{"basic_test_sort_key_1", "basic_test_value_1"},
@@ -1316,7 +1318,7 @@ TEST_F(basic, multi_set_get_del)
     ASSERT_EQ(0, count);
 }
 
-TEST_F(basic, set_get_del_async)
+TEST_P(basic, set_get_del_async)
 {
     std::string new_value;
 
@@ -1409,7 +1411,7 @@ TEST_F(basic, set_get_del_async)
               client_->get("basic_test_hash_key_1", "basic_test_sort_key_1", new_value));
 }
 
-TEST_F(basic, multi_set_get_del_async)
+TEST_P(basic, multi_set_get_del_async)
 {
     std::map<std::string, std::string> actual_kvs;
     int64_t count;
@@ -1617,7 +1619,7 @@ TEST_F(basic, multi_set_get_del_async)
     ASSERT_EQ(0, count);
 }
 
-TEST_F(basic, scan_with_filter)
+TEST_P(basic, scan_with_filter)
 {
     int ret = 0;
     const std::map<std::string, std::string> kvs({{"m_1", "a"},
@@ -1709,7 +1711,7 @@ TEST_F(basic, scan_with_filter)
     ASSERT_EQ(8, deleted_count);
 }
 
-TEST_F(basic, full_scan_with_filter)
+TEST_P(basic, full_scan_with_filter)
 {
     int ret = 0;
     // multi_set

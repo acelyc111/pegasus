@@ -48,7 +48,9 @@ class batch_get : public test_util
 {
 };
 
-TEST_F(batch_get, set_and_then_batch_get)
+INSTANTIATE_TEST_CASE_P(, batch_get, ::testing::Values(false, true));
+
+TEST_P(batch_get, set_and_then_batch_get)
 {
     auto rrdb_client =
         new ::dsn::apps::rrdb_client(cluster_name_.c_str(), meta_list_, app_name_.c_str());

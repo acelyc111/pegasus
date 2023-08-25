@@ -222,9 +222,9 @@ jobs:
           # TODO(yingchun): Disable it because we find it's too flaky, we will re-enable it after
           # it has been optimized.
 #          - partition_split_test
-          - pegasus_geo_test
+          - pegasus_geo_test # added enc, ok
           - pegasus_rproxy_test # ok
-          - pegasus_unit_test
+          - pegasus_unit_test # added enc, ok
           - recovery_test -
           - restore_test -
           - throttle_test -
