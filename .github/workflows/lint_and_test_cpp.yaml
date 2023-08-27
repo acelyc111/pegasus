@@ -195,10 +195,10 @@ jobs:
       matrix:
         test_module:
           - backup_restore_test
-          - base_api_test
+          - base_api_test # added enc, ing
           - base_test # ok
           - bulk_load_test
-          - detect_hotspot_test
+          - detect_hotspot_test # enc ignored, ok
           - dsn_aio_test # added enc, ok
           - dsn_block_service_test # partial added enc, ok
           - dsn_client_test # ok

@@ -198,7 +198,11 @@ protected:
     }
 };
 
-TEST_F(detect_hotspot_test, write_hotspot_data_test)
+// The test will cost much time, and not related to whether encryption is enabled or not, so
+// we only run it once.
+INSTANTIATE_TEST_CASE_P(, detect_hotspot_test, ::testing::Values(false));
+
+TEST_P(detect_hotspot_test, write_hotspot_data_test)
 {
     std::cout << "start testing write hotspot data..." << std::endl;
     ASSERT_NO_FATAL_FAILURE(write_hotspot_data());
