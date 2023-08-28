@@ -137,10 +137,7 @@ TEST_P(aio_test, basic)
                 ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
             }
             for (int i = 0; i < kTotalBufferCount; i++) {
-                if (strcmp(kUnitBuffer, read_buffers[i]) != 0) {
-                    ASSERT_STREQ(kUnitBuffer, read_buffers[i]) << i;
-                }
-                ASSERT_STREQ(kUnitBuffer, read_buffers[i]) << i;
+                ASSERT_STREQ(kUnitBuffer, read_buffers[i]);
             }
         }
     };
@@ -253,6 +250,7 @@ TEST_P(aio_test, basic)
     }
     NO_FATALS(verify_data());
     ASSERT_EQ(ERR_OK, file::close(wfile));
+    ASSERT_EQ(ERR_OK, file::close(rfile));
 }
 
 TEST_P(aio_test, aio_share)
@@ -263,8 +261,8 @@ TEST_P(aio_test, aio_share)
     auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
     ASSERT_NE(rfile, nullptr);
 
-    file::close(wfile);
-    file::close(rfile);
+    ASSERT_EQ(ERR_OK, file::close(wfile));
+    ASSERT_EQ(ERR_OK, file::close(rfile));
 }
 
 TEST_P(aio_test, operation_failed)
@@ -309,9 +307,9 @@ TEST_P(aio_test, operation_failed)
 
     t = ::dsn::file::read(rfile, buff, 512, 100, LPC_AIO_TEST, nullptr, io_callback, 0);
     t->wait();
-    LOG_INFO("error code: {}", *err);
-    file::close(wfile);
-    file::close(rfile);
+    ASSERT_EQ(ERR_HANDLE_EOF, *err);
+    ASSERT_EQ(ERR_OK, file::close(wfile));
+    ASSERT_EQ(ERR_OK, file::close(rfile));
 }
 
 DEFINE_TASK_CODE_AIO(LPC_AIO_TEST_READ, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
