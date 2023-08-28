@@ -30,12 +30,15 @@
 #include <stdint.h>
 #include <memory>
 
-#include <rocksdb/env.h>
-
 #include "aio/aio_task.h"
 #include "aio_provider.h"
 #include "utils/singleton.h"
 #include "utils/work_queue.h"
+
+namespace rocksdb {
+class RandomAccessFile;
+class RandomRWFile;
+} // namespace rocksdb
 
 namespace dsn {
 class error_code;

@@ -59,7 +59,8 @@ native_linux_aio_provider::open_read_file(const std::string &fname)
 std::unique_ptr<rocksdb::RandomRWFile>
 native_linux_aio_provider::open_write_file(const std::string &fname)
 {
-    // Create the file if it not exists.
+    // rocksdb::NewRandomRWFile() doesn't act as the docs described, it will not create the
+    // file if it not exists, so we try to create the file by ReopenWritableFile() first.
     {
         std::unique_ptr<rocksdb::WritableFile> cfile;
         auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
@@ -106,7 +107,6 @@ error_code native_linux_aio_provider::write(const aio_context &aio_ctx,
 {
     rocksdb::Slice data((const char *)(aio_ctx.buffer), aio_ctx.buffer_size);
     auto s = aio_ctx.dfile->wfile()->Write(aio_ctx.file_offset, data);
-    //    LOG_ERROR("write file {}:{}", aio_ctx.file_offset, aio_ctx.buffer_size);
     if (!s.ok()) {
         LOG_ERROR("write file failed, err = {}", s.ToString());
         return ERR_FILE_OPERATION_FAILED;
@@ -122,13 +122,11 @@ error_code native_linux_aio_provider::read(const aio_context &aio_ctx,
     rocksdb::Slice result;
     auto s = aio_ctx.dfile->rfile()->Read(
         aio_ctx.file_offset, aio_ctx.buffer_size, &result, (char *)(aio_ctx.buffer));
-    //    LOG_ERROR("read file {}:{}", aio_ctx.file_offset, aio_ctx.buffer_size);
     if (!s.ok()) {
         LOG_ERROR("read file failed, err = {}", s.ToString());
         return ERR_FILE_OPERATION_FAILED;
     }
 
-    //    LOG_ERROR("read file out {}:{}", aio_ctx.file_offset, result.size());
     if (result.empty()) {
         return ERR_HANDLE_EOF;
     }

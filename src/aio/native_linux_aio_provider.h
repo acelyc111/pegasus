@@ -34,11 +34,6 @@
 #include "aio_provider.h"
 #include "utils/error_code.h"
 
-namespace rocksdb {
-class RandomAccessFile;
-class RandomRWFile;
-} // namespace rocksdb
-
 namespace dsn {
 class disk_engine;
 
@@ -49,11 +44,12 @@ public:
     ~native_linux_aio_provider() override;
 
     std::unique_ptr<rocksdb::RandomAccessFile> open_read_file(const std::string &fname) override;
-    std::unique_ptr<rocksdb::RandomRWFile> open_write_file(const std::string &fname) override;
-    error_code close(rocksdb::RandomRWFile *wf) override;
-    error_code flush(rocksdb::RandomRWFile *wf) override;
-    error_code write(const aio_context &aio_ctx, /*out*/ uint64_t *processed_bytes) override;
     error_code read(const aio_context &aio_ctx, /*out*/ uint64_t *processed_bytes) override;
+
+    std::unique_ptr<rocksdb::RandomRWFile> open_write_file(const std::string &fname) override;
+    error_code write(const aio_context &aio_ctx, /*out*/ uint64_t *processed_bytes) override;
+    error_code flush(rocksdb::RandomRWFile *wf) override;
+    error_code close(rocksdb::RandomRWFile *wf) override;
 
     void submit_aio_task(aio_task *aio) override;
     aio_context *prepare_aio_context(aio_task *tsk) override { return new aio_context; }

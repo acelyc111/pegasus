@@ -53,7 +53,6 @@ struct linux_fd_t
     inline bool is_invalid() const { return fd == DSN_INVALID_FILE_HANDLE; }
 };
 
-// TODO(yingchun): remove the class
 class aio_provider
 {
 public:
@@ -69,12 +68,12 @@ public:
     virtual ~aio_provider() = default;
 
     virtual std::unique_ptr<rocksdb::RandomAccessFile> open_read_file(const std::string &fname) = 0;
-    virtual std::unique_ptr<rocksdb::RandomRWFile> open_write_file(const std::string &fname) = 0;
-
-    virtual error_code close(rocksdb::RandomRWFile *rwf) = 0;
-    virtual error_code flush(rocksdb::RandomRWFile *rwf) = 0;
-    virtual error_code write(const aio_context &aio_ctx, /*out*/ uint64_t *processed_bytes) = 0;
     virtual error_code read(const aio_context &aio_ctx, /*out*/ uint64_t *processed_bytes) = 0;
+
+    virtual std::unique_ptr<rocksdb::RandomRWFile> open_write_file(const std::string &fname) = 0;
+    virtual error_code write(const aio_context &aio_ctx, /*out*/ uint64_t *processed_bytes) = 0;
+    virtual error_code flush(rocksdb::RandomRWFile *rwf) = 0;
+    virtual error_code close(rocksdb::RandomRWFile *rwf) = 0;
 
     // Submits the aio_task to the underlying disk-io executor.
     // This task may not be executed immediately, call `aio_task::wait`
