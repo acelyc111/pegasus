@@ -180,6 +180,7 @@ void nfs_service_impl::on_get_file_size(
     get_file_size_response resp;
     error_code err = ERR_OK;
     std::string folder = request.source_dir;
+    // TODO(yingchun): refactor the following code!
     if (request.file_list.size() == 0) // return all file size in the destination file folder
     {
         if (!dsn::utils::filesystem::directory_exists(folder)) {
@@ -201,7 +202,6 @@ void nfs_service_impl::on_get_file_size(
                     }
 
                     resp.size_list.push_back(sz);
-                    // TODO(yingchun): refactor the code
                     resp.file_list.push_back(
                         fpath.substr(request.source_dir.length(), fpath.length() - 1));
                 }
@@ -211,19 +211,15 @@ void nfs_service_impl::on_get_file_size(
     {
         for (const auto &file_name : request.file_list) {
             std::string file_path = dsn::utils::filesystem::path_combine(folder, file_name);
-            uint64_t sz;
-            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                         ->GetFileSize(file_path, &sz);
-            if (!s.ok()) {
-                LOG_ERROR(
-                    "[nfs_service] get size of file {} failed, err = ", file_path, s.ToString());
-                // TODO(yingchun): change the legacy error code
-                err = ERR_OBJECT_NOT_FOUND;
+            int64_t sz;
+            if (!dsn::utils::filesystem::file_size(
+                    file_path, dsn::utils::FileDataType::kSensitive, sz)) {
+                LOG_ERROR("[nfs_service] get size of file {} failed", file_path);
+                err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
 
             resp.size_list.push_back(sz);
-            // TODO(yingchun): refactor the code
             resp.file_list.push_back(
                 (folder + file_name)
                     .substr(request.source_dir.length(), (folder + file_name).length() - 1));
