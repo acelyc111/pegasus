@@ -380,33 +380,33 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
     auto upload_background = [this, req, t]() {
         upload_response resp;
         do {
-            std::unique_ptr<rocksdb::SequentialFile> sfile;
+            rocksdb::EnvOptions env_options;
+            env_options.use_direct_reads = FLAGS_enable_direct_io;
+            std::unique_ptr<rocksdb::SequentialFile> rfile;
             auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                         ->NewSequentialFile(req.input_local_name, &sfile, rocksdb::EnvOptions());
+                         ->NewSequentialFile(req.input_local_name, &rfile, env_options);
             if (!s.ok()) {
-                LOG_ERROR("open file '{}' failed, err = {}", file_name(), s.ToString());
-                resp.err = ERR_FS_INTERNAL;
+                LOG_ERROR("open local file '{}' failed, err = {}", req.input_local_name, s.ToString());
+                resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
 
-            uint64_t file_size;
-            // dsn::utils::filesystem::file_size(
-            //     req.input_local_name, dsn::utils::FileDataType::kSensitive, file_sz);
-            s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                    ->GetFileSize(req.input_local_name, &file_size);
-            if (!s.ok()) {
+            int64_t file_size;
+            if (!dsn::utils::filesystem::file_size(
+                 req.input_local_name, dsn::utils::FileDataType::kSensitive, file_size)) {
                 LOG_ERROR(
-                    "get file size for '{}' failed, err = {}", req.input_local_name, s.ToString());
+                    "get local file '{}' size failed, err = {}", req.input_local_name, s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
 
             rocksdb::Slice result;
             char scratch[file_size];
-            s = sfile->Read(file_size, &result, scratch);
+            s = rfile->Read(file_size, &result, scratch);
             if (!s.ok()) {
                 LOG_ERROR("read file '{}' failed, err = {}", req.input_local_name, s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
+                break;
             }
 
             resp.err = write_data_in_batches(result.data(), result.size(), resp.uploaded_size);
@@ -529,29 +529,28 @@ dsn::task_ptr hdfs_file_object::download(const download_request &req,
         if (resp.err == ERR_OK) {
             bool write_succ = false;
             do {
-                // TODO(yingchun): enplasulate this into a function.
                 rocksdb::EnvOptions env_options;
                 env_options.use_direct_writes = FLAGS_enable_direct_io;
-                std::unique_ptr<rocksdb::WritableFile> rw_file;
+                std::unique_ptr<rocksdb::WritableFile> wfile;
                 auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                             ->NewWritableFile(req.output_local_name, &rw_file, env_options);
+                             ->NewWritableFile(req.output_local_name, &wfile, env_options);
                 if (!s.ok()) {
                     LOG_ERROR(
                         "create file '{}' failed, err = {}", req.output_local_name, s.ToString());
                     break;
                 }
 
-                s = rw_file->Append(rocksdb::Slice(read_buffer.data(), read_length));
+                s = wfile->Append(rocksdb::Slice(read_buffer.data(), read_length));
                 if (!s.ok()) {
                     LOG_ERROR(
                         "append file '{}' failed, err = {}", req.output_local_name, s.ToString());
                     break;
                 }
 
-                s = rw_file->Sync();
+                s = wfile->Fsync();
                 if (!s.ok()) {
                     LOG_ERROR(
-                        "sync file '{}' failed, err = {}", req.output_local_name, s.ToString());
+                        "fsync file '{}' failed, err = {}", req.output_local_name, s.ToString());
                     break;
                 }
 
