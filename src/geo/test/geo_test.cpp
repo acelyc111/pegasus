@@ -45,7 +45,6 @@
 #include "geo/lib/geo_client.h"
 #include "pegasus/client.h"
 #include "runtime/rpc/rpc_address.h"
-#include "test_util/test_util.h"
 #include "utils/blob.h"
 #include "utils/error_code.h"
 #include "utils/flags.h"
@@ -57,7 +56,11 @@ namespace geo {
 
 DSN_DECLARE_int32(min_level);
 
-class geo_client_test : public pegasus::encrypt_data_test_base
+// TODO(yingchun): it doesn't make sense to derive from pegasus::encrypt_data_test_base to test
+//  encryption or non-encryption senarios, because the Pegasus cluster has been started with a
+//  fixed value of FLAGS_encrypt_data_at_rest.
+//  We can test the senarios after clearing and restarting the cluster.
+class geo_client_test : public ::testing::Test
 {
 public:
     geo_client_test()
@@ -122,9 +125,7 @@ inline bool operator==(const SearchResult &l, const SearchResult &r)
            l.value == r.value && l.cellid == r.cellid;
 }
 
-INSTANTIATE_TEST_CASE_P(, geo_client_test, ::testing::Values(false, true));
-
-TEST_P(geo_client_test, set_and_del)
+TEST_F(geo_client_test, set_and_del)
 {
     double expect_lat_degrees = 12.345;
     double expect_lng_degrees = 67.890;
@@ -213,7 +214,7 @@ TEST_P(geo_client_test, set_and_del)
     }
 }
 
-TEST_P(geo_client_test, set_and_del_on_undecoded_data)
+TEST_F(geo_client_test, set_and_del_on_undecoded_data)
 {
     double lat_degrees = 23.456;
     double lng_degrees = 78.901;
@@ -243,7 +244,7 @@ TEST_P(geo_client_test, set_and_del_on_undecoded_data)
     ASSERT_EQ(ret, pegasus::PERR_OK);
 }
 
-TEST_P(geo_client_test, set_geo_data)
+TEST_F(geo_client_test, set_geo_data)
 {
     double lat_degrees = 56.789;
     double lng_degrees = 12.345;
@@ -276,7 +277,7 @@ TEST_P(geo_client_test, set_geo_data)
     ASSERT_EQ(result.front().value, test_value);
 }
 
-TEST_P(geo_client_test, same_point_diff_hash_key)
+TEST_F(geo_client_test, same_point_diff_hash_key)
 {
     double lat_degrees = 22.345;
     double lng_degrees = 67.890;
@@ -343,7 +344,7 @@ TEST_P(geo_client_test, same_point_diff_hash_key)
     ASSERT_EQ(ret, pegasus::PERR_OK);
 }
 
-TEST_P(geo_client_test, same_point_diff_sort_key)
+TEST_F(geo_client_test, same_point_diff_sort_key)
 {
     double lat_degrees = 32.345;
     double lng_degrees = 67.890;
@@ -410,7 +411,7 @@ TEST_P(geo_client_test, same_point_diff_sort_key)
     ASSERT_EQ(ret, pegasus::PERR_OK);
 }
 
-TEST_P(geo_client_test, generate_and_restore_geo_keys)
+TEST_F(geo_client_test, generate_and_restore_geo_keys)
 {
     std::string geo_hash_key;
     std::string geo_sort_key;
@@ -450,7 +451,7 @@ TEST_P(geo_client_test, generate_and_restore_geo_keys)
     ASSERT_EQ(test_sort_key, restore_sort_key);
 }
 
-TEST_P(geo_client_test, normalize_result_random_order)
+TEST_F(geo_client_test, normalize_result_random_order)
 {
     geo::SearchResult r1(1.1, 1.1, 1, "test_hash_key_1", "test_sort_key_1", "value_1");
     geo::SearchResult r2(2.2, 2.2, 2, "test_hash_key_2", "test_sort_key_2", "value_2");
@@ -495,7 +496,7 @@ TEST_P(geo_client_test, normalize_result_random_order)
     }
 }
 
-TEST_P(geo_client_test, normalize_result_distance_order)
+TEST_F(geo_client_test, normalize_result_distance_order)
 {
     geo::SearchResult r1(1.1, 1.1, 1, "test_hash_key_1", "test_sort_key_1", "value_1");
     geo::SearchResult r2(2.2, 2.2, 2, "test_hash_key_2", "test_sort_key_2", "value_2");
@@ -539,7 +540,7 @@ TEST_P(geo_client_test, normalize_result_distance_order)
     }
 }
 
-TEST_P(geo_client_test, distance)
+TEST_F(geo_client_test, distance)
 {
     {
         double lat_degrees = 80;
@@ -573,7 +574,7 @@ TEST_P(geo_client_test, distance)
     ASSERT_DOUBLE_EQ(distance, 0.0);
 }
 
-TEST_P(geo_client_test, large_cap)
+TEST_F(geo_client_test, large_cap)
 {
     double lat_degrees = 40.039752;
     double lng_degrees = 116.332557;
