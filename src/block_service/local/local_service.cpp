@@ -424,6 +424,7 @@ dsn::task_ptr local_file_object::read(const read_request &req,
 
             resp.err = load_metadata();
             if (resp.err != ERR_OK) {
+                resp.err = ERR_FS_INTERNAL;
                 LOG_WARNING("load metadata of {} failed", file_name());
                 break;
             }

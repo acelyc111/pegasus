@@ -26,6 +26,8 @@
 #include <string>
 #include <utility>
 
+#include <rocksdb/env.h>
+
 #include "block_service/block_service_manager.h"
 #include "block_service/local/local_service.h"
 #include "block_service_mock.h"
@@ -57,20 +59,20 @@ public:
             PROVIDER, LOCAL_DIR, FILE_NAME, _fs.get(), download_size);
     }
 
-    // TODO(yingchun): improve the tests to test operate on encrypted files.
     void create_local_file(const std::string &file_name)
     {
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, file_name);
-        utils::filesystem::create_file(whole_name);
-        std::ofstream test_file;
-        test_file.open(whole_name);
-        test_file << "write some data.\n";
-        test_file.close();
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                       rocksdb::Slice("write some data."),
+                                       whole_name,
+                                       /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
         _file_meta.name = whole_name;
-        utils::filesystem::md5sum(whole_name, _file_meta.md5);
-        utils::filesystem::file_size(
-            whole_name, dsn::utils::FileDataType::kNonSensitive, _file_meta.size);
+        ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(whole_name, _file_meta.md5));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            whole_name, dsn::utils::FileDataType::kSensitive, _file_meta.size));
     }
 
     void create_remote_file(const std::string &file_name, int64_t size, const std::string &md5)
@@ -91,8 +93,7 @@ public:
 
 INSTANTIATE_TEST_CASE_P(, block_service_manager_test, ::testing::Values(false, true));
 
-// download_file unit tests
-TEST_P(block_service_manager_test, do_download_remote_file_not_exist)
+TEST_P(block_service_manager_test, remote_file_not_exist)
 {
     utils::filesystem::remove_path(LOCAL_DIR);
     auto fs = std::make_unique<local_service>();
@@ -100,31 +101,29 @@ TEST_P(block_service_manager_test, do_download_remote_file_not_exist)
     uint64_t download_size = 0;
     error_code err = _block_service_manager.download_file(
         PROVIDER, LOCAL_DIR, FILE_NAME, fs.get(), download_size);
-    ASSERT_EQ(err, ERR_CORRUPTION); // file does not exist
+    ASSERT_EQ(ERR_CORRUPTION, err);
 }
 
-TEST_P(block_service_manager_test, do_download_same_name_file)
+TEST_P(block_service_manager_test, local_file_exist)
 {
-    // local file exists, but md5 not matched with remote file
-    create_local_file(FILE_NAME);
-    create_remote_file(FILE_NAME, 2333, "md5_not_match");
-    uint64_t download_size = 0;
-    ASSERT_EQ(test_download_file(download_size), ERR_PATH_ALREADY_EXIST);
-    ASSERT_EQ(download_size, 0);
-}
-
-TEST_P(block_service_manager_test, do_download_file_exist)
-{
-    create_local_file(FILE_NAME);
-    create_remote_file(FILE_NAME, _file_meta.size, _file_meta.md5);
-    uint64_t download_size = 0;
-    ASSERT_EQ(test_download_file(download_size), ERR_PATH_ALREADY_EXIST);
-    ASSERT_EQ(download_size, 0);
+    NO_FATALS(create_local_file(FILE_NAME));
+    struct remote_file_info
+    {
+        int64_t size;
+        std::string md5;
+    } tests[]{{2333, "bad_md5"}, {2333, _file_meta.md5}, {_file_meta.size, "bad_md5"}};
+    for (const auto &test : tests) {
+        // The remote file will be overwritten when repeatedly created.
+        create_remote_file(FILE_NAME, test.size, test.md5);
+        uint64_t download_size = 0;
+        ASSERT_EQ(test_download_file(download_size), ERR_PATH_ALREADY_EXIST);
+        ASSERT_EQ(download_size, 0);
+    }
 }
 
 TEST_P(block_service_manager_test, do_download_succeed)
 {
-    create_local_file(FILE_NAME);
+    NO_FATALS(create_local_file(FILE_NAME));
     create_remote_file(FILE_NAME, _file_meta.size, _file_meta.md5);
     // remove local file to mock condition that file not existed
     std::string file_name = utils::filesystem::path_combine(LOCAL_DIR, FILE_NAME);
