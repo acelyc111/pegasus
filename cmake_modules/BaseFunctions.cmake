@@ -389,11 +389,6 @@ function(dsn_common_setup)
 
   set(BUILD_SHARED_LIBS OFF)
 
-  include(CheckCXXCompilerFlag)
-  CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
-  if(NOT ${COMPILER_SUPPORTS_CXX17})
-    message(FATAL_ERROR "You need a compiler with C++17 support.")
-  endif()
   set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(CMAKE_CXX_EXTENSIONS OFF)

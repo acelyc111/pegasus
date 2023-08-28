@@ -60,6 +60,7 @@ namespace file {
     default:
         CHECK(false, "");
     }
+    return nullptr;
 }
 
 /*extern*/ error_code close(disk_file *file)
