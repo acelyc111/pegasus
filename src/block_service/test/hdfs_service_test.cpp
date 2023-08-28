@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+#include <rocksdb/env.h>
+
 #include "block_service/block_service.h"
 #include "block_service/hdfs/hdfs_service.h"
 #include "runtime/api_layer1.h"
@@ -35,6 +37,7 @@
 #include "runtime/task/task.h"
 #include "runtime/task/task_code.h"
 #include "runtime/task/task_tracker.h"
+#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/blob.h"
 #include "utils/encryption_utils.h"
@@ -66,7 +69,7 @@ DSN_DEFINE_uint32(hdfs_test,
 
 DEFINE_TASK_CODE(LPC_TEST_HDFS, TASK_PRIORITY_HIGH, dsn::THREAD_POOL_DEFAULT)
 
-class HDFSClientTest : public testing::Test
+class HDFSClientTest : public pegasus::encrypt_data_test_base
 {
 protected:
     virtual void SetUp() override;
@@ -94,13 +97,18 @@ void HDFSClientTest::TearDown() {}
 
 void HDFSClientTest::generate_test_file(const char *filename)
 {
-    // generate a local test file.
     int lines = FLAGS_num_test_file_lines;
-    FILE *fp = fopen(filename, "wb");
+    std::unique_ptr<rocksdb::WritableFile> wfile;
+    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                 ->NewWritableFile(filename, &wfile, rocksdb::EnvOptions());
+    CHECK(s.ok(), "Open error: {}", s.ToString());
     for (int i = 0; i < lines; ++i) {
-        fprintf(fp, "%04d_this_is_a_simple_test_file\n", i);
+        rocksdb::Slice data(fmt::format("{:04}d_this_is_a_simple_test_file\n", i));
+        s = wfile->Append(data);
+        CHECK(s.ok(), "Append error: {}", s.ToString());
     }
-    fclose(fp);
+    s = wfile->Fsync();
+    CHECK(s.ok(), "Fsync error: {}", s.ToString());
 }
 
 void HDFSClientTest::write_test_files_async(task_tracker *tracker)
@@ -110,17 +118,19 @@ void HDFSClientTest::write_test_files_async(task_tracker *tracker)
         tasking::enqueue(LPC_TEST_HDFS, tracker, [this, i]() {
             // mock the writing process in hdfs_file_object::download().
             std::string test_file_name = local_test_dir + "/test_file_" + std::to_string(i);
-            std::ofstream out(test_file_name, std::ios::binary | std::ios::out | std::ios::trunc);
-            if (out.is_open()) {
-                out.write(test_data_str.c_str(), test_data_str.length());
-            }
-            out.close();
+            auto s = rocksdb::WriteStringToFile(
+                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                rocksdb::Slice(test_data_str),
+                test_file_name,
+                /* should_sync */ true);
+            CHECK(s.ok(), "{}", s.ToString());
         });
     }
 }
 
-// TODO(yingchun): add encryption test when HDFSClient supports encryption.
-TEST_F(HDFSClientTest, test_basic_operation)
+INSTANTIATE_TEST_CASE_P(, HDFSClientTest, ::testing::Values(false, true));
+
+TEST_P(HDFSClientTest, test_basic_operation)
 {
     if (name_node == example_name_node || backup_path == example_backup_path) {
         return;
@@ -134,12 +144,11 @@ TEST_F(HDFSClientTest, test_basic_operation)
     std::string remote_test_file = "hdfs_client_test/test_file";
     int64_t test_file_size = 0;
 
-    // TODO(yingchun): improve the tests to test operate on encrypted files.
     generate_test_file(local_test_file.c_str());
     dsn::utils::filesystem::file_size(
         local_test_file, dsn::utils::FileDataType::kNonSensitive, test_file_size);
 
-    // fisrt clean up all old file in test directory.
+    // first clean up all old file in test directory.
     printf("clean up all old files.\n");
     remove_path_response rem_resp;
     s->remove_path(remove_path_request{"hdfs_client_test", true},
@@ -261,7 +270,7 @@ TEST_F(HDFSClientTest, test_basic_operation)
     utils::filesystem::remove_path(local_file_for_download);
 }
 
-TEST_F(HDFSClientTest, test_concurrent_upload_download)
+TEST_P(HDFSClientTest, test_concurrent_upload_download)
 {
     if (name_node == example_name_node || backup_path == example_backup_path) {
         return;
@@ -391,7 +400,7 @@ TEST_F(HDFSClientTest, test_concurrent_upload_download)
     }
 }
 
-TEST_F(HDFSClientTest, test_rename_path_while_writing)
+TEST_P(HDFSClientTest, test_rename_path_while_writing)
 {
     task_tracker tracker;
     write_test_files_async(&tracker);
