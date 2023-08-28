@@ -386,16 +386,18 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
             auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
                          ->NewSequentialFile(req.input_local_name, &rfile, env_options);
             if (!s.ok()) {
-                LOG_ERROR("open local file '{}' failed, err = {}", req.input_local_name, s.ToString());
+                LOG_ERROR(
+                    "open local file '{}' failed, err = {}", req.input_local_name, s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
 
             int64_t file_size;
             if (!dsn::utils::filesystem::file_size(
-                 req.input_local_name, dsn::utils::FileDataType::kSensitive, file_size)) {
-                LOG_ERROR(
-                    "get local file '{}' size failed, err = {}", req.input_local_name, s.ToString());
+                    req.input_local_name, dsn::utils::FileDataType::kSensitive, file_size)) {
+                LOG_ERROR("get local file '{}' size failed, err = {}",
+                          req.input_local_name,
+                          s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
