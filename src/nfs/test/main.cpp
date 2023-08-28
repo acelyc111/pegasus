@@ -69,7 +69,7 @@ INSTANTIATE_TEST_CASE_P(, nfs_test, ::testing::Values(false));
 
 TEST_P(nfs_test, basic)
 {
-    std::unique_ptr<dsn::nfs_node> nfs(dsn::nfs_node::create());
+    auto nfs = dsn::nfs_node::create();
     nfs->start();
     nfs->register_async_rpc_handler_for_test();
     dsn::gpid fake_pid = gpid(1, 0);
