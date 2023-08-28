@@ -253,8 +253,8 @@ error_code meta_state_service_simple::initialize(const std::vector<std::string> 
     if (utils::filesystem::file_exists(log_path)) {
         std::unique_ptr<rocksdb::SequentialFile> log_file;
         // TODO(yingchun): don't encrypt
-        auto s =
-            dsn::utils::PegasusEnv()->NewSequentialFile(log_path, &log_file, rocksdb::EnvOptions());
+        auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                     ->NewSequentialFile(log_path, &log_file, rocksdb::EnvOptions());
         CHECK(s.ok(), "open log file '{}' failed, err = {}", log_path, s.ToString());
 
         while (true) {

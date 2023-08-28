@@ -394,40 +394,13 @@ bool rename_path(const std::string &path1, const std::string &path2)
 // TODO(yingchun): refactor to use uint64_t.
 bool file_size(const std::string &path, FileDataType type, int64_t &sz)
 {
-    if (type == FileDataType::kSensitive) {
-        uint64_t file_size = 0;
-        auto s = dsn::utils::PegasusEnv()->GetFileSize(path, &file_size);
-        if (!s.ok()) {
-            LOG_ERROR("GetFileSize failed, file '{}', err = {}", path, s.ToString());
-            return false;
-        }
-        sz = file_size;
-    } else {
-        CHECK(FileDataType::kNonSensitive == type, "");
-        struct stat_ st;
-        std::string npath;
-        int err;
-
-        if (path.empty()) {
-            return false;
-        }
-
-        err = get_normalized_path(path, npath);
-        if (err != 0) {
-            return false;
-        }
-
-        err = dsn::utils::filesystem::get_stat_internal(npath, st);
-        if (err != 0) {
-            return false;
-        }
-
-        if (!S_ISREG(st.st_mode)) {
-            return false;
-        }
-
-        sz = st.st_size;
+    uint64_t file_size = 0;
+    auto s = dsn::utils::PegasusEnv(type)->GetFileSize(path, &file_size);
+    if (!s.ok()) {
+        LOG_ERROR("GetFileSize failed, file '{}', err = {}", path, s.ToString());
+        return false;
     }
+    sz = file_size;
     return true;
 }
 

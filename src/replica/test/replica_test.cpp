@@ -62,6 +62,7 @@
 #include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/defer.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
@@ -187,7 +188,7 @@ public:
         ASSERT_TRUE(dsn::utils::filesystem::file_exists(current_chkpt_file));
         int64_t size = 0;
         dsn::utils::filesystem::file_size(
-            current_chkpt_file, utils::filesystem::FileDataType::kNonSensitive, size);
+            current_chkpt_file, dsn::utils::FileDataType::kNonSensitive, size);
         ASSERT_LT(0, size);
     }
 

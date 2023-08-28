@@ -42,6 +42,7 @@
 #include "runtime/tool_api.h"
 #include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
@@ -117,14 +118,14 @@ TEST_P(nfs_test, basic)
         // TODO(yingchun): improve the tests to test operate on encrypted files.
         int64_t sz1, sz2;
         ASSERT_TRUE(utils::filesystem::file_size(
-            "nfs_test_file1", utils::filesystem::FileDataType::kNonSensitive, sz1));
+            "nfs_test_file1", dsn::utils::FileDataType::kNonSensitive, sz1));
         ASSERT_TRUE(utils::filesystem::file_size(
-            "nfs_test_dir/nfs_test_file1", utils::filesystem::FileDataType::kNonSensitive, sz2));
+            "nfs_test_dir/nfs_test_file1", dsn::utils::FileDataType::kNonSensitive, sz2));
         ASSERT_EQ(sz1, sz2);
         ASSERT_TRUE(utils::filesystem::file_size(
-            "nfs_test_file2", utils::filesystem::FileDataType::kNonSensitive, sz1));
+            "nfs_test_file2", dsn::utils::FileDataType::kNonSensitive, sz1));
         ASSERT_TRUE(utils::filesystem::file_size(
-            "nfs_test_dir/nfs_test_file2", utils::filesystem::FileDataType::kNonSensitive, sz2));
+            "nfs_test_dir/nfs_test_file2", dsn::utils::FileDataType::kNonSensitive, sz2));
         ASSERT_EQ(sz1, sz2);
     }
 
@@ -200,16 +201,14 @@ TEST_P(nfs_test, basic)
 
         int64_t sz1, sz2;
         ASSERT_TRUE(utils::filesystem::file_size(
-            "nfs_test_dir/nfs_test_file1", utils::filesystem::FileDataType::kNonSensitive, sz1));
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir_copy/nfs_test_file1",
-                                                 utils::filesystem::FileDataType::kNonSensitive,
-                                                 sz2));
+            "nfs_test_dir/nfs_test_file1", dsn::utils::FileDataType::kNonSensitive, sz1));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            "nfs_test_dir_copy/nfs_test_file1", dsn::utils::FileDataType::kNonSensitive, sz2));
         ASSERT_EQ(sz1, sz2);
         ASSERT_TRUE(utils::filesystem::file_size(
-            "nfs_test_dir/nfs_test_file2", utils::filesystem::FileDataType::kNonSensitive, sz1));
-        ASSERT_TRUE(utils::filesystem::file_size("nfs_test_dir_copy/nfs_test_file2",
-                                                 utils::filesystem::FileDataType::kNonSensitive,
-                                                 sz2));
+            "nfs_test_dir/nfs_test_file2", dsn::utils::FileDataType::kNonSensitive, sz1));
+        ASSERT_TRUE(utils::filesystem::file_size(
+            "nfs_test_dir_copy/nfs_test_file2", dsn::utils::FileDataType::kNonSensitive, sz2));
         ASSERT_EQ(sz1, sz2);
     }
 

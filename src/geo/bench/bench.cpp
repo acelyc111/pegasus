@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         RESULT_COUNT
     };
     auto statistics = rocksdb::CreateDBStatistics();
-    rocksdb::Env *env = dsn::utils::PegasusEnv();
+    rocksdb::Env *env = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive);
     uint64_t start = env->NowNanos();
     std::atomic<uint64_t> count(test_count);
     dsn::utils::notify_event get_completed;

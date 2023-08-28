@@ -30,6 +30,7 @@
 #include "block_service_mock.h"
 #include "metadata_types.h"
 #include "test_util/test_util.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 
@@ -68,7 +69,7 @@ public:
         _file_meta.name = whole_name;
         utils::filesystem::md5sum(whole_name, _file_meta.md5);
         utils::filesystem::file_size(
-            whole_name, utils::filesystem::FileDataType::kNonSensitive, _file_meta.size);
+            whole_name, dsn::utils::FileDataType::kNonSensitive, _file_meta.size);
     }
 
     void create_remote_file(const std::string &file_name, int64_t size, const std::string &md5)

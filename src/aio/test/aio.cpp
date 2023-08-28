@@ -43,6 +43,7 @@
 #include "runtime/tool_api.h"
 #include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
@@ -336,7 +337,7 @@ TEST_P(aio_test, dsn_file)
 
     int64_t fin_size, fout_size;
     ASSERT_TRUE(utils::filesystem::file_size(
-        "copy_source.txt", utils::filesystem::FileDataType::kNonSensitive, fin_size));
+        "copy_source.txt", dsn::utils::FileDataType::kNonSensitive, fin_size));
     ASSERT_LT(0, fin_size);
 
     dsn::disk_file *fin = file::open("copy_source.txt", file::FileOpenType::kReadOnly);
@@ -411,6 +412,6 @@ TEST_P(aio_test, dsn_file)
     ASSERT_EQ(ERR_OK, file::close(fin));
 
     ASSERT_TRUE(utils::filesystem::file_size(
-        "copy_dest.txt", utils::filesystem::FileDataType::kNonSensitive, fout_size));
+        "copy_dest.txt", dsn::utils::FileDataType::kNonSensitive, fout_size));
     ASSERT_EQ(fin_size, fout_size);
 }

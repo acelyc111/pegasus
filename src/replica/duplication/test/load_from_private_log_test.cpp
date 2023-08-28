@@ -44,6 +44,7 @@
 #include "runtime/task/task_tracker.h"
 #include "utils/autoref_ptr.h"
 #include "utils/chrono_literals.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/errors.h"
 #include "utils/fail_point.h"
@@ -463,7 +464,7 @@ TEST_P(load_fail_mode_test, fail_skip_real_corrupted_file)
         std::string log_path = _log_dir + "/log.1.0";
         int64_t file_size;
         ASSERT_TRUE(utils::filesystem::file_size(
-            log_path, utils::filesystem::FileDataType::kSensitive, file_size));
+            log_path, dsn::utils::FileDataType::kSensitive, file_size));
         auto wfile = file::open(log_path, file::FileOpenType::kWriteOnly);
         ASSERT_NE(wfile, nullptr);
 

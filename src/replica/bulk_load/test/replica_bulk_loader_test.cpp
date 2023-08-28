@@ -33,6 +33,7 @@
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/task/task_tracker.h"
 #include "utils/blob.h"
+#include "utils/encryption_utils.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
@@ -259,7 +260,7 @@ public:
         _file_meta.name = whole_name;
         utils::filesystem::md5sum(whole_name, _file_meta.md5);
         utils::filesystem::file_size(
-            whole_name, utils::filesystem::FileDataType::kNonSensitive, _file_meta.size);
+            whole_name, dsn::utils::FileDataType::kNonSensitive, _file_meta.size);
     }
 
     error_code create_local_metadata_file()

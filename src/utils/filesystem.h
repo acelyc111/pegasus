@@ -61,6 +61,8 @@
 
 namespace dsn {
 namespace utils {
+enum class FileDataType;
+
 namespace filesystem {
 
 // TODO(yingchun): pre refactor: consider to use rocksdb/file_system.h to replace functions in this
@@ -99,11 +101,6 @@ bool remove_path(const std::string &path);
 // this will always remove target path if exist
 bool rename_path(const std::string &path1, const std::string &path2);
 
-enum class FileDataType
-{
-    kSensitive = 0,
-    kNonSensitive = 1
-};
 bool file_size(const std::string &path, FileDataType type, int64_t &sz);
 
 bool create_directory(const std::string &path);

@@ -196,7 +196,7 @@ void nfs_service_impl::on_get_file_size(
                 for (const auto &fpath : file_list) {
                     int64_t sz;
                     if (!dsn::utils::filesystem::file_size(
-                            fpath, dsn::utils::filesystem::FileDataType::kSensitive, sz)) {
+                            fpath, dsn::utils::FileDataType::kSensitive, sz)) {
                         LOG_ERROR("[nfs_service] get size of file {} failed", fpath);
                         err = ERR_FILE_OPERATION_FAILED;
                         break;
@@ -214,7 +214,8 @@ void nfs_service_impl::on_get_file_size(
         for (const auto &file_name : request.file_list) {
             std::string file_path = dsn::utils::filesystem::path_combine(folder, file_name);
             uint64_t sz;
-            auto s = dsn::utils::PegasusEnv()->GetFileSize(file_path, &sz);
+            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                         ->GetFileSize(file_path, &sz);
             if (!s.ok()) {
                 LOG_ERROR(
                     "[nfs_service] get size of file {} failed, err = ", file_path, s.ToString());

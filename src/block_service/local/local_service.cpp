@@ -279,32 +279,18 @@ error_code local_file_object::load_metadata()
         return ERR_OK;
 
     std::string metadata_path = local_service::get_metafile(file_name());
-    std::unique_ptr<rocksdb::SequentialFile> sfile;
-    auto s =
-        dsn::utils::PegasusEnv()->NewSequentialFile(metadata_path, &sfile, rocksdb::EnvOptions());
-    if (!s.ok()) {
-        LOG_ERROR("open file '{}' failed, err = {}", metadata_path, s.ToString());
-        return ERR_FS_INTERNAL;
-    }
-
-    uint64_t file_size;
-    s = dsn::utils::PegasusEnv()->GetFileSize(metadata_path, &file_size);
-    if (!s.ok()) {
-        LOG_ERROR("get file size for '{}' failed, err = {}", metadata_path, s.ToString());
-        return ERR_FS_INTERNAL;
-    }
-
-    rocksdb::Slice result;
-    char scratch[file_size];
-    s = sfile->Read(file_size, &result, scratch);
+    std::string data;
+    auto s = rocksdb::ReadFileToString(
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), metadata_path, &data);
     if (!s.ok()) {
         LOG_ERROR("read file '{}' failed, err = {}", metadata_path, s.ToString());
         return ERR_FS_INTERNAL;
     }
 
     file_metadata meta;
-    bool ans = file_metadata_from_json(result.ToString(), meta);
+    bool ans = file_metadata_from_json(data, meta);
     if (!ans) {
+        LOG_ERROR("decode metadata '{}' file content failed", metadata_path);
         return ERR_FS_INTERNAL;
     }
     _size = meta.size;
@@ -318,28 +304,15 @@ error_code local_file_object::store_metadata()
     file_metadata meta;
     meta.md5 = _md5_value;
     meta.size = _size;
+    std::string meta_str = nlohmann::json(meta).dump();
     std::string metadata_path = local_service::get_metafile(file_name());
-
-    rocksdb::EnvOptions env_options;
-    env_options.use_direct_writes = FLAGS_enable_direct_io;
-    std::unique_ptr<rocksdb::WritableFile> rw_file;
     auto s =
-        dsn::utils::PegasusEnv()->NewWritableFile(metadata_path, &rw_file, rocksdb::EnvOptions());
+        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                                   rocksdb::Slice(meta_str),
+                                   metadata_path,
+                                   true);
     if (!s.ok()) {
         LOG_WARNING("store to metadata file {} failed, err={}", metadata_path, s.ToString());
-        return ERR_FS_INTERNAL;
-    }
-
-    std::string meta_str = nlohmann::json(meta).dump();
-    s = rw_file->Append(meta_str);
-    if (!s.ok()) {
-        LOG_ERROR("append file '{}' failed, err = {}", metadata_path, s.ToString());
-        return ERR_FS_INTERNAL;
-    }
-
-    s = rw_file->Sync();
-    if (!s.ok()) {
-        LOG_ERROR("sync file '{}' failed, err = {}", metadata_path, s.ToString());
         return ERR_FS_INTERNAL;
     }
 
@@ -383,8 +356,8 @@ dsn::task_ptr local_file_object::write(const write_request &req,
                 rocksdb::EnvOptions env_options;
                 env_options.use_direct_writes = FLAGS_enable_direct_io;
                 std::unique_ptr<rocksdb::WritableFile> rw_file;
-                auto s =
-                    dsn::utils::PegasusEnv()->NewWritableFile(file_name(), &rw_file, env_options);
+                auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                             ->NewWritableFile(file_name(), &rw_file, env_options);
                 if (!s.ok()) {
                     LOG_ERROR("create file '{}' failed, err = {}", file_name(), s.ToString());
                     resp.err = ERR_FS_INTERNAL;
@@ -459,8 +432,8 @@ dsn::task_ptr local_file_object::read(const read_request &req,
 
             LOG_DEBUG("start to read file '{}', size = {}", file_name(), total_sz);
             std::unique_ptr<rocksdb::SequentialFile> sfile;
-            auto s = dsn::utils::PegasusEnv()->NewSequentialFile(
-                file_name(), &sfile, rocksdb::EnvOptions());
+            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                         ->NewSequentialFile(file_name(), &sfile, rocksdb::EnvOptions());
             if (!s.ok()) {
                 LOG_ERROR("open file '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FS_INTERNAL;
@@ -510,7 +483,8 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
 
         upload_response resp;
         do {
-            auto s = dsn::utils::PegasusEnv()->LinkFile(req.input_local_name, file_name());
+            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                         ->LinkFile(req.input_local_name, file_name());
             if (!s.ok()) {
                 LOG_ERROR("link file '{}' to '{}' failed, err = {}",
                           req.input_local_name,
@@ -521,7 +495,8 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
             }
 
             uint64_t file_size;
-            s = dsn::utils::PegasusEnv()->GetFileSize(file_name(), &file_size);
+            s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                    ->GetFileSize(file_name(), &file_size);
             if (!s.ok()) {
                 LOG_ERROR("get file size for '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
@@ -580,7 +555,8 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             }
 
             LOG_DEBUG("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
-            auto s = dsn::utils::PegasusEnv()->LinkFile(file_name(), target_file);
+            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                         ->LinkFile(file_name(), target_file);
             if (!s.ok()) {
                 LOG_ERROR("link file '{}' to '{}' failed, err = {}",
                           file_name(),
@@ -591,7 +567,8 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             }
 
             uint64_t file_size;
-            s = dsn::utils::PegasusEnv()->GetFileSize(file_name(), &file_size);
+            s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                    ->GetFileSize(file_name(), &file_size);
             if (!s.ok()) {
                 LOG_ERROR("get file size for '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;

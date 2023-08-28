@@ -44,6 +44,8 @@
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
 
+// TODO(yingchun): most of the code are the same as
+// src/replica/storage/simple_kv/simple_kv.server.impl.cpp, unify the code!
 namespace dsn {
 class blob;
 
@@ -182,7 +184,8 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
 
     std::unique_ptr<rocksdb::SequentialFile> rfile;
     // TODO(yingchun): don't encrypt
-    auto s = dsn::utils::PegasusEnv()->NewSequentialFile(name, &rfile, rocksdb::EnvOptions());
+    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                 ->NewSequentialFile(name, &rfile, rocksdb::EnvOptions());
     CHECK(s.ok(), "open log file '{}' failed, err = {}", name, s.ToString());
 
     _store.clear();

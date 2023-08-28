@@ -24,6 +24,6 @@
 namespace pegasus {
 namespace test {
 
-config::config() { env = dsn::utils::PegasusEnv(); }
+config::config() { env = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive); }
 } // namespace test
 } // namespace pegasus

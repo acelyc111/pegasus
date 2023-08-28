@@ -83,7 +83,8 @@ error_code write_blob_to_file(const std::string &fname, const blob &data)
     // TODO(yingchun): consider not encrypt the meta files.
     std::string tmp_fname = fname + ".tmp";
     auto cleanup = defer([tmp_fname]() {
-        auto s = dsn::utils::PegasusEnv()->DeleteFile(tmp_fname);
+        auto s =
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)->DeleteFile(tmp_fname);
         // TODO(yingchun): add macro for rocksdb::Status
         LOG_WARNING_IF(!s.ok(), "delete file {} failed, error = {}", tmp_fname, s.ToString());
     });
@@ -162,7 +163,7 @@ error_code replica_init_info::load_json(const std::string &fname)
     int64_t file_size = 0;
     LOG_AND_RETURN_NOT_TRUE(
         ERROR,
-        utils::filesystem::file_size(fname, utils::filesystem::FileDataType::kSensitive, file_size),
+        utils::filesystem::file_size(fname, dsn::utils::FileDataType::kSensitive, file_size),
         ERR_FILE_OPERATION_FAILED,
         "get file size of {} failed",
         fname);
@@ -220,7 +221,7 @@ error_code replica_app_info::load(const std::string &fname)
     int64_t file_size = 0;
     LOG_AND_RETURN_NOT_TRUE(
         ERROR,
-        utils::filesystem::file_size(fname, utils::filesystem::FileDataType::kSensitive, file_size),
+        utils::filesystem::file_size(fname, dsn::utils::FileDataType::kSensitive, file_size),
         ERR_FILE_OPERATION_FAILED,
         "get file size of {} failed",
         fname);

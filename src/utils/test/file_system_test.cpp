@@ -22,6 +22,7 @@
 #include <string>
 
 #include "test_util/test_util.h"
+#include "utils/encryption_utils.h"
 #include "utils/filesystem.h"
 
 namespace dsn {

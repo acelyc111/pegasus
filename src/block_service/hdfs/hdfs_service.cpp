@@ -382,8 +382,8 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
         upload_response resp;
         do {
             std::unique_ptr<rocksdb::SequentialFile> sfile;
-            auto s = dsn::utils::PegasusEnv()->NewSequentialFile(
-                req.input_local_name, &sfile, rocksdb::EnvOptions());
+            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                         ->NewSequentialFile(req.input_local_name, &sfile, rocksdb::EnvOptions());
             if (!s.ok()) {
                 LOG_ERROR("open file '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FS_INTERNAL;
@@ -392,8 +392,9 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
 
             uint64_t file_size;
             // dsn::utils::filesystem::file_size(
-            //     req.input_local_name, dsn::utils::filesystem::FileDataType::kSensitive, file_sz);
-            s = dsn::utils::PegasusEnv()->GetFileSize(req.input_local_name, &file_size);
+            //     req.input_local_name, dsn::utils::FileDataType::kSensitive, file_sz);
+            s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                    ->GetFileSize(req.input_local_name, &file_size);
             if (!s.ok()) {
                 LOG_ERROR(
                     "get file size for '{}' failed, err = {}", req.input_local_name, s.ToString());
@@ -533,8 +534,8 @@ dsn::task_ptr hdfs_file_object::download(const download_request &req,
                 rocksdb::EnvOptions env_options;
                 env_options.use_direct_writes = FLAGS_enable_direct_io;
                 std::unique_ptr<rocksdb::WritableFile> rw_file;
-                auto s = dsn::utils::PegasusEnv()->NewWritableFile(
-                    req.output_local_name, &rw_file, env_options);
+                auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                             ->NewWritableFile(req.output_local_name, &rw_file, env_options);
                 if (!s.ok()) {
                     LOG_ERROR(
                         "create file '{}' failed, err = {}", req.output_local_name, s.ToString());

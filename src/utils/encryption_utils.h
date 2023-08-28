@@ -24,7 +24,13 @@ class Env;
 namespace dsn {
 namespace utils {
 
-rocksdb::Env *PegasusEnv();
+enum class FileDataType
+{
+    kSensitive = 0,
+    kNonSensitive = 1
+};
+
+rocksdb::Env *PegasusEnv(FileDataType type);
 
 } // namespace dsn
 } // namespace utils

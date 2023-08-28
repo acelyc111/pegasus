@@ -39,6 +39,7 @@
 #include "utils/TokenBucket.h"
 #include "utils/autoref_ptr.h"
 #include "utils/blob.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
@@ -607,7 +608,7 @@ dsn::task_ptr fds_file_object::upload(const upload_request &req,
         // get file size
         int64_t file_sz = 0;
         dsn::utils::filesystem::file_size(
-            local_file, dsn::utils::filesystem::FileDataType::kSensitive, file_sz);
+            local_file, dsn::utils::FileDataType::kSensitive, file_sz);
 
         upload_response resp;
         // TODO: we can cache the whole file in buffer, then upload the buffer rather than the

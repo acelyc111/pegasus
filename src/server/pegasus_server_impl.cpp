@@ -1637,7 +1637,7 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
         // Set `ignore_unknown_options` true for forward compatibility.
         rocksdb::ConfigOptions config_options;
         config_options.ignore_unknown_options = true;
-        config_options.env = dsn::utils::PegasusEnv();
+        config_options.env = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive);
         auto status =
             rocksdb::LoadLatestOptions(config_options, rdb_path, &loaded_db_opt, &loaded_cf_descs);
         if (!status.ok()) {
@@ -1682,7 +1682,7 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
     config_options.ignore_unsupported_options = true;
     config_options.sanity_level =
         rocksdb::ConfigOptions::SanityLevel::kSanityLevelLooselyCompatible;
-    config_options.env = dsn::utils::PegasusEnv();
+    config_options.env = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive);
     // TODO(yingchun): CheckOptionsCompatibility cause many issues!
     auto s =
         rocksdb::CheckOptionsCompatibility(config_options, rdb_path, _db_opts, column_families);

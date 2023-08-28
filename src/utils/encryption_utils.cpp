@@ -62,15 +62,15 @@ rocksdb::Env *NewEncryptedEnv()
     return NewEncryptedEnv(rocksdb::Env::Default(), provider);
 }
 
-rocksdb::Env *PegasusEnv()
+rocksdb::Env *PegasusEnv(FileDataType type)
 {
-    if (FLAGS_encrypt_data_at_rest) {
+    if (FLAGS_encrypt_data_at_rest && type == FileDataType::kSensitive) {
         static rocksdb::Env *env = NewEncryptedEnv();
         return env;
-    } else {
-        static rocksdb::Env *env = rocksdb::Env::Default();
-        return env;
     }
+
+    static rocksdb::Env *env = rocksdb::Env::Default();
+    return env;
 }
 } // namespace dsn
 } // namespace utils

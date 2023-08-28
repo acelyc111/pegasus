@@ -105,13 +105,14 @@ bool replica::read_cold_backup_metadata(const std::string &fname,
     }
     int64_t file_size = 0;
     if (!::dsn::utils::filesystem::file_size(
-            fname, utils::filesystem::FileDataType::kNonSensitive, file_size)) {
+            fname, dsn::utils::FileDataType::kNonSensitive, file_size)) {
         LOG_ERROR_PREFIX("get file({}) size failed", fname);
         return false;
     }
 
     std::unique_ptr<rocksdb::SequentialFile> sfile;
-    auto s = dsn::utils::PegasusEnv()->NewSequentialFile(fname, &sfile, rocksdb::EnvOptions());
+    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                 ->NewSequentialFile(fname, &sfile, rocksdb::EnvOptions());
     if (!s.ok()) {
         LOG_ERROR("open file '{}' failed, err = {}", fname, s.ToString());
         return false;
@@ -161,7 +162,7 @@ error_code replica::download_checkpoint(const configuration_restore_request &req
                     utils::filesystem::path_combine(local_chkpt_dir, f_meta.name);
                 if (download_err == ERR_OK || download_err == ERR_PATH_ALREADY_EXIST) {
                     if (!utils::filesystem::verify_file(file_name,
-                                                        utils::filesystem::FileDataType::kSensitive,
+                                                        dsn::utils::FileDataType::kSensitive,
                                                         f_meta.md5,
                                                         f_meta.size)) {
                         download_err = ERR_CORRUPTION;

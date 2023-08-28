@@ -46,6 +46,7 @@
 #include "utils/binary_reader.h"
 #include "utils/binary_writer.h"
 #include "utils/blob.h"
+#include "utils/encryption_utils.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
 #include "utils/ports.h"
@@ -62,7 +63,7 @@ static void copy_file(const char *from_file, const char *to_file, int64_t to_siz
 {
     int64_t from_size;
     ASSERT_TRUE(dsn::utils::filesystem::file_size(
-        from_file, utils::filesystem::FileDataType::kSensitive, from_size));
+        from_file, dsn::utils::FileDataType::kSensitive, from_size));
     ASSERT_LE(to_size, from_size);
     auto rfile = file::open(from_file, file::FileOpenType::kReadOnly);
     ASSERT_NE(rfile, nullptr);
@@ -280,8 +281,7 @@ TEST_P(replication_test, log_file)
     ASSERT_EQ(1, lf->index());
     ASSERT_EQ(100, lf->start_offset());
     int64_t sz;
-    ASSERT_TRUE(
-        dsn::utils::filesystem::file_size(fpath, utils::filesystem::FileDataType::kSensitive, sz));
+    ASSERT_TRUE(dsn::utils::filesystem::file_size(fpath, dsn::utils::FileDataType::kSensitive, sz));
     ASSERT_EQ(lf->start_offset() + sz, lf->end_offset());
 
     // read data

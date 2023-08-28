@@ -48,7 +48,8 @@ std::unique_ptr<rocksdb::RandomAccessFile>
 native_linux_aio_provider::open_read_file(const std::string &fname)
 {
     std::unique_ptr<rocksdb::RandomAccessFile> rfile;
-    auto s = dsn::utils::PegasusEnv()->NewRandomAccessFile(fname, &rfile, rocksdb::EnvOptions());
+    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                 ->NewRandomAccessFile(fname, &rfile, rocksdb::EnvOptions());
     if (!s.ok()) {
         LOG_ERROR("open read file '{}' failed, err = {}", fname, s.ToString());
     }
@@ -61,7 +62,8 @@ native_linux_aio_provider::open_write_file(const std::string &fname)
     // Create the file if it not exists.
     {
         std::unique_ptr<rocksdb::WritableFile> cfile;
-        auto s = dsn::utils::PegasusEnv()->ReopenWritableFile(fname, &cfile, rocksdb::EnvOptions());
+        auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                     ->ReopenWritableFile(fname, &cfile, rocksdb::EnvOptions());
         if (!s.ok()) {
             LOG_ERROR("try open or create file '{}' failed, err = {}", fname, s.ToString());
         }
@@ -69,7 +71,8 @@ native_linux_aio_provider::open_write_file(const std::string &fname)
 
     // Open the file for write as RandomRWFile, to support un-sequential write.
     std::unique_ptr<rocksdb::RandomRWFile> wfile;
-    auto s = dsn::utils::PegasusEnv()->NewRandomRWFile(fname, &wfile, rocksdb::EnvOptions());
+    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                 ->NewRandomRWFile(fname, &wfile, rocksdb::EnvOptions());
     if (!s.ok()) {
         LOG_ERROR("open write file '{}' failed, err = {}", fname, s.ToString());
     }
