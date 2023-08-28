@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 #include <chrono>
 #include <string>

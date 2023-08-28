@@ -15,13 +15,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <errno.h>
 #include <nlohmann/json.hpp>
+#include <rocksdb/env.h>
 #include <algorithm>
-#include <fstream>
 #include <initializer_list>
 #include <memory>
-#include <rocksdb/env.h>
 #include <set>
 #include <type_traits>
 #include <utility>
@@ -29,17 +27,17 @@
 #include "local_service.h"
 #include "nlohmann/detail/macro_scope.hpp"
 #include "nlohmann/json_fwd.hpp"
+#include "rocksdb/slice.h"
+#include "rocksdb/status.h"
 #include "runtime/task/async_calls.h"
 #include "utils/autoref_ptr.h"
 #include "utils/blob.h"
-#include "utils/defer.h"
 #include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
-#include "utils/safe_strerror_posix.h"
 #include "utils/string_view.h"
 #include "utils/strings.h"
 

@@ -24,18 +24,20 @@
  * THE SOFTWARE.
  */
 
-#include <alloca.h>
-#include <fcntl.h>
+#include <assert.h>
+#include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
-#include <stdint.h>
 #include <string.h>
 #include <algorithm>
+#include <cstdint>
 #include <list>
 #include <memory>
+#include <ostream>
 #include <random>
 #include <string>
+#include <vector>
 
 #include "aio/aio_task.h"
 #include "aio/file_io.h"
@@ -45,12 +47,8 @@
 #include "utils/autoref_ptr.h"
 #include "utils/encryption_utils.h"
 #include "utils/error_code.h"
-#include "utils/fail_point.h"
 #include "utils/filesystem.h"
-#include "utils/flags.h"
 #include "utils/fmt_logging.h"
-#include "utils/ports.h"
-#include "utils/strings.h"
 #include "utils/test_macros.h"
 #include "utils/threadpool_code.h"
 

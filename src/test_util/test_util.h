@@ -21,6 +21,7 @@
 
 #include <functional>
 
+#include "gtest/gtest.h"
 #include "utils/flags.h"
 #include "utils/test_macros.h"
 

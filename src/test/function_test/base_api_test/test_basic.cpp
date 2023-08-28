@@ -25,6 +25,7 @@
 #include <atomic>
 #include <chrono>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <thread>
@@ -35,6 +36,7 @@
 #include "include/pegasus/client.h"
 #include "pegasus/error.h"
 #include "test/function_test/utils/test_util.h"
+#include "utils/error_code.h"
 
 using namespace ::pegasus;
 

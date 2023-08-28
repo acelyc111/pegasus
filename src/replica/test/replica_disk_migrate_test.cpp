@@ -19,9 +19,11 @@
 
 #include <fmt/core.h>
 #include <fmt/ostream.h>
+#include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <iosfwd>
 #include <map>
 #include <memory>
@@ -46,7 +48,6 @@
 #include "runtime/rpc/rpc_holder.h"
 #include "runtime/task/task.h"
 #include "runtime/task/task_tracker.h"
-#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/error_code.h"
 #include "utils/fail_point.h"

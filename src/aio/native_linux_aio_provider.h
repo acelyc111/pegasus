@@ -35,6 +35,7 @@
 #include "utils/error_code.h"
 
 namespace rocksdb {
+class RandomAccessFile;
 class RandomRWFile;
 } // namespace rocksdb
 

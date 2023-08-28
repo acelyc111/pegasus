@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
@@ -33,7 +34,6 @@
 #include "replica/mutation.h"
 #include "replica/prepare_list.h"
 #include "runtime/task/task_code.h"
-#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 
 namespace dsn {

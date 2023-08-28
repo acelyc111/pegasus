@@ -17,14 +17,16 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/system/error_code.hpp>
-#include <fcntl.h>
 #include <fmt/core.h>
+#include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
+#include <stdint.h>
 #include <sys/types.h>
-#include <unistd.h>
 
+#include "aio/aio_task.h"
+#include "aio/file_io.h"
 #include "common/gpid.h"
 #include "common/replication.codes.h"
 #include "common/replication_other_types.h"

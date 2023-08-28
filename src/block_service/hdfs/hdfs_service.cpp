@@ -19,7 +19,6 @@
 #include <fcntl.h>
 #include <rocksdb/env.h>
 #include <algorithm>
-#include <fstream>
 #include <type_traits>
 #include <utility>
 

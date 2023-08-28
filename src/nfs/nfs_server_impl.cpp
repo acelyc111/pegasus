@@ -26,7 +26,6 @@
 
 #include "nfs/nfs_server_impl.h"
 
-#include <fcntl.h>
 #include <rocksdb/env.h>
 #include <chrono>
 #include <cstdint>
@@ -43,7 +42,6 @@
 #include "utils/encryption_utils.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
-#include "utils/ports.h"
 #include "utils/string_conv.h"
 #include "utils/utils.h"
 

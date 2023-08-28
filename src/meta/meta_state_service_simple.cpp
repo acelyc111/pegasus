@@ -26,8 +26,6 @@
 
 #include "meta_state_service_simple.h"
 
-#include <fcntl.h>
-#include <stdio.h>
 #include <string.h>
 #include <algorithm>
 #include <set>
@@ -46,13 +44,8 @@
 #include "utils/encryption_utils.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
-#include "utils/ports.h"
 #include "utils/strings.h"
 #include "utils/utils.h"
-
-namespace rocksdb {
-class SequentialFile;
-} // namespace rocksdb
 
 namespace dsn {
 namespace dist {

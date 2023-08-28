@@ -25,7 +25,6 @@
  */
 
 #include <alloca.h>
-#include <fcntl.h>
 #include <rocksdb/env.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/status.h>
@@ -34,7 +33,6 @@
 #include <utility>
 #include <vector>
 
-#include "aio/aio_task.h"
 #include "aio/file_io.h"
 #include "common/bulk_load_common.h"
 #include "common/duplication_common.h"
@@ -63,9 +61,9 @@
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
 #include "utils/latency_tracer.h"
-#include "utils/ports.h"
 #include "utils/string_view.h"
 #include "utils/threadpool_code.h"
+#include "utils/utils.h"
 
 namespace dsn {
 class disk_file;

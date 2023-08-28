@@ -46,6 +46,7 @@
 #include "utils/threadpool_code.h"
 
 namespace rocksdb {
+class RandomAccessFile;
 class RandomRWFile;
 } // namespace rocksdb
 

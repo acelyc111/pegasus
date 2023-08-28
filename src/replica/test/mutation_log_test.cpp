@@ -26,14 +26,15 @@
 
 #include "replica/mutation_log.h"
 
+#include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <unordered_map>
 
 #include "aio/aio_task.h"
+#include "aio/file_io.h"
 #include "backup_types.h"
 #include "common/replication.codes.h"
 #include "consensus_types.h"

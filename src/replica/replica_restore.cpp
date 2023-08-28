@@ -17,12 +17,14 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
+#include <rocksdb/env.h>
+#include <rocksdb/slice.h>
+#include <rocksdb/status.h>
 #include <stdint.h>
 #include <atomic>
 #include <fstream>
 #include <map>
 #include <memory>
-#include <rocksdb/env.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -54,7 +56,6 @@
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
-#include "utils/utils.h"
 
 using namespace dsn::dist::block_service;
 

@@ -33,6 +33,7 @@
 #include "aio/aio_provider.h"
 #include "disk_engine.h"
 #include "rocksdb/env.h"
+#include "utils/fmt_logging.h"
 
 namespace dsn {
 class task_tracker;

@@ -59,7 +59,6 @@
 #include "runtime/rpc/rpc_message.h"
 #include "runtime/task/task_code.h"
 #include "runtime/task/task_tracker.h"
-#include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/defer.h"
 #include "utils/encryption_utils.h"

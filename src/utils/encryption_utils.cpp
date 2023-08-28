@@ -21,10 +21,12 @@
 #include <rocksdb/convenience.h>
 #include <rocksdb/env.h>
 #include <rocksdb/env_encryption.h>
+#include <rocksdb/status.h>
 #include <memory>
 #include <string>
 
 #include "utils/flags.h"
+#include "utils/fmt_logging.h"
 
 DSN_DEFINE_bool(pegasus.server,
                 encrypt_data_at_rest,

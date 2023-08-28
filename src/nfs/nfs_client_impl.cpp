@@ -26,8 +26,6 @@
 
 #include "nfs_client_impl.h"
 
-// IWYU pragma: no_include <ext/alloc_traits.h>
-#include <fcntl.h>
 #include <mutex>
 
 #include "nfs/nfs_code_definition.h"
@@ -38,7 +36,6 @@
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
-#include "utils/ports.h"
 #include "utils/string_conv.h"
 #include "utils/token_buckets.h"
 

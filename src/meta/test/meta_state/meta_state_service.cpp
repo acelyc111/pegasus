@@ -27,6 +27,7 @@
 #include "meta/meta_state_service.h"
 
 #include <boost/lexical_cast.hpp>
+#include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <ext/alloc_traits.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
@@ -38,12 +39,12 @@
 #include "meta/meta_state_service_zookeeper.h"
 #include "runtime/service_app.h"
 #include "runtime/task/task_tracker.h"
+#include "test_util/test_util.h"
 #include "utils/binary_reader.h"
 #include "utils/binary_writer.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
-#include "test_util/test_util.h"
 #include "utils/threadpool_code.h"
 
 DSN_DECLARE_bool(encrypt_data_at_rest);

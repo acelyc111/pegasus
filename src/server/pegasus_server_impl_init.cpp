@@ -26,6 +26,7 @@
 #include <rocksdb/table.h>
 #include <rocksdb/write_buffer_manager.h>
 #include <stdio.h>
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <mutex>
