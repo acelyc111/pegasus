@@ -673,7 +673,7 @@ dsn::task_ptr fds_file_object::download(const download_request &req,
     t->set_tracker(tracker);
     download_response resp;
 
-    // TODO(yingchun): use rocksdb::Env
+    // TODO(yingchun): use rocksdb API to implement this.
     std::shared_ptr<std::ofstream> handle(new std::ofstream(
         req.output_local_name, std::ios::binary | std::ios::out | std::ios::trunc));
     if (!handle->is_open()) {

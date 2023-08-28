@@ -308,7 +308,7 @@ error_code local_file_object::store_metadata()
         rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
                                    rocksdb::Slice(meta_str),
                                    metadata_path,
-                                   true);
+                                   /* should_sync */ true);
     if (!s.ok()) {
         LOG_WARNING("store to metadata file {} failed, err={}", metadata_path, s.ToString());
         return ERR_FS_INTERNAL;
@@ -353,21 +353,29 @@ dsn::task_ptr local_file_object::write(const write_request &req,
             do {
                 rocksdb::EnvOptions env_options;
                 env_options.use_direct_writes = FLAGS_enable_direct_io;
-                std::unique_ptr<rocksdb::WritableFile> rw_file;
+                std::unique_ptr<rocksdb::WritableFile> wfile;
                 auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                             ->NewWritableFile(file_name(), &rw_file, env_options);
+                             ->NewWritableFile(file_name(), &wfile, env_options);
                 if (!s.ok()) {
                     LOG_ERROR("create file '{}' failed, err = {}", file_name(), s.ToString());
                     resp.err = ERR_FS_INTERNAL;
                     break;
                 }
 
-                s = rw_file->Append(rocksdb::Slice(req.buffer.data(), req.buffer.length()));
+                s = wfile->Append(rocksdb::Slice(req.buffer.data(), req.buffer.length()));
                 if (!s.ok()) {
                     LOG_ERROR("append file '{}' failed, err = {}", file_name(), s.ToString());
                     resp.err = ERR_FS_INTERNAL;
                     break;
                 }
+
+                s = wfile->Fsync();
+                if (!s.ok()) {
+                    LOG_ERROR("fsync file '{}' failed, err = {}", file_name(), s.ToString());
+                    resp.err = ERR_FS_INTERNAL;
+                    break;
+                }
+
                 resp.written_size = req.buffer.length();
 
                 // Currently we calc the meta data from source data, which save the io bandwidth
@@ -375,7 +383,7 @@ dsn::task_ptr local_file_object::write(const write_request &req,
                 _size = resp.written_size;
                 _md5_value = utils::string_md5(req.buffer.data(), req.buffer.length());
                 // TODO(yingchun): make store_metadata as a local function, do not depend on the
-                // member variables (i.e. _size and _md5_value).
+                //  member variables (i.e. _size and _md5_value).
                 auto err = store_metadata();
                 if (err != ERR_OK) {
                     LOG_ERROR("store_metadata failed");
@@ -429,9 +437,11 @@ dsn::task_ptr local_file_object::read(const read_request &req,
             }
 
             LOG_DEBUG("start to read file '{}', size = {}", file_name(), total_sz);
+            rocksdb::EnvOptions env_options;
+            env_options.use_direct_reads = FLAGS_enable_direct_io;
             std::unique_ptr<rocksdb::SequentialFile> sfile;
             auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                         ->NewSequentialFile(file_name(), &sfile, rocksdb::EnvOptions());
+                         ->NewSequentialFile(file_name(), &sfile, env_options);
             if (!s.ok()) {
                 LOG_ERROR("open file '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FS_INTERNAL;
@@ -447,16 +457,17 @@ dsn::task_ptr local_file_object::read(const read_request &req,
             }
 
             rocksdb::Slice result;
-            char scratch[total_sz];
-            s = sfile->Read(total_sz, &result, scratch);
+            std::string buf;
+            buf.resize(total_sz + 1);
+            s = sfile->Read(total_sz, &result, buf.data());
             if (!s.ok()) {
                 LOG_ERROR("read file '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FS_INTERNAL;
                 break;
             }
 
-            // Need a deep copy here, because the data will be used out of the scope.
-            resp.buffer = blob::create_from_bytes(result.data(), result.size());
+            buf[result.size()] = 0;
+            resp.buffer = blob::create_from_bytes(std::move(buf));
         } while (false);
         tsk->enqueue_with(resp);
         release_ref();
@@ -481,6 +492,7 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
 
         upload_response resp;
         do {
+            // Hard link the file.
             auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
                          ->LinkFile(req.input_local_name, file_name());
             if (!s.ok()) {
@@ -492,11 +504,10 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
                 break;
             }
 
-            uint64_t file_size;
-            s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                    ->GetFileSize(file_name(), &file_size);
-            if (!s.ok()) {
-                LOG_ERROR("get file size for '{}' failed, err = {}", file_name(), s.ToString());
+            int64_t file_size;
+            if (!dsn::utils::filesystem::file_size(
+                    file_name(), dsn::utils::FileDataType::kSensitive, file_size)) {
+                LOG_ERROR("get file size of '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
@@ -510,8 +521,14 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
                 resp.err = ERR_FS_INTERNAL;
                 break;
             }
+
+            auto err = store_metadata();
+            if (err != ERR_OK) {
+                LOG_ERROR("store_metadata failed");
+                resp.err = ERR_FS_INTERNAL;
+                break;
+            }
             _has_meta_synced = true;
-            store_metadata();
         } while (false);
         tsk->enqueue_with(resp);
         release_ref();
@@ -553,6 +570,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             }
 
             LOG_DEBUG("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
+            // Hard link the file.
             auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
                          ->LinkFile(file_name(), target_file);
             if (!s.ok()) {
@@ -564,18 +582,14 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 break;
             }
 
-            uint64_t file_size;
-            s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                    ->GetFileSize(file_name(), &file_size);
-            if (!s.ok()) {
-                LOG_ERROR("get file size for '{}' failed, err = {}", file_name(), s.ToString());
+            int64_t file_size;
+            if (!dsn::utils::filesystem::file_size(
+                    target_file, dsn::utils::FileDataType::kSensitive, file_size)) {
+                LOG_ERROR("get file size of '{}' failed, err = {}", target_file, s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
-            LOG_DEBUG("finish download file({}), file_size = {}", target_file, file_size);
 
-            resp.downloaded_size = file_size;
-            _size = file_size;
             auto res = utils::filesystem::md5sum(target_file, _md5_value);
             if (res != dsn::ERR_OK) {
                 LOG_WARNING("calculate md5sum for {} failed", target_file);
@@ -583,8 +597,11 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 break;
             }
 
-            _has_meta_synced = true;
+            LOG_DEBUG("finish download file({}), file_size = {}", target_file, file_size);
+            resp.downloaded_size = file_size;
             resp.file_md5 = _md5_value;
+            _size = file_size;
+            _has_meta_synced = true;
         } while (false);
         tsk->enqueue_with(resp);
         release_ref();
