@@ -77,10 +77,12 @@ int main(int argc, char **argv)
         }
     }
 
+    // TODO(yingchun): the benchmark can not exit normally, we need to fix it later.
     pegasus::geo::geo_client my_geo(
         "config.ini", cluster_name.c_str(), app_name.c_str(), geo_app_name.c_str());
-    if (!my_geo.set_max_level(max_level).is_ok()) {
-        std::cerr << "set_max_level failed" << std::endl;
+    auto err = my_geo.set_max_level(max_level);
+    if (!err.is_ok()) {
+        std::cerr << "set_max_level failed, err: " << err << std::endl;
         return -1;
     }
 
@@ -109,7 +111,7 @@ int main(int argc, char **argv)
         RESULT_COUNT
     };
     auto statistics = rocksdb::CreateDBStatistics();
-    rocksdb::Env *env = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive);
+    rocksdb::Env *env = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive);
     uint64_t start = env->NowNanos();
     std::atomic<uint64_t> count(test_count);
     dsn::utils::notify_event get_completed;
