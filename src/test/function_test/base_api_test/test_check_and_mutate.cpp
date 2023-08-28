@@ -33,9 +33,7 @@ class check_and_mutate : public test_util
 {
 };
 
-INSTANTIATE_TEST_CASE_P(, check_and_mutate, ::testing::Values(false, true));
-
-TEST_P(check_and_mutate, value_not_exist)
+TEST_F(check_and_mutate, value_not_exist)
 {
     std::string hash_key("check_and_mutate_test_value_not_exist");
 
@@ -172,7 +170,7 @@ TEST_P(check_and_mutate, value_not_exist)
     }
 }
 
-TEST_P(check_and_mutate, value_exist)
+TEST_F(check_and_mutate, value_exist)
 {
     std::string hash_key("check_and_mutate_test_value_exist");
 
@@ -268,7 +266,7 @@ TEST_P(check_and_mutate, value_exist)
     }
 }
 
-TEST_P(check_and_mutate, value_not_empty)
+TEST_F(check_and_mutate, value_not_empty)
 {
     std::string hash_key("check_and_mutate_test_value_not_empty");
 
@@ -365,7 +363,7 @@ TEST_P(check_and_mutate, value_not_empty)
         ASSERT_EQ(PERR_OK, client_->del(hash_key, "k4"));
     }
 }
-TEST_P(check_and_mutate, value_match_anywhere)
+TEST_F(check_and_mutate, value_match_anywhere)
 {
     std::string hash_key("check_and_mutate_test_value_match_anywhere");
 
@@ -563,7 +561,7 @@ TEST_P(check_and_mutate, value_match_anywhere)
     }
 }
 
-TEST_P(check_and_mutate, value_match_prefix)
+TEST_F(check_and_mutate, value_match_prefix)
 {
     std::string hash_key("check_and_mutate_test_value_match_prefix");
 
@@ -796,7 +794,7 @@ TEST_P(check_and_mutate, value_match_prefix)
     }
 }
 
-TEST_P(check_and_mutate, value_match_postfix)
+TEST_F(check_and_mutate, value_match_postfix)
 {
     std::string hash_key("check_and_mutate_test_value_match_postfix");
 
@@ -1029,7 +1027,7 @@ TEST_P(check_and_mutate, value_match_postfix)
     }
 }
 
-TEST_P(check_and_mutate, value_bytes_compare)
+TEST_F(check_and_mutate, value_bytes_compare)
 {
     std::string hash_key("check_and_mutate_test_value_bytes_compare");
 
@@ -1266,7 +1264,7 @@ TEST_P(check_and_mutate, value_bytes_compare)
     }
 }
 
-TEST_P(check_and_mutate, value_int_compare)
+TEST_F(check_and_mutate, value_int_compare)
 {
     std::string hash_key("check_and_mutate_test_value_int_compare");
 
@@ -1575,7 +1573,7 @@ TEST_P(check_and_mutate, value_int_compare)
     }
 }
 
-TEST_P(check_and_mutate, invalid_type)
+TEST_F(check_and_mutate, invalid_type)
 {
     std::string hash_key("check_and_mutate_test_value_invalid_type");
 
@@ -1599,7 +1597,7 @@ TEST_P(check_and_mutate, invalid_type)
     }
 }
 
-TEST_P(check_and_mutate, set_del)
+TEST_F(check_and_mutate, set_del)
 {
     std::string hash_key("check_and_mutate_test_set_del");
 
@@ -1630,7 +1628,7 @@ TEST_P(check_and_mutate, set_del)
     }
 }
 
-TEST_P(check_and_mutate, multi_get_mutations)
+TEST_F(check_and_mutate, multi_get_mutations)
 {
     std::string hash_key("check_and_mutate_test_multi_get_mutations");
 
@@ -1676,7 +1674,7 @@ TEST_P(check_and_mutate, multi_get_mutations)
     }
 }
 
-TEST_P(check_and_mutate, expire_seconds)
+TEST_F(check_and_mutate, expire_seconds)
 {
     std::string hash_key("check_and_mutate_test_expire_seconds");
 

@@ -32,9 +32,7 @@ class check_and_set : public test_util
 {
 };
 
-INSTANTIATE_TEST_CASE_P(, check_and_set, ::testing::Values(false, true));
-
-TEST_P(check_and_set, value_not_exist)
+TEST_F(check_and_set, value_not_exist)
 {
     std::string hash_key("check_and_set_test_value_not_exist");
 
@@ -168,7 +166,7 @@ TEST_P(check_and_set, value_not_exist)
     }
 }
 
-TEST_P(check_and_set, value_exist)
+TEST_F(check_and_set, value_exist)
 {
     std::string hash_key("check_and_set_test_value_exist");
 
@@ -263,7 +261,7 @@ TEST_P(check_and_set, value_exist)
     }
 }
 
-TEST_P(check_and_set, value_not_empty)
+TEST_F(check_and_set, value_not_empty)
 {
     std::string hash_key("check_and_set_test_value_not_empty");
 
@@ -359,7 +357,7 @@ TEST_P(check_and_set, value_not_empty)
         ASSERT_EQ(PERR_OK, client_->del(hash_key, "k4"));
     }
 }
-TEST_P(check_and_set, value_match_anywhere)
+TEST_F(check_and_set, value_match_anywhere)
 {
     std::string hash_key("check_and_set_test_value_match_anywhere");
 
@@ -556,7 +554,7 @@ TEST_P(check_and_set, value_match_anywhere)
     }
 }
 
-TEST_P(check_and_set, value_match_prefix)
+TEST_F(check_and_set, value_match_prefix)
 {
     std::string hash_key("check_and_set_test_value_match_prefix");
 
@@ -787,7 +785,7 @@ TEST_P(check_and_set, value_match_prefix)
     }
 }
 
-TEST_P(check_and_set, value_match_postfix)
+TEST_F(check_and_set, value_match_postfix)
 {
     std::string hash_key("check_and_set_test_value_match_postfix");
 
@@ -1018,7 +1016,7 @@ TEST_P(check_and_set, value_match_postfix)
     }
 }
 
-TEST_P(check_and_set, value_bytes_compare)
+TEST_F(check_and_set, value_bytes_compare)
 {
     std::string hash_key("check_and_set_test_value_bytes_compare");
 
@@ -1252,7 +1250,7 @@ TEST_P(check_and_set, value_bytes_compare)
     }
 }
 
-TEST_P(check_and_set, value_int_compare)
+TEST_F(check_and_set, value_int_compare)
 {
     std::string hash_key("check_and_set_test_value_int_compare");
 
@@ -1556,7 +1554,7 @@ TEST_P(check_and_set, value_int_compare)
     }
 }
 
-TEST_P(check_and_set, invalid_type)
+TEST_F(check_and_set, invalid_type)
 {
     std::string hash_key("check_and_set_test_value_invalid_type");
 

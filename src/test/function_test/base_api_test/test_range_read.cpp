@@ -109,9 +109,7 @@ public:
     std::map<std::string, std::string> expect_kvs_;
 };
 
-INSTANTIATE_TEST_CASE_P(, range_read_test, ::testing::Values(false, true));
-
-TEST_P(range_read_test, multiget_test)
+TEST_F(range_read_test, multiget_test)
 {
     pegasus::pegasus_client::multi_get_options options;
     struct test_struct
@@ -147,7 +145,7 @@ TEST_P(range_read_test, multiget_test)
     }
 }
 
-TEST_P(range_read_test, sortkeycount_test)
+TEST_F(range_read_test, sortkeycount_test)
 {
     int64_t count;
     struct test_struct
@@ -166,7 +164,7 @@ TEST_P(range_read_test, sortkeycount_test)
     }
 }
 
-TEST_P(range_read_test, scan_test)
+TEST_F(range_read_test, scan_test)
 {
     struct test_struct
     {

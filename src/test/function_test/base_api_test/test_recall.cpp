@@ -49,9 +49,7 @@ protected:
     const int kv_count = 10000;
 };
 
-INSTANTIATE_TEST_CASE_P(, drop_and_recall, ::testing::Values(false, true));
-
-TEST_P(drop_and_recall, simple)
+TEST_F(drop_and_recall, simple)
 {
     std::vector<std::string> hashkeys_for_gpid(partition_count_, "");
 

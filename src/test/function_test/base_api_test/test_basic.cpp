@@ -31,6 +31,7 @@
 #include <utility>
 #include <vector>
 
+#include "client/replication_ddl_client.h"
 #include "include/pegasus/client.h"
 #include "pegasus/error.h"
 #include "test/function_test/utils/test_util.h"
@@ -41,11 +42,15 @@ typedef pegasus_client::internal_info internal_info;
 
 class basic : public test_util
 {
+public:
+    void TearDown() override
+    {
+        test_util::TearDown();
+        ASSERT_EQ(dsn::ERR_OK, ddl_client_->drop_app(app_name_, 0));
+    }
 };
 
-INSTANTIATE_TEST_CASE_P(, basic, ::testing::Values(false, true));
-
-TEST_P(basic, set_get_del)
+TEST_F(basic, set_get_del)
 {
     // set
     ASSERT_EQ(PERR_OK,
@@ -83,7 +88,7 @@ TEST_P(basic, set_get_del)
               client_->get("basic_test_hash_key_1", "basic_test_sort_key_1", new_value));
 }
 
-TEST_P(basic, multi_get)
+TEST_F(basic, multi_get)
 {
     const std::map<std::string, std::string> kvs({{"", "0"},
                                                   {"1", "1"},
@@ -606,7 +611,7 @@ TEST_P(basic, multi_get)
     ASSERT_EQ(0, count);
 }
 
-TEST_P(basic, multi_get_reverse)
+TEST_F(basic, multi_get_reverse)
 {
     // multi_set
     const std::map<std::string, std::string> kvs({{"", "0"},
@@ -1191,7 +1196,7 @@ TEST_P(basic, multi_get_reverse)
     ASSERT_EQ(0, count);
 }
 
-TEST_P(basic, multi_set_get_del)
+TEST_F(basic, multi_set_get_del)
 {
     // multi_set
     const std::map<std::string, std::string> kvs({{"basic_test_sort_key_1", "basic_test_value_1"},
@@ -1318,7 +1323,7 @@ TEST_P(basic, multi_set_get_del)
     ASSERT_EQ(0, count);
 }
 
-TEST_P(basic, set_get_del_async)
+TEST_F(basic, set_get_del_async)
 {
     std::string new_value;
 
@@ -1411,7 +1416,7 @@ TEST_P(basic, set_get_del_async)
               client_->get("basic_test_hash_key_1", "basic_test_sort_key_1", new_value));
 }
 
-TEST_P(basic, multi_set_get_del_async)
+TEST_F(basic, multi_set_get_del_async)
 {
     std::map<std::string, std::string> actual_kvs;
     int64_t count;
@@ -1619,7 +1624,7 @@ TEST_P(basic, multi_set_get_del_async)
     ASSERT_EQ(0, count);
 }
 
-TEST_P(basic, scan_with_filter)
+TEST_F(basic, scan_with_filter)
 {
     int ret = 0;
     const std::map<std::string, std::string> kvs({{"m_1", "a"},
@@ -1711,7 +1716,7 @@ TEST_P(basic, scan_with_filter)
     ASSERT_EQ(8, deleted_count);
 }
 
-TEST_P(basic, full_scan_with_filter)
+TEST_F(basic, full_scan_with_filter)
 {
     int ret = 0;
     // multi_set

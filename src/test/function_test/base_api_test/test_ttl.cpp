@@ -86,9 +86,7 @@ protected:
     const int32_t timeout_ms = 5000;
 };
 
-INSTANTIATE_TEST_CASE_P(, ttl_test, ::testing::Values(false, true));
-
-TEST_P(ttl_test, set_without_default_ttl)
+TEST_F(ttl_test, set_without_default_ttl)
 {
     // set with ttl
     ASSERT_EQ(
@@ -150,7 +148,7 @@ TEST_P(ttl_test, set_without_default_ttl)
     ASSERT_EQ(ttl_test_value_2, value);
 }
 
-TEST_P(ttl_test, set_with_default_ttl)
+TEST_F(ttl_test, set_with_default_ttl)
 {
     // set without ttl
     ASSERT_EQ(PERR_OK, client_->set(ttl_hash_key, ttl_test_sort_key_0, ttl_test_value_0));
