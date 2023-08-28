@@ -24,8 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <assert.h>
-#include <gtest/gtest-param-test.h>
+// IWYU pragma: no_include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
@@ -112,10 +111,7 @@ TEST_P(aio_test, basic)
 
                 t->wait();
                 ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
-                if (strcmp(kUnitBuffer, read_buffer) != 0) {
-                    assert(false);
-                }
-                ASSERT_STREQ(kUnitBuffer, read_buffer) << i;
+                ASSERT_STREQ(kUnitBuffer, read_buffer);
             }
         }
 

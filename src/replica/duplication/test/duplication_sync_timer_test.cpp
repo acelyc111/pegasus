@@ -17,7 +17,7 @@
 
 #include "replica/duplication/duplication_sync_timer.h"
 
-#include <gtest/gtest-param-test.h>
+// IWYU pragma: no_include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
