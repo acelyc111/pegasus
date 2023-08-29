@@ -72,9 +72,6 @@ namespace replication {
 
 const std::string replica_init_info::kInitInfo = ".init-info";
 
-DEFINE_TASK_CODE_AIO(LPC_AIO_INFO_WRITE, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
-DEFINE_TASK_CODE_AIO(LPC_AIO_INFO_READ, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
-
 namespace {
 error_code write_blob_to_file(const std::string &fname, const blob &data)
 {
