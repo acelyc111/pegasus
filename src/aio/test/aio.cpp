@@ -63,11 +63,19 @@ DEFINE_TASK_CODE_AIO(LPC_AIO_TEST, TASK_PRIORITY_COMMON, THREAD_POOL_TEST_SERVER
 class aio_test : public pegasus::encrypt_data_test_base
 {
 public:
+    aio_test()
+    {
+        _test_file_name = "tmp";
+        if (FLAGS_encrypt_data_at_rest) {
+            _test_file_name += ".encrypted";
+        }
+    }
+
     void SetUp() override { utils::filesystem::remove_path(_test_file_name); }
 
-    void TearDown() override { utils::filesystem::remove_path(_test_file_name); }
+    void TearDown() override {}
 
-    std::string _test_file_name = "tmp";
+    std::string _test_file_name;
 };
 
 INSTANTIATE_TEST_CASE_P(, aio_test, ::testing::Values(false, true));
@@ -78,21 +86,23 @@ TEST_P(aio_test, basic)
     size_t kUnitBufferLength = strlen(kUnitBuffer);
     int kTotalBufferCount = 100;
     int kBufferCountPerBatch = 10;
+    int64_t kFileSize = kUnitBufferLength * kTotalBufferCount;
     ASSERT_EQ(0, kTotalBufferCount % kBufferCountPerBatch);
-
-    // write file
-    auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
-    ASSERT_NE(wfile, nullptr);
-
-    // read file
-    auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
-    ASSERT_NE(rfile, nullptr);
 
     auto check_callback = [kUnitBufferLength](::dsn::error_code err, size_t n) {
         CHECK_EQ(ERR_OK, err);
         CHECK_EQ(kUnitBufferLength, n);
     };
     auto verify_data = [=]() {
+        int64_t file_size;
+        ASSERT_TRUE(utils::filesystem::file_size(
+            _test_file_name, dsn::utils::FileDataType::kSensitive, file_size));
+        ASSERT_EQ(kFileSize, file_size);
+
+        // read file
+        auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
+        ASSERT_NE(rfile, nullptr);
+
         // sequential read
         {
             uint64_t offset = 0;
@@ -140,10 +150,14 @@ TEST_P(aio_test, basic)
                 ASSERT_STREQ(kUnitBuffer, read_buffers[i]);
             }
         }
+        ASSERT_EQ(ERR_OK, file::close(rfile));
     };
 
-    // new write
+    // 1. new write
     {
+        auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+        ASSERT_NE(wfile, nullptr);
+
         uint64_t offset = 0;
         std::list<aio_task_ptr> tasks;
         for (int i = 0; i < kTotalBufferCount; i++) {
@@ -162,11 +176,15 @@ TEST_P(aio_test, basic)
             ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
         }
         ASSERT_EQ(ERR_OK, file::flush(wfile));
+        ASSERT_EQ(ERR_OK, file::close(wfile));
     }
     NO_FATALS(verify_data());
 
-    // un-sequential write
+    // 2. un-sequential write
     {
+        auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+        ASSERT_NE(wfile, nullptr);
+
         std::vector<uint64_t> offsets;
         offsets.reserve(kTotalBufferCount);
         for (int i = 0; i < kTotalBufferCount; i++) {
@@ -193,11 +211,15 @@ TEST_P(aio_test, basic)
             ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
         }
         ASSERT_EQ(ERR_OK, file::flush(wfile));
+        ASSERT_EQ(ERR_OK, file::close(wfile));
     }
     NO_FATALS(verify_data());
 
-    // overwrite
+    // 3. overwrite
     {
+        auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+        ASSERT_NE(wfile, nullptr);
+
         uint64_t offset = 0;
         std::list<aio_task_ptr> tasks;
         for (int i = 0; i < kTotalBufferCount; i++) {
@@ -216,11 +238,15 @@ TEST_P(aio_test, basic)
             ASSERT_EQ(kUnitBufferLength, t->get_transferred_size());
         }
         ASSERT_EQ(ERR_OK, file::flush(wfile));
+        ASSERT_EQ(ERR_OK, file::close(wfile));
     }
     NO_FATALS(verify_data());
 
-    // vector write
+    // 4. vector write
     {
+        auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+        ASSERT_NE(wfile, nullptr);
+
         uint64_t offset = 0;
         std::list<aio_task_ptr> tasks;
         std::unique_ptr<dsn_file_buffer_t[]> buffers(new dsn_file_buffer_t[kBufferCountPerBatch]);
@@ -247,10 +273,9 @@ TEST_P(aio_test, basic)
             ASSERT_EQ(kBufferCountPerBatch * kUnitBufferLength, t->get_transferred_size());
         }
         ASSERT_EQ(ERR_OK, file::flush(wfile));
+        ASSERT_EQ(ERR_OK, file::close(wfile));
     }
     NO_FATALS(verify_data());
-    ASSERT_EQ(ERR_OK, file::close(wfile));
-    ASSERT_EQ(ERR_OK, file::close(rfile));
 }
 
 TEST_P(aio_test, aio_share)
@@ -322,19 +347,27 @@ struct aio_result
 
 TEST_P(aio_test, dsn_file)
 {
+    std::string src_file = "copy_source.txt";
+    std::string dst_file = "copy_dest.txt";
     if (FLAGS_encrypt_data_at_rest) {
-        // The testfiles copy_source.txt and copy_dest.txt are not encrypted.
-        return;
+        encrypt_file(src_file, src_file + ".encrypted");
+        src_file += ".encrypted";
+
+        encrypt_file(dst_file, dst_file + ".encrypted");
+        dst_file += ".encrypted";
     }
 
-    int64_t fin_size, fout_size;
+    int64_t src_file_size;
     ASSERT_TRUE(utils::filesystem::file_size(
-        "copy_source.txt", dsn::utils::FileDataType::kNonSensitive, fin_size));
-    ASSERT_LT(0, fin_size);
+        src_file, dsn::utils::FileDataType::kSensitive, src_file_size));
+    ASSERT_LT(0, src_file_size);
+    std::string src_file_md5;
+    ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(src_file, src_file_md5));
+    ASSERT_FALSE(src_file_md5.empty());
 
-    dsn::disk_file *fin = file::open("copy_source.txt", file::FileOpenType::kReadOnly);
+    dsn::disk_file *fin = file::open(src_file, file::FileOpenType::kReadOnly);
     ASSERT_NE(nullptr, fin);
-    dsn::disk_file *fout = file::open("copy_dest.txt", file::FileOpenType::kWriteOnly);
+    dsn::disk_file *fout = file::open(dst_file, file::FileOpenType::kWriteOnly);
     ASSERT_NE(nullptr, fout);
     char kUnitBuffer[1024];
     uint64_t offset = 0;
@@ -399,11 +432,15 @@ TEST_P(aio_test, dsn_file)
         offset += rin.sz;
     }
 
-    ASSERT_EQ((uint64_t)fin_size, offset);
+    ASSERT_EQ((uint64_t)src_file_size, offset);
     ASSERT_EQ(ERR_OK, file::close(fout));
     ASSERT_EQ(ERR_OK, file::close(fin));
 
+    int64_t dst_file_size;
     ASSERT_TRUE(utils::filesystem::file_size(
-        "copy_dest.txt", dsn::utils::FileDataType::kNonSensitive, fout_size));
-    ASSERT_EQ(fin_size, fout_size);
+        dst_file, dsn::utils::FileDataType::kSensitive, dst_file_size));
+    ASSERT_EQ(src_file_size, dst_file_size);
+    std::string dst_file_md5;
+    ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(src_file, dst_file_md5));
+    ASSERT_EQ(src_file_md5, dst_file_md5);
 }

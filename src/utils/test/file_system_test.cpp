@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <string>
 
+#include <rocksdb/env.h>
+
 #include "test_util/test_util.h"
 #include "utils/encryption_utils.h"
 #include "utils/filesystem.h"
@@ -35,6 +37,48 @@ class filesystem_test : public pegasus::encrypt_data_test_base
 };
 
 INSTANTIATE_TEST_CASE_P(, filesystem_test, ::testing::Values(false, true));
+
+TEST_P(filesystem_test, check_new_md5sum)
+{
+    // deprecated_md5sum doesn't support kSensitive files, so skip it here.
+    if (FLAGS_encrypt_data_at_rest) {
+        return;
+    }
+    struct file_info
+    {
+        int64_t size;
+    } tests[]{{4095}, {4096}, {4097}};
+
+    for (const auto &test : tests) {
+        std::string fname = "test_file";
+        // deprecated_md5sum doesn't support kSensitive files, so use kNonSensitive here.
+        auto s = rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                                            rocksdb::Slice(std::string(test.size, 'a')),
+                                            fname,
+                                            /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        // Check the file size.
+        int64_t file_fsize;
+        ASSERT_TRUE(file_size(fname, FileDataType::kNonSensitive, file_fsize));
+        ASSERT_EQ(test.size, file_fsize);
+
+        // Get the md5sum.
+        std::string md5sum1;
+        ASSERT_EQ(ERR_OK, md5sum(fname, md5sum1));
+        ASSERT_FALSE(md5sum1.empty());
+
+        // Check the md5sum is repeatable.
+        std::string md5sum2;
+        ASSERT_EQ(ERR_OK, md5sum(fname, md5sum2));
+        ASSERT_EQ(md5sum1, md5sum2);
+
+        // Check the md5sum is the same to deprecated_md5sum.
+        ASSERT_EQ(ERR_OK, deprecated_md5sum(fname, md5sum2));
+        ASSERT_EQ(md5sum1, md5sum2);
+
+        utils::filesystem::remove_path(fname);
+    }
+}
 
 TEST_P(filesystem_test, verify_file_test)
 {

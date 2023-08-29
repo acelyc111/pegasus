@@ -60,20 +60,28 @@ std::unique_ptr<rocksdb::RandomRWFile>
 native_linux_aio_provider::open_write_file(const std::string &fname)
 {
     // rocksdb::NewRandomRWFile() doesn't act as the docs described, it will not create the
-    // file if it not exists, so we try to create the file by ReopenWritableFile() first.
-    {
+    // file if it not exists, and an error Status will be returned, so we try to create the
+    // file by ReopenWritableFile() if it not exist.
+    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)->FileExists(fname);
+    if (!s.ok() && !s.IsNotFound()) {
+        LOG_ERROR("failed to check whether the file '{}' exist, err = {}", fname, s.ToString());
+        return nullptr;
+    }
+
+    if (s.IsNotFound()) {
         std::unique_ptr<rocksdb::WritableFile> cfile;
-        auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                     ->ReopenWritableFile(fname, &cfile, rocksdb::EnvOptions());
+        s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                ->ReopenWritableFile(fname, &cfile, rocksdb::EnvOptions());
         if (!s.ok()) {
-            LOG_ERROR("try open or create file '{}' failed, err = {}", fname, s.ToString());
+            LOG_ERROR("failed to create file '{}', err = {}", fname, s.ToString());
+            return nullptr;
         }
     }
 
     // Open the file for write as RandomRWFile, to support un-sequential write.
     std::unique_ptr<rocksdb::RandomRWFile> wfile;
-    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                 ->NewRandomRWFile(fname, &wfile, rocksdb::EnvOptions());
+    s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+            ->NewRandomRWFile(fname, &wfile, rocksdb::EnvOptions());
     if (!s.ok()) {
         LOG_ERROR("open write file '{}' failed, err = {}", fname, s.ToString());
     }

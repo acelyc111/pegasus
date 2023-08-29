@@ -466,6 +466,10 @@ void nfs_client_impl::continue_write()
         LOG_ERROR("open file {} failed", file_path);
         handle_completion(fc->user_req, ERR_FILE_OPERATION_FAILED);
     } else {
+        LOG_DEBUG("nfs: copy to file {} [{}, {}]",
+                  file_path,
+                  reqc->response.offset,
+                  reqc->response.offset + reqc->response.size);
         zauto_lock l(reqc->lock);
         if (reqc->is_valid) {
             reqc->local_write_task = file::write(fc->file_holder->file_handle,

@@ -66,7 +66,7 @@ enum class FileDataType;
 namespace filesystem {
 
 // TODO(yingchun): pre refactor: consider to use rocksdb/file_system.h to replace functions in this
-// file.
+//  file.
 
 int get_normalized_path(const std::string &path, std::string &npath);
 
@@ -131,6 +131,7 @@ bool get_disk_space_info(const std::string &path, disk_space_info &info);
 bool link_file(const std::string &src, const std::string &target);
 
 error_code md5sum(const std::string &file_path, /*out*/ std::string &result);
+error_code deprecated_md5sum(const std::string &file_path, /*out*/ std::string &result);
 
 // return value:
 //  - <A, B>:

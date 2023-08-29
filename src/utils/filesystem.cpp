@@ -713,6 +713,55 @@ bool link_file(const std::string &src, const std::string &target)
 error_code md5sum(const std::string &file_path, /*out*/ std::string &result)
 {
     result.clear();
+    if (!::dsn::utils::filesystem::file_exists(file_path)) {
+        LOG_ERROR("md5sum error: file {} not exist", file_path);
+        return ERR_OBJECT_NOT_FOUND;
+    }
+
+    std::unique_ptr<rocksdb::SequentialFile> sfile;
+    auto s = dsn::utils::PegasusEnv(FileDataType::kSensitive)
+                 ->NewSequentialFile(file_path, &sfile, rocksdb::EnvOptions());
+    if (!sfile) {
+        LOG_ERROR("md5sum error: open file {} failed", file_path);
+        return ERR_FILE_OPERATION_FAILED;
+    }
+
+    const int64_t kBufferSize = 4096;
+    char buf[kBufferSize];
+    unsigned char out[MD5_DIGEST_LENGTH] = {0};
+    MD5_CTX c;
+    CHECK_EQ(1, MD5_Init(&c));
+    while (true) {
+        rocksdb::Slice res;
+        s = sfile->Read(kBufferSize, &res, buf);
+        if (!s.ok()) {
+            MD5_Final(out, &c);
+            LOG_ERROR("md5sum error: read file {} failed, err = ", file_path, s.ToString());
+            return ERR_FILE_OPERATION_FAILED;
+        }
+        if (res.empty()) {
+            break;
+        }
+        CHECK_EQ(1, MD5_Update(&c, buf, res.size()));
+        if (res.size() < kBufferSize) {
+            break;
+        }
+    }
+    CHECK_EQ(1, MD5_Final(out, &c));
+
+    char str[MD5_DIGEST_LENGTH * 2 + 1];
+    str[MD5_DIGEST_LENGTH * 2] = 0;
+    for (int n = 0; n < MD5_DIGEST_LENGTH; n++) {
+        sprintf(str + n + n, "%02x", out[n]);
+    }
+    result.assign(str);
+
+    return ERR_OK;
+}
+
+error_code deprecated_md5sum(const std::string &file_path, /*out*/ std::string &result)
+{
+    result.clear();
     // if file not exist, we return ERR_OBJECT_NOT_FOUND
     if (!::dsn::utils::filesystem::file_exists(file_path)) {
         LOG_ERROR("md5sum error: file {} not exist", file_path);
@@ -725,7 +774,7 @@ error_code md5sum(const std::string &file_path, /*out*/ std::string &result)
         return ERR_FILE_OPERATION_FAILED;
     }
 
-    char buf[4096];
+    char buf[4097] = {0};
     unsigned char out[MD5_DIGEST_LENGTH];
     MD5_CTX c;
     MD5_Init(&c);
@@ -735,8 +784,10 @@ error_code md5sum(const std::string &file_path, /*out*/ std::string &result)
             MD5_Update(&c, buf, 4096);
         } else {
             if (feof(fp)) {
-                if (ret_code > 0)
+                if (ret_code > 0) {
+                    buf[ret_code] = 0;
                     MD5_Update(&c, buf, ret_code);
+                }
                 break;
             } else {
                 int err = ferror(fp);

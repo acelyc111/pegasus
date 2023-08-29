@@ -62,6 +62,10 @@ void encrypt_data_test_base::encrypt_file(const std::string &src, const std::str
         s = wfile->Append(result);
         ASSERT_TRUE(s.ok()) << s.ToString();
         total_size += result.size();
+
+        if (result.size() < kBlockSize) {
+            break;
+        }
     } while (true);
 
     LOG_INFO("encrypt file from {} to {}, total size {}", src, dst, total_size);

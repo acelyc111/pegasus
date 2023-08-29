@@ -107,8 +107,10 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
         it->second->last_access_time = dsn_now_ms();
     } while (false);
 
-    LOG_DEBUG(
-        "nfs: copy file {} [{}, {}]", file_path, request.offset, request.offset + request.size);
+    LOG_DEBUG("nfs: copy from file {} [{}, {}]",
+              file_path,
+              request.offset,
+              request.offset + request.size);
 
     if (dfile == nullptr) {
         LOG_ERROR("[nfs_service] open file {} failed", file_path);
