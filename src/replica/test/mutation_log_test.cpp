@@ -59,7 +59,6 @@ class message_ex;
 using namespace ::dsn;
 using namespace ::dsn::replication;
 
-// TODO(yingchun): improve the tests to test operate on encrypted files.
 static void copy_file(const char *from_file, const char *to_file, int64_t to_size = -1)
 {
     int64_t from_size;
