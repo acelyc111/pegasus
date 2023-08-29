@@ -387,6 +387,7 @@ statistic_file_infos_under_dir(const std::string &dir,
     total_size = 0;
     file_infos.clear();
 
+    // TODO(yingchun): check if there are any files that are not sensitive (not encrypted).
     for (std::string &file : sub_files) {
         std::pair<std::string, int64_t> file_info;
 

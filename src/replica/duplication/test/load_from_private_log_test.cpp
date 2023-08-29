@@ -309,47 +309,53 @@ TEST_P(load_from_private_log_test, start_duplication_100000_4MB)
 // Ensure replica_duplicator can correctly handle real-world log file
 TEST_P(load_from_private_log_test, handle_real_private_log)
 {
+    std::vector<std::string> log_files({"log.1.0.handle_real_private_log",
+                                        "log.1.0.handle_real_private_log2",
+                                        "log.1.0.all_loaded_are_write_empties"});
     if (FLAGS_encrypt_data_at_rest) {
-        // The testfiles log.1.0.* are not encrypted.
-        return;
+        for (int i = 0; i < log_files.size(); i++) {
+            encrypt_file(log_files[i], log_files[i] + ".encrypted");
+            log_files[i] += ".encrypted";
+        }
     }
 
     struct test_data
     {
-        std::string fname;
         int puts;
         int total;
         gpid id;
     } tests[] = {
         // PUT, PUT, PUT, EMPTY, PUT, EMPTY, EMPTY
-        {"log.1.0.handle_real_private_log", 4, 6, gpid(1, 4)},
+        {4, 6, gpid(1, 4)},
 
         // EMPTY, PUT, EMPTY
-        {"log.1.0.handle_real_private_log2", 1, 2, gpid(1, 4)},
+        {1, 2, gpid(1, 4)},
 
         // EMPTY, EMPTY, EMPTY
-        {"log.1.0.all_loaded_are_write_empties", 0, 2, gpid(1, 5)},
+        {0, 2, gpid(1, 5)},
     };
 
-    for (auto tt : tests) {
+    ASSERT_EQ(log_files.size(), sizeof(tests) / sizeof(test_data));
+    for (int i = 0; i < log_files.size(); i++) {
         // reset replica to specified gpid
         duplicator.reset(nullptr);
-        _replica = create_mock_replica(stub.get(), tt.id.get_app_id(), tt.id.get_partition_index());
+        _replica = create_mock_replica(
+            stub.get(), tests[i].id.get_app_id(), tests[i].id.get_partition_index());
 
         // Update '_log_dir' to the corresponding replica created above.
         _log_dir = _replica->dir();
         ASSERT_TRUE(utils::filesystem::path_exists(_log_dir)) << _log_dir;
 
         // Copy the log file to '_log_dir'
-        boost::filesystem::path file(tt.fname);
-        ASSERT_TRUE(dsn::utils::filesystem::file_exists(tt.fname)) << tt.fname;
+        boost::filesystem::path file(log_files[i]);
+        ASSERT_TRUE(dsn::utils::filesystem::file_exists(log_files[i])) << log_files[i];
         boost::system::error_code ec;
         boost::filesystem::copy_file(
             file, _log_dir + "/log.1.0", boost::filesystem::copy_option::overwrite_if_exists, ec);
         ASSERT_TRUE(!ec) << ec.value() << ", " << ec.category().name() << ", " << ec.message();
 
         // Start to verify.
-        load_and_wait_all_entries_loaded(tt.puts, tt.total, tt.id, 1, 0);
+        load_and_wait_all_entries_loaded(tests[i].puts, tests[i].total, tests[i].id, 1, 0);
     }
 }
 
