@@ -97,8 +97,6 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
             if (dfile != nullptr) {
                 auto fh = std::make_shared<file_handle_info_on_server>();
                 fh->file_handle = dfile;
-                fh->file_access_count = 1;
-                fh->last_access_time = dsn_now_ms();
                 it = _handles_map.insert(std::make_pair(file_path, std::move(fh))).first;
             }
         }

@@ -52,10 +52,11 @@ TEST_P(filesystem_test, check_new_md5sum)
     for (const auto &test : tests) {
         std::string fname = "test_file";
         // deprecated_md5sum doesn't support kSensitive files, so use kNonSensitive here.
-        auto s = rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
-                                            rocksdb::Slice(std::string(test.size, 'a')),
-                                            fname,
-                                            /* should_sync */ true);
+        auto s = rocksdb::WriteStringToFile(
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            rocksdb::Slice(std::string(test.size, 'a')),
+            fname,
+            /* should_sync */ true);
         ASSERT_TRUE(s.ok()) << s.ToString();
         // Check the file size.
         int64_t file_fsize;
