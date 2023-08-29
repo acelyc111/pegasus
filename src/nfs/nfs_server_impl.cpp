@@ -111,6 +111,7 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
         it->second->last_access_time = dsn_now_ms();
     } while (false);
 
+    CHECK_NOTNULL(dfile, "");
     LOG_DEBUG("nfs: copy from file {} [{}, {}]",
               file_path,
               request.offset,
@@ -192,6 +193,8 @@ void nfs_service_impl::on_get_file_size(
             } else {
                 for (const auto &fpath : file_list) {
                     int64_t sz;
+                    // TODO(yingchun): check if there are any files that are not sensitive (not
+                    // encrypted).
                     if (!dsn::utils::filesystem::file_size(
                             fpath, dsn::utils::FileDataType::kSensitive, sz)) {
                         LOG_ERROR("[nfs_service] get size of file {} failed", fpath);
@@ -210,6 +213,7 @@ void nfs_service_impl::on_get_file_size(
         for (const auto &file_name : request.file_list) {
             std::string file_path = dsn::utils::filesystem::path_combine(folder, file_name);
             int64_t sz;
+            // TODO(yingchun): check if there are any files that are not sensitive (not encrypted).
             if (!dsn::utils::filesystem::file_size(
                     file_path, dsn::utils::FileDataType::kSensitive, sz)) {
                 LOG_ERROR("[nfs_service] get size of file {} failed", file_path);
