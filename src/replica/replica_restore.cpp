@@ -104,31 +104,17 @@ bool replica::read_cold_backup_metadata(const std::string &fname,
             "checkpoint on remote storage media is damaged, coz file({}) doesn't exist", fname);
         return false;
     }
-    int64_t file_size = 0;
-    if (!::dsn::utils::filesystem::file_size(
-            fname, dsn::utils::FileDataType::kNonSensitive, file_size)) {
-        LOG_ERROR_PREFIX("get file({}) size failed", fname);
-        return false;
-    }
 
-    std::unique_ptr<rocksdb::SequentialFile> sfile;
-    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                 ->NewSequentialFile(fname, &sfile, rocksdb::EnvOptions());
+    std::string data;
+    auto s = rocksdb::ReadFileToString(
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), fname, &data);
     if (!s.ok()) {
-        LOG_ERROR("open file '{}' failed, err = {}", fname, s.ToString());
-        return false;
-    }
-
-    rocksdb::Slice result;
-    char scratch[file_size];
-    s = sfile->Read(file_size, &result, scratch);
-    if (!s.ok()) {
-        LOG_ERROR("read file '{}' failed, err = {}", fname, s.ToString());
+        LOG_ERROR_PREFIX("read file '{}' failed, err = {}", fname, s.ToString());
         return false;
     }
 
     if (!::dsn::json::json_forwarder<cold_backup_metadata>::decode(
-            blob(result.data(), 0, result.size()), backup_metadata)) {
+            blob::create_from_bytes(std::move(data)), backup_metadata)) {
         LOG_ERROR_PREFIX("file({}) under checkpoint is damaged", fname);
         return false;
     }
@@ -162,6 +148,8 @@ error_code replica::download_checkpoint(const configuration_restore_request &req
                 const std::string file_name =
                     utils::filesystem::path_combine(local_chkpt_dir, f_meta.name);
                 if (download_err == ERR_OK || download_err == ERR_PATH_ALREADY_EXIST) {
+                    // TODO(yingchun): check if there are any files that are not sensitive (not
+                    //  encrypted).
                     if (!utils::filesystem::verify_file(file_name,
                                                         dsn::utils::FileDataType::kSensitive,
                                                         f_meta.md5,
