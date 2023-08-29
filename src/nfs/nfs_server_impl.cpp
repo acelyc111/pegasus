@@ -94,11 +94,17 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
         auto it = _handles_map.find(file_path); // find file handle cache first
         if (it == _handles_map.end()) {
             dfile = file::open(file_path, file::FileOpenType::kReadOnly);
-            if (dfile != nullptr) {
-                auto fh = std::make_shared<file_handle_info_on_server>();
-                fh->file_handle = dfile;
-                it = _handles_map.insert(std::make_pair(file_path, std::move(fh))).first;
+            if (dfile == nullptr) {
+                LOG_ERROR("[nfs_service] open file {} failed", file_path);
+                ::dsn::service::copy_response resp;
+                resp.error = ERR_OBJECT_NOT_FOUND;
+                reply(resp);
+                return;
             }
+
+            auto fh = std::make_shared<file_handle_info_on_server>();
+            fh->file_handle = dfile;
+            it = _handles_map.insert(std::make_pair(file_path, std::move(fh))).first;
         }
         dfile = it->second->file_handle;
         it->second->file_access_count++;
@@ -109,14 +115,6 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
               file_path,
               request.offset,
               request.offset + request.size);
-
-    if (dfile == nullptr) {
-        LOG_ERROR("[nfs_service] open file {} failed", file_path);
-        ::dsn::service::copy_response resp;
-        resp.error = ERR_OBJECT_NOT_FOUND;
-        reply(resp);
-        return;
-    }
 
     auto cp = std::make_shared<callback_para>(std::move(reply));
     cp->bb = blob(dsn::utils::make_shared_array<char>(request.size), request.size);
