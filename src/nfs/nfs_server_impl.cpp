@@ -194,7 +194,7 @@ void nfs_service_impl::on_get_file_size(
                 for (const auto &fpath : file_list) {
                     int64_t sz;
                     // TODO(yingchun): check if there are any files that are not sensitive (not
-                    // encrypted).
+                    //  encrypted).
                     if (!dsn::utils::filesystem::file_size(
                             fpath, dsn::utils::FileDataType::kSensitive, sz)) {
                         LOG_ERROR("[nfs_service] get size of file {} failed", fpath);
