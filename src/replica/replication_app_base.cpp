@@ -80,44 +80,20 @@ error_code write_blob_to_file(const std::string &fname, const blob &data)
 {
     // TODO(yingchun): consider not encrypt the meta files.
     std::string tmp_fname = fname + ".tmp";
-    auto cleanup = defer([tmp_fname]() {
-        auto s =
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)->DeleteFile(tmp_fname);
-        // TODO(yingchun): add macro for rocksdb::Status
-        LOG_WARNING_IF(!s.ok(), "delete file {} failed, error = {}", tmp_fname, s.ToString());
-    });
-
-    disk_file *wfile = file::open(tmp_fname, file::FileOpenType::kWriteOnly);
+    auto cleanup = defer([tmp_fname]() { utils::filesystem::remove_path(tmp_fname); });
+    auto s =
+        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                   rocksdb::Slice(data.data(), data.length()),
+                                   tmp_fname,
+                                   /* should_sync */ true);
     LOG_AND_RETURN_NOT_TRUE(
-        ERROR, wfile != nullptr, ERR_FILE_OPERATION_FAILED, "open file {} failed", tmp_fname);
-
-    error_code err;
-    size_t write_size = 0;
-    task_tracker tracker;
-    auto tsk = file::write(wfile,
-                           data.data(),
-                           data.length(),
-                           0,
-                           LPC_AIO_INFO_WRITE,
-                           &tracker,
-                           [&err, &write_size](error_code e, size_t s) {
-                               err = e;
-                               write_size = s;
-                           },
-                           0);
-    CHECK_NOTNULL(tsk, "create file::write task failed");
-    tracker.wait_outstanding_tasks();
-    LOG_AND_RETURN_NOT_OK(ERROR, file::flush(wfile), "file::flush failed");
-    LOG_AND_RETURN_NOT_OK(ERROR, file::close(wfile), "file::close failed");
-    LOG_AND_RETURN_NOT_OK(ERROR, err, "write file {} failed", tmp_fname);
-    CHECK_EQ(data.length(), write_size);
+        ERROR, s.ok(), ERR_FILE_OPERATION_FAILED, "write file {} failed", tmp_fname);
     LOG_AND_RETURN_NOT_TRUE(ERROR,
                             utils::filesystem::rename_path(tmp_fname, fname),
                             ERR_FILE_OPERATION_FAILED,
                             "move file from {} to {} failed",
                             tmp_fname,
                             fname);
-
     return ERR_OK;
 }
 } // namespace
@@ -154,44 +130,16 @@ error_code replica_init_info::store(const std::string &dir)
 
 error_code replica_init_info::load_json(const std::string &fname)
 {
-    auto rfile = file::open(fname, file::FileOpenType::kReadOnly);
-    LOG_AND_RETURN_NOT_TRUE(
-        ERROR, rfile != nullptr, ERR_FILE_OPERATION_FAILED, "open file {} failed", fname);
-
-    int64_t file_size = 0;
-    LOG_AND_RETURN_NOT_TRUE(
-        ERROR,
-        utils::filesystem::file_size(fname, dsn::utils::FileDataType::kSensitive, file_size),
-        ERR_FILE_OPERATION_FAILED,
-        "get file size of {} failed",
-        fname);
-
-    error_code err;
-    size_t read_size = 0;
-    task_tracker tracker;
-    rocksdb::Slice result;
-    std::shared_ptr<char> buffer(utils::make_shared_array<char>(file_size));
-    auto tsk = ::dsn::file::read(rfile,
-                                 buffer.get(),
-                                 file_size,
-                                 0,
-                                 LPC_AIO_INFO_READ,
-                                 &tracker,
-                                 [&err, &read_size](error_code e, size_t s) {
-                                     err = e;
-                                     read_size = s;
-                                 });
-    CHECK_NOTNULL(tsk, "create file::read task failed");
-    tracker.wait_outstanding_tasks();
-    LOG_AND_RETURN_NOT_OK(ERROR, err, "read file {} failed", fname);
-    CHECK_EQ(file_size, read_size);
-    LOG_AND_RETURN_NOT_TRUE(
-        ERROR,
-        json::json_forwarder<replica_init_info>::decode(blob(buffer, file_size), *this),
-        ERR_FILE_OPERATION_FAILED,
-        "decode json from file {} failed",
-        fname);
-
+    std::string data;
+    auto s = rocksdb::ReadFileToString(
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), fname, &data);
+    LOG_AND_RETURN_NOT_TRUE(ERROR, s.ok(), ERR_FILE_OPERATION_FAILED, "read file {} failed", fname);
+    LOG_AND_RETURN_NOT_TRUE(ERROR,
+                            json::json_forwarder<replica_init_info>::decode(
+                                blob::create_from_bytes(std::move(data)), *this),
+                            ERR_FILE_OPERATION_FAILED,
+                            "decode json from file {} failed",
+                            fname);
     return ERR_OK;
 }
 
@@ -212,45 +160,15 @@ std::string replica_init_info::to_string()
 
 error_code replica_app_info::load(const std::string &fname)
 {
-    auto rfile = file::open(fname, file::FileOpenType::kReadOnly);
-    LOG_AND_RETURN_NOT_TRUE(
-        ERROR, rfile != nullptr, ERR_FILE_OPERATION_FAILED, "open file {} failed", fname);
-
-    int64_t file_size = 0;
-    LOG_AND_RETURN_NOT_TRUE(
-        ERROR,
-        utils::filesystem::file_size(fname, dsn::utils::FileDataType::kSensitive, file_size),
-        ERR_FILE_OPERATION_FAILED,
-        "get file size of {} failed",
-        fname);
-
-    error_code err;
-    size_t read_size = 0;
-    task_tracker tracker;
-    rocksdb::Slice result;
-    std::shared_ptr<char> buffer(utils::make_shared_array<char>(file_size));
-    auto tsk = ::dsn::file::read(rfile,
-                                 buffer.get(),
-                                 file_size,
-                                 0,
-                                 LPC_AIO_INFO_READ,
-                                 &tracker,
-                                 [&err, &read_size](error_code e, size_t s) {
-                                     err = e;
-                                     read_size = s;
-                                 });
-    CHECK_NOTNULL(tsk, "create file::read task failed");
-    tracker.wait_outstanding_tasks();
-    LOG_AND_RETURN_NOT_OK(ERROR, err, "read file {} failed", fname);
-    CHECK_EQ(file_size, read_size);
-
-    binary_reader reader(blob(buffer, file_size));
+    std::string data;
+    auto s = rocksdb::ReadFileToString(
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), fname, &data);
+    LOG_AND_RETURN_NOT_TRUE(ERROR, s.ok(), ERR_FILE_OPERATION_FAILED, "read file {} failed", fname);
+    binary_reader reader(blob::create_from_bytes(std::move(data)));
     int magic = 0;
     unmarshall(reader, magic, DSF_THRIFT_BINARY);
-
     LOG_AND_RETURN_NOT_TRUE(
         ERROR, magic == 0xdeadbeef, ERR_INVALID_DATA, "data in file {} is invalid (magic)", fname);
-
     unmarshall(reader, *_app, DSF_THRIFT_JSON);
     return ERR_OK;
 }
