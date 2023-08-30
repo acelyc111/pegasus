@@ -198,16 +198,14 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
     _store.clear();
 
     // Read header.
-    uint64_t offset = 0;
     uint64_t count = 0;
     int magic = 0;
     rocksdb::Slice result;
     static const uint64_t kHeaderSize = sizeof(count) + sizeof(magic);
     char buff[kHeaderSize] = {0};
-    s = rfile->PositionedRead(offset, kHeaderSize, &result, buff);
+    s = rfile->Read(kHeaderSize, &result, buff);
     CHECK(s.ok(), "read header failed, err = {}", s.ToString());
     CHECK(!result.empty(), "read EOF of file '{}'", name);
-    offset += kHeaderSize;
 
     binary_reader reader(blob(buff, 0, kHeaderSize));
     CHECK_EQ(sizeof(count), reader.read(count));
@@ -216,29 +214,25 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
 
     for (uint64_t i = 0; i < count; i++) {
         uint32_t sz = 0;
-        s = rfile->PositionedRead(offset, sizeof(sz), &result, (char *)&sz);
+        s = rfile->Read(sizeof(sz), &result, (char *)&sz);
         CHECK(s.ok(), "read key size failed, err = {}", s.ToString());
         CHECK(!result.empty(), "read EOF of file '{}'", name);
-        offset += sizeof(sz);
 
         std::shared_ptr<char> key_buffer(dsn::utils::make_shared_array<char>(sz));
-        s = rfile->PositionedRead(offset, sz, &result, key_buffer.get());
+        s = rfile->Read(sz, &result, key_buffer.get());
         CHECK(s.ok(), "read key failed, err = {}", s.ToString());
         CHECK(!result.empty(), "read EOF of file '{}'", name);
         std::string key = result.ToString();
-        offset += sz;
 
-        s = rfile->PositionedRead(offset, sizeof(sz), &result, (char *)&sz);
+        s = rfile->Read(sizeof(sz), &result, (char *)&sz);
         CHECK(s.ok(), "read value size failed, err = {}", s.ToString());
         CHECK(!result.empty(), "read EOF of file '{}'", name);
-        offset += sizeof(sz);
 
         std::shared_ptr<char> value_buffer(dsn::utils::make_shared_array<char>(sz));
-        s = rfile->PositionedRead(offset, sz, &result, value_buffer.get());
+        s = rfile->Read(sz, &result, value_buffer.get());
         CHECK(s.ok(), "read value failed, err = {}", s.ToString());
         CHECK(!result.empty(), "read EOF of file '{}'", name);
         std::string value = result.ToString();
-        offset += sz;
 
         _store[key] = value;
     }
@@ -258,46 +252,39 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
 
     std::string fname = fmt::format("{}/checkpoint.{}", data_dir(), last_commit);
     auto wfile = file::open(fname, file::FileOpenType::kWriteOnly);
-    CHECK(wfile != nullptr, "");
+    CHECK_NOTNULL(wfile, "");
+
+#define WRITE_DATA_SIZE(data, size)                                                                \
+    do {                                                                                           \
+        auto tsk = ::dsn::file::write(                                                             \
+            wfile, (char *)&data, size, offset, LPC_AIO_IMMEDIATE_CALLBACK, nullptr, nullptr);     \
+        tsk->wait();                                                                               \
+        offset += size;                                                                            \
+    } while (false)
+
+#define WRITE_DATA(data) WRITE_DATA_SIZE(data, sizeof(data))
 
     uint64_t offset = 0;
     uint64_t count = (uint64_t)_store.size();
-    auto tsk = ::dsn::file::write(
-        wfile, (char *)&count, sizeof(count), offset, LPC_AIO_IMMEDIATE_CALLBACK, nullptr, nullptr);
-    tsk->wait();
-    offset += sizeof(count);
+    WRITE_DATA(count);
 
     int magic = 0xdeadbeef;
-    tsk = ::dsn::file::write(
-        wfile, (char *)&magic, sizeof(magic), offset, LPC_AIO_IMMEDIATE_CALLBACK, nullptr, nullptr);
-    tsk->wait();
-    offset += sizeof(magic);
+    WRITE_DATA(magic);
 
-    for (auto it = _store.begin(); it != _store.end(); ++it) {
-        const std::string &k = it->first;
+    for (const auto &kv : _store) {
+        const std::string &k = kv.first;
         uint32_t sz = (uint32_t)k.length();
-        tsk = ::dsn::file::write(
-            wfile, (char *)&sz, sizeof(sz), offset, LPC_AIO_IMMEDIATE_CALLBACK, nullptr, nullptr);
-        tsk->wait();
-        offset += sizeof(sz);
+        WRITE_DATA(sz);
+        WRITE_DATA_SIZE(k[0], sz);
 
-        tsk = ::dsn::file::write(
-            wfile, (char *)&k[0], sz, offset, LPC_AIO_IMMEDIATE_CALLBACK, nullptr, nullptr);
-        tsk->wait();
-        offset += sz;
-
-        const std::string &v = it->second;
+        const std::string &v = kv.second;
         sz = (uint32_t)v.length();
-        tsk = ::dsn::file::write(
-            wfile, (char *)&sz, sizeof(sz), offset, LPC_AIO_IMMEDIATE_CALLBACK, nullptr, nullptr);
-        tsk->wait();
-        offset += sizeof(sz);
-
-        tsk = ::dsn::file::write(
-            wfile, (char *)&v[0], sz, offset, LPC_AIO_IMMEDIATE_CALLBACK, nullptr, nullptr);
-        tsk->wait();
-        offset += sz;
+        WRITE_DATA(sz);
+        WRITE_DATA_SIZE(v[0], sz);
     }
+#undef WRITE_DATA
+#undef WRITE_DATA_SIZE
+
     CHECK_EQ(ERR_OK, file::flush(wfile));
     CHECK_EQ(ERR_OK, file::close(wfile));
 
