@@ -180,6 +180,8 @@ public:
     dsn::task_tracker _tracker;
 };
 
+INSTANTIATE_TEST_CASE_P(, fine_collector_test, ::testing::Values(false, true));
+
 TEST_P(fine_collector_test, fine_collector)
 {
     detect_hotkey_result result;
@@ -287,6 +289,8 @@ public:
 
     dsn::task_tracker _tracker;
 };
+
+INSTANTIATE_TEST_CASE_P(, hotkey_collector_test, ::testing::Values(false, true));
 
 TEST_P(hotkey_collector_test, hotkey_type)
 {
