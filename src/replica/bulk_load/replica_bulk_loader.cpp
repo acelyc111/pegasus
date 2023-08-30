@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+#include "rocksdb/env.h"
+
 #include "block_service/block_service_manager.h"
 #include "common/bulk_load_common.h"
 #include "common/gpid.h"
@@ -562,10 +564,11 @@ void replica_bulk_loader::download_sst_file(const std::string &remote_dir,
 error_code replica_bulk_loader::parse_bulk_load_metadata(const std::string &fname)
 {
     std::string buf;
-    error_code ec = utils::filesystem::read_file(fname, buf);
-    if (ec != ERR_OK) {
-        LOG_ERROR_PREFIX("read file {} failed, error = {}", fname, ec);
-        return ec;
+    auto s = rocksdb::ReadFileToString(
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), fname, &buf);
+    if (!s.ok()) {
+        LOG_ERROR_PREFIX("read file {} failed, error = {}", fname, s.ToString());
+        return ERR_FILE_OPERATION_FAILED;
     }
 
     blob bb = blob::create_from_bytes(std::move(buf));

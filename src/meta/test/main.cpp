@@ -65,8 +65,7 @@ TEST(meta, update_configuration) { g_app->update_configuration_test(); }
 
 TEST(meta, balancer_validator)
 {
-    // run too long time!
-    return;
+    // TODO(yingchun): this test last too long time, optimize it!
     g_app->balancer_validator();
 }
 

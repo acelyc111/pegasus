@@ -774,7 +774,7 @@ error_code deprecated_md5sum(const std::string &file_path, /*out*/ std::string &
         return ERR_FILE_OPERATION_FAILED;
     }
 
-    char buf[4097] = {0};
+    char buf[4096];
     unsigned char out[MD5_DIGEST_LENGTH];
     MD5_CTX c;
     MD5_Init(&c);
@@ -784,10 +784,8 @@ error_code deprecated_md5sum(const std::string &file_path, /*out*/ std::string &
             MD5_Update(&c, buf, 4096);
         } else {
             if (feof(fp)) {
-                if (ret_code > 0) {
-                    buf[ret_code] = 0;
+                if (ret_code > 0)
                     MD5_Update(&c, buf, ret_code);
-                }
                 break;
             } else {
                 int err = ferror(fp);
@@ -825,36 +823,6 @@ std::pair<error_code, bool> is_directory_empty(const std::string &dirname)
         res.first = ERR_FILE_OPERATION_FAILED;
     }
     return res;
-}
-
-error_code read_file(const std::string &fname, std::string &buf)
-{
-    if (!file_exists(fname)) {
-        LOG_ERROR("file({}) doesn't exist", fname);
-        return ERR_FILE_OPERATION_FAILED;
-    }
-
-    int64_t file_sz = 0;
-    if (!file_size(fname, FileDataType::kNonSensitive, file_sz)) {
-        LOG_ERROR("get file({}) size failed", fname);
-        return ERR_FILE_OPERATION_FAILED;
-    }
-
-    buf.resize(file_sz);
-    std::ifstream fin(fname, std::ifstream::in);
-    if (!fin.is_open()) {
-        LOG_ERROR("open file({}) failed", fname);
-        return ERR_FILE_OPERATION_FAILED;
-    }
-    fin.read(&buf[0], file_sz);
-    CHECK_EQ_MSG(file_sz,
-                 fin.gcount(),
-                 "read file({}) failed, file_size = {} but read size = {}",
-                 fname,
-                 file_sz,
-                 fin.gcount());
-    fin.close();
-    return ERR_OK;
 }
 
 bool verify_file(const std::string &fname,
@@ -930,20 +898,6 @@ bool create_directory(const std::string &path, std::string &absolute_path, std::
     return true;
 }
 
-bool write_file(const std::string &fname, std::string &buf)
-{
-    if (!file_exists(fname)) {
-        LOG_ERROR("file({}) doesn't exist", fname);
-        return false;
-    }
-
-    std::ofstream fstream;
-    fstream.open(fname.c_str());
-    fstream << buf;
-    fstream.close();
-    return true;
-}
-
 bool check_dir_rw(const std::string &path, std::string &err_msg)
 {
     FAIL_POINT_INJECT_F("filesystem_check_dir_rw", [path](string_view str) {
@@ -954,23 +908,31 @@ bool check_dir_rw(const std::string &path, std::string &err_msg)
                path.find(broken_disk_dir) == std::string::npos;
     });
 
-    std::string fname = "read_write_test_file";
-    std::string fpath = path_combine(path, fname);
-    if (!create_file(fpath)) {
-        err_msg = fmt::format("Fail to create test file {}.", fpath);
-        return false;
-    }
-
+    static const std::string kTestValue = "test_value";
+    static const std::string kFname = "read_write_test_file";
+    std::string fpath = path_combine(path, kFname);
     auto cleanup = defer([&fpath]() { remove_path(fpath); });
-    std::string value = "test_value";
-    if (!write_file(fpath, value)) {
-        err_msg = fmt::format("Fail to write file {}.", fpath);
+    // Use kSensitive to test encryption functionality as well.
+    auto s =
+        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                   rocksdb::Slice(kTestValue),
+                                   fpath,
+                                   /* should_sync */ true);
+    if (!s.ok()) {
+        err_msg = fmt::format("fail to write file {}, err={}", fpath, s.ToString());
         return false;
     }
 
-    std::string buf;
-    if (read_file(fpath, buf) != ERR_OK || buf != value) {
-        err_msg = fmt::format("Fail to read file {} or get wrong value({}).", fpath, buf);
+    std::string read_data;
+    s = rocksdb::ReadFileToString(
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), fpath, &read_data);
+    if (!s.ok()) {
+        err_msg = fmt::format("fail to read file {}, err={}", fpath, s.ToString());
+        return false;
+    }
+
+    if (read_data != kTestValue) {
+        err_msg = fmt::format("get wrong value'{}' from file", read_data, fpath);
         return false;
     }
 
