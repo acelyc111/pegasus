@@ -457,24 +457,6 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
         FLAGS_rocksdb_level0_file_num_compaction_trigger;
     _data_cf_opts.level0_slowdown_writes_trigger = FLAGS_rocksdb_level0_slowdown_writes_trigger;
     _data_cf_opts.level0_stop_writes_trigger = FLAGS_rocksdb_level0_stop_writes_trigger;
-    _data_cf_opts.periodic_compaction_seconds = FLAGS_rocksdb_periodic_compaction_seconds;
-
-    // RocksDB will automatically set arena_block_size. See
-    // https://github.com/facebook/rocksdb/blob/v8.3.2/db/column_family.cc#L212
-    // Pegasus set arena_block_size manually to avoid compatibility check failure when calling
-    // rocksdb::CheckOptionsCompatibility().
-    if (_data_cf_opts.arena_block_size <= 0) {
-        _data_cf_opts.arena_block_size =
-            std::min(size_t{1024 * 1024}, _data_cf_opts.write_buffer_size / 8);
-
-        // Align up to 4k
-        const size_t align = 4 * 1024;
-        _data_cf_opts.arena_block_size =
-            ((_data_cf_opts.arena_block_size + align - 1) / align) * align;
-    }
-    // RocksDB will automatically set ttl. See
-    // https://github.com/facebook/rocksdb/blob/v8.3.2/db/column_family.cc#L412
-    _data_cf_opts.ttl = _data_cf_opts.periodic_compaction_seconds;
 
     CHECK(parse_compression_types(FLAGS_rocksdb_compression_type,
                                   _data_cf_opts.compression_per_level),
@@ -521,20 +503,6 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
                 FLAGS_rocksdb_limiter_enable_auto_tune));
         });
         _db_opts.rate_limiter = _s_rate_limiter;
-        // When rate limiter is enabled, RocksDB will automatically enable bytes_per_sync to 1MB.
-        // See
-        // https://github.com/facebook/rocksdb/blob/v8.3.2/include/rocksdb/options.h#L980C23-L980C23
-        // Pegasus set bytes_per_sync manually to avoid compatibility check failure when calling
-        // rocksdb::CheckOptionsCompatibility().
-        _db_opts.bytes_per_sync = 1 << 20; // 1MB
-        _db_opts.delayed_write_rate = _s_rate_limiter->GetBytesPerSecond();
-    }
-    // RocksDB will automatically set delayed_write_rate. See
-    // https://github.com/facebook/rocksdb/blob/v8.3.2/db/db_impl/db_impl_open.cc#L88
-    // Pegasus set delayed_write_rate manually to avoid compatibility check failure when calling
-    // rocksdb::CheckOptionsCompatibility().
-    if (_db_opts.delayed_write_rate == 0) {
-        _db_opts.delayed_write_rate = 16 * 1024 * 1024;
     }
 
     LOG_INFO_PREFIX("rocksdb_enable_write_buffer_manager = {}",
@@ -635,6 +603,7 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
 
     _key_ttl_compaction_filter_factory = std::make_shared<KeyWithTTLCompactionFilterFactory>();
     _data_cf_opts.compaction_filter_factory = _key_ttl_compaction_filter_factory;
+    _data_cf_opts.periodic_compaction_seconds = FLAGS_rocksdb_periodic_compaction_seconds;
     _checkpoint_reserve_min_count = FLAGS_checkpoint_reserve_min_count;
     _checkpoint_reserve_time_seconds = FLAGS_checkpoint_reserve_time_seconds;
 
