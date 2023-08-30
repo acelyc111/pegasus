@@ -258,64 +258,7 @@ public:
         std::cout << "the loaded original app_info is " << info << std::endl;
     }
 
-    void test_auto_trash(error_code ec)
-    {
-        // The replica path will only be moved to error path when encounter ERR_RDB_CORRUPTION
-        // error.
-        bool moved_to_err_path = (ec == ERR_RDB_CORRUPTION);
-
-        // Clear up the remaining state.
-        auto *dn = stub->get_fs_manager()->find_replica_dir(_app_info.app_type, _pid);
-        if (dn != nullptr) {
-            dsn::utils::filesystem::remove_path(dn->replica_dir(_app_info.app_type, _pid));
-            dn->holding_replicas.clear();
-        }
-
-        // Disable failure detector to avoid connecting with meta server which is not started.
-        FLAGS_fd_disabled = true;
-
-        replica *rep =
-            stub->generate_replica(_app_info, _pid, partition_status::PS_PRIMARY, 1, false, true);
-        auto original_replica_path = rep->dir();
-        ASSERT_TRUE(has_gpid(_pid));
-
-        rep->handle_local_failure(ec);
-        stub->wait_closing_replicas_finished();
-
-        ASSERT_EQ(!moved_to_err_path, dsn::utils::filesystem::path_exists(original_replica_path));
-        dn = stub->get_fs_manager()->get_dir_node(original_replica_path);
-        ASSERT_NE(dn, nullptr);
-        std::vector<std::string> subs;
-        ASSERT_TRUE(dsn::utils::filesystem::get_subdirectories(dn->full_dir, subs, false));
-        bool found_err_path = false;
-        std::string err_path;
-        const int ts_length = 16;
-        size_t err_pos = original_replica_path.size() + ts_length + 1; // Add 1 for dot in path.
-        for (const auto &sub : subs) {
-            if (sub.size() <= original_replica_path.size()) {
-                continue;
-            }
-            uint64_t ts = 0;
-            if (sub.find(original_replica_path) == 0 && sub.find(kFolderSuffixErr) == err_pos &&
-                dsn::buf2uint64(sub.substr(original_replica_path.size() + 1, ts_length), ts)) {
-                err_path = sub;
-                ASSERT_GT(ts, 0);
-                found_err_path = true;
-                break;
-            }
-        }
-        ASSERT_EQ(moved_to_err_path, found_err_path);
-        ASSERT_FALSE(has_gpid(_pid));
-        ASSERT_EQ(moved_to_err_path, dn->status == disk_status::NORMAL)
-            << moved_to_err_path << ", " << enum_to_string(dn->status);
-        ASSERT_EQ(!moved_to_err_path, dn->status == disk_status::IO_ERROR)
-            << moved_to_err_path << ", " << enum_to_string(dn->status);
-
-        // It's safe to cleanup the .err path after been found.
-        if (!err_path.empty()) {
-            dsn::utils::filesystem::remove_path(err_path);
-        }
-    }
+    void test_auto_trash(error_code ec);
 
 public:
     dsn::app_info _app_info;
@@ -560,6 +503,65 @@ TEST_P(replica_test, test_clear_on_failure)
 
     ASSERT_FALSE(dsn::utils::filesystem::path_exists(path));
     ASSERT_FALSE(has_gpid(_pid));
+}
+
+void replica_test::test_auto_trash(error_code ec)
+{
+    // The replica path will only be moved to error path when encounter ERR_RDB_CORRUPTION
+    // error.
+    bool moved_to_err_path = (ec == ERR_RDB_CORRUPTION);
+
+    // Clear up the remaining state.
+    auto *dn = stub->get_fs_manager()->find_replica_dir(_app_info.app_type, _pid);
+    if (dn != nullptr) {
+        dsn::utils::filesystem::remove_path(dn->replica_dir(_app_info.app_type, _pid));
+        dn->holding_replicas.clear();
+    }
+
+    // Disable failure detector to avoid connecting with meta server which is not started.
+    FLAGS_fd_disabled = true;
+
+    replica *rep =
+        stub->generate_replica(_app_info, _pid, partition_status::PS_PRIMARY, 1, false, true);
+    auto original_replica_path = rep->dir();
+    ASSERT_TRUE(has_gpid(_pid));
+
+    rep->handle_local_failure(ec);
+    stub->wait_closing_replicas_finished();
+
+    ASSERT_EQ(!moved_to_err_path, dsn::utils::filesystem::path_exists(original_replica_path));
+    dn = stub->get_fs_manager()->get_dir_node(original_replica_path);
+    ASSERT_NE(dn, nullptr);
+    std::vector<std::string> subs;
+    ASSERT_TRUE(dsn::utils::filesystem::get_subdirectories(dn->full_dir, subs, false));
+    bool found_err_path = false;
+    std::string err_path;
+    const int ts_length = 16;
+    size_t err_pos = original_replica_path.size() + ts_length + 1; // Add 1 for dot in path.
+    for (const auto &sub : subs) {
+        if (sub.size() <= original_replica_path.size()) {
+            continue;
+        }
+        uint64_t ts = 0;
+        if (sub.find(original_replica_path) == 0 && sub.find(kFolderSuffixErr) == err_pos &&
+            dsn::buf2uint64(sub.substr(original_replica_path.size() + 1, ts_length), ts)) {
+            err_path = sub;
+            ASSERT_GT(ts, 0);
+            found_err_path = true;
+            break;
+        }
+    }
+    ASSERT_EQ(moved_to_err_path, found_err_path);
+    ASSERT_FALSE(has_gpid(_pid));
+    ASSERT_EQ(moved_to_err_path, dn->status == disk_status::NORMAL) << moved_to_err_path << ", "
+                                                                    << enum_to_string(dn->status);
+    ASSERT_EQ(!moved_to_err_path, dn->status == disk_status::IO_ERROR)
+        << moved_to_err_path << ", " << enum_to_string(dn->status);
+
+    // It's safe to cleanup the .err path after been found.
+    if (!err_path.empty()) {
+        dsn::utils::filesystem::remove_path(err_path);
+    }
 }
 
 TEST_P(replica_test, test_auto_trash_of_corruption)
