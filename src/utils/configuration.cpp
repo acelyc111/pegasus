@@ -33,18 +33,16 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 
-#include <errno.h>
+#include <fmt/core.h>
+#include <rocksdb/env.h>
+#include <rocksdb/status.h>
 #include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <utility>
 
-#include <fmt/core.h>
-#include <rocksdb/env.h>
-
 #include "utils/configuration.h"
 #include "utils/encryption_utils.h"
-#include "utils/filesystem.h"
 #include "utils/strings.h"
 
 namespace dsn {

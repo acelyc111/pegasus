@@ -26,6 +26,7 @@
 
 #include "nfs_client_impl.h"
 
+#include <ext/alloc_traits.h>
 #include <mutex>
 
 #include "nfs/nfs_code_definition.h"

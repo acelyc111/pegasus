@@ -17,6 +17,7 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/system/error_code.hpp>
+#include <ext/alloc_traits.h>
 #include <fmt/core.h>
 // IWYU pragma: no_include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>

@@ -16,13 +16,12 @@
 // under the License.
 
 #include <fmt/core.h>
+#include <rocksdb/status.h>
 #include <functional>
 #include <memory>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#include "rocksdb/env.h"
 
 #include "block_service/block_service_manager.h"
 #include "common/bulk_load_common.h"
@@ -40,6 +39,7 @@
 #include "replica/replica_stub.h"
 #include "replica/replication_app_base.h"
 #include "replica_bulk_loader.h"
+#include "rocksdb/env.h"
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/rpc/rpc_holder.h"
 #include "runtime/task/async_calls.h"

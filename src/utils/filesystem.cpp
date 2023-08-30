@@ -41,13 +41,14 @@
 #include <ftw.h>
 #include <limits.h>
 #include <openssl/md5.h>
+#include <rocksdb/slice.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 // IWYU pragma: no_include <bits/struct_stat.h>
 #include <sys/stat.h> // IWYU pragma: keep
 #include <unistd.h>
-#include <fstream>
+#include <memory>
 
 #include "rocksdb/env.h"
 #include "rocksdb/status.h"
@@ -59,7 +60,6 @@
 #include "utils/ports.h"
 #include "utils/safe_strerror_posix.h"
 #include "utils/string_view.h"
-#include "utils/strings.h"
 
 #define getcwd_ getcwd
 #define rmdir_ rmdir

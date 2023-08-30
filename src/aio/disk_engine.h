@@ -32,6 +32,7 @@
 
 #include "aio/aio_task.h"
 #include "aio_provider.h"
+#include "rocksdb/env.h"
 #include "utils/singleton.h"
 #include "utils/work_queue.h"
 

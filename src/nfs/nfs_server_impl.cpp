@@ -26,7 +26,6 @@
 
 #include "nfs/nfs_server_impl.h"
 
-#include <rocksdb/env.h>
 #include <chrono>
 #include <cstdint>
 #include <mutex>
@@ -35,7 +34,6 @@
 
 #include "nfs/nfs_code_definition.h"
 #include "perf_counter/perf_counter.h"
-#include "rocksdb/status.h"
 #include "runtime/api_layer1.h"
 #include "runtime/task/async_calls.h"
 #include "utils/TokenBucket.h"

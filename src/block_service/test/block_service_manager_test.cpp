@@ -19,14 +19,14 @@
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
+#include <rocksdb/env.h>
+#include <rocksdb/slice.h>
+#include <rocksdb/status.h>
 #include <cstdint>
-#include <fstream>
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
-
-#include <rocksdb/env.h>
 
 #include "block_service/block_service_manager.h"
 #include "block_service/local/local_service.h"
@@ -36,6 +36,7 @@
 #include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
+#include "utils/test_macros.h"
 
 namespace dsn {
 namespace dist {

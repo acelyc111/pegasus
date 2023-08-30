@@ -19,13 +19,15 @@
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
+#include <rocksdb/env.h>
+#include <rocksdb/slice.h>
+#include <rocksdb/status.h>
 #include <stdint.h>
 #include <string>
 
-#include <rocksdb/env.h>
-
 #include "test_util/test_util.h"
 #include "utils/encryption_utils.h"
+#include "utils/error_code.h"
 #include "utils/filesystem.h"
 
 namespace dsn {

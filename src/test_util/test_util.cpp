@@ -18,20 +18,23 @@
 #include "test_util.h"
 
 #include <gtest/gtest-spi.h>
+#include <rocksdb/env.h>
 #include <stdint.h>
 #include <chrono>
+#include <memory>
 #include <ostream>
 #include <thread>
-
-#include <rocksdb/env.h>
 
 #include "gtest/gtest-message.h"
 #include "gtest/gtest-test-part.h"
 #include "gtest/gtest.h"
+#include "rocksdb/slice.h"
+#include "rocksdb/status.h"
 #include "runtime/api_layer1.h"
 #include "utils/defer.h"
 #include "utils/encryption_utils.h"
 #include "utils/fmt_logging.h"
+#include "utils/utils.h"
 
 namespace pegasus {
 

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <functional>
+#include <string>
 
 #include "gtest/gtest.h"
 #include "utils/flags.h"

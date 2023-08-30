@@ -18,7 +18,6 @@
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
 #include <rocksdb/env.h>
-#include <rocksdb/slice.h>
 #include <rocksdb/status.h>
 #include <stdint.h>
 #include <atomic>

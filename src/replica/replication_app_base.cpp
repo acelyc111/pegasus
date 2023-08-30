@@ -33,7 +33,6 @@
 #include <utility>
 #include <vector>
 
-#include "aio/file_io.h"
 #include "common/bulk_load_common.h"
 #include "common/duplication_common.h"
 #include "common/replica_envs.h"
@@ -49,8 +48,6 @@
 #include "runtime/rpc/serialization.h"
 #include "runtime/task/task_code.h"
 #include "runtime/task/task_spec.h"
-#include "runtime/task/task_tracker.h"
-#include "utils/autoref_ptr.h"
 #include "utils/binary_reader.h"
 #include "utils/binary_writer.h"
 #include "utils/blob.h"
@@ -62,11 +59,8 @@
 #include "utils/fmt_logging.h"
 #include "utils/latency_tracer.h"
 #include "utils/string_view.h"
-#include "utils/threadpool_code.h"
-#include "utils/utils.h"
 
 namespace dsn {
-class disk_file;
 
 namespace replication {
 

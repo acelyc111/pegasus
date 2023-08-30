@@ -31,8 +31,6 @@
 #include <utility>
 #include <vector>
 
-#include <rocksdb/env.h>
-
 #include "aio/aio_provider.h"
 #include "aio/aio_task.h"
 #include "native_linux_aio_provider.h"

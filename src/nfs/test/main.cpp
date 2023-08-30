@@ -24,14 +24,17 @@
  * THE SOFTWARE.
  */
 
+#include <ext/alloc_traits.h>
 // IWYU pragma: no_include <gtest/gtest-param-test.h>
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "aio/aio_task.h"

@@ -35,27 +35,35 @@
 
 #include "simple_kv.server.impl.h"
 
+#include <fmt/core.h>
 #include <inttypes.h>
+#include <rocksdb/slice.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <atomic>
-#include <fstream>
+#include <memory>
 #include <utility>
 #include <vector>
 
+#include "aio/aio_task.h"
+#include "aio/file_io.h"
+#include "common/replication.codes.h"
 #include "consensus_types.h"
 #include "replica/storage/simple_kv/simple_kv.server.h"
 #include "rocksdb/env.h"
 #include "rocksdb/status.h"
 #include "runtime/serverlet.h"
 #include "simple_kv_types.h"
+#include "utils/autoref_ptr.h"
+#include "utils/binary_reader.h"
+#include "utils/blob.h"
 #include "utils/encryption_utils.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
+#include "utils/utils.h"
 
 namespace dsn {
-class blob;
 
 namespace replication {
 class replica;
