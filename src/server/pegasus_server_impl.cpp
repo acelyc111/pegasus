@@ -1634,8 +1634,8 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
         rocksdb::DBOptions loaded_db_opt;
         std::vector<rocksdb::ColumnFamilyDescriptor> loaded_cf_descs;
         rocksdb::ColumnFamilyOptions loaded_data_cf_opts;
-        // Set `ignore_unknown_options` true for forward compatibility.
         rocksdb::ConfigOptions config_options;
+        // Set `ignore_unknown_options` true for forward compatibility.
         config_options.ignore_unknown_options = true;
         config_options.env = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive);
         auto status =
@@ -1683,7 +1683,6 @@ dsn::error_code pegasus_server_impl::start(int argc, char **argv)
     config_options.sanity_level =
         rocksdb::ConfigOptions::SanityLevel::kSanityLevelLooselyCompatible;
     config_options.env = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive);
-    // TODO(yingchun): CheckOptionsCompatibility cause many issues!
     auto s =
         rocksdb::CheckOptionsCompatibility(config_options, rdb_path, _db_opts, column_families);
     if (!s.ok() && !s.IsNotFound() && !has_incompatible_db_options) {
