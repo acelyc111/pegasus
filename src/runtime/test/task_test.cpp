@@ -68,6 +68,7 @@ public:
 
     static void test_signal_finished_task()
     {
+        // config-test.ini is not encrypted, so set FLAGS_encrypt_data_at_rest = false on force.
         FLAGS_encrypt_data_at_rest = false;
 
         disk_file *fp = file::open("config-test.ini", file::FileOpenType::kReadOnly);

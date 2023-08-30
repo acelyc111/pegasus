@@ -36,9 +36,6 @@
 #include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
-#include "utils/flags.h"
-
-DSN_DECLARE_bool(encrypt_data_at_rest);
 
 static void file_utils_test_setup()
 {

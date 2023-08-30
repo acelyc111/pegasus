@@ -65,8 +65,7 @@ enum class FileDataType;
 
 namespace filesystem {
 
-// TODO(yingchun): pre refactor: consider to use rocksdb/file_system.h to replace functions in this
-//  file.
+// TODO(yingchun): Consider using rocksdb APIs to rewrite the following functions.
 
 int get_normalized_path(const std::string &path, std::string &npath);
 
@@ -148,11 +147,6 @@ bool verify_file(const std::string &fname,
                  const int64_t &expected_fsize);
 
 bool verify_file_size(const std::string &fname, FileDataType type, const int64_t &expected_fsize);
-
-bool verify_data_md5(const std::string &fname,
-                     const char *data,
-                     const size_t data_size,
-                     const std::string &expected_md5);
 
 // create driectory and get absolute path
 bool create_directory(const std::string &path,

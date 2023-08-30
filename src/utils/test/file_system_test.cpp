@@ -32,18 +32,13 @@ namespace dsn {
 namespace utils {
 namespace filesystem {
 
-class filesystem_test : public pegasus::encrypt_data_test_base
-{
-};
+// The old filesystem API doesn't support sensitive files, so skip testing
+// FLAGS_encrypt_data_at_rest=true.
 
-INSTANTIATE_TEST_CASE_P(, filesystem_test, ::testing::Values(false, true));
-
-TEST_P(filesystem_test, check_new_md5sum)
+TEST(filesystem_test, check_new_md5sum)
 {
-    // deprecated_md5sum doesn't support kSensitive files, so skip it here.
-    if (FLAGS_encrypt_data_at_rest) {
-        return;
-    }
+    FLAGS_encrypt_data_at_rest = false;
+
     struct file_info
     {
         int64_t size;
@@ -81,8 +76,10 @@ TEST_P(filesystem_test, check_new_md5sum)
     }
 }
 
-TEST_P(filesystem_test, verify_file_test)
+TEST(filesystem_test, verify_file_test)
 {
+    FLAGS_encrypt_data_at_rest = false;
+
     const std::string &fname = "test_file";
     std::string expected_md5;
     int64_t expected_fsize;

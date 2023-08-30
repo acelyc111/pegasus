@@ -24,6 +24,9 @@ class Env;
 namespace dsn {
 namespace utils {
 
+// Indicate whether the file is sensitive or not.
+// Only the sensitive file will be encrypted if FLAGS_encrypt_data_at_rest
+// is enabled at the same time.
 enum class FileDataType
 {
     kSensitive = 0,

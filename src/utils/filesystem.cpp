@@ -909,22 +909,6 @@ bool verify_file_size(const std::string &fname, FileDataType type, const int64_t
     return true;
 }
 
-bool verify_data_md5(const std::string &fname,
-                     const char *data,
-                     const size_t data_size,
-                     const std::string &expected_md5)
-{
-    std::string md5 = string_md5(data, data_size);
-    if (md5 != expected_md5) {
-        LOG_ERROR("verify data({}) failed, because data damaged, size: md5: {} VS {}",
-                  fname,
-                  md5,
-                  expected_md5);
-        return false;
-    }
-    return true;
-}
-
 bool create_directory(const std::string &path, std::string &absolute_path, std::string &err_msg)
 {
     FAIL_POINT_INJECT_F("filesystem_create_directory", [path](string_view str) {
