@@ -190,7 +190,6 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
     dsn::zauto_lock l(_lock);
 
     std::unique_ptr<rocksdb::SequentialFile> rfile;
-    // TODO(yingchun): don't encrypt
     auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
                  ->NewSequentialFile(name, &rfile, rocksdb::EnvOptions());
     CHECK(s.ok(), "open log file '{}' failed, err = {}", name, s.ToString());
@@ -212,7 +211,9 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
     CHECK_EQ(sizeof(magic), reader.read(magic));
     CHECK_EQ_MSG(magic, 0xdeadbeef, "invalid checkpoint");
 
+    // Read kv pairs.
     for (uint64_t i = 0; i < count; i++) {
+        // Read key.
         uint32_t sz = 0;
         s = rfile->Read(sizeof(sz), &result, (char *)&sz);
         CHECK(s.ok(), "read key size failed, err = {}", s.ToString());
@@ -224,6 +225,7 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
         CHECK(!result.empty(), "read EOF of file '{}'", name);
         std::string key = result.ToString();
 
+        // Read value.
         s = rfile->Read(sizeof(sz), &result, (char *)&sz);
         CHECK(s.ok(), "read value size failed, err = {}", s.ToString());
         CHECK(!result.empty(), "read EOF of file '{}'", name);
@@ -234,6 +236,7 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
         CHECK(!result.empty(), "read EOF of file '{}'", name);
         std::string value = result.ToString();
 
+        // Store the kv pair.
         _store[key] = value;
     }
 }
