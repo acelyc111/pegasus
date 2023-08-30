@@ -279,7 +279,7 @@ error_code local_file_object::load_metadata()
     std::string metadata_path = local_service::get_metafile(file_name());
     std::string data;
     auto s = rocksdb::ReadFileToString(
-        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), metadata_path, &data);
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), metadata_path, &data);
     if (!s.ok()) {
         LOG_ERROR("read file '{}' failed, err = {}", metadata_path, s.ToString());
         return ERR_FS_INTERNAL;
@@ -305,7 +305,7 @@ error_code local_file_object::store_metadata()
     std::string meta_str = nlohmann::json(meta).dump();
     std::string metadata_path = local_service::get_metafile(file_name());
     auto s =
-        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
                                    rocksdb::Slice(meta_str),
                                    metadata_path,
                                    /* should_sync */ true);
@@ -493,6 +493,14 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
 
         upload_response resp;
         do {
+            // Create the directory.
+            std::string path = dsn::utils::filesystem::remove_file_name(file_name());
+            if (!dsn::utils::filesystem::create_directory(path)) {
+                LOG_ERROR("create directory '{}' failed", path);
+                resp.err = ERR_FILE_OPERATION_FAILED;
+                break;
+            }
+
             // Hard link the file.
             auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
                          ->LinkFile(req.input_local_name, file_name());
