@@ -125,9 +125,9 @@ public:
             }
         }
 
-        start(all_test_envs);
+        ASSERT_EQ(dsn::ERR_OK, start(all_test_envs));
         if (is_restart) {
-            _server->stop(false);
+            ASSERT_EQ(dsn::ERR_OK, _server->stop(false));
             ASSERT_EQ(dsn::ERR_OK, start());
         }
 
@@ -182,7 +182,7 @@ TEST_P(pegasus_server_impl_test, test_open_db_with_app_envs)
 {
     std::map<std::string, std::string> envs;
     envs[ROCKSDB_ENV_USAGE_SCENARIO_KEY] = ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD;
-    start(envs);
+    ASSERT_EQ(dsn::ERR_OK, start(envs));
     ASSERT_EQ(ROCKSDB_ENV_USAGE_SCENARIO_BULK_LOAD, _server->_usage_scenario);
 }
 
@@ -204,12 +204,12 @@ TEST_P(pegasus_server_impl_test, test_stop_db_twice)
     ASSERT_TRUE(_server->_is_open);
     ASSERT_TRUE(_server->_db != nullptr);
 
-    _server->stop(false);
+    ASSERT_EQ(dsn::ERR_OK, _server->stop(false));
     ASSERT_FALSE(_server->_is_open);
     ASSERT_TRUE(_server->_db == nullptr);
 
     // stop again
-    _server->stop(false);
+    ASSERT_EQ(dsn::ERR_OK, _server->stop(false));
     ASSERT_FALSE(_server->_is_open);
     ASSERT_TRUE(_server->_db == nullptr);
 }

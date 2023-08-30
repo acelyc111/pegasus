@@ -123,6 +123,8 @@ public:
     dsn::task_tracker _tracker;
 };
 
+INSTANTIATE_TEST_CASE_P(, coarse_collector_test, ::testing::Values(false, true));
+
 TEST_P(coarse_collector_test, coarse_collector)
 {
     detect_hotkey_result result;

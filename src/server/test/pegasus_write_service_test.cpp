@@ -224,6 +224,8 @@ public:
     }
 };
 
+INSTANTIATE_TEST_CASE_P(, pegasus_write_service_test, ::testing::Values(false, true));
+
 TEST_P(pegasus_write_service_test, multi_put) { test_multi_put(); }
 
 TEST_P(pegasus_write_service_test, multi_remove) { test_multi_remove(); }

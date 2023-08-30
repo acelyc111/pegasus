@@ -111,6 +111,8 @@ public:
     }
 };
 
+INSTANTIATE_TEST_CASE_P(, manual_compact_service_test, ::testing::Values(false, true));
+
 TEST_P(manual_compact_service_test, check_compact_disabled)
 {
     std::map<std::string, std::string> envs;

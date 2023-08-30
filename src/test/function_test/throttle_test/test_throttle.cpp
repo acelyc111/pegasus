@@ -324,7 +324,7 @@ public:
     }
 };
 
-#define TEST_FLAN_DESC_custom_kb(op, sz)                                                           \
+#define TEST_PLAN_DESC_custom_kb(op, sz)                                                           \
     fmt::format(#op " test / throttle by size / {}kb value size", sz)
 
 TEST_F(throttle_test, test)
@@ -500,7 +500,7 @@ TEST_F(throttle_test, test)
     ASSERT_NEAR(result.total_size_per_sec, actual_value, actual_value * 0.3);
 
     // big value test can't run normally in the function test
-    plan = {TEST_FLAN_DESC_custom_kb(set, FLAGS_throttle_test_medium_value_kb),
+    plan = {TEST_PLAN_DESC_custom_kb(set, FLAGS_throttle_test_medium_value_kb),
             operation_type::set,
             1024 * FLAGS_throttle_test_medium_value_kb,
             1,
@@ -518,7 +518,7 @@ TEST_F(throttle_test, test)
     result.finalize();
     ASSERT_NEAR(result.total_size_per_sec, actual_value, actual_value * 0.3);
 
-    plan = {TEST_FLAN_DESC_custom_kb(get, FLAGS_throttle_test_medium_value_kb),
+    plan = {TEST_PLAN_DESC_custom_kb(get, FLAGS_throttle_test_medium_value_kb),
             operation_type::get,
             1024 * FLAGS_throttle_test_medium_value_kb,
             1,
@@ -536,7 +536,7 @@ TEST_F(throttle_test, test)
     result.finalize();
     ASSERT_NEAR(result.total_size_per_sec, actual_value, actual_value * 0.3);
 
-    plan = {TEST_FLAN_DESC_custom_kb(set, FLAGS_throttle_test_large_value_kb),
+    plan = {TEST_PLAN_DESC_custom_kb(set, FLAGS_throttle_test_large_value_kb),
             operation_type::set,
             1024 * FLAGS_throttle_test_large_value_kb,
             1,
@@ -554,7 +554,7 @@ TEST_F(throttle_test, test)
     result.finalize();
     ASSERT_NEAR(result.total_size_per_sec, actual_value, actual_value * 0.3);
 
-    plan = {TEST_FLAN_DESC_custom_kb(get, FLAGS_throttle_test_large_value_kb),
+    plan = {TEST_PLAN_DESC_custom_kb(get, FLAGS_throttle_test_large_value_kb),
             operation_type::get,
             1024 * FLAGS_throttle_test_large_value_kb,
             1,

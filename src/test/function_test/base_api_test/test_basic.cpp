@@ -25,18 +25,15 @@
 #include <atomic>
 #include <chrono>
 #include <map>
-#include <memory>
 #include <set>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 
-#include "client/replication_ddl_client.h"
 #include "include/pegasus/client.h"
 #include "pegasus/error.h"
 #include "test/function_test/utils/test_util.h"
-#include "utils/error_code.h"
 
 using namespace ::pegasus;
 
@@ -44,12 +41,6 @@ typedef pegasus_client::internal_info internal_info;
 
 class basic : public test_util
 {
-public:
-    void TearDown() override
-    {
-        test_util::TearDown();
-        ASSERT_EQ(dsn::ERR_OK, ddl_client_->drop_app(app_name_, 0));
-    }
 };
 
 TEST_F(basic, set_get_del)

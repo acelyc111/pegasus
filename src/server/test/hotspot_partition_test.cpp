@@ -123,6 +123,8 @@ public:
     void clear_calculator_histories() { calculator._partitions_stat_histories.clear(); }
 };
 
+INSTANTIATE_TEST_CASE_P(, hotspot_partition_test, ::testing::Values(false, true));
+
 TEST_P(hotspot_partition_test, hotspot_partition_policy)
 {
     // Insert normal scenario data to test

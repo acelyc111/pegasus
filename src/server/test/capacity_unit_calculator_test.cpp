@@ -157,6 +157,8 @@ public:
     }
 };
 
+INSTANTIATE_TEST_CASE_P(, capacity_unit_calculator_test, ::testing::Values(false, true));
+
 TEST_P(capacity_unit_calculator_test, init) { test_init(); }
 
 TEST_P(capacity_unit_calculator_test, get)
