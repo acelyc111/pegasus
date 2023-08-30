@@ -918,7 +918,7 @@ bool check_dir_rw(const std::string &path, std::string &err_msg)
                                    rocksdb::Slice(kTestValue),
                                    fpath,
                                    /* should_sync */ true);
-    if (!s.ok()) {
+    if (dsn_unlikely(!s.ok())) {
         err_msg = fmt::format("fail to write file {}, err={}", fpath, s.ToString());
         return false;
     }
@@ -926,13 +926,13 @@ bool check_dir_rw(const std::string &path, std::string &err_msg)
     std::string read_data;
     s = rocksdb::ReadFileToString(
         dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), fpath, &read_data);
-    if (!s.ok()) {
+    if (dsn_unlikely(!s.ok())) {
         err_msg = fmt::format("fail to read file {}, err={}", fpath, s.ToString());
         return false;
     }
 
-    if (read_data != kTestValue) {
-        err_msg = fmt::format("get wrong value'{}' from file", read_data, fpath);
+    if (dsn_unlikely(read_data != kTestValue)) {
+        err_msg = fmt::format("get wrong value '{}' from file", read_data, fpath);
         return false;
     }
 
