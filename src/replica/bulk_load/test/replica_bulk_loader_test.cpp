@@ -274,11 +274,11 @@ public:
 
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, METADATA);
         blob bb = json::json_forwarder<bulk_load_metadata>::encode(_metadata);
-        auto s =
-            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
-                                       rocksdb::Slice(bb.data(), bb.length()),
-                                       whole_name,
-                                       /* should_sync */ true);
+        auto s = rocksdb::WriteStringToFile(
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            rocksdb::Slice(bb.data(), bb.length()),
+            whole_name,
+            /* should_sync */ true);
         if (!s.ok()) {
             LOG_ERROR("write file {} failed", whole_name);
             return ERR_FILE_OPERATION_FAILED;

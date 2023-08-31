@@ -21,6 +21,10 @@
 #include <string>
 #include <vector>
 
+#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+
 #include "block_service/block_service.h"
 #include "runtime/task/task.h"
 #include "runtime/task/task_code.h"
@@ -31,6 +35,13 @@ class task_tracker;
 
 namespace dist {
 namespace block_service {
+
+struct file_metadata
+{
+    int64_t size;
+    std::string md5;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(file_metadata, size, md5)
 
 class local_service : public block_filesystem
 {

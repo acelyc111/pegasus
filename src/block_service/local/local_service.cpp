@@ -15,7 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <nlohmann/json.hpp>
 #include <rocksdb/env.h>
 #include <algorithm>
 #include <initializer_list>
@@ -25,8 +24,6 @@
 #include <utility>
 
 #include "local_service.h"
-#include "nlohmann/detail/macro_scope.hpp"
-#include "nlohmann/json_fwd.hpp"
 #include "rocksdb/slice.h"
 #include "rocksdb/status.h"
 #include "runtime/task/async_calls.h"
@@ -54,13 +51,6 @@ namespace dist {
 namespace block_service {
 
 DEFINE_TASK_CODE(LPC_LOCAL_SERVICE_CALL, TASK_PRIORITY_COMMON, THREAD_POOL_BLOCK_SERVICE)
-
-struct file_metadata
-{
-    uint64_t size;
-    std::string md5;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(file_metadata, size, md5)
 
 bool file_metadata_from_json(const std::string &data, file_metadata &fmeta) noexcept
 {
@@ -292,6 +282,7 @@ error_code local_file_object::load_metadata()
         return ERR_FS_INTERNAL;
     }
     _size = meta.size;
+    LOG_ERROR("metadata_path = {}, _size = {}", metadata_path, _size);
     _md5_value = meta.md5;
     _has_meta_synced = true;
     return ERR_OK;
@@ -381,6 +372,7 @@ dsn::task_ptr local_file_object::write(const write_request &req,
                 // Currently we calc the meta data from source data, which save the io bandwidth
                 // a lot, but it is somewhat not correct.
                 _size = resp.written_size;
+                LOG_ERROR("_size = {}", _size);
                 _md5_value = utils::string_md5(req.buffer.data(), req.buffer.length());
                 // TODO(yingchun): make store_metadata as a local function, do not depend on the
                 //  member variables (i.e. _size and _md5_value).
@@ -437,7 +429,11 @@ dsn::task_ptr local_file_object::read(const read_request &req,
                 total_sz = req.remote_length;
             }
 
-            LOG_DEBUG("start to read file '{}', size = {}", file_name(), total_sz);
+            LOG_INFO("file_sz = {}, req.remote_length = {}, req.remote_pos = {}, total_sz = {}",
+                     file_sz,
+                     req.remote_length,
+                     req.remote_pos,
+                     total_sz);
             rocksdb::EnvOptions env_options;
             env_options.use_direct_reads = FLAGS_enable_direct_io;
             std::unique_ptr<rocksdb::SequentialFile> sfile;
@@ -449,6 +445,10 @@ dsn::task_ptr local_file_object::read(const read_request &req,
                 break;
             }
 
+            LOG_INFO("start to read file '{}', offset = {}, size = {}",
+                     file_name(),
+                     req.remote_pos,
+                     total_sz);
             s = sfile->Skip(req.remote_pos);
             if (!s.ok()) {
                 LOG_ERROR(
@@ -524,6 +524,7 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
 
             resp.uploaded_size = file_size;
             _size = file_size;
+            LOG_ERROR("_size = {}", _size);
             auto res = utils::filesystem::md5sum(file_name(), _md5_value);
             if (res != dsn::ERR_OK) {
                 LOG_WARNING("calculate md5sum for {} failed", file_name());
@@ -589,12 +590,11 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             }
 
             auto type = dsn::utils::FileDataType::kNonSensitive;
-//            if (file_name().find("bulk_load_metadata") != std::string::npos) {
-//                type = dsn::utils::FileDataType::kNonSensitive;
-//            }
+            //            if (file_name().find("bulk_load_metadata") != std::string::npos) {
+            //                type = dsn::utils::FileDataType::kNonSensitive;
+            //            }
             // Hard link the file.
-            auto s = dsn::utils::PegasusEnv(type)
-                         ->LinkFile(file_name(), target_file);
+            auto s = dsn::utils::PegasusEnv(type)->LinkFile(file_name(), target_file);
             if (!s.ok()) {
                 LOG_ERROR("link file '{}' to '{}' failed, err = {}",
                           file_name(),
@@ -605,8 +605,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             }
 
             int64_t file_size;
-            if (!dsn::utils::filesystem::file_size(
-                    target_file, type, file_size)) {
+            if (!dsn::utils::filesystem::file_size(target_file, type, file_size)) {
                 LOG_ERROR("get file size of '{}' failed, err = {}", target_file, s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
@@ -623,6 +622,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             resp.downloaded_size = file_size;
             resp.file_md5 = _md5_value;
             _size = file_size;
+            LOG_ERROR("_size = {}", _size);
             _has_meta_synced = true;
         } while (false);
         tsk->enqueue_with(resp);
