@@ -578,7 +578,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 }
             }
 
-            LOG_INFO("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
+            LOG_DEBUG("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
 
             // Create the directory.
             std::string path = dsn::utils::filesystem::remove_file_name(file_name());
@@ -619,7 +619,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 break;
             }
 
-            LOG_INFO("finish download file({}), file_size = {}", target_file, file_size);
+            LOG_DEBUG("finish download file({}), file_size = {}", target_file, file_size);
             resp.downloaded_size = file_size;
             resp.file_md5 = _md5_value;
             _size = file_size;

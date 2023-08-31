@@ -39,7 +39,10 @@
 #include "utils/error_code.h"
 #include "utils/errors.h"
 #include "utils/filesystem.h"
+#include "utils/flags.h"
 #include "utils/utils.h"
+
+DSN_DECLARE_bool(encrypt_data_at_rest);
 
 using namespace ::dsn;
 using namespace ::dsn::replication;
@@ -62,12 +65,12 @@ using std::string;
 /// hashkey: hashi sortkey: sorti value: newValue       i=[0, 1000]
 /// hashkey: hashkeyj sortkey: sortkeyj value: newValue j=[0, 1000]
 ///
-class bulk_load_test : public test_util, public testing::TestWithParam<bool>
+class bulk_load_test : public test_util
 {
 protected:
     bulk_load_test() : test_util(map<string, string>({{"rocksdb.allow_ingest_behind", "true"}}))
     {
-        FLAGS_encrypt_data_at_rest = GetParam();
+//        FLAGS_encrypt_data_at_rest = GetParam();
 
         TRICKY_CODE_TO_AVOID_LINK_ERROR;
         bulk_load_local_root_ =
