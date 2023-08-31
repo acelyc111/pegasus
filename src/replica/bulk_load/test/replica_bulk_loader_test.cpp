@@ -25,6 +25,8 @@
 #include <memory>
 #include <vector>
 
+#include <rocksdb/env.h>
+
 #include "common/bulk_load_common.h"
 #include "common/gpid.h"
 #include "common/json_helper.h"
@@ -271,21 +273,16 @@ public:
         _metadata.file_total_size = _file_meta.size;
 
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, METADATA);
-        utils::filesystem::create_file(whole_name);
-        std::ofstream os(whole_name.c_str(),
-                         (std::ofstream::out | std::ios::binary | std::ofstream::trunc));
-        if (!os.is_open()) {
-            LOG_ERROR("open file {} failed", whole_name);
-            return ERR_FILE_OPERATION_FAILED;
-        }
-
         blob bb = json::json_forwarder<bulk_load_metadata>::encode(_metadata);
-        os.write((const char *)bb.data(), (std::streamsize)bb.length());
-        if (os.bad()) {
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                                       rocksdb::Slice(bb.data(), bb.length()),
+                                       whole_name,
+                                       /* should_sync */ true);
+        if (!s.ok()) {
             LOG_ERROR("write file {} failed", whole_name);
             return ERR_FILE_OPERATION_FAILED;
         }
-        os.close();
 
         return ERR_OK;
     }
@@ -557,7 +554,7 @@ TEST_P(replica_bulk_loader_test, bulk_load_metadata_corrupt)
     create_local_file(METADATA);
     std::string metadata_file_name = utils::filesystem::path_combine(LOCAL_DIR, METADATA);
     error_code ec = test_parse_bulk_load_metadata(metadata_file_name);
-    ASSERT_EQ(ec, ERR_CORRUPTION);
+    ASSERT_EQ(ERR_CORRUPTION, ec);
     utils::filesystem::remove_path(LOCAL_DIR);
 }
 

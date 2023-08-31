@@ -193,6 +193,7 @@ bulk_load_service::check_bulk_load_request_params(const start_bulk_load_request 
     cf_req.file_name = remote_path;
     cf_req.ignore_metadata = true;
     error_code err = ERR_OK;
+
     dsn::dist::block_service::block_file_ptr file_handler = nullptr;
     blk_fs
         ->create_file(

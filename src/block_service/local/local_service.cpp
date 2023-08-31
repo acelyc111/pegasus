@@ -279,7 +279,7 @@ error_code local_file_object::load_metadata()
     std::string metadata_path = local_service::get_metafile(file_name());
     std::string data;
     auto s = rocksdb::ReadFileToString(
-        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), metadata_path, &data);
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), metadata_path, &data);
     if (!s.ok()) {
         LOG_ERROR("read file '{}' failed, err = {}", metadata_path, s.ToString());
         return ERR_FS_INTERNAL;
@@ -305,7 +305,7 @@ error_code local_file_object::store_metadata()
     std::string meta_str = nlohmann::json(meta).dump();
     std::string metadata_path = local_service::get_metafile(file_name());
     auto s =
-        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
                                    rocksdb::Slice(meta_str),
                                    metadata_path,
                                    /* should_sync */ true);
@@ -441,7 +441,7 @@ dsn::task_ptr local_file_object::read(const read_request &req,
             rocksdb::EnvOptions env_options;
             env_options.use_direct_reads = FLAGS_enable_direct_io;
             std::unique_ptr<rocksdb::SequentialFile> sfile;
-            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive)
                          ->NewSequentialFile(file_name(), &sfile, env_options);
             if (!s.ok()) {
                 LOG_ERROR("open file '{}' failed, err = {}", file_name(), s.ToString());

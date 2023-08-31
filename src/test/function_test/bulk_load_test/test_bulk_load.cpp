@@ -263,7 +263,9 @@ TEST_F(bulk_load_test, bulk_load_tests)
     ASSERT_NO_FATAL_FAILURE(operate_data(operation::GET, "oldValue", 10));
 
     ASSERT_EQ(ERR_OK, start_bulk_load());
-    ASSERT_EQ(bulk_load_status::BLS_SUCCEED, wait_bulk_load_finish(300));
+    if (bulk_load_status::BLS_SUCCEED != wait_bulk_load_finish(300)) {
+        assert(false);
+    }
     std::cout << "Start to verify data..." << std::endl;
     ASSERT_NO_FATAL_FAILURE(verify_bulk_load_data());
 

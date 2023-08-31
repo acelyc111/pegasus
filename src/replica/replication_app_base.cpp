@@ -73,7 +73,7 @@ error_code write_blob_to_file(const std::string &fname, const blob &data)
     std::string tmp_fname = fname + ".tmp";
     auto cleanup = defer([tmp_fname]() { utils::filesystem::remove_path(tmp_fname); });
     auto s =
-        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
                                    rocksdb::Slice(data.data(), data.length()),
                                    tmp_fname,
                                    /* should_sync */ true);
@@ -123,7 +123,7 @@ error_code replica_init_info::load_json(const std::string &fname)
 {
     std::string data;
     auto s = rocksdb::ReadFileToString(
-        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), fname, &data);
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), fname, &data);
     LOG_AND_RETURN_NOT_TRUE(ERROR, s.ok(), ERR_FILE_OPERATION_FAILED, "read file {} failed", fname);
     LOG_AND_RETURN_NOT_TRUE(ERROR,
                             json::json_forwarder<replica_init_info>::decode(
@@ -153,7 +153,7 @@ error_code replica_app_info::load(const std::string &fname)
 {
     std::string data;
     auto s = rocksdb::ReadFileToString(
-        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), fname, &data);
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), fname, &data);
     LOG_AND_RETURN_NOT_TRUE(ERROR, s.ok(), ERR_FILE_OPERATION_FAILED, "read file {} failed", fname);
     binary_reader reader(blob::create_from_bytes(std::move(data)));
     int magic = 0;
