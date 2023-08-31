@@ -578,9 +578,22 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 }
             }
 
-            LOG_DEBUG("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
+            LOG_INFO("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
+
+            // Create the directory.
+            std::string path = dsn::utils::filesystem::remove_file_name(file_name());
+            if (!dsn::utils::filesystem::create_directory(path)) {
+                LOG_ERROR("create directory '{}' failed", path);
+                resp.err = ERR_FILE_OPERATION_FAILED;
+                break;
+            }
+
+            auto type = dsn::utils::FileDataType::kNonSensitive;
+//            if (file_name().find("bulk_load_metadata") != std::string::npos) {
+//                type = dsn::utils::FileDataType::kNonSensitive;
+//            }
             // Hard link the file.
-            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+            auto s = dsn::utils::PegasusEnv(type)
                          ->LinkFile(file_name(), target_file);
             if (!s.ok()) {
                 LOG_ERROR("link file '{}' to '{}' failed, err = {}",
@@ -593,7 +606,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
 
             int64_t file_size;
             if (!dsn::utils::filesystem::file_size(
-                    target_file, dsn::utils::FileDataType::kSensitive, file_size)) {
+                    target_file, type, file_size)) {
                 LOG_ERROR("get file size of '{}' failed, err = {}", target_file, s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
@@ -606,7 +619,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 break;
             }
 
-            LOG_DEBUG("finish download file({}), file_size = {}", target_file, file_size);
+            LOG_INFO("finish download file({}), file_size = {}", target_file, file_size);
             resp.downloaded_size = file_size;
             resp.file_md5 = _md5_value;
             _size = file_size;

@@ -62,11 +62,13 @@ using std::string;
 /// hashkey: hashi sortkey: sorti value: newValue       i=[0, 1000]
 /// hashkey: hashkeyj sortkey: sortkeyj value: newValue j=[0, 1000]
 ///
-class bulk_load_test : public test_util
+class bulk_load_test : public test_util, public testing::TestWithParam<bool>
 {
 protected:
     bulk_load_test() : test_util(map<string, string>({{"rocksdb.allow_ingest_behind", "true"}}))
     {
+        FLAGS_encrypt_data_at_rest = GetParam();
+
         TRICKY_CODE_TO_AVOID_LINK_ERROR;
         bulk_load_local_root_ =
             utils::filesystem::path_combine("onebox/block_service/local_service/", LOCAL_ROOT);
@@ -89,14 +91,17 @@ protected:
         ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root("mkdir -p onebox/block_service"));
         ASSERT_NO_FATAL_FAILURE(
             run_cmd_from_project_root("mkdir -p onebox/block_service/local_service"));
-        ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root(
-            "cp -r src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files/" +
-            LOCAL_ROOT + " onebox/block_service/local_service"));
-        string cmd = "echo '{\"app_id\":" + std::to_string(app_id_) +
-                     ",\"app_name\":\"temp\",\"partition_count\":8}' > "
-                     "onebox/block_service/local_service/bulk_load_root/cluster/temp/"
-                     "bulk_load_info";
-        ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root(cmd));
+        if (FLAGS_encrypt_data_at_rest) {
+        } else {
+            ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root(
+                    "cp -r src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files/" +
+                    LOCAL_ROOT + " onebox/block_service/local_service"));
+            string cmd = "echo '{\"app_id\":" + std::to_string(app_id_) +
+                         ",\"app_name\":\"temp\",\"partition_count\":8}' > "
+                         "onebox/block_service/local_service/bulk_load_root/cluster/temp/"
+                         "bulk_load_info";
+            ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root(cmd));
+        }
     }
 
     error_code start_bulk_load(bool ingest_behind = false)
@@ -227,16 +232,29 @@ protected:
 /// case1: lack of `bulk_load_info` file
 /// case2: `bulk_load_info` file inconsistent with app_info
 ///
-TEST_F(bulk_load_test, bulk_load_test_failed)
+TEST_F(bulk_load_test, bulk_load_test_failed1)
 {
     // bulk load failed because `bulk_load_info` file is missing
     ASSERT_NO_FATAL_FAILURE(
         remove_file(bulk_load_local_root_ + "/" + CLUSTER + "/" + app_name_ + "/bulk_load_info"));
     ASSERT_EQ(ERR_OBJECT_NOT_FOUND, start_bulk_load());
+}
 
+TEST_F(bulk_load_test, bulk_load_test_failed2)
+{
     // bulk load failed because `bulk_load_info` file inconsistent with current app_info
     ASSERT_NO_FATAL_FAILURE(replace_bulk_load_info());
     ASSERT_EQ(ERR_INCONSISTENT_STATE, start_bulk_load());
+}
+
+TEST_F(bulk_load_test, bulk_load_test_failed3)
+{
+    // bulk load failed because partition[0] `bulk_load_metadata` file is missing
+    ASSERT_NO_FATAL_FAILURE(remove_file(bulk_load_local_root_ + "/" + CLUSTER + "/" + app_name_ +
+                                        "/0/bulk_load_metadata"));
+    ASSERT_EQ(ERR_OK, start_bulk_load());
+    // bulk load will get FAILED
+    ASSERT_EQ(bulk_load_status::BLS_FAILED, wait_bulk_load_finish(300));
 }
 
 ///
@@ -248,16 +266,6 @@ TEST_F(bulk_load_test, bulk_load_test_failed)
 ///
 TEST_F(bulk_load_test, bulk_load_tests)
 {
-    // bulk load failed because partition[0] `bulk_load_metadata` file is missing
-    ASSERT_NO_FATAL_FAILURE(remove_file(bulk_load_local_root_ + "/" + CLUSTER + "/" + app_name_ +
-                                        "/0/bulk_load_metadata"));
-    ASSERT_EQ(ERR_OK, start_bulk_load());
-    // bulk load will get FAILED
-    ASSERT_EQ(bulk_load_status::BLS_FAILED, wait_bulk_load_finish(300));
-
-    // recover complete files
-    ASSERT_NO_FATAL_FAILURE(copy_bulk_load_files());
-
     // write old data
     ASSERT_NO_FATAL_FAILURE(operate_data(operation::SET, "oldValue", 10));
     ASSERT_NO_FATAL_FAILURE(operate_data(operation::GET, "oldValue", 10));

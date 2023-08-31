@@ -718,11 +718,16 @@ error_code md5sum(const std::string &file_path, /*out*/ std::string &result)
         return ERR_OBJECT_NOT_FOUND;
     }
 
+    auto type = dsn::utils::FileDataType::kNonSensitive;
+//    if (file_path.find("bulk_load_metadata") != std::string::npos) {
+//        type = dsn::utils::FileDataType::kNonSensitive;
+//    }
+
     std::unique_ptr<rocksdb::SequentialFile> sfile;
-    auto s = dsn::utils::PegasusEnv(FileDataType::kSensitive)
+    auto s = dsn::utils::PegasusEnv(type)
                  ->NewSequentialFile(file_path, &sfile, rocksdb::EnvOptions());
     if (!sfile) {
-        LOG_ERROR("md5sum error: open file {} failed", file_path);
+        LOG_ERROR("md5sum error: open file {} failed, err={}", file_path, s.ToString());
         return ERR_FILE_OPERATION_FAILED;
     }
 

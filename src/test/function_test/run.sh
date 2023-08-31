@@ -45,7 +45,7 @@ fi
 
 loop_count=0
 last_ret=0
-while [ $loop_count -le 1 ]
+while [ $loop_count -le 0 ]
 do
   GTEST_OUTPUT="xml:${REPORT_DIR}/${TEST_BIN}.xml" ./${TEST_BIN}
   last_ret=$?
