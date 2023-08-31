@@ -349,10 +349,10 @@ TEST_P(aio_test, dsn_file)
     std::string src_file = "copy_source.txt";
     std::string dst_file = "copy_dest.txt";
     if (FLAGS_encrypt_data_at_rest) {
-        encrypt_file(src_file, src_file + ".encrypted");
+        pegasus::encrypt_file(src_file, src_file + ".encrypted");
         src_file += ".encrypted";
 
-        encrypt_file(dst_file, dst_file + ".encrypted");
+        pegasus::encrypt_file(dst_file, dst_file + ".encrypted");
         dst_file += ".encrypted";
     }
 

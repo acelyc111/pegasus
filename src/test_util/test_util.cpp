@@ -38,7 +38,7 @@
 
 namespace pegasus {
 
-void encrypt_data_test_base::encrypt_file(const std::string &src, const std::string &dst)
+void encrypt_file(const std::string &src, const std::string &dst)
 {
     std::unique_ptr<rocksdb::SequentialFile> sfile;
     auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive)

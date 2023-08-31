@@ -35,7 +35,11 @@
 #include "include/pegasus/error.h"
 #include "meta_admin_types.h"
 #include "metadata_types.h"
+#include "meta/meta_bulk_load_service.h"
+#include "rocksdb/env.h"
 #include "test/function_test/utils/test_util.h"
+#include "test_util/test_util.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/errors.h"
 #include "utils/filesystem.h"
@@ -70,86 +74,88 @@ class bulk_load_test : public test_util
 protected:
     bulk_load_test() : test_util(map<string, string>({{"rocksdb.allow_ingest_behind", "true"}}))
     {
-//        FLAGS_encrypt_data_at_rest = GetParam();
-
         TRICKY_CODE_TO_AVOID_LINK_ERROR;
-        bulk_load_local_root_ =
-            utils::filesystem::path_combine("onebox/block_service/local_service/", LOCAL_ROOT);
+        BULK_LOAD_LOCAL_APP_ROOT = fmt::format("{}/{}/{}/{}", LOCAL_SERVICE_ROOT, BULK_LOAD, CLUSTER, app_name_);
     }
 
     void SetUp() override
     {
         test_util::SetUp();
-        ASSERT_NO_FATAL_FAILURE(copy_bulk_load_files());
+        NO_FATALS(copy_bulk_load_files());
     }
 
     void TearDown() override
     {
-        ASSERT_EQ(ERR_OK, ddl_client_->drop_app(app_name_, 0));
-        ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root("rm -rf onebox/block_service"));
+//        ASSERT_EQ(ERR_OK, ddl_client_->drop_app(app_name_, 0));
+//        NO_FATALS(run_cmd_from_project_root("rm -rf " + LOCAL_SERVICE_ROOT));
     }
 
     void copy_bulk_load_files()
     {
-        ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root("mkdir -p onebox/block_service"));
-        ASSERT_NO_FATAL_FAILURE(
-            run_cmd_from_project_root("mkdir -p onebox/block_service/local_service"));
-        if (FLAGS_encrypt_data_at_rest) {
-        } else {
-            ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root(
-                    "cp -r src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files/" +
-                    LOCAL_ROOT + " onebox/block_service/local_service"));
-            string cmd = "echo '{\"app_id\":" + std::to_string(app_id_) +
-                         ",\"app_name\":\"temp\",\"partition_count\":8}' > "
-                         "onebox/block_service/local_service/bulk_load_root/cluster/temp/"
-                         "bulk_load_info";
-            ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root(cmd));
-        }
+        // Prepare bulk load files.
+        // The source data has 8 partitions.
+        ASSERT_EQ(8, partition_count_);
+        NO_FATALS(run_cmd_from_project_root("mkdir -p " + LOCAL_SERVICE_ROOT));
+        NO_FATALS(run_cmd_from_project_root(fmt::format("cp -r {}/{} {}", SOURCE_FILES_ROOT, BULK_LOAD, LOCAL_SERVICE_ROOT)));
+
+        // Prepare bulk load metadata.
+        bulk_load_info bl_info;
+        bl_info.app_id = app_id_;
+        bl_info.app_name = app_name_;
+        bl_info.partition_count = partition_count_;
+        blob value = dsn::json::json_forwarder<bulk_load_info>::encode(bl_info);
+        string file_path = fmt::format("{}/{}/cluster/{}/bulk_load_info", LOCAL_SERVICE_ROOT, BULK_LOAD, app_name_);
+        auto s = rocksdb::WriteStringToFile(
+                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                rocksdb::Slice(value.data(), value.length()),
+                file_path,
+                /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
     }
 
     error_code start_bulk_load(bool ingest_behind = false)
     {
-        auto err_resp =
-            ddl_client_->start_bulk_load(app_name_, CLUSTER, PROVIDER, LOCAL_ROOT, ingest_behind);
-        return err_resp.get_value().err;
+        return ddl_client_->start_bulk_load(app_name_, CLUSTER, PROVIDER, BULK_LOAD, ingest_behind).get_value().err;;
     }
 
     void remove_file(const string &file_path)
     {
-        ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root("rm " + file_path));
+        NO_FATALS(run_cmd_from_project_root("rm " + file_path));
     }
 
-    void replace_bulk_load_info()
+    void make_inconsistent_bulk_load_info()
     {
-        string cmd = "cp -R "
-                     "src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files/"
-                     "mock_bulk_load_info/. " +
-                     bulk_load_local_root_ + "/" + CLUSTER + "/" + app_name_ + "/";
-        ASSERT_NO_FATAL_FAILURE(run_cmd_from_project_root(cmd));
+        bulk_load_info bl_info;
+        bl_info.app_id = app_id_ + 1;
+        bl_info.app_name = app_name_ + "wrong";
+        bl_info.partition_count = partition_count_ * 2;
+        blob value = dsn::json::json_forwarder<bulk_load_info>::encode(bl_info);
+        string file_path = fmt::format("{}/{}/cluster/{}/bulk_load_info", LOCAL_SERVICE_ROOT, BULK_LOAD, app_name_);
+        auto s = rocksdb::WriteStringToFile(
+                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                rocksdb::Slice(value.data(), value.length()),
+                file_path,
+                /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
     }
 
     void update_allow_ingest_behind(const string &allow_ingest_behind)
     {
-        // update app envs
-        std::vector<string> keys;
-        keys.emplace_back(ROCKSDB_ALLOW_INGEST_BEHIND);
-        std::vector<string> values;
-        values.emplace_back(allow_ingest_behind);
-        ASSERT_EQ(ERR_OK, ddl_client_->set_app_envs(app_name_, keys, values).get_value().err);
+        ASSERT_EQ(ERR_OK, ddl_client_->set_app_envs(app_name_, {ROCKSDB_ALLOW_INGEST_BEHIND}, {allow_ingest_behind}).get_value().err);
         std::cout << "sleep 31s to wait app_envs update" << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(31));
     }
 
-    bulk_load_status::type wait_bulk_load_finish(int64_t seconds)
+    bulk_load_status::type wait_bulk_load_finish(int64_t remain_seconds)
     {
         int64_t sleep_time = 5;
         error_code err = ERR_OK;
 
         bulk_load_status::type last_status = bulk_load_status::BLS_INVALID;
         // when bulk load end, err will be ERR_INVALID_STATE
-        while (seconds > 0 && err == ERR_OK) {
-            sleep_time = sleep_time > seconds ? seconds : sleep_time;
-            seconds -= sleep_time;
+        while (remain_seconds > 0 && err == ERR_OK) {
+            sleep_time = sleep_time > remain_seconds ? remain_seconds : sleep_time;
+            remain_seconds -= sleep_time;
             std::cout << "sleep " << sleep_time << "s to query bulk status" << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
 
@@ -164,13 +170,12 @@ protected:
 
     void verify_bulk_load_data()
     {
-        ASSERT_NO_FATAL_FAILURE(verify_data("hashkey", "sortkey"));
-        ASSERT_NO_FATAL_FAILURE(verify_data(HASHKEY_PREFIX, SORTKEY_PREFIX));
+        NO_FATALS(verify_data("hashkey", "sortkey"));
+        NO_FATALS(verify_data(HASHKEY_PREFIX, SORTKEY_PREFIX));
     }
 
     void verify_data(const string &hashkey_prefix, const string &sortkey_prefix)
     {
-        const string &expected_value = VALUE;
         for (int i = 0; i < COUNT; ++i) {
             string hash_key = hashkey_prefix + std::to_string(i);
             for (int j = 0; j < COUNT; ++j) {
@@ -178,7 +183,7 @@ protected:
                 string act_value;
                 ASSERT_EQ(PERR_OK, client_->get(hash_key, sort_key, act_value)) << hash_key << ","
                                                                                 << sort_key;
-                ASSERT_EQ(expected_value, act_value) << hash_key << "," << sort_key;
+                ASSERT_EQ(VALUE, act_value) << hash_key << "," << sort_key;
             }
         }
     }
@@ -219,77 +224,74 @@ protected:
     }
 
 protected:
-    string bulk_load_local_root_;
-
-    const string LOCAL_ROOT = "bulk_load_root";
+    string BULK_LOAD_LOCAL_APP_ROOT;
+    const string SOURCE_FILES_ROOT = "src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files";
+    const string LOCAL_SERVICE_ROOT = "onebox/block_service/local_service";
+    const string BULK_LOAD = "bulk_load_root";
     const string CLUSTER = "cluster";
     const string PROVIDER = "local_service";
-
     const string HASHKEY_PREFIX = "hash";
     const string SORTKEY_PREFIX = "sort";
     const string VALUE = "newValue";
     const int32_t COUNT = 1000;
 };
 
-///
-/// case1: lack of `bulk_load_info` file
-/// case2: `bulk_load_info` file inconsistent with app_info
-///
+// Test bulk load failed because `bulk_load_info` file is missing
 TEST_F(bulk_load_test, bulk_load_test_failed1)
 {
-    // bulk load failed because `bulk_load_info` file is missing
-    ASSERT_NO_FATAL_FAILURE(
-        remove_file(bulk_load_local_root_ + "/" + CLUSTER + "/" + app_name_ + "/bulk_load_info"));
+    NO_FATALS(remove_file(BULK_LOAD_LOCAL_APP_ROOT + "/bulk_load_info"));
     ASSERT_EQ(ERR_OBJECT_NOT_FOUND, start_bulk_load());
 }
 
+// Test bulk load failed because `bulk_load_info` file inconsistent with current app_info
 TEST_F(bulk_load_test, bulk_load_test_failed2)
 {
-    // bulk load failed because `bulk_load_info` file inconsistent with current app_info
-    ASSERT_NO_FATAL_FAILURE(replace_bulk_load_info());
+    NO_FATALS(make_inconsistent_bulk_load_info());
     ASSERT_EQ(ERR_INCONSISTENT_STATE, start_bulk_load());
 }
 
+// Test bulk load failed because partition[0] `bulk_load_metadata` file is missing
 TEST_F(bulk_load_test, bulk_load_test_failed3)
 {
-    // bulk load failed because partition[0] `bulk_load_metadata` file is missing
-    ASSERT_NO_FATAL_FAILURE(remove_file(bulk_load_local_root_ + "/" + CLUSTER + "/" + app_name_ +
-                                        "/0/bulk_load_metadata"));
+    NO_FATALS(remove_file(BULK_LOAD_LOCAL_APP_ROOT + "/0/bulk_load_metadata"));
     ASSERT_EQ(ERR_OK, start_bulk_load());
-    // bulk load will get FAILED
     ASSERT_EQ(bulk_load_status::BLS_FAILED, wait_bulk_load_finish(300));
 }
 
 ///
-/// case1: lack of `bulk_load_metadata` file
-/// case2: bulk load succeed with data verfied
-/// case3: bulk load data consistent:
+/// case1: bulk load succeed with data verfied
+/// case2: bulk load data consistent:
 ///     - old data will be overrided by bulk load data
 ///     - get/set/del succeed after bulk load
 ///
 TEST_F(bulk_load_test, bulk_load_tests)
 {
     // write old data
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::SET, "oldValue", 10));
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::GET, "oldValue", 10));
+    NO_FATALS(operate_data(operation::SET, "oldValue", 10));
+    NO_FATALS(operate_data(operation::GET, "oldValue", 10));
 
     ASSERT_EQ(ERR_OK, start_bulk_load());
     if (bulk_load_status::BLS_SUCCEED != wait_bulk_load_finish(300)) {
         assert(false);
     }
     std::cout << "Start to verify data..." << std::endl;
-    ASSERT_NO_FATAL_FAILURE(verify_bulk_load_data());
+    NO_FATALS(verify_bulk_load_data());
 
-    // value overide by bulk_loaded_data
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::GET, VALUE, 10));
+    // values have been overwritten by bulk_load_data
+    std::cout << "Start to GET data..." << std::endl;
+    NO_FATALS(operate_data(operation::GET, VALUE, 10));
 
-    // write data after bulk load succeed
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::SET, "valueAfterBulkLoad", 20));
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::GET, "valueAfterBulkLoad", 20));
+    // write new data succeed after bulk load
+    std::cout << "Start to SET data..." << std::endl;
+    NO_FATALS(operate_data(operation::SET, "valueAfterBulkLoad", 20));
+    std::cout << "Start to GET data..." << std::endl;
+    NO_FATALS(operate_data(operation::GET, "valueAfterBulkLoad", 20));
 
-    // del data after bulk load succeed
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::DEL, "", 15));
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::NO_VALUE, "", 15));
+    // delete data succeed after bulk load
+    std::cout << "Start to DEL data..." << std::endl;
+    NO_FATALS(operate_data(operation::DEL, "", 15));
+    std::cout << "Start to NO_VALUE data..." << std::endl;
+    NO_FATALS(operate_data(operation::NO_VALUE, "", 15));
 }
 
 ///
@@ -301,30 +303,30 @@ TEST_F(bulk_load_test, bulk_load_tests)
 ///
 TEST_F(bulk_load_test, bulk_load_ingest_behind_tests)
 {
-    ASSERT_NO_FATAL_FAILURE(update_allow_ingest_behind("false"));
+    NO_FATALS(update_allow_ingest_behind("false"));
 
     // app envs allow_ingest_behind = false, request ingest_behind = true
     ASSERT_EQ(ERR_INCONSISTENT_STATE, start_bulk_load(true));
 
-    ASSERT_NO_FATAL_FAILURE(update_allow_ingest_behind("true"));
+    NO_FATALS(update_allow_ingest_behind("true"));
 
     // write old data
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::SET, "oldValue", 10));
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::GET, "oldValue", 10));
+    NO_FATALS(operate_data(operation::SET, "oldValue", 10));
+    NO_FATALS(operate_data(operation::GET, "oldValue", 10));
 
     ASSERT_EQ(ERR_OK, start_bulk_load(true));
     ASSERT_EQ(bulk_load_status::BLS_SUCCEED, wait_bulk_load_finish(300));
 
     std::cout << "Start to verify data..." << std::endl;
-    // value overide by bulk_loaded_data
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::GET, "oldValue", 10));
-    ASSERT_NO_FATAL_FAILURE(verify_data("hashkey", "sortkey"));
+    // values have been overwritten by bulk_load_data
+    NO_FATALS(operate_data(operation::GET, "oldValue", 10));
+    NO_FATALS(verify_data("hashkey", "sortkey"));
 
-    // write data after bulk load succeed
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::SET, "valueAfterBulkLoad", 20));
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::GET, "valueAfterBulkLoad", 20));
+    // write new data succeed after bulk load
+    NO_FATALS(operate_data(operation::SET, "valueAfterBulkLoad", 20));
+    NO_FATALS(operate_data(operation::GET, "valueAfterBulkLoad", 20));
 
-    // del data after bulk load succeed
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::DEL, "", 15));
-    ASSERT_NO_FATAL_FAILURE(operate_data(operation::NO_VALUE, "", 15));
+    // delete data succeed after bulk load
+    NO_FATALS(operate_data(operation::DEL, "", 15));
+    NO_FATALS(operate_data(operation::NO_VALUE, "", 15));
 }

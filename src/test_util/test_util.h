@@ -34,9 +34,9 @@ class encrypt_data_test_base : public testing::TestWithParam<bool>
 {
 public:
     encrypt_data_test_base() { FLAGS_encrypt_data_at_rest = GetParam(); }
-
-    void encrypt_file(const std::string &src, const std::string &dst);
 };
+
+void encrypt_file(const std::string &src, const std::string &dst);
 
 #define ASSERT_EVENTUALLY(expr)                                                                    \
     do {                                                                                           \

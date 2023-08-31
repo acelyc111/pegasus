@@ -229,7 +229,7 @@ bulk_load_service::check_bulk_load_request_params(const start_bulk_load_request 
 
     bulk_load_info bl_info;
     if (!::dsn::json::json_forwarder<bulk_load_info>::decode(r_resp.buffer, bl_info)) {
-        LOG_ERROR("file({}) is damaged on remote file provider({})", remote_path, file_provider);
+        LOG_ERROR("file({}) is damaged on remote file provider({}), data = '{}", remote_path, file_provider, r_resp.buffer);
         hint_msg = "bulk_load_info damaged";
         return ERR_CORRUPTION;
     }
