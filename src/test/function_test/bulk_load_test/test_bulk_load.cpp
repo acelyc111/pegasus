@@ -351,16 +351,21 @@ TEST_F(bulk_load_test, bulk_load_ingest_behind_tests)
     ASSERT_EQ(ERR_OK, start_bulk_load(true));
     ASSERT_EQ(bulk_load_status::BLS_SUCCEED, wait_bulk_load_finish(300));
 
-    std::cout << "Start to verify data..." << std::endl;
     // values have been overwritten by bulk_load_data
+    std::cout << "Start to GET data..." << std::endl;
     NO_FATALS(operate_data(operation::GET, "oldValue", 10));
+    std::cout << "Start to verify data..." << std::endl;
     NO_FATALS(verify_data("hashkey", "sortkey"));
 
     // write new data succeed after bulk load
+    std::cout << "Start to SET data..." << std::endl;
     NO_FATALS(operate_data(operation::SET, "valueAfterBulkLoad", 20));
+    std::cout << "Start to GET data..." << std::endl;
     NO_FATALS(operate_data(operation::GET, "valueAfterBulkLoad", 20));
 
     // delete data succeed after bulk load
+    std::cout << "Start to DEL data..." << std::endl;
     NO_FATALS(operate_data(operation::DEL, "", 15));
+    std::cout << "Start to NO_VALUE data..." << std::endl;
     NO_FATALS(operate_data(operation::NO_VALUE, "", 15));
 }
