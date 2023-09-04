@@ -35,6 +35,7 @@
 #include "utils/encryption_utils.h"
 #include "utils/fmt_logging.h"
 #include "utils/utils.h"
+#include "utils/filesystem.h"
 
 namespace pegasus {
 
@@ -72,6 +73,14 @@ void encrypt_file(const std::string &src, const std::string &dst)
     } while (true);
 
     LOG_INFO("encrypt file from {} to {}, total size {}", src, dst, total_size);
+}
+
+void encrypt_file(const std::string &fname)
+{
+    // TODO(yingchun): add timestamp to the tmp encrypted file name.
+    std::string tmp_fname = fname + ".encrypted.tmp";
+    NO_FATALS(encrypt_file(fname, tmp_fname));
+    ASSERT_TRUE(::dsn::utils::filesystem::rename_path(tmp_fname, fname));
 }
 
 void AssertEventually(const std::function<void(void)> &f, int timeout_sec, WaitBackoff backoff)

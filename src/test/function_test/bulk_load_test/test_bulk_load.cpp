@@ -77,7 +77,7 @@ protected:
     {
         TRICKY_CODE_TO_AVOID_LINK_ERROR;
         BULK_LOAD_LOCAL_APP_ROOT =
-            fmt::format("{}/{}/{}/{}", LOCAL_SERVICE_ROOT, BULK_LOAD, CLUSTER, app_name_);
+            fmt::format("{}/{}/{}", LOCAL_BULK_LOAD_ROOT, CLUSTER, app_name_);
     }
 
     void SetUp() override
@@ -89,32 +89,59 @@ protected:
     void TearDown() override
     {
         ASSERT_EQ(ERR_OK, ddl_client_->drop_app(app_name_, 0));
-        NO_FATALS(run_cmd_from_project_root("rm -rf " + LOCAL_SERVICE_ROOT));
+        NO_FATALS(run_cmd_from_project_root("rm -rf " + LOCAL_BULK_LOAD_ROOT));
     }
 
     void copy_bulk_load_files()
     {
+        // TODO(yingchun): remove src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files/mock_bulk_load_info
         // Prepare bulk load files.
         // The source data has 8 partitions.
         ASSERT_EQ(8, partition_count_);
-        NO_FATALS(run_cmd_from_project_root("mkdir -p " + LOCAL_SERVICE_ROOT));
+        NO_FATALS(run_cmd_from_project_root("mkdir -p " + LOCAL_BULK_LOAD_ROOT));
         NO_FATALS(run_cmd_from_project_root(
             fmt::format("cp -r {}/{} {}", SOURCE_FILES_ROOT, BULK_LOAD, LOCAL_SERVICE_ROOT)));
+        if (FLAGS_encrypt_data_at_rest) {
+            std::vector<std::string> src_files;
+            ASSERT_TRUE(dsn::utils::filesystem::get_subfiles(LOCAL_SERVICE_ROOT, src_files, true));
+            for (const auto &src_file : src_files) {
+                NO_FATALS(pegasus::encrypt_file(src_file));
+            }
+        }
 
-        // Prepare bulk load metadata.
-        bulk_load_info bl_info;
-        bl_info.app_id = app_id_;
-        bl_info.app_name = app_name_;
-        bl_info.partition_count = partition_count_;
-        blob value = dsn::json::json_forwarder<bulk_load_info>::encode(bl_info);
-        string file_path = fmt::format(
-            "{}/{}/cluster/{}/bulk_load_info", LOCAL_SERVICE_ROOT, BULK_LOAD, app_name_);
-        auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-            rocksdb::Slice(value.data(), value.length()),
-            file_path,
-            /* should_sync */ true);
-        ASSERT_TRUE(s.ok()) << s.ToString();
+        // Write file 'bulk_load_info'.
+        string bulk_load_info_path = fmt::format(
+            "{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
+        {
+            bulk_load_info bli;
+            bli.app_id = app_id_;
+            bli.app_name = app_name_;
+            bli.partition_count = partition_count_;
+            blob value = dsn::json::json_forwarder<bulk_load_info>::encode(bli);
+            auto s = rocksdb::WriteStringToFile(
+                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                rocksdb::Slice(value.data(), value.length()),
+                bulk_load_info_path,
+                /* should_sync */ true);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+
+        // Write file '.bulk_load_info.meta'.
+        {
+            dist::block_service::file_metadata fm;
+            ASSERT_TRUE(utils::filesystem::file_size(
+                bulk_load_info_path, dsn::utils::FileDataType::kSensitive, fm.size));
+            ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(bulk_load_info_path, fm.md5));
+            std::string value = nlohmann::json(fm).dump();
+            string bulk_load_info_meta_path = fmt::format(
+                "{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
+            auto s = rocksdb::WriteStringToFile(
+                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                rocksdb::Slice(value),
+                bulk_load_info_meta_path,
+                /* should_sync */ true);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
     }
 
     error_code start_bulk_load(bool ingest_behind = false)
@@ -122,7 +149,6 @@ protected:
         return ddl_client_->start_bulk_load(app_name_, CLUSTER, PROVIDER, BULK_LOAD, ingest_behind)
             .get_value()
             .err;
-        ;
     }
 
     void remove_file(const string &file_path)
@@ -134,7 +160,7 @@ protected:
     {
         // Write file 'bulk_load_info'.
         string bulk_load_info_path = fmt::format(
-            "{}/{}/cluster/{}/bulk_load_info", LOCAL_SERVICE_ROOT, BULK_LOAD, app_name_);
+            "{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
         {
             bulk_load_info bli;
             bli.app_id = app_id_ + 1;
@@ -157,7 +183,7 @@ protected:
             ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(bulk_load_info_path, fm.md5));
             std::string value = nlohmann::json(fm).dump();
             string bulk_load_info_meta_path = fmt::format(
-                "{}/{}/cluster/{}/.bulk_load_info.meta", LOCAL_SERVICE_ROOT, BULK_LOAD, app_name_);
+                "{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
             auto s = rocksdb::WriteStringToFile(
                 dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
                 rocksdb::Slice(value),
@@ -262,6 +288,7 @@ protected:
     const string SOURCE_FILES_ROOT =
         "src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files";
     const string LOCAL_SERVICE_ROOT = "onebox/block_service/local_service";
+    const string LOCAL_BULK_LOAD_ROOT = "onebox/block_service/local_service/bulk_load_root";
     const string BULK_LOAD = "bulk_load_root";
     const string CLUSTER = "cluster";
     const string PROVIDER = "local_service";
@@ -292,7 +319,6 @@ TEST_F(bulk_load_test, bulk_load_test_failed3)
     if (ERR_OK != start_bulk_load()) {
         assert(false);
     }
-    ASSERT_EQ(ERR_OK, start_bulk_load());
     ASSERT_EQ(bulk_load_status::BLS_FAILED, wait_bulk_load_finish(300));
 }
 

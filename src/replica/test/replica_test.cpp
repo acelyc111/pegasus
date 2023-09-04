@@ -187,7 +187,7 @@ public:
         ASSERT_TRUE(dsn::utils::filesystem::file_exists(current_chkpt_file));
         int64_t size = 0;
         dsn::utils::filesystem::file_size(
-            current_chkpt_file, dsn::utils::FileDataType::kNonSensitive, size);
+            current_chkpt_file, dsn::utils::FileDataType::kSensitive, size);
         ASSERT_LT(0, size);
     }
 

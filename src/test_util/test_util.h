@@ -37,6 +37,7 @@ public:
 };
 
 void encrypt_file(const std::string &src, const std::string &dst);
+void encrypt_file(const std::string &fname);
 
 #define ASSERT_EVENTUALLY(expr)                                                                    \
     do {                                                                                           \

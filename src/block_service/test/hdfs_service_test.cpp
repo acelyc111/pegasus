@@ -149,7 +149,7 @@ TEST_P(HDFSClientTest, test_basic_operation)
 
     generate_test_file(local_test_file.c_str());
     dsn::utils::filesystem::file_size(
-        local_test_file, dsn::utils::FileDataType::kNonSensitive, test_file_size);
+        local_test_file, dsn::utils::FileDataType::kSensitive, test_file_size);
 
     // first clean up all old file in test directory.
     printf("clean up all old files.\n");
@@ -215,7 +215,7 @@ TEST_P(HDFSClientTest, test_basic_operation)
     // compare local_test_file and local_file_for_download.
     int64_t file_size = 0;
     dsn::utils::filesystem::file_size(
-        local_file_for_download, dsn::utils::FileDataType::kNonSensitive, file_size);
+        local_file_for_download, dsn::utils::FileDataType::kSensitive, file_size);
     ASSERT_EQ(test_file_size, file_size);
     std::string test_file_md5sum;
     dsn::utils::filesystem::md5sum(local_test_file, test_file_md5sum);
@@ -302,7 +302,7 @@ TEST_P(HDFSClientTest, test_concurrent_upload_download)
         generate_test_file(file_name.c_str());
         int64_t file_size = 0;
         dsn::utils::filesystem::file_size(
-            file_name, dsn::utils::FileDataType::kNonSensitive, file_size);
+            file_name, dsn::utils::FileDataType::kSensitive, file_size);
         std::string md5sum;
         dsn::utils::filesystem::md5sum(file_name, md5sum);
 

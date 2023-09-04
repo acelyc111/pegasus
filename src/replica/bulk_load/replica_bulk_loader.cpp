@@ -565,7 +565,7 @@ error_code replica_bulk_loader::parse_bulk_load_metadata(const std::string &fnam
 {
     std::string buf;
     auto s = rocksdb::ReadFileToString(
-        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), fname, &buf);
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), fname, &buf);
     if (!s.ok()) {
         LOG_ERROR_PREFIX("read file {} failed, error = {}", fname, s.ToString());
         return ERR_FILE_OPERATION_FAILED;

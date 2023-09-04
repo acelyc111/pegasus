@@ -255,7 +255,7 @@ public:
     {
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, file_name);
         auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
             rocksdb::Slice("write some data.\n"),
             whole_name,
             /* should_sync */ true);
@@ -263,7 +263,7 @@ public:
         _file_meta.name = whole_name;
         utils::filesystem::md5sum(whole_name, _file_meta.md5);
         utils::filesystem::file_size(
-            whole_name, dsn::utils::FileDataType::kNonSensitive, _file_meta.size);
+            whole_name, dsn::utils::FileDataType::kSensitive, _file_meta.size);
     }
 
     error_code create_local_metadata_file()
@@ -275,7 +275,7 @@ public:
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, METADATA);
         blob bb = json::json_forwarder<bulk_load_metadata>::encode(_metadata);
         auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
             rocksdb::Slice(bb.data(), bb.length()),
             whole_name,
             /* should_sync */ true);

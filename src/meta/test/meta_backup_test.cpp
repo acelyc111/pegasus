@@ -110,7 +110,7 @@ public:
 
         int64_t metadata_file_size = 0;
         if (!dsn::utils::filesystem::file_size(
-                metadata_file, dsn::utils::FileDataType::kNonSensitive, metadata_file_size)) {
+                metadata_file, dsn::utils::FileDataType::kSensitive, metadata_file_size)) {
             return false;
         }
         return metadata_file_size > 0;
