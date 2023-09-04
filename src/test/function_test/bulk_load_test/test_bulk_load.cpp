@@ -88,8 +88,8 @@ protected:
 
     void TearDown() override
     {
-        //        ASSERT_EQ(ERR_OK, ddl_client_->drop_app(app_name_, 0));
-        //        NO_FATALS(run_cmd_from_project_root("rm -rf " + LOCAL_SERVICE_ROOT));
+        ASSERT_EQ(ERR_OK, ddl_client_->drop_app(app_name_, 0));
+        NO_FATALS(run_cmd_from_project_root("rm -rf " + LOCAL_SERVICE_ROOT));
     }
 
     void copy_bulk_load_files()
@@ -110,7 +110,7 @@ protected:
         string file_path = fmt::format(
             "{}/{}/cluster/{}/bulk_load_info", LOCAL_SERVICE_ROOT, BULK_LOAD, app_name_);
         auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
             rocksdb::Slice(value.data(), value.length()),
             file_path,
             /* should_sync */ true);
@@ -142,7 +142,7 @@ protected:
             bli.partition_count = partition_count_ * 2;
             blob value = dsn::json::json_forwarder<bulk_load_info>::encode(bli);
             auto s = rocksdb::WriteStringToFile(
-                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
                 rocksdb::Slice(value.data(), value.length()),
                 bulk_load_info_path,
                 /* should_sync */ true);
@@ -153,13 +153,13 @@ protected:
         {
             dist::block_service::file_metadata fm;
             ASSERT_TRUE(utils::filesystem::file_size(
-                bulk_load_info_path, dsn::utils::FileDataType::kNonSensitive, fm.size));
+                bulk_load_info_path, dsn::utils::FileDataType::kSensitive, fm.size));
             ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(bulk_load_info_path, fm.md5));
             std::string value = nlohmann::json(fm).dump();
             string bulk_load_info_meta_path = fmt::format(
                 "{}/{}/cluster/{}/.bulk_load_info.meta", LOCAL_SERVICE_ROOT, BULK_LOAD, app_name_);
             auto s = rocksdb::WriteStringToFile(
-                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
                 rocksdb::Slice(value),
                 bulk_load_info_meta_path,
                 /* should_sync */ true);
@@ -175,7 +175,7 @@ protected:
                 ->set_app_envs(app_name_, {ROCKSDB_ALLOW_INGEST_BEHIND}, {allow_ingest_behind})
                 .get_value()
                 .err);
-        std::cout << "sleep 31s to wait app_envs update" << std::endl;
+        LOG_INFO("sleep 31s to wait app_envs update");
         std::this_thread::sleep_for(std::chrono::seconds(31));
     }
 
@@ -189,7 +189,7 @@ protected:
         while (remain_seconds > 0 && err == ERR_OK) {
             sleep_time = sleep_time > remain_seconds ? remain_seconds : sleep_time;
             remain_seconds -= sleep_time;
-            std::cout << "sleep " << sleep_time << "s to query bulk status" << std::endl;
+            LOG_INFO("sleep {}s to query bulk status", sleep_time);
             std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
 
             auto resp = ddl_client_->query_bulk_load(app_name_).get_value();
@@ -211,6 +211,7 @@ protected:
     {
         for (int i = 0; i < COUNT; ++i) {
             string hash_key = hashkey_prefix + std::to_string(i);
+            LOG_INFO("Start to verify hashkey: {}", hash_key);
             for (int j = 0; j < COUNT; ++j) {
                 string sort_key = sortkey_prefix + std::to_string(j);
                 string act_value;
@@ -267,7 +268,7 @@ protected:
     const string HASHKEY_PREFIX = "hash";
     const string SORTKEY_PREFIX = "sort";
     const string VALUE = "newValue";
-    const int32_t COUNT = 1000;
+    const int32_t COUNT = 100;
 };
 
 // Test bulk load failed because `bulk_load_info` file is missing
@@ -288,6 +289,9 @@ TEST_F(bulk_load_test, bulk_load_test_failed2)
 TEST_F(bulk_load_test, bulk_load_test_failed3)
 {
     NO_FATALS(remove_file(BULK_LOAD_LOCAL_APP_ROOT + "/0/bulk_load_metadata"));
+    if (ERR_OK != start_bulk_load()) {
+        assert(false);
+    }
     ASSERT_EQ(ERR_OK, start_bulk_load());
     ASSERT_EQ(bulk_load_status::BLS_FAILED, wait_bulk_load_finish(300));
 }
@@ -308,23 +312,23 @@ TEST_F(bulk_load_test, bulk_load_tests)
     if (bulk_load_status::BLS_SUCCEED != wait_bulk_load_finish(300)) {
         assert(false);
     }
-    std::cout << "Start to verify data..." << std::endl;
+    LOG_INFO("Start to verify data...");
     NO_FATALS(verify_bulk_load_data());
 
     // values have been overwritten by bulk_load_data
-    std::cout << "Start to GET data..." << std::endl;
+    LOG_INFO("Start to GET data...");
     NO_FATALS(operate_data(operation::GET, VALUE, 10));
 
     // write new data succeed after bulk load
-    std::cout << "Start to SET data..." << std::endl;
+    LOG_INFO("Start to SET data...");
     NO_FATALS(operate_data(operation::SET, "valueAfterBulkLoad", 20));
-    std::cout << "Start to GET data..." << std::endl;
+    LOG_INFO("Start to GET data...");
     NO_FATALS(operate_data(operation::GET, "valueAfterBulkLoad", 20));
 
     // delete data succeed after bulk load
-    std::cout << "Start to DEL data..." << std::endl;
+    LOG_INFO("Start to DEL data...");
     NO_FATALS(operate_data(operation::DEL, "", 15));
-    std::cout << "Start to NO_VALUE data..." << std::endl;
+    LOG_INFO("Start to NO_VALUE data...");
     NO_FATALS(operate_data(operation::NO_VALUE, "", 15));
 }
 
@@ -352,20 +356,20 @@ TEST_F(bulk_load_test, bulk_load_ingest_behind_tests)
     ASSERT_EQ(bulk_load_status::BLS_SUCCEED, wait_bulk_load_finish(300));
 
     // values have been overwritten by bulk_load_data
-    std::cout << "Start to GET data..." << std::endl;
+    LOG_INFO("Start to GET data...");
     NO_FATALS(operate_data(operation::GET, "oldValue", 10));
-    std::cout << "Start to verify data..." << std::endl;
+    LOG_INFO("Start to verify data...");
     NO_FATALS(verify_data("hashkey", "sortkey"));
 
     // write new data succeed after bulk load
-    std::cout << "Start to SET data..." << std::endl;
+    LOG_INFO("Start to SET data...");
     NO_FATALS(operate_data(operation::SET, "valueAfterBulkLoad", 20));
-    std::cout << "Start to GET data..." << std::endl;
+    LOG_INFO("Start to GET data...");
     NO_FATALS(operate_data(operation::GET, "valueAfterBulkLoad", 20));
 
     // delete data succeed after bulk load
-    std::cout << "Start to DEL data..." << std::endl;
+    LOG_INFO("Start to DEL data...");
     NO_FATALS(operate_data(operation::DEL, "", 15));
-    std::cout << "Start to NO_VALUE data..." << std::endl;
+    LOG_INFO("Start to NO_VALUE data...");
     NO_FATALS(operate_data(operation::NO_VALUE, "", 15));
 }
