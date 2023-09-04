@@ -254,12 +254,12 @@ public:
     void create_local_file(const std::string &file_name)
     {
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, file_name);
-        utils::filesystem::create_file(whole_name);
-        std::ofstream test_file;
-        test_file.open(whole_name);
-        test_file << "write some data.\n";
-        test_file.close();
-
+        auto s = rocksdb::WriteStringToFile(
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            rocksdb::Slice("write some data.\n"),
+            whole_name,
+            /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
         _file_meta.name = whole_name;
         utils::filesystem::md5sum(whole_name, _file_meta.md5);
         utils::filesystem::file_size(

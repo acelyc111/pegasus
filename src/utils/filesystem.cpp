@@ -483,51 +483,27 @@ out_error:
 
 bool create_file(const std::string &path)
 {
-    size_t pos;
     std::string npath;
-    int fd;
-    int mode;
-    int err;
-
-    if (path.empty()) {
-        return false;
-    }
-
-    if (_FS_ISSEP(path.back())) {
-        return false;
-    }
-
-    err = get_normalized_path(path, npath);
+    int err = get_normalized_path(path, npath);
     if (err != 0) {
         return false;
     }
 
-    if (dsn::utils::filesystem::path_exists_internal(npath, FTW_F)) {
-        return true;
-    }
-
-    if (dsn::utils::filesystem::path_exists_internal(npath, FTW_D)) {
-        return false;
-    }
-
-    pos = npath.find_last_of("\\/");
+    auto pos = npath.find_last_of("\\/");
     if ((pos != std::string::npos) && (pos > 0)) {
         auto ppath = npath.substr(0, pos);
         if (!dsn::utils::filesystem::create_directory(ppath)) {
+            LOG_WARNING("fail to create directory {}", ppath);
             return false;
         }
     }
 
-    mode = 0775;
-    fd = ::creat(npath.c_str(), mode);
-    if (fd == -1) {
-        err = errno;
-        LOG_WARNING("create_file {} failed, err = {}", path, safe_strerror(err));
+    std::unique_ptr<rocksdb::WritableFile> wfile;
+    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                 ->ReopenWritableFile(path, &wfile, rocksdb::EnvOptions());
+    if (dsn_unlikely(!s.ok())) {
+        LOG_WARNING("fail to create file {}, err={}", path, s.ToString());
         return false;
-    }
-
-    if (::close_(fd) != 0) {
-        LOG_WARNING("create_file {}, failed to close the file handle.", path);
     }
 
     return true;

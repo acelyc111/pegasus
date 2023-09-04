@@ -28,7 +28,10 @@
 #include <initializer_list>
 #include <vector>
 
+#include <rocksdb/env.h>
+
 #include "block_service/local/local_service.h"
+#include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 
 namespace dsn {
@@ -37,21 +40,24 @@ namespace block_service {
 
 // Simple tests for nlohmann::json serialization, via NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE.
 
-// TODO(yingchun): add encryption test when FDSClient supports encryption.
 TEST(local_service, store_metadata)
 {
     local_file_object file("a.txt");
     error_code ec = file.store_metadata();
-    ASSERT_EQ(ec, ERR_OK);
+    ASSERT_EQ(ERR_OK, ec);
 
     auto meta_file_path = local_service::get_metafile(file.file_name());
     ASSERT_TRUE(boost::filesystem::exists(meta_file_path));
 
-    std::ifstream ifs(meta_file_path);
-    nlohmann::json j;
-    ifs >> j;
-    ASSERT_EQ(j["md5"], "");
-    ASSERT_EQ(j["size"], 0);
+    std::string data;
+    auto s = rocksdb::ReadFileToString(
+        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), meta_file_path, &data);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    nlohmann::json j = nlohmann::json::parse(data);
+    ;
+    ASSERT_EQ("", j["md5"]);
+    ASSERT_EQ(0, j["size"]);
 }
 
 TEST(local_service, load_metadata)
@@ -60,30 +66,41 @@ TEST(local_service, load_metadata)
     auto meta_file_path = local_service::get_metafile(file.file_name());
 
     {
-        std::ofstream ofs(meta_file_path);
         nlohmann::json j({{"md5", "abcde"}, {"size", 5}});
-        ofs << j;
-        ofs.close();
+        std::string data = j.dump();
+        auto s = rocksdb::WriteStringToFile(
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            rocksdb::Slice(data),
+            meta_file_path,
+            /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
-        ASSERT_EQ(file.load_metadata(), ERR_OK);
-        ASSERT_EQ(file.get_md5sum(), "abcde");
-        ASSERT_EQ(file.get_size(), 5);
+        ASSERT_EQ(ERR_OK, file.load_metadata());
+        ASSERT_EQ("abcde", file.get_md5sum());
+        ASSERT_EQ(5, file.get_size());
     }
 
     {
-        std::ofstream ofs(meta_file_path);
-        ofs << "invalid json string";
-        ofs.close();
+        auto s = rocksdb::WriteStringToFile(
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            rocksdb::Slice("invalid json string"),
+            meta_file_path,
+            /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
         local_file_object file2("a.txt");
         ASSERT_EQ(file2.load_metadata(), ERR_FS_INTERNAL);
     }
 
     {
-        std::ofstream ofs(meta_file_path);
         nlohmann::json j({{"md5", "abcde"}, {"no such key", "illegal"}});
-        ofs << j;
-        ofs.close();
+        std::string data = j.dump();
+        auto s = rocksdb::WriteStringToFile(
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+            rocksdb::Slice(data),
+            meta_file_path,
+            /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
         local_file_object file2("a.txt");
         ASSERT_EQ(file2.load_metadata(), ERR_FS_INTERNAL);

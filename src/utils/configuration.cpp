@@ -69,8 +69,7 @@ bool configuration::load(const char *file_name, const char *arguments)
 {
     _file_name = std::string(file_name);
 
-    auto s = rocksdb::ReadFileToString(
-        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive), _file_name, &_file_data);
+    auto s = rocksdb::ReadFileToString(rocksdb::Env::Default(), _file_name, &_file_data);
     if (!s.ok()) {
         fmt::print(stderr, "ERROR: read file '{}' failed, err = {}\n", _file_name, s.ToString());
         return false;

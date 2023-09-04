@@ -66,7 +66,7 @@ rocksdb::Env *NewEncryptedEnv()
 
 rocksdb::Env *PegasusEnv(FileDataType type)
 {
-    if (FLAGS_encrypt_data_at_rest && type == FileDataType::kSensitive) {
+    if (FLAGS_encrypt_data_at_rest) {
         static rocksdb::Env *env = NewEncryptedEnv();
         return env;
     }
