@@ -62,19 +62,9 @@ DEFINE_TASK_CODE_AIO(LPC_AIO_TEST, TASK_PRIORITY_COMMON, THREAD_POOL_TEST_SERVER
 class aio_test : public pegasus::encrypt_data_test_base
 {
 public:
-    aio_test()
-    {
-        _test_file_name = "tmp";
-        if (FLAGS_encrypt_data_at_rest) {
-            _test_file_name += ".encrypted";
-        }
-    }
+    void SetUp() override { utils::filesystem::remove_path(kTestFileName); }
 
-    void SetUp() override { utils::filesystem::remove_path(_test_file_name); }
-
-    void TearDown() override {}
-
-    std::string _test_file_name;
+    const std::string kTestFileName = "aio_test.txt";
 };
 
 INSTANTIATE_TEST_CASE_P(, aio_test, ::testing::Values(false, true));
@@ -89,20 +79,21 @@ TEST_P(aio_test, basic)
     ASSERT_EQ(0, kTotalBufferCount % kBufferCountPerBatch);
 
     auto check_callback = [kUnitBufferLength](::dsn::error_code err, size_t n) {
+        // Use CHECK_* instead of ASSERT_* to exit the tests immediately when error occurs.
         CHECK_EQ(ERR_OK, err);
         CHECK_EQ(kUnitBufferLength, n);
     };
     auto verify_data = [=]() {
         int64_t file_size;
         ASSERT_TRUE(utils::filesystem::file_size(
-            _test_file_name, dsn::utils::FileDataType::kSensitive, file_size));
+            kTestFileName, dsn::utils::FileDataType::kSensitive, file_size));
         ASSERT_EQ(kFileSize, file_size);
 
-        // read file
-        auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
+        // Create a read file handler.
+        auto rfile = file::open(kTestFileName, file::FileOpenType::kReadOnly);
         ASSERT_NE(rfile, nullptr);
 
-        // sequential read
+        // 1. Check sequential read.
         {
             uint64_t offset = 0;
             std::list<aio_task_ptr> tasks;
@@ -124,7 +115,7 @@ TEST_P(aio_test, basic)
             }
         }
 
-        // concurrent read
+        // 2. CHeck concurrent read.
         {
             uint64_t offset = 0;
             std::list<aio_task_ptr> tasks;
@@ -152,9 +143,9 @@ TEST_P(aio_test, basic)
         ASSERT_EQ(ERR_OK, file::close(rfile));
     };
 
-    // 1. new write
+    // 1. Sequential write.
     {
-        auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+        auto wfile = file::open(kTestFileName, file::FileOpenType::kWriteOnly);
         ASSERT_NE(wfile, nullptr);
 
         uint64_t offset = 0;
@@ -179,9 +170,9 @@ TEST_P(aio_test, basic)
     }
     NO_FATALS(verify_data());
 
-    // 2. un-sequential write
+    // 2. Un-sequential write.
     {
-        auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+        auto wfile = file::open(kTestFileName, file::FileOpenType::kWriteOnly);
         ASSERT_NE(wfile, nullptr);
 
         std::vector<uint64_t> offsets;
@@ -214,9 +205,9 @@ TEST_P(aio_test, basic)
     }
     NO_FATALS(verify_data());
 
-    // 3. overwrite
+    // 3. Overwrite.
     {
-        auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+        auto wfile = file::open(kTestFileName, file::FileOpenType::kWriteOnly);
         ASSERT_NE(wfile, nullptr);
 
         uint64_t offset = 0;
@@ -241,9 +232,9 @@ TEST_P(aio_test, basic)
     }
     NO_FATALS(verify_data());
 
-    // 4. vector write
+    // 4. Vector write.
     {
-        auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+        auto wfile = file::open(kTestFileName, file::FileOpenType::kWriteOnly);
         ASSERT_NE(wfile, nullptr);
 
         uint64_t offset = 0;
@@ -279,10 +270,10 @@ TEST_P(aio_test, basic)
 
 TEST_P(aio_test, aio_share)
 {
-    auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+    auto wfile = file::open(kTestFileName, file::FileOpenType::kWriteOnly);
     ASSERT_NE(wfile, nullptr);
 
-    auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
+    auto rfile = file::open(kTestFileName, file::FileOpenType::kReadOnly);
     ASSERT_NE(rfile, nullptr);
 
     ASSERT_EQ(ERR_OK, file::close(wfile));
@@ -298,7 +289,7 @@ TEST_P(aio_test, operation_failed)
         *count = n;
     };
 
-    auto wfile = file::open(_test_file_name, file::FileOpenType::kWriteOnly);
+    auto wfile = file::open(kTestFileName, file::FileOpenType::kWriteOnly);
     ASSERT_NE(wfile, nullptr);
 
     char buff[512] = {0};
@@ -314,7 +305,7 @@ TEST_P(aio_test, operation_failed)
     t->wait();
     ASSERT_EQ(ERR_FILE_OPERATION_FAILED, *err);
 
-    auto rfile = file::open(_test_file_name, file::FileOpenType::kReadOnly);
+    auto rfile = file::open(kTestFileName, file::FileOpenType::kReadOnly);
     ASSERT_NE(nullptr, rfile);
 
     t = ::dsn::file::read(rfile, buff, 512, 0, LPC_AIO_TEST, nullptr, io_callback, 0);

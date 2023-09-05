@@ -226,7 +226,6 @@ int rocksdb_wrapper::ingest_files(int64_t decree,
                           "decree = {}, ingest_behind = {}",
                           decree,
                           ingest_behind);
-        LOG_FATAL("see");
     } else {
         LOG_INFO_ROCKSDB("IngestExternalFile",
                          "Ingest files succeed, decree = {}, ingest_behind = {}",
