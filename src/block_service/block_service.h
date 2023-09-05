@@ -379,8 +379,7 @@ public:
                                 dsn::task_tracker *tracker = nullptr) = 0;
 
     // TODO(yingchun): it seems every read() will read the whole file, consider to read the whole
-    // file directly.
-    // TODO(yingchun): The read file is always not encrypted?
+    //  file directly.
     /**
      * @brief read
      * @param req, ref {@link #read_request}

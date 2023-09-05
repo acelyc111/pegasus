@@ -38,7 +38,7 @@ namespace block_service {
 
 struct file_metadata
 {
-    int64_t size;
+    int64_t size = 0;
     std::string md5;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(file_metadata, size, md5)

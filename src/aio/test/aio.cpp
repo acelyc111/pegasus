@@ -115,7 +115,7 @@ TEST_P(aio_test, basic)
             }
         }
 
-        // 2. CHeck concurrent read.
+        // 2. Check concurrent read.
         {
             uint64_t offset = 0;
             std::list<aio_task_ptr> tasks;
