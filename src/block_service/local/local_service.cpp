@@ -190,7 +190,7 @@ dsn::task_ptr local_service::create_file(const create_file_request &req,
         if (utils::filesystem::file_exists(file_path) &&
             utils::filesystem::file_exists(meta_file_path)) {
 
-            LOG_DEBUG("file({}) already exist", file_path);
+            LOG_INFO("file({}) already exist", file_path);
             resp.err = f->load_metadata();
         }
 
@@ -487,9 +487,9 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
     upload_future_ptr tsk(new upload_future(code, cb, 0));
     tsk->set_tracker(tracker);
     auto upload_file_func = [this, req, tsk]() {
-        LOG_DEBUG("start to transfer from src_file({}) to dst_file({})",
-                  req.input_local_name,
-                  file_name());
+        LOG_INFO("start to transfer from src_file({}) to dst_file({})",
+                 req.input_local_name,
+                 file_name());
 
         upload_response resp;
         do {
@@ -520,11 +520,10 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
-            LOG_DEBUG("finish upload file, file = {}, file_size = {}", file_name(), file_size);
+            LOG_INFO("finish upload file, file = {}, file_size = {}", file_name(), file_size);
 
             resp.uploaded_size = file_size;
             _size = file_size;
-            LOG_ERROR("_size = {}", _size);
             auto res = utils::filesystem::md5sum(file_name(), _md5_value);
             if (res != dsn::ERR_OK) {
                 LOG_WARNING("calculate md5sum for {} failed", file_name());
@@ -574,12 +573,15 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             if (!_has_meta_synced) {
                 if (!utils::filesystem::file_exists(file_name()) ||
                     !utils::filesystem::file_exists(local_service::get_metafile(file_name()))) {
+                    LOG_ERROR("file '{}' or metadata file '{}' not found",
+                              file_name(),
+                              local_service::get_metafile(file_name()));
                     resp.err = ERR_OBJECT_NOT_FOUND;
                     break;
                 }
             }
 
-            LOG_DEBUG("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
+            LOG_INFO("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
 
             // Create the directory.
             std::string path = dsn::utils::filesystem::remove_file_name(file_name());
@@ -589,24 +591,59 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 break;
             }
 
-            auto type = dsn::utils::FileDataType::kSensitive;
-            //            if (file_name().find("bulk_load_metadata") != std::string::npos) {
-            //                type = dsn::utils::FileDataType::kSensitive;
-            //            }
-            // Hard link the file.
-            auto s = dsn::utils::PegasusEnv(type)->LinkFile(file_name(), target_file);
+            // TODO(yingchun): Consider to use hard link, LinkFile().
+            std::unique_ptr<rocksdb::SequentialFile> sfile;
+            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                         ->NewSequentialFile(file_name(), &sfile, rocksdb::EnvOptions());
             if (!s.ok()) {
-                LOG_ERROR("link file '{}' to '{}' failed, err = {}",
-                          file_name(),
-                          target_file,
-                          s.ToString());
+                LOG_ERROR("NewSequentialFile '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
 
+            std::unique_ptr<rocksdb::WritableFile> wfile;
+            s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                    ->NewWritableFile(target_file, &wfile, rocksdb::EnvOptions());
+            if (!s.ok()) {
+                LOG_ERROR("NewWritableFile '{}' failed, err = {}", target_file, s.ToString());
+                resp.err = ERR_FILE_OPERATION_FAILED;
+                break;
+            }
+
+            // Read 4MB at a time.
+            const uint64_t kBlockSize = 4 << 20;
+            auto buffer = dsn::utils::make_shared_array<char>(kBlockSize);
+            do {
+                rocksdb::Slice result;
+                s = sfile->Read(kBlockSize, &result, buffer.get());
+                if (!s.ok()) {
+                    LOG_ERROR("Read '{}' failed, err = {}", file_name(), s.ToString());
+                    resp.err = ERR_FILE_OPERATION_FAILED;
+                    break;
+                }
+                if (result.empty()) {
+                    break;
+                }
+
+                s = wfile->Append(result);
+                if (!s.ok()) {
+                    LOG_ERROR("Append '{}' failed, err = {}", target_file, s.ToString());
+                    resp.err = ERR_FILE_OPERATION_FAILED;
+                    break;
+                }
+
+                if (result.size() < kBlockSize) {
+                    break;
+                }
+            } while (true);
+            if (!s.ok()) {
+                break;
+            }
+
             int64_t file_size;
-            if (!dsn::utils::filesystem::file_size(target_file, type, file_size)) {
-                LOG_ERROR("get file size of '{}' failed, err = {}", target_file, s.ToString());
+            if (!dsn::utils::filesystem::file_size(
+                    target_file, dsn::utils::FileDataType::kSensitive, file_size)) {
+                LOG_ERROR("get file size of '{}' failed", target_file);
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
@@ -618,11 +655,10 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 break;
             }
 
-            LOG_DEBUG("finish download file({}), file_size = {}", target_file, file_size);
+            LOG_INFO("finish download file({}), file_size = {}", target_file, file_size);
             resp.downloaded_size = file_size;
             resp.file_md5 = _md5_value;
             _size = file_size;
-            LOG_ERROR("_size = {}", _size);
             _has_meta_synced = true;
         } while (false);
         tsk->enqueue_with(resp);

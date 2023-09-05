@@ -254,11 +254,11 @@ public:
     void create_local_file(const std::string &file_name)
     {
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, file_name);
-        auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-            rocksdb::Slice("write some data.\n"),
-            whole_name,
-            /* should_sync */ true);
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                       rocksdb::Slice("write some data.\n"),
+                                       whole_name,
+                                       /* should_sync */ true);
         ASSERT_TRUE(s.ok()) << s.ToString();
         _file_meta.name = whole_name;
         utils::filesystem::md5sum(whole_name, _file_meta.md5);
@@ -274,11 +274,11 @@ public:
 
         std::string whole_name = utils::filesystem::path_combine(LOCAL_DIR, METADATA);
         blob bb = json::json_forwarder<bulk_load_metadata>::encode(_metadata);
-        auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-            rocksdb::Slice(bb.data(), bb.length()),
-            whole_name,
-            /* should_sync */ true);
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                       rocksdb::Slice(bb.data(), bb.length()),
+                                       whole_name,
+                                       /* should_sync */ true);
         if (!s.ok()) {
             LOG_ERROR("write file {} failed", whole_name);
             return ERR_FILE_OPERATION_FAILED;

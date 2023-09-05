@@ -251,6 +251,7 @@ bool file_exists(const std::string &path)
         return false;
     }
 
+    LOG_INFO("npath={}", npath);
     return dsn::utils::filesystem::path_exists_internal(npath, FTW_F);
 }
 
@@ -695,8 +696,8 @@ error_code md5sum(const std::string &file_path, /*out*/ std::string &result)
     }
 
     std::unique_ptr<rocksdb::SequentialFile> sfile;
-    auto s =
-        dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)->NewSequentialFile(file_path, &sfile, rocksdb::EnvOptions());
+    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                 ->NewSequentialFile(file_path, &sfile, rocksdb::EnvOptions());
     if (!sfile) {
         LOG_ERROR("md5sum error: open file {} failed, err={}", file_path, s.ToString());
         return ERR_FILE_OPERATION_FAILED;

@@ -94,7 +94,8 @@ protected:
 
     void copy_bulk_load_files()
     {
-        // TODO(yingchun): remove src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files/mock_bulk_load_info
+        // TODO(yingchun): remove
+        // src/test/function_test/bulk_load_test/pegasus-bulk-load-function-test-files/mock_bulk_load_info
         // Prepare bulk load files.
         // The source data has 8 partitions.
         ASSERT_EQ(8, partition_count_);
@@ -106,12 +107,16 @@ protected:
             ASSERT_TRUE(dsn::utils::filesystem::get_subfiles(LOCAL_SERVICE_ROOT, src_files, true));
             for (const auto &src_file : src_files) {
                 NO_FATALS(pegasus::encrypt_file(src_file));
+                int64_t file_size;
+                ASSERT_TRUE(dsn::utils::filesystem::file_size(
+                    src_file, dsn::utils::FileDataType::kNonSensitive, file_size));
+                LOG_INFO("get file size of '{}' {}", src_file, file_size);
             }
         }
 
         // Write file 'bulk_load_info'.
-        string bulk_load_info_path = fmt::format(
-            "{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
+        string bulk_load_info_path =
+            fmt::format("{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
         {
             bulk_load_info bli;
             bli.app_id = app_id_;
@@ -133,8 +138,8 @@ protected:
                 bulk_load_info_path, dsn::utils::FileDataType::kSensitive, fm.size));
             ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(bulk_load_info_path, fm.md5));
             std::string value = nlohmann::json(fm).dump();
-            string bulk_load_info_meta_path = fmt::format(
-                "{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
+            string bulk_load_info_meta_path =
+                fmt::format("{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
             auto s = rocksdb::WriteStringToFile(
                 dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
                 rocksdb::Slice(value),
@@ -159,8 +164,8 @@ protected:
     void make_inconsistent_bulk_load_info()
     {
         // Write file 'bulk_load_info'.
-        string bulk_load_info_path = fmt::format(
-            "{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
+        string bulk_load_info_path =
+            fmt::format("{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
         {
             bulk_load_info bli;
             bli.app_id = app_id_ + 1;
@@ -182,8 +187,8 @@ protected:
                 bulk_load_info_path, dsn::utils::FileDataType::kSensitive, fm.size));
             ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(bulk_load_info_path, fm.md5));
             std::string value = nlohmann::json(fm).dump();
-            string bulk_load_info_meta_path = fmt::format(
-                "{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
+            string bulk_load_info_meta_path =
+                fmt::format("{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
             auto s = rocksdb::WriteStringToFile(
                 dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
                 rocksdb::Slice(value),

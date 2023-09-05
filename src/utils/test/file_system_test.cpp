@@ -29,6 +29,7 @@
 #include "utils/encryption_utils.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
+#include "utils/test_macros.h"
 
 namespace dsn {
 namespace utils {
@@ -36,6 +37,33 @@ namespace filesystem {
 
 // The old filesystem API doesn't support sensitive files, so skip testing
 // FLAGS_encrypt_data_at_rest=true.
+
+TEST(filesystem_test, encrypt_file)
+{
+    FLAGS_encrypt_data_at_rest = true;
+    std::string fname = "filesystem_test.encrypt_file1";
+    auto s =
+        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                                   rocksdb::Slice(std::string(100, 'a')),
+                                   fname,
+                                   /* should_sync */ true);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    NO_FATALS(pegasus::encrypt_file(fname, fname + ".encrypted"));
+
+    s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+            ->LinkFile(fname + ".encrypted", fname + ".encrypted2");
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    std::string fname2 = "filesystem_test.encrypt_file2";
+    s = rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive),
+                                   rocksdb::Slice(std::string(100, 'a')),
+                                   fname2,
+                                   /* should_sync */ true);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    NO_FATALS(pegasus::encrypt_file(fname2));
+}
 
 TEST(filesystem_test, check_new_md5sum)
 {

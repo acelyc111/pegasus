@@ -67,11 +67,11 @@ TEST(local_service, load_metadata)
     {
         nlohmann::json j({{"md5", "abcde"}, {"size", 5}});
         std::string data = j.dump();
-        auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-            rocksdb::Slice(data),
-            meta_file_path,
-            /* should_sync */ true);
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                       rocksdb::Slice(data),
+                                       meta_file_path,
+                                       /* should_sync */ true);
         ASSERT_TRUE(s.ok()) << s.ToString();
 
         ASSERT_EQ(ERR_OK, file.load_metadata());
@@ -80,11 +80,11 @@ TEST(local_service, load_metadata)
     }
 
     {
-        auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-            rocksdb::Slice("invalid json string"),
-            meta_file_path,
-            /* should_sync */ true);
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                       rocksdb::Slice("invalid json string"),
+                                       meta_file_path,
+                                       /* should_sync */ true);
         ASSERT_TRUE(s.ok()) << s.ToString();
 
         local_file_object file2("a.txt");
@@ -94,11 +94,11 @@ TEST(local_service, load_metadata)
     {
         nlohmann::json j({{"md5", "abcde"}, {"no such key", "illegal"}});
         std::string data = j.dump();
-        auto s = rocksdb::WriteStringToFile(
-            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-            rocksdb::Slice(data),
-            meta_file_path,
-            /* should_sync */ true);
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                       rocksdb::Slice(data),
+                                       meta_file_path,
+                                       /* should_sync */ true);
         ASSERT_TRUE(s.ok()) << s.ToString();
 
         local_file_object file2("a.txt");
