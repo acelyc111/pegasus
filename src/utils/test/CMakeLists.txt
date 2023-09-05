@@ -33,9 +33,10 @@ set(MY_PROJ_LIBS dsn_http
                  dsn_runtime
                  dsn_utils
                  gtest
-                 rocksdb)
+                 rocksdb
+                 test_utils)
 
-set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex test_utils rocksdb)
+set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
 
 # Extra files that will be installed
 set(MY_BINPLACES "${CMAKE_CURRENT_SOURCE_DIR}/config-bad-section.ini"
