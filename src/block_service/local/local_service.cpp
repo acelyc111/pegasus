@@ -342,27 +342,13 @@ dsn::task_ptr local_file_object::write(const write_request &req,
             LOG_DEBUG("start write file, file = {}", file_name());
 
             do {
-                rocksdb::EnvOptions env_options;
-                env_options.use_direct_writes = FLAGS_enable_direct_io;
-                std::unique_ptr<rocksdb::WritableFile> wfile;
-                auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                             ->NewWritableFile(file_name(), &wfile, env_options);
+                auto s = rocksdb::WriteStringToFile(
+                    dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                    rocksdb::Slice(req.buffer.data(), req.buffer.length()),
+                    file_name(),
+                    /* should_sync */ true);
                 if (!s.ok()) {
-                    LOG_ERROR("create file '{}' failed, err = {}", file_name(), s.ToString());
-                    resp.err = ERR_FS_INTERNAL;
-                    break;
-                }
-
-                s = wfile->Append(rocksdb::Slice(req.buffer.data(), req.buffer.length()));
-                if (!s.ok()) {
-                    LOG_ERROR("append file '{}' failed, err = {}", file_name(), s.ToString());
-                    resp.err = ERR_FS_INTERNAL;
-                    break;
-                }
-
-                s = wfile->Fsync();
-                if (!s.ok()) {
-                    LOG_ERROR("fsync file '{}' failed, err = {}", file_name(), s.ToString());
+                    LOG_ERROR("write file '{}' failed, err = {}", file_name(), s.ToString());
                     resp.err = ERR_FS_INTERNAL;
                     break;
                 }
