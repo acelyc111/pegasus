@@ -93,7 +93,7 @@ rocksdb::Status do_copy_file(const std::string &src_fname,
     if (remain_size == -1) {
         remain_size = src_file_size;
     }
-    CHECK_LE(remain_size, src_file_size);
+    remain_size = std::min(remain_size, src_file_size);
 
     std::unique_ptr<rocksdb::WritableFile> wfile;
     s = dsn::utils::PegasusEnv(dst_type)->NewWritableFile(dst_fname, &wfile, rocksdb::EnvOptions());
