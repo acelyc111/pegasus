@@ -492,22 +492,13 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
                 break;
             }
 
-            // Hard link the file.
-            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                         ->LinkFile(req.input_local_name, file_name());
+            uint64_t file_size;
+            auto s = dsn::utils::copy_file(req.input_local_name, file_name(), &file_size);
             if (!s.ok()) {
-                LOG_ERROR("link file '{}' to '{}' failed, err = {}",
+                LOG_ERROR("upload from '{}' to '{}' failed, err = {}",
                           req.input_local_name,
                           file_name(),
                           s.ToString());
-                resp.err = ERR_FILE_OPERATION_FAILED;
-                break;
-            }
-
-            int64_t file_size;
-            if (!dsn::utils::filesystem::file_size(
-                    file_name(), dsn::utils::FileDataType::kSensitive, file_size)) {
-                LOG_ERROR("get file size of '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
@@ -582,65 +573,13 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 break;
             }
 
-            // TODO(yingchun): Consider to use hard link, LinkFile().
-            std::unique_ptr<rocksdb::SequentialFile> sfile;
-            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                         ->NewSequentialFile(file_name(), &sfile, rocksdb::EnvOptions());
+            uint64_t file_size;
+            auto s = dsn::utils::copy_file(file_name(), target_file, &file_size);
             if (!s.ok()) {
-                LOG_ERROR("NewSequentialFile '{}' failed, err = {}", file_name(), s.ToString());
-                resp.err = ERR_FILE_OPERATION_FAILED;
-                break;
-            }
-
-            std::unique_ptr<rocksdb::WritableFile> wfile;
-            s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                    ->NewWritableFile(target_file, &wfile, rocksdb::EnvOptions());
-            if (!s.ok()) {
-                LOG_ERROR("NewWritableFile '{}' failed, err = {}", target_file, s.ToString());
-                resp.err = ERR_FILE_OPERATION_FAILED;
-                break;
-            }
-
-            // Read 4MB at a time.
-            const uint64_t kBlockSize = 4 << 20;
-            auto buffer = dsn::utils::make_shared_array<char>(kBlockSize);
-            do {
-                rocksdb::Slice result;
-                s = sfile->Read(kBlockSize, &result, buffer.get());
-                if (!s.ok()) {
-                    LOG_ERROR("Read '{}' failed, err = {}", file_name(), s.ToString());
-                    break;
-                }
-                if (result.empty()) {
-                    break;
-                }
-
-                s = wfile->Append(result);
-                if (!s.ok()) {
-                    LOG_ERROR("Append '{}' failed, err = {}", target_file, s.ToString());
-                    break;
-                }
-
-                if (result.size() < kBlockSize) {
-                    break;
-                }
-            } while (true);
-            if (!s.ok()) {
-                resp.err = ERR_FILE_OPERATION_FAILED;
-                break;
-            }
-
-            s = wfile->Fsync();
-            if (!s.ok()) {
-                LOG_ERROR("fsync file '{}' failed, err = {}", target_file, s.ToString());
-                resp.err = ERR_FILE_OPERATION_FAILED;
-                break;
-            }
-
-            int64_t file_size;
-            if (!dsn::utils::filesystem::file_size(
-                    target_file, dsn::utils::FileDataType::kSensitive, file_size)) {
-                LOG_ERROR("get file size of '{}' failed", target_file);
+                LOG_ERROR("download from '{}' to '{}' failed, err = {}",
+                          file_name(),
+                          target_file,
+                          s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
