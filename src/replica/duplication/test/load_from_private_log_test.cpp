@@ -315,7 +315,8 @@ TEST_P(load_from_private_log_test, handle_real_private_log)
                                         "log.1.0.all_loaded_are_write_empties"});
     if (FLAGS_encrypt_data_at_rest) {
         for (int i = 0; i < log_files.size(); i++) {
-            pegasus::encrypt_file(log_files[i], log_files[i] + ".encrypted");
+            auto s = dsn::utils::encrypt_file(log_files[i], log_files[i] + ".encrypted");
+            ASSERT_TRUE(s.ok()) << s.ToString();
             log_files[i] += ".encrypted";
         }
     }

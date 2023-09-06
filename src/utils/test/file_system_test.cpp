@@ -49,7 +49,8 @@ TEST(filesystem_test, encrypt_file)
                                    /* should_sync */ true);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
-    NO_FATALS(pegasus::encrypt_file(fname, fname + ".encrypted"));
+    s = dsn::utils::encrypt_file(fname, fname + ".encrypted");
+    ASSERT_TRUE(s.ok()) << s.ToString();
 
     s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
             ->LinkFile(fname + ".encrypted", fname + ".encrypted2");
@@ -62,7 +63,8 @@ TEST(filesystem_test, encrypt_file)
                                    /* should_sync */ true);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
-    NO_FATALS(pegasus::encrypt_file(fname2));
+    s = dsn::utils::encrypt_file(fname2);
+    ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
 TEST(filesystem_test, check_new_md5sum)

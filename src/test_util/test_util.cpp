@@ -35,53 +35,8 @@
 #include "utils/env.h"
 #include "utils/fmt_logging.h"
 #include "utils/utils.h"
-#include "utils/filesystem.h"
 
 namespace pegasus {
-
-void encrypt_file(const std::string &src, const std::string &dst)
-{
-    std::unique_ptr<rocksdb::SequentialFile> sfile;
-    auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kNonSensitive)
-                 ->NewSequentialFile(src, &sfile, rocksdb::EnvOptions());
-    ASSERT_TRUE(s.ok()) << s.ToString();
-
-    std::unique_ptr<rocksdb::WritableFile> wfile;
-    s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-            ->NewWritableFile(dst, &wfile, rocksdb::EnvOptions());
-    ASSERT_TRUE(s.ok()) << s.ToString();
-
-    const uint64_t kBlockSize = 4 << 20;
-    auto buffer = dsn::utils::make_shared_array<char>(kBlockSize);
-    uint64_t total_size = 0;
-    do {
-        // Read 4MB at a time.
-        rocksdb::Slice result;
-        s = sfile->Read(kBlockSize, &result, buffer.get());
-        ASSERT_TRUE(s.ok()) << s.ToString();
-        if (result.empty()) {
-            break;
-        }
-
-        s = wfile->Append(result);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-        total_size += result.size();
-
-        if (result.size() < kBlockSize) {
-            break;
-        }
-    } while (true);
-
-    LOG_INFO("encrypt file from {} to {}, total size {}", src, dst, total_size);
-}
-
-void encrypt_file(const std::string &fname)
-{
-    // TODO(yingchun): add timestamp to the tmp encrypted file name.
-    std::string tmp_fname = fname + ".encrypted.tmp";
-    NO_FATALS(encrypt_file(fname, tmp_fname));
-    ASSERT_TRUE(::dsn::utils::filesystem::rename_path(tmp_fname, fname));
-}
 
 void AssertEventually(const std::function<void(void)> &f, int timeout_sec, WaitBackoff backoff)
 {

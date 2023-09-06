@@ -87,7 +87,8 @@ TEST_P(nfs_test, basic)
     std::vector<std::string> src_filenames({"nfs_test_file1", "nfs_test_file2"});
     if (FLAGS_encrypt_data_at_rest) {
         for (int i = 0; i < src_filenames.size(); i++) {
-            pegasus::encrypt_file(src_filenames[i], src_filenames[i] + ".encrypted");
+            auto s = dsn::utils::encrypt_file(src_filenames[i], src_filenames[i] + ".encrypted");
+            ASSERT_TRUE(s.ok()) << s.ToString();
             src_filenames[i] += ".encrypted";
         }
     }

@@ -17,9 +17,10 @@
 
 #pragma once
 
-namespace rocksdb {
-class Env;
-} // namespace rocksdb
+#include <rocksdb/env.h>
+#include <rocksdb/status.h>
+
+#include <string>
 
 namespace dsn {
 namespace utils {
@@ -35,5 +36,9 @@ enum class FileDataType
 
 rocksdb::Env *PegasusEnv(FileDataType type);
 
-} // namespace dsn
+rocksdb::Status encrypt_file(const std::string &src_fname, const std::string &dst_fname);
+rocksdb::Status encrypt_file(const std::string &fname);
+rocksdb::Status copy_file(const std::string &src_fname, const std::string &dst_fname);
+
 } // namespace utils
+} // namespace dsn

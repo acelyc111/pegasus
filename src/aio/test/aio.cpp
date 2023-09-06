@@ -340,10 +340,12 @@ TEST_P(aio_test, dsn_file)
     std::string src_file = "copy_source.txt";
     std::string dst_file = "copy_dest.txt";
     if (FLAGS_encrypt_data_at_rest) {
-        pegasus::encrypt_file(src_file, src_file + ".encrypted");
+        auto s = dsn::utils::encrypt_file(src_file, src_file + ".encrypted");
+        ASSERT_TRUE(s.ok()) << s.ToString();
         src_file += ".encrypted";
 
-        pegasus::encrypt_file(dst_file, dst_file + ".encrypted");
+        s = dsn::utils::encrypt_file(dst_file, dst_file + ".encrypted");
+        ASSERT_TRUE(s.ok()) << s.ToString();
         dst_file += ".encrypted";
     }
 

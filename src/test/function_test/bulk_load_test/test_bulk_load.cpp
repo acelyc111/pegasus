@@ -106,7 +106,8 @@ protected:
             std::vector<std::string> src_files;
             ASSERT_TRUE(dsn::utils::filesystem::get_subfiles(LOCAL_SERVICE_ROOT, src_files, true));
             for (const auto &src_file : src_files) {
-                NO_FATALS(pegasus::encrypt_file(src_file));
+                auto s = dsn::utils::encrypt_file(src_file);
+                ASSERT_TRUE(s.ok()) << s.ToString();
                 int64_t file_size;
                 ASSERT_TRUE(dsn::utils::filesystem::file_size(
                     src_file, dsn::utils::FileDataType::kNonSensitive, file_size));
