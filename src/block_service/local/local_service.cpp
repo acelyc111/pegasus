@@ -487,7 +487,10 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
-            LOG_INFO("finish upload file '{}', size = {}", file_name(), file_size);
+            LOG_INFO("finish to upload from '{}' to '{}', size = {}",
+                     req.input_local_name,
+                     file_name(),
+                     file_size);
 
             resp.uploaded_size = file_size;
             _size = file_size;

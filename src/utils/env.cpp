@@ -82,9 +82,10 @@ rocksdb::Status do_copy_file(const std::string &src_fname,
                              int64_t remain_size,
                              uint64_t *total_size)
 {
+    rocksdb::EnvOptions rd_env_options;
+    rd_env_options.use_direct_reads = FLAGS_enable_direct_io;
     std::unique_ptr<rocksdb::SequentialFile> sfile;
-    auto s = dsn::utils::PegasusEnv(src_type)->NewSequentialFile(
-        src_fname, &sfile, rocksdb::EnvOptions());
+    auto s = dsn::utils::PegasusEnv(src_type)->NewSequentialFile(src_fname, &sfile, rd_env_options);
     LOG_AND_RETURN_NOT_RDB_OK(WARNING, s, "failed to open file {} for reading", src_fname);
 
     // Limit the size of the file to be copied.
@@ -95,8 +96,10 @@ rocksdb::Status do_copy_file(const std::string &src_fname,
     }
     remain_size = std::min(remain_size, src_file_size);
 
+    rocksdb::EnvOptions wt_env_options;
+    wt_env_options.use_direct_writes = FLAGS_enable_direct_io;
     std::unique_ptr<rocksdb::WritableFile> wfile;
-    s = dsn::utils::PegasusEnv(dst_type)->NewWritableFile(dst_fname, &wfile, rocksdb::EnvOptions());
+    s = dsn::utils::PegasusEnv(dst_type)->NewWritableFile(dst_fname, &wfile, wt_env_options);
     LOG_AND_RETURN_NOT_RDB_OK(WARNING, s, "failed to open file {} for writing", dst_fname);
 
     // Read at most 4MB once.

@@ -378,6 +378,8 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
 
     add_ref();
     auto upload_background = [this, req, t]() {
+        LOG_INFO("start to upload from '{}' to '{}'", req.input_local_name, file_name());
+
         upload_response resp;
         do {
             rocksdb::EnvOptions env_options;
@@ -395,9 +397,7 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
             int64_t file_size;
             if (!dsn::utils::filesystem::file_size(
                     req.input_local_name, dsn::utils::FileDataType::kSensitive, file_size)) {
-                LOG_ERROR("get local file '{}' size failed, err = {}",
-                          req.input_local_name,
-                          s.ToString());
+                LOG_ERROR("get size of local file '{}' failed", req.input_local_name);
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
@@ -406,12 +406,18 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
             char scratch[file_size];
             s = rfile->Read(file_size, &result, scratch);
             if (!s.ok()) {
-                LOG_ERROR("read file '{}' failed, err = {}", req.input_local_name, s.ToString());
+                LOG_ERROR(
+                    "read local file '{}' failed, err = {}", req.input_local_name, s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
 
             resp.err = write_data_in_batches(result.data(), result.size(), resp.uploaded_size);
+
+            LOG_INFO("finish to upload from '{}' to '{}', size = {}",
+                     req.input_local_name,
+                     file_name(),
+                     resp.uploaded_size);
         } while (false);
         t->enqueue_with(resp);
         release_ref();
@@ -524,49 +530,54 @@ dsn::task_ptr hdfs_file_object::download(const download_request &req,
     auto download_background = [this, req, t]() {
         download_response resp;
         resp.downloaded_size = 0;
-        std::string read_buffer;
-        size_t read_length = 0;
-        resp.err =
-            read_data_in_batches(req.remote_pos, req.remote_length, read_buffer, read_length);
-        if (resp.err == ERR_OK) {
-            bool write_succ = false;
-            do {
-                rocksdb::EnvOptions env_options;
-                env_options.use_direct_writes = FLAGS_enable_direct_io;
-                std::unique_ptr<rocksdb::WritableFile> wfile;
-                auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
-                             ->NewWritableFile(req.output_local_name, &wfile, env_options);
-                if (!s.ok()) {
-                    LOG_ERROR(
-                        "create file '{}' failed, err = {}", req.output_local_name, s.ToString());
-                    break;
-                }
+        resp.err = ERR_OK;
+        bool write_succ = false;
+        std::string target_file = req.output_local_name;
+        do {
+            LOG_INFO("start to download from '{}' to '{}'", file_name(), target_file);
 
-                s = wfile->Append(rocksdb::Slice(read_buffer.data(), read_length));
-                if (!s.ok()) {
-                    LOG_ERROR(
-                        "append file '{}' failed, err = {}", req.output_local_name, s.ToString());
-                    break;
-                }
-
-                s = wfile->Fsync();
-                if (!s.ok()) {
-                    LOG_ERROR(
-                        "fsync file '{}' failed, err = {}", req.output_local_name, s.ToString());
-                    break;
-                }
-
-                resp.downloaded_size = read_length;
-                resp.file_md5 = utils::string_md5(read_buffer.c_str(), read_length);
-                write_succ = true;
-            } while (false);
-            if (!write_succ) {
-                LOG_ERROR("HDFS download failed: fail to write local file {} when download {}",
-                          req.output_local_name,
-                          file_name());
-                resp.err = ERR_FILE_OPERATION_FAILED;
-                resp.downloaded_size = 0;
+            std::string read_buffer;
+            size_t read_length = 0;
+            resp.err =
+                read_data_in_batches(req.remote_pos, req.remote_length, read_buffer, read_length);
+            if (resp.err != ERR_OK) {
+                LOG_ERROR("read data from remote '{}' failed, err = {}", file_name(), resp.err);
+                break;
             }
+
+            rocksdb::EnvOptions env_options;
+            env_options.use_direct_writes = FLAGS_enable_direct_io;
+            std::unique_ptr<rocksdb::WritableFile> wfile;
+            auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
+                         ->NewWritableFile(target_file, &wfile, env_options);
+            if (!s.ok()) {
+                LOG_ERROR("create local file '{}' failed, err = {}", target_file, s.ToString());
+                break;
+            }
+
+            s = wfile->Append(rocksdb::Slice(read_buffer.data(), read_length));
+            if (!s.ok()) {
+                LOG_ERROR("append local file '{}' failed, err = {}", target_file, s.ToString());
+                break;
+            }
+
+            s = wfile->Fsync();
+            if (!s.ok()) {
+                LOG_ERROR("fsync local file '{}' failed, err = {}", target_file, s.ToString());
+                break;
+            }
+
+            resp.downloaded_size = read_length;
+            resp.file_md5 = utils::string_md5(read_buffer.c_str(), read_length);
+            write_succ = true;
+        } while (false);
+
+        if (!write_succ) {
+            LOG_ERROR("HDFS download failed: fail to write local file {} when download {}",
+                      target_file,
+                      file_name());
+            resp.err = ERR_FILE_OPERATION_FAILED;
+            resp.downloaded_size = 0;
         }
         t->enqueue_with(resp);
         release_ref();
