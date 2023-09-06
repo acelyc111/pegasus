@@ -124,7 +124,6 @@ rocksdb::Status do_copy_file(const std::string &src_fname,
 rocksdb::Status
 copy_file(const std::string &src_fname, const std::string &dst_fname, uint64_t *total_size)
 {
-    // All files are encrypted by default.
     // TODO(yingchun): Consider to use hard link, LinkFile().
     return do_copy_file(
         src_fname, FileDataType::kSensitive, dst_fname, FileDataType::kSensitive, total_size);

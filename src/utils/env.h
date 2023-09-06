@@ -37,10 +37,13 @@ enum class FileDataType
 rocksdb::Env *PegasusEnv(FileDataType type);
 
 // The 'total_size' is the total size of the file content, exclude the file encryption header.
+// 'src_fname' is not encrypted and 'dst_fname' is encrypted.
 rocksdb::Status encrypt_file(const std::string &src_fname,
                              const std::string &dst_fname,
                              uint64_t *total_size = nullptr);
+// Encrypt the original non-encrypted 'fname'.
 rocksdb::Status encrypt_file(const std::string &fname, uint64_t *total_size = nullptr);
+// Both 'src_fname' and 'dst_fname' are encrypted files.
 rocksdb::Status copy_file(const std::string &src_fname,
                           const std::string &dst_fname,
                           uint64_t *total_size = nullptr);
