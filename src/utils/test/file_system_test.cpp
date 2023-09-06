@@ -26,7 +26,7 @@
 #include <string>
 
 #include "test_util/test_util.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 #include "utils/test_macros.h"

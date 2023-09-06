@@ -31,7 +31,7 @@
 #include <rocksdb/env.h>
 
 #include "block_service/local/local_service.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/error_code.h"
 
 namespace dsn {

@@ -51,7 +51,7 @@
 #include "runtime/api_layer1.h"
 #include "runtime/task/async_calls.h"
 #include "utils/autoref_ptr.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"

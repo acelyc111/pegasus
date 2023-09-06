@@ -42,7 +42,7 @@
 #include <utility>
 
 #include "utils/configuration.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/strings.h"
 
 namespace dsn {

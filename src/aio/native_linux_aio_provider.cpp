@@ -33,7 +33,7 @@
 #include "rocksdb/status.h"
 #include "runtime/service_engine.h"
 #include "runtime/task/async_calls.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/fmt_logging.h"
 #include "utils/latency_tracer.h"
 #include "utils/ports.h"

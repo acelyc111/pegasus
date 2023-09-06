@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "encryption_utils.h"
+#include "env.h"
 
 #include <fmt/core.h>
 #include <rocksdb/convenience.h>

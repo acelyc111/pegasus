@@ -38,7 +38,7 @@
 #include "meta_test_base.h"
 #include "runtime/api_layer1.h"
 #include "runtime/rpc/rpc_address.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/error_code.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"

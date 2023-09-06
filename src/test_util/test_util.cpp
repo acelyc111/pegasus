@@ -32,7 +32,7 @@
 #include "rocksdb/status.h"
 #include "runtime/api_layer1.h"
 #include "utils/defer.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/fmt_logging.h"
 #include "utils/utils.h"
 #include "utils/filesystem.h"

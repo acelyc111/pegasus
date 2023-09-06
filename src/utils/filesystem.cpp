@@ -53,7 +53,7 @@
 #include "rocksdb/env.h"
 #include "rocksdb/status.h"
 #include "utils/defer.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"

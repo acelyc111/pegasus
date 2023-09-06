@@ -42,7 +42,7 @@
 #include "test_util/test_util.h"
 #include "utils/autoref_ptr.h"
 #include "utils/blob.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/enum_helper.h"
 #include "utils/error_code.h"
 #include "utils/filesystem.h"

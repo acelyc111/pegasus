@@ -29,7 +29,7 @@
 #include "runtime/task/async_calls.h"
 #include "utils/autoref_ptr.h"
 #include "utils/blob.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/error_code.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
@@ -293,11 +293,11 @@ error_code local_file_object::store_metadata()
     file_metadata meta;
     meta.md5 = _md5_value;
     meta.size = _size;
-    std::string meta_str = nlohmann::json(meta).dump();
+    std::string data = nlohmann::json(meta).dump();
     std::string metadata_path = local_service::get_metafile(file_name());
     auto s =
         rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-                                   rocksdb::Slice(meta_str),
+                                   rocksdb::Slice(data),
                                    metadata_path,
                                    /* should_sync */ true);
     if (!s.ok()) {
@@ -372,7 +372,6 @@ dsn::task_ptr local_file_object::write(const write_request &req,
                 // Currently we calc the meta data from source data, which save the io bandwidth
                 // a lot, but it is somewhat not correct.
                 _size = resp.written_size;
-                LOG_ERROR("_size = {}", _size);
                 _md5_value = utils::string_md5(req.buffer.data(), req.buffer.length());
                 // TODO(yingchun): make store_metadata as a local function, do not depend on the
                 //  member variables (i.e. _size and _md5_value).
@@ -416,7 +415,6 @@ dsn::task_ptr local_file_object::read(const read_request &req,
 
             resp.err = load_metadata();
             if (resp.err != ERR_OK) {
-                resp.err = ERR_FS_INTERNAL;
                 LOG_WARNING("load metadata of {} failed", file_name());
                 break;
             }
@@ -429,9 +427,8 @@ dsn::task_ptr local_file_object::read(const read_request &req,
                 total_sz = req.remote_length;
             }
 
-            LOG_INFO("file_sz = {}, req.remote_length = {}, req.remote_pos = {}, total_sz = {}",
-                     file_sz,
-                     req.remote_length,
+            LOG_INFO("start to read file '{}', offset = {}, size = {}",
+                     file_name(),
                      req.remote_pos,
                      total_sz);
             rocksdb::EnvOptions env_options;
@@ -445,10 +442,6 @@ dsn::task_ptr local_file_object::read(const read_request &req,
                 break;
             }
 
-            LOG_INFO("start to read file '{}', offset = {}, size = {}",
-                     file_name(),
-                     req.remote_pos,
-                     total_sz);
             s = sfile->Skip(req.remote_pos);
             if (!s.ok()) {
                 LOG_ERROR(
@@ -487,9 +480,7 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
     upload_future_ptr tsk(new upload_future(code, cb, 0));
     tsk->set_tracker(tracker);
     auto upload_file_func = [this, req, tsk]() {
-        LOG_INFO("start to transfer from src_file({}) to dst_file({})",
-                 req.input_local_name,
-                 file_name());
+        LOG_INFO("start to upload from '{}' to '{}'", req.input_local_name, file_name());
 
         upload_response resp;
         do {
@@ -520,13 +511,13 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
-            LOG_INFO("finish upload file, file = {}, file_size = {}", file_name(), file_size);
+            LOG_INFO("finish upload file '{}', size = {}", file_name(), file_size);
 
             resp.uploaded_size = file_size;
             _size = file_size;
             auto res = utils::filesystem::md5sum(file_name(), _md5_value);
             if (res != dsn::ERR_OK) {
-                LOG_WARNING("calculate md5sum for {} failed", file_name());
+                LOG_WARNING("calculate md5sum for '{}' failed", file_name());
                 resp.err = ERR_FS_INTERNAL;
                 break;
             }
@@ -581,7 +572,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 }
             }
 
-            LOG_INFO("start to transfer, src_file({}), dst_file({})", file_name(), target_file);
+            LOG_INFO("start to download from '{}' to '{}'", file_name(), target_file);
 
             // Create the directory.
             std::string path = dsn::utils::filesystem::remove_file_name(file_name());
@@ -618,7 +609,6 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 s = sfile->Read(kBlockSize, &result, buffer.get());
                 if (!s.ok()) {
                     LOG_ERROR("Read '{}' failed, err = {}", file_name(), s.ToString());
-                    resp.err = ERR_FILE_OPERATION_FAILED;
                     break;
                 }
                 if (result.empty()) {
@@ -628,7 +618,6 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 s = wfile->Append(result);
                 if (!s.ok()) {
                     LOG_ERROR("Append '{}' failed, err = {}", target_file, s.ToString());
-                    resp.err = ERR_FILE_OPERATION_FAILED;
                     break;
                 }
 
@@ -637,6 +626,14 @@ dsn::task_ptr local_file_object::download(const download_request &req,
                 }
             } while (true);
             if (!s.ok()) {
+                resp.err = ERR_FILE_OPERATION_FAILED;
+                break;
+            }
+
+            s = wfile->Fsync();
+            if (!s.ok()) {
+                LOG_ERROR("fsync file '{}' failed, err = {}", target_file, s.ToString());
+                resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
 
@@ -651,11 +648,11 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             auto res = utils::filesystem::md5sum(target_file, _md5_value);
             if (res != dsn::ERR_OK) {
                 LOG_WARNING("calculate md5sum for {} failed", target_file);
-                resp.err = ERR_FS_INTERNAL;
+                resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
 
-            LOG_INFO("finish download file({}), file_size = {}", target_file, file_size);
+            LOG_INFO("finish download file '{}', size = {}", target_file, file_size);
             resp.downloaded_size = file_size;
             resp.file_md5 = _md5_value;
             _size = file_size;

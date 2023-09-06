@@ -40,7 +40,7 @@
 #include "rocksdb/env.h"
 #include "test/function_test/utils/test_util.h"
 #include "test_util/test_util.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/error_code.h"
 #include "utils/errors.h"
 #include "utils/filesystem.h"

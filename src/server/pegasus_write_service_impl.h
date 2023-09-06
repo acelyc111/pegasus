@@ -28,7 +28,7 @@
 #include "pegasus_write_service.h"
 #include "rocksdb_wrapper.h"
 #include "utils/defer.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/filesystem.h"
 #include "utils/string_conv.h"
 #include "utils/strings.h"

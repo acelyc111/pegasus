@@ -46,7 +46,7 @@
 #include "utils/autoref_ptr.h"
 #include "utils/binary_reader.h"
 #include "utils/blob.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
 #include "utils/threadpool_code.h"

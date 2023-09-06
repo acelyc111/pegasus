@@ -41,7 +41,7 @@
 #include "utils/binary_writer.h"
 #include "utils/blob.h"
 #include "utils/crc.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
 #include "utils/latency_tracer.h"

@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 
 namespace pegasus {
 namespace test {

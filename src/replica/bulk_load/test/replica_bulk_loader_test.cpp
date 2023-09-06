@@ -36,7 +36,7 @@
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/task/task_tracker.h"
 #include "utils/blob.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"

@@ -52,7 +52,7 @@
 #include "utils/binary_writer.h"
 #include "utils/blob.h"
 #include "utils/defer.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/factory_store.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"

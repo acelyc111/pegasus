@@ -47,7 +47,7 @@
 #include "runtime/task/task_tracker.h"
 #include "utils/autoref_ptr.h"
 #include "utils/chrono_literals.h"
-#include "utils/encryption_utils.h"
+#include "utils/env.h"
 #include "utils/error_code.h"
 #include "utils/errors.h"
 #include "utils/fail_point.h"
