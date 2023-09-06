@@ -85,6 +85,7 @@ public:
         // signal a finished task won't cause failure
         t->signal_waiters(); // signal_waiters may return false
         t->signal_waiters();
+        ASSERT_EQ(ERR_OK, file::close(fp));
     }
 };
 

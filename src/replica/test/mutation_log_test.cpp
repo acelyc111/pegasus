@@ -75,6 +75,7 @@ static void overwrite_file(const char *file, int offset, const void *buf, int si
                                 });
     t->wait();
     ASSERT_EQ(ERR_OK, file::flush(wfile));
+    ASSERT_EQ(ERR_OK, file::close(wfile));
 }
 
 class replication_test : public pegasus::encrypt_data_test_base

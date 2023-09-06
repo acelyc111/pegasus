@@ -357,9 +357,9 @@ TEST_P(aio_test, dsn_file)
     ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(src_file, src_file_md5));
     ASSERT_FALSE(src_file_md5.empty());
 
-    dsn::disk_file *fin = file::open(src_file, file::FileOpenType::kReadOnly);
+    auto fin = file::open(src_file, file::FileOpenType::kReadOnly);
     ASSERT_NE(nullptr, fin);
-    dsn::disk_file *fout = file::open(dst_file, file::FileOpenType::kWriteOnly);
+    auto fout = file::open(dst_file, file::FileOpenType::kWriteOnly);
     ASSERT_NE(nullptr, fout);
     char kUnitBuffer[1024];
     uint64_t offset = 0;
