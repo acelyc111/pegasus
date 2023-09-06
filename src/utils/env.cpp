@@ -115,7 +115,11 @@ rocksdb::Status do_copy_file(const std::string &src_fname,
                                   sfile->Read(bytes_per_copy, &result, buffer.get()),
                                   "failed to read file {}",
                                   src_fname);
-        CHECK(!result.empty(), "read file {} at offset {} with size {} failed", src_fname, offset, bytes_per_copy);
+        CHECK(!result.empty(),
+              "read file {} at offset {} with size {} failed",
+              src_fname,
+              offset,
+              bytes_per_copy);
         LOG_AND_RETURN_NOT_RDB_OK(
             WARNING, wfile->Append(result), "failed to write file {}", dst_fname);
 
@@ -148,8 +152,12 @@ copy_file(const std::string &src_fname, const std::string &dst_fname, uint64_t *
 rocksdb::Status
 encrypt_file(const std::string &src_fname, const std::string &dst_fname, uint64_t *total_size)
 {
-    return do_copy_file(
-        src_fname, FileDataType::kNonSensitive, dst_fname, FileDataType::kSensitive, -1, total_size);
+    return do_copy_file(src_fname,
+                        FileDataType::kNonSensitive,
+                        dst_fname,
+                        FileDataType::kSensitive,
+                        -1,
+                        total_size);
 }
 
 rocksdb::Status encrypt_file(const std::string &fname, uint64_t *total_size)
@@ -165,12 +173,15 @@ rocksdb::Status encrypt_file(const std::string &fname, uint64_t *total_size)
     return rocksdb::Status::OK();
 }
 
-rocksdb::Status copy_file_by_size(const std::string &src_fname,
-                                  const std::string &dst_fname,
-                                  int64_t limit_size)
+rocksdb::Status
+copy_file_by_size(const std::string &src_fname, const std::string &dst_fname, int64_t limit_size)
 {
-    return do_copy_file(
-            src_fname, FileDataType::kSensitive, dst_fname, FileDataType::kSensitive, limit_size, nullptr);
+    return do_copy_file(src_fname,
+                        FileDataType::kSensitive,
+                        dst_fname,
+                        FileDataType::kSensitive,
+                        limit_size,
+                        nullptr);
 }
 
 } // namespace utils

@@ -227,23 +227,24 @@ TEST_P(env_file_test, copy_file_by_size)
 
     // Prepare a non-encrypted test file.
     auto s =
-            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-                                       rocksdb::Slice(kFileContent),
-                                       kFileName,
-                    /* should_sync */ true);
+        rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                   rocksdb::Slice(kFileContent),
+                                   kFileName,
+                                   /* should_sync */ true);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     // Check file size.
     int64_t wfile_size;
     ASSERT_TRUE(dsn::utils::filesystem::file_size(
-            kFileName, dsn::utils::FileDataType::kSensitive, wfile_size));
+        kFileName, dsn::utils::FileDataType::kSensitive, wfile_size));
     ASSERT_EQ(kFileContentSize, wfile_size);
     ASSERT_TRUE(dsn::utils::filesystem::file_size(
-            kFileName, dsn::utils::FileDataType::kNonSensitive, wfile_size));
+        kFileName, dsn::utils::FileDataType::kNonSensitive, wfile_size));
     ASSERT_EQ(kFileContentSize + extra_size, wfile_size);
 
     // Check copy_file_by_size(src_fname, dst_fname, limit_size).
-    struct test_case {
+    struct test_case
+    {
         int64_t limit_size;
         int64_t expect_size;
     } tests[] = {{-1, kFileContentSize},
@@ -258,16 +259,15 @@ TEST_P(env_file_test, copy_file_by_size)
 
         int64_t actual_size;
         ASSERT_TRUE(dsn::utils::filesystem::file_size(
-                copy_file_name, dsn::utils::FileDataType::kSensitive, actual_size));
+            copy_file_name, dsn::utils::FileDataType::kSensitive, actual_size));
         ASSERT_EQ(test.expect_size, actual_size);
         ASSERT_TRUE(dsn::utils::filesystem::file_size(
-                copy_file_name, dsn::utils::FileDataType::kNonSensitive, wfile_size));
+            copy_file_name, dsn::utils::FileDataType::kNonSensitive, wfile_size));
         ASSERT_EQ(test.expect_size + extra_size, wfile_size);
         // Check file content.
         std::string data;
-        s = rocksdb::ReadFileToString(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-                                      copy_file_name,
-                                      &data);
+        s = rocksdb::ReadFileToString(
+            dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), copy_file_name, &data);
         ASSERT_EQ(std::string(test.expect_size, 'a'), data);
     }
 }
