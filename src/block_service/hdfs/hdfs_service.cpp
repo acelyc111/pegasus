@@ -413,6 +413,10 @@ dsn::task_ptr hdfs_file_object::upload(const upload_request &req,
             }
 
             resp.err = write_data_in_batches(result.data(), result.size(), resp.uploaded_size);
+            if (resp.err != ERR_OK) {
+                LOG_ERROR("write data to remote '{}' failed, err = {}", file_name(), resp.err);
+                break;
+            }
 
             LOG_INFO("finish to upload from '{}' to '{}', size = {}",
                      req.input_local_name,
