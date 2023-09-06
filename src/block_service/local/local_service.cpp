@@ -271,18 +271,17 @@ error_code local_file_object::load_metadata()
     auto s = rocksdb::ReadFileToString(
         dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive), metadata_path, &data);
     if (!s.ok()) {
-        LOG_ERROR("read file '{}' failed, err = {}", metadata_path, s.ToString());
+        LOG_WARNING("read file '{}' failed, err = {}", metadata_path, s.ToString());
         return ERR_FS_INTERNAL;
     }
 
     file_metadata meta;
     bool ans = file_metadata_from_json(data, meta);
     if (!ans) {
-        LOG_ERROR("decode metadata '{}' file content failed", metadata_path);
+        LOG_WARNING("decode metadata '{}' file content failed", metadata_path);
         return ERR_FS_INTERNAL;
     }
     _size = meta.size;
-    LOG_ERROR("metadata_path = {}, _size = {}", metadata_path, _size);
     _md5_value = meta.md5;
     _has_meta_synced = true;
     return ERR_OK;
@@ -339,7 +338,7 @@ dsn::task_ptr local_file_object::write(const write_request &req,
         }
 
         if (resp.err == ERR_OK) {
-            LOG_DEBUG("start write file, file = {}", file_name());
+            LOG_INFO("start write file, file = {}", file_name());
 
             do {
                 auto s = rocksdb::WriteStringToFile(
@@ -348,7 +347,7 @@ dsn::task_ptr local_file_object::write(const write_request &req,
                     file_name(),
                     /* should_sync */ true);
                 if (!s.ok()) {
-                    LOG_ERROR("write file '{}' failed, err = {}", file_name(), s.ToString());
+                    LOG_WARNING("write file '{}' failed, err = {}", file_name(), s.ToString());
                     resp.err = ERR_FS_INTERNAL;
                     break;
                 }
@@ -363,7 +362,7 @@ dsn::task_ptr local_file_object::write(const write_request &req,
                 //  member variables (i.e. _size and _md5_value).
                 auto err = store_metadata();
                 if (err != ERR_OK) {
-                    LOG_ERROR("store_metadata failed");
+                    LOG_WARNING("store_metadata failed");
                     resp.err = ERR_FS_INTERNAL;
                     break;
                 }
@@ -423,14 +422,14 @@ dsn::task_ptr local_file_object::read(const read_request &req,
             auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
                          ->NewSequentialFile(file_name(), &sfile, env_options);
             if (!s.ok()) {
-                LOG_ERROR("open file '{}' failed, err = {}", file_name(), s.ToString());
+                LOG_WARNING("open file '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FS_INTERNAL;
                 break;
             }
 
             s = sfile->Skip(req.remote_pos);
             if (!s.ok()) {
-                LOG_ERROR(
+                LOG_WARNING(
                     "skip '{}' for {} failed, err = {}", file_name(), req.remote_pos, s.ToString());
                 resp.err = ERR_FS_INTERNAL;
                 break;
@@ -441,7 +440,7 @@ dsn::task_ptr local_file_object::read(const read_request &req,
             buf.resize(total_sz + 1);
             s = sfile->Read(total_sz, &result, buf.data());
             if (!s.ok()) {
-                LOG_ERROR("read file '{}' failed, err = {}", file_name(), s.ToString());
+                LOG_WARNING("read file '{}' failed, err = {}", file_name(), s.ToString());
                 resp.err = ERR_FS_INTERNAL;
                 break;
             }
@@ -473,7 +472,7 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
             // Create the directory.
             std::string path = dsn::utils::filesystem::remove_file_name(file_name());
             if (!dsn::utils::filesystem::create_directory(path)) {
-                LOG_ERROR("create directory '{}' failed", path);
+                LOG_WARNING("create directory '{}' failed", path);
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
@@ -481,10 +480,10 @@ dsn::task_ptr local_file_object::upload(const upload_request &req,
             uint64_t file_size;
             auto s = dsn::utils::copy_file(req.input_local_name, file_name(), &file_size);
             if (!s.ok()) {
-                LOG_ERROR("upload from '{}' to '{}' failed, err = {}",
-                          req.input_local_name,
-                          file_name(),
-                          s.ToString());
+                LOG_WARNING("upload from '{}' to '{}' failed, err = {}",
+                            req.input_local_name,
+                            file_name(),
+                            s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
@@ -531,9 +530,9 @@ dsn::task_ptr local_file_object::download(const download_request &req,
 
         do {
             if (target_file.empty()) {
-                LOG_ERROR("download {} failed, because target name({}) is invalid",
-                          file_name(),
-                          target_file);
+                LOG_WARNING("download {} failed, because target name({}) is invalid",
+                            file_name(),
+                            target_file);
                 resp.err = ERR_INVALID_PARAMETERS;
                 break;
             }
@@ -541,9 +540,9 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             if (!_has_meta_synced) {
                 if (!utils::filesystem::file_exists(file_name()) ||
                     !utils::filesystem::file_exists(local_service::get_metafile(file_name()))) {
-                    LOG_ERROR("file '{}' or metadata file '{}' not found",
-                              file_name(),
-                              local_service::get_metafile(file_name()));
+                    LOG_WARNING("file '{}' or metadata file '{}' not found",
+                                file_name(),
+                                local_service::get_metafile(file_name()));
                     resp.err = ERR_OBJECT_NOT_FOUND;
                     break;
                 }
@@ -554,7 +553,7 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             // Create the directory.
             std::string path = dsn::utils::filesystem::remove_file_name(file_name());
             if (!dsn::utils::filesystem::create_directory(path)) {
-                LOG_ERROR("create directory '{}' failed", path);
+                LOG_WARNING("create directory '{}' failed", path);
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
@@ -562,10 +561,10 @@ dsn::task_ptr local_file_object::download(const download_request &req,
             uint64_t file_size;
             auto s = dsn::utils::copy_file(file_name(), target_file, &file_size);
             if (!s.ok()) {
-                LOG_ERROR("download from '{}' to '{}' failed, err = {}",
-                          file_name(),
-                          target_file,
-                          s.ToString());
+                LOG_WARNING("download from '{}' to '{}' failed, err = {}",
+                            file_name(),
+                            target_file,
+                            s.ToString());
                 resp.err = ERR_FILE_OPERATION_FAILED;
                 break;
             }
