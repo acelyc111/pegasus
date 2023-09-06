@@ -47,6 +47,11 @@ rocksdb::Status encrypt_file(const std::string &fname, uint64_t *total_size = nu
 rocksdb::Status copy_file(const std::string &src_fname,
                           const std::string &dst_fname,
                           uint64_t *total_size = nullptr);
+// Both 'src_fname' and 'dst_fname' are encrypted files. 'limit_size' is the max size of the
+// size to copy, and -1 means no limit.
+rocksdb::Status copy_file_by_size(const std::string &src_fname,
+                                  const std::string &dst_fname,
+                                  int64_t limit_size = -1);
 
 } // namespace utils
 } // namespace dsn

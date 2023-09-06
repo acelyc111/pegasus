@@ -59,48 +59,6 @@ class message_ex;
 using namespace ::dsn;
 using namespace ::dsn::replication;
 
-static void copy_file(const char *from_file, const char *to_file, int64_t to_size = -1)
-{
-    int64_t from_size;
-    ASSERT_TRUE(dsn::utils::filesystem::file_size(
-        from_file, dsn::utils::FileDataType::kSensitive, from_size));
-    ASSERT_LE(to_size, from_size);
-    auto rfile = file::open(from_file, file::FileOpenType::kReadOnly);
-    ASSERT_NE(rfile, nullptr);
-    auto wfile = file::open(to_file, file::FileOpenType::kWriteOnly);
-    ASSERT_NE(wfile, nullptr);
-    if (to_size == -1) {
-        to_size = from_size;
-    }
-    if (to_size > 0) {
-        std::unique_ptr<char[]> buf(new char[to_size]);
-        auto t = ::dsn::file::read(rfile,
-                                   buf.get(),
-                                   to_size,
-                                   0,
-                                   LPC_AIO_IMMEDIATE_CALLBACK,
-                                   nullptr,
-                                   [=](::dsn::error_code err, size_t n) {
-                                       CHECK_EQ(ERR_OK, err);
-                                       CHECK_EQ(to_size, n);
-                                   });
-        t->wait();
-
-        t = ::dsn::file::write(wfile,
-                               buf.get(),
-                               to_size,
-                               0,
-                               LPC_AIO_IMMEDIATE_CALLBACK,
-                               nullptr,
-                               [=](::dsn::error_code err, size_t n) {
-                                   CHECK_EQ(ERR_OK, err);
-                                   CHECK_EQ(to_size, n);
-                               });
-        t->wait();
-        ASSERT_EQ(ERR_OK, file::flush(wfile));
-    }
-}
-
 static void overwrite_file(const char *file, int offset, const void *buf, int size)
 {
     auto wfile = file::open(file, file::FileOpenType::kWriteOnly);
@@ -221,7 +179,7 @@ TEST_P(replication_test, log_file)
 
     // bad file data: empty file
     ASSERT_TRUE(!dsn::utils::filesystem::file_exists("log.1.0"));
-    copy_file(fpath.c_str(), "log.1.0", 0);
+    dsn::utils::copy_file_by_size(fpath, "log.1.0", 0);
     ASSERT_TRUE(dsn::utils::filesystem::file_exists("log.1.0"));
     lf = log_file::open_read("log.1.0", err);
     ASSERT_TRUE(lf == nullptr);
@@ -231,7 +189,7 @@ TEST_P(replication_test, log_file)
 
     // bad file data: incomplete log_block_header
     ASSERT_TRUE(!dsn::utils::filesystem::file_exists("log.1.1"));
-    copy_file(fpath.c_str(), "log.1.1", sizeof(log_block_header) - 1);
+    dsn::utils::copy_file_by_size(fpath, "log.1.1", sizeof(log_block_header) - 1);
     ASSERT_TRUE(dsn::utils::filesystem::file_exists("log.1.1"));
     lf = log_file::open_read("log.1.1", err);
     ASSERT_TRUE(lf == nullptr);
@@ -241,7 +199,7 @@ TEST_P(replication_test, log_file)
 
     // bad file data: bad log_block_header (magic = 0xfeadbeef)
     ASSERT_TRUE(!dsn::utils::filesystem::file_exists("log.1.2"));
-    copy_file(fpath.c_str(), "log.1.2");
+    dsn::utils::copy_file_by_size(fpath, "log.1.2");
     int32_t bad_magic = 0xfeadbeef;
     overwrite_file("log.1.2", FIELD_OFFSET(log_block_header, magic), &bad_magic, sizeof(bad_magic));
     ASSERT_TRUE(dsn::utils::filesystem::file_exists("log.1.2"));
@@ -253,7 +211,7 @@ TEST_P(replication_test, log_file)
 
     // bad file data: bad log_block_header (crc check failed)
     ASSERT_TRUE(!dsn::utils::filesystem::file_exists("log.1.3"));
-    copy_file(fpath.c_str(), "log.1.3");
+    dsn::utils::copy_file_by_size(fpath, "log.1.3");
     int32_t bad_crc = 0;
     overwrite_file("log.1.3", FIELD_OFFSET(log_block_header, body_crc), &bad_crc, sizeof(bad_crc));
     ASSERT_TRUE(dsn::utils::filesystem::file_exists("log.1.3"));
@@ -265,7 +223,7 @@ TEST_P(replication_test, log_file)
 
     // bad file data: incomplete block body
     ASSERT_TRUE(!dsn::utils::filesystem::file_exists("log.1.4"));
-    copy_file(fpath.c_str(), "log.1.4", sizeof(log_block_header) + 1);
+    dsn::utils::copy_file_by_size(fpath, "log.1.4", sizeof(log_block_header) + 1);
     ASSERT_TRUE(dsn::utils::filesystem::file_exists("log.1.4"));
     lf = log_file::open_read("log.1.4", err);
     ASSERT_TRUE(lf == nullptr);

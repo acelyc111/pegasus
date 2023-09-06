@@ -17,6 +17,7 @@
 
 #include "env.h"
 
+#include <algorithm>
 #include <fmt/core.h>
 #include <rocksdb/convenience.h>
 #include <rocksdb/env_encryption.h>
@@ -78,46 +79,61 @@ rocksdb::Status do_copy_file(const std::string &src_fname,
                              dsn::utils::FileDataType src_type,
                              const std::string &dst_fname,
                              dsn::utils::FileDataType dst_type,
-                             uint64_t *total_size = nullptr)
+                             int64_t remain_size,
+                             uint64_t *total_size)
 {
     std::unique_ptr<rocksdb::SequentialFile> sfile;
     auto s = dsn::utils::PegasusEnv(src_type)->NewSequentialFile(
         src_fname, &sfile, rocksdb::EnvOptions());
     LOG_AND_RETURN_NOT_RDB_OK(WARNING, s, "failed to open file {} for reading", src_fname);
 
+    // Limit the size of the file to be copied.
+    int64_t src_file_size;
+    CHECK(dsn::utils::filesystem::file_size(src_fname, src_type, src_file_size), "");
+    if (remain_size == -1) {
+        remain_size = src_file_size;
+    }
+    CHECK_LE(remain_size, src_file_size);
+
     std::unique_ptr<rocksdb::WritableFile> wfile;
     s = dsn::utils::PegasusEnv(dst_type)->NewWritableFile(dst_fname, &wfile, rocksdb::EnvOptions());
     LOG_AND_RETURN_NOT_RDB_OK(WARNING, s, "failed to open file {} for writing", dst_fname);
 
-    // Read 4MB at a time.
+    // Read at most 4MB once.
     // TODO(yingchun): make it configurable.
     const uint64_t kBlockSize = 4 << 20;
     auto buffer = dsn::utils::make_shared_array<char>(kBlockSize);
-    uint64_t copied_size = 0;
+    uint64_t offset = 0;
     do {
-        rocksdb::Slice result;
-        LOG_AND_RETURN_NOT_RDB_OK(WARNING,
-                                  sfile->Read(kBlockSize, &result, buffer.get()),
-                                  "failed to read file {}",
-                                  src_fname);
-        if (result.empty()) {
+        int bytes_per_copy = std::min(remain_size, static_cast<int64_t>(kBlockSize));
+        if (bytes_per_copy <= 0) {
             break;
         }
 
+        rocksdb::Slice result;
+        LOG_AND_RETURN_NOT_RDB_OK(WARNING,
+                                  sfile->Read(bytes_per_copy, &result, buffer.get()),
+                                  "failed to read file {}",
+                                  src_fname);
+        CHECK(!result.empty(), "read file {} at offset {} with size {} failed", src_fname, offset, bytes_per_copy);
         LOG_AND_RETURN_NOT_RDB_OK(
             WARNING, wfile->Append(result), "failed to write file {}", dst_fname);
-        copied_size += result.size();
-        if (result.size() < kBlockSize) {
+
+        offset += result.size();
+        remain_size -= result.size();
+
+        // Reach the end of the file.
+        if (result.size() < bytes_per_copy) {
             break;
         }
     } while (true);
     LOG_AND_RETURN_NOT_RDB_OK(WARNING, wfile->Fsync(), "failed to fsync file {}", dst_fname);
 
     if (total_size != nullptr) {
-        *total_size = copied_size;
+        *total_size = offset;
     }
 
-    LOG_INFO("copy file from {} to {}, total size {}", src_fname, dst_fname, copied_size);
+    LOG_INFO("copy file from {} to {}, total size {}", src_fname, dst_fname, offset);
     return rocksdb::Status::OK();
 }
 
@@ -126,14 +142,14 @@ copy_file(const std::string &src_fname, const std::string &dst_fname, uint64_t *
 {
     // TODO(yingchun): Consider to use hard link, LinkFile().
     return do_copy_file(
-        src_fname, FileDataType::kSensitive, dst_fname, FileDataType::kSensitive, total_size);
+        src_fname, FileDataType::kSensitive, dst_fname, FileDataType::kSensitive, -1, total_size);
 }
 
 rocksdb::Status
 encrypt_file(const std::string &src_fname, const std::string &dst_fname, uint64_t *total_size)
 {
     return do_copy_file(
-        src_fname, FileDataType::kNonSensitive, dst_fname, FileDataType::kSensitive, total_size);
+        src_fname, FileDataType::kNonSensitive, dst_fname, FileDataType::kSensitive, -1, total_size);
 }
 
 rocksdb::Status encrypt_file(const std::string &fname, uint64_t *total_size)
@@ -147,6 +163,14 @@ rocksdb::Status encrypt_file(const std::string &fname, uint64_t *total_size)
         return rocksdb::Status::IOError("rename file failed");
     }
     return rocksdb::Status::OK();
+}
+
+rocksdb::Status copy_file_by_size(const std::string &src_fname,
+                                  const std::string &dst_fname,
+                                  int64_t limit_size)
+{
+    return do_copy_file(
+            src_fname, FileDataType::kSensitive, dst_fname, FileDataType::kSensitive, limit_size, nullptr);
 }
 
 } // namespace utils
