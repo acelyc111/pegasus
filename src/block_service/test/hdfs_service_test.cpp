@@ -92,9 +92,9 @@ void HDFSClientTest::write_test_files_async(const std::string &local_test_path,
                                             task_tracker *tracker)
 {
     dsn::utils::filesystem::create_directory(local_test_path);
-    std::string local_test;
+    std::string local_test_data;
     for (int i = 0; i < FLAGS_num_test_file_lines; ++i) {
-        local_test += "test";
+        local_test_data += "test";
     }
     for (int i = 0; i < 100; ++i) {
         tasking::enqueue(LPC_TEST_HDFS, tracker, [&]() {
@@ -102,7 +102,7 @@ void HDFSClientTest::write_test_files_async(const std::string &local_test_path,
             std::string test_file_name = local_test_path + "/test_file_" + std::to_string(i);
             auto s = rocksdb::WriteStringToFile(
                 dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-                rocksdb::Slice(local_test),
+                rocksdb::Slice(local_test_data),
                 test_file_name,
                 /* should_sync */ true);
             CHECK(s.ok(), "{}", s.ToString());
