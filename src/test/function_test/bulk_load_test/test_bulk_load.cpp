@@ -63,12 +63,12 @@ using std::string;
 ///  - `bulk_load_root` sub-directory stores right data
 ///     - Please do not rename any files or directories under this folder
 ///
-/// The app who is executing bulk load:
-/// - app_name is `temp`, app_id is 2, partition_count is 8
+/// The app to test bulk load functionality:
+/// - partition count should be 8
 ///
 /// Data:
-/// hashkey: hashi sortkey: sorti value: newValue       i=[0, 1000]
-/// hashkey: hashkeyj sortkey: sortkeyj value: newValue j=[0, 1000]
+/// hashkey: hash${i} sortkey: sort${i} value: newValue       i=[0, 1000]
+/// hashkey: hashkey${j} sortkey: sortkey${j} value: newValue j=[0, 1000]
 ///
 class bulk_load_test : public test_util
 {
@@ -92,6 +92,34 @@ protected:
         NO_FATALS(run_cmd_from_project_root("rm -rf " + LOCAL_BULK_LOAD_ROOT));
     }
 
+    void generate_bulk_load_info(const bulk_load_info &bli, const std::string &bulk_load_info_path)
+    {
+        blob value = dsn::json::json_forwarder<bulk_load_info>::encode(bli);
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                       rocksdb::Slice(value.data(), value.length()),
+                                       bulk_load_info_path,
+                                       /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+    void generate_bulk_load_info_meta(const std::string &bulk_load_info_path)
+    {
+        dist::block_service::file_metadata fm;
+        ASSERT_TRUE(utils::filesystem::file_size(
+            bulk_load_info_path, dsn::utils::FileDataType::kSensitive, fm.size));
+        ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(bulk_load_info_path, fm.md5));
+        std::string value = nlohmann::json(fm).dump();
+        string bulk_load_info_meta_path =
+            fmt::format("{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
+        auto s =
+            rocksdb::WriteStringToFile(dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
+                                       rocksdb::Slice(value),
+                                       bulk_load_info_meta_path,
+                                       /* should_sync */ true);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
     void copy_bulk_load_files()
     {
         // TODO(yingchun): remove
@@ -108,46 +136,17 @@ protected:
             for (const auto &src_file : src_files) {
                 auto s = dsn::utils::encrypt_file(src_file);
                 ASSERT_TRUE(s.ok()) << s.ToString();
-                int64_t file_size;
-                ASSERT_TRUE(dsn::utils::filesystem::file_size(
-                    src_file, dsn::utils::FileDataType::kNonSensitive, file_size));
-                LOG_INFO("get file size of '{}' {}", src_file, file_size);
             }
         }
 
-        // Write file 'bulk_load_info'.
+        // Generate 'bulk_load_info'.
         string bulk_load_info_path =
             fmt::format("{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
-        {
-            bulk_load_info bli;
-            bli.app_id = app_id_;
-            bli.app_name = app_name_;
-            bli.partition_count = partition_count_;
-            blob value = dsn::json::json_forwarder<bulk_load_info>::encode(bli);
-            auto s = rocksdb::WriteStringToFile(
-                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-                rocksdb::Slice(value.data(), value.length()),
-                bulk_load_info_path,
-                /* should_sync */ true);
-            ASSERT_TRUE(s.ok()) << s.ToString();
-        }
+        NO_FATALS(generate_bulk_load_info(bulk_load_info(app_id_, app_name_, partition_count_),
+                                          bulk_load_info_path));
 
-        // Write file '.bulk_load_info.meta'.
-        {
-            dist::block_service::file_metadata fm;
-            ASSERT_TRUE(utils::filesystem::file_size(
-                bulk_load_info_path, dsn::utils::FileDataType::kSensitive, fm.size));
-            ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(bulk_load_info_path, fm.md5));
-            std::string value = nlohmann::json(fm).dump();
-            string bulk_load_info_meta_path =
-                fmt::format("{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
-            auto s = rocksdb::WriteStringToFile(
-                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-                rocksdb::Slice(value),
-                bulk_load_info_meta_path,
-                /* should_sync */ true);
-            ASSERT_TRUE(s.ok()) << s.ToString();
-        }
+        // Generate '.bulk_load_info.meta'.
+        NO_FATALS(generate_bulk_load_info_meta(bulk_load_info_path));
     }
 
     error_code start_bulk_load(bool ingest_behind = false)
@@ -160,43 +159,6 @@ protected:
     void remove_file(const string &file_path)
     {
         NO_FATALS(run_cmd_from_project_root("rm " + file_path));
-    }
-
-    void make_inconsistent_bulk_load_info()
-    {
-        // Write file 'bulk_load_info'.
-        string bulk_load_info_path =
-            fmt::format("{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
-        {
-            bulk_load_info bli;
-            bli.app_id = app_id_ + 1;
-            bli.app_name = app_name_ + "wrong";
-            bli.partition_count = partition_count_ * 2;
-            blob value = dsn::json::json_forwarder<bulk_load_info>::encode(bli);
-            auto s = rocksdb::WriteStringToFile(
-                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-                rocksdb::Slice(value.data(), value.length()),
-                bulk_load_info_path,
-                /* should_sync */ true);
-            ASSERT_TRUE(s.ok()) << s.ToString();
-        }
-
-        // Write file '.bulk_load_info.meta'.
-        {
-            dist::block_service::file_metadata fm;
-            ASSERT_TRUE(utils::filesystem::file_size(
-                bulk_load_info_path, dsn::utils::FileDataType::kSensitive, fm.size));
-            ASSERT_EQ(ERR_OK, utils::filesystem::md5sum(bulk_load_info_path, fm.md5));
-            std::string value = nlohmann::json(fm).dump();
-            string bulk_load_info_meta_path =
-                fmt::format("{}/cluster/{}/.bulk_load_info.meta", LOCAL_BULK_LOAD_ROOT, app_name_);
-            auto s = rocksdb::WriteStringToFile(
-                dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive),
-                rocksdb::Slice(value),
-                bulk_load_info_meta_path,
-                /* should_sync */ true);
-            ASSERT_TRUE(s.ok()) << s.ToString();
-        }
     }
 
     void update_allow_ingest_behind(const string &allow_ingest_behind)
@@ -305,26 +267,37 @@ protected:
 };
 
 // Test bulk load failed because `bulk_load_info` file is missing
-TEST_F(bulk_load_test, bulk_load_test_failed1)
+TEST_F(bulk_load_test, bulk_load_test_missing_bulk_load_info)
 {
     NO_FATALS(remove_file(BULK_LOAD_LOCAL_APP_ROOT + "/bulk_load_info"));
     ASSERT_EQ(ERR_OBJECT_NOT_FOUND, start_bulk_load());
 }
 
 // Test bulk load failed because `bulk_load_info` file inconsistent with current app_info
-TEST_F(bulk_load_test, bulk_load_test_failed2)
+TEST_F(bulk_load_test, bulk_load_test_inconsistent_bulk_load_info)
 {
-    NO_FATALS(make_inconsistent_bulk_load_info());
-    ASSERT_EQ(ERR_INCONSISTENT_STATE, start_bulk_load());
+    // Only 'app_id' and 'partition_count' will be checked.
+    bulk_load_info tests[] = {{app_id_ + 1, app_name_, partition_count_},
+                              {app_id_, app_name_, partition_count_ * 2}};
+    for (const auto &test : tests) {
+        // Generate inconsistent 'bulk_load_info'.
+        string bulk_load_info_path =
+            fmt::format("{}/cluster/{}/bulk_load_info", LOCAL_BULK_LOAD_ROOT, app_name_);
+        NO_FATALS(generate_bulk_load_info(test, bulk_load_info_path));
+
+        // Generate '.bulk_load_info.meta'.
+        NO_FATALS(generate_bulk_load_info_meta(bulk_load_info_path));
+
+        ASSERT_EQ(ERR_INCONSISTENT_STATE, start_bulk_load()) << test.app_id << "," << test.app_name
+                                                             << "," << test.partition_count;
+    }
 }
 
 // Test bulk load failed because partition[0] `bulk_load_metadata` file is missing
-TEST_F(bulk_load_test, bulk_load_test_failed3)
+TEST_F(bulk_load_test, bulk_load_test_missing_p0_bulk_load_metadata)
 {
     NO_FATALS(remove_file(BULK_LOAD_LOCAL_APP_ROOT + "/0/bulk_load_metadata"));
-    if (ERR_OK != start_bulk_load()) {
-        assert(false);
-    }
+    ASSERT_EQ(ERR_OK, start_bulk_load());
     ASSERT_EQ(bulk_load_status::BLS_FAILED, wait_bulk_load_finish(300));
 }
 
@@ -341,9 +314,7 @@ TEST_F(bulk_load_test, bulk_load_tests)
     NO_FATALS(operate_data(operation::GET, "oldValue", 10));
 
     ASSERT_EQ(ERR_OK, start_bulk_load());
-    if (bulk_load_status::BLS_SUCCEED != wait_bulk_load_finish(300)) {
-        assert(false);
-    }
+    ASSERT_EQ(bulk_load_status::BLS_SUCCEED, wait_bulk_load_finish(300));
     LOG_INFO("Start to verify data...");
     NO_FATALS(verify_bulk_load_data());
 

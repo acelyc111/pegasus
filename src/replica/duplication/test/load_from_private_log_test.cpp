@@ -349,12 +349,8 @@ TEST_P(load_from_private_log_test, handle_real_private_log)
         ASSERT_TRUE(utils::filesystem::path_exists(_log_dir)) << _log_dir;
 
         // Copy the log file to '_log_dir'
-        boost::filesystem::path file(log_files[i]);
-        ASSERT_TRUE(dsn::utils::filesystem::file_exists(log_files[i])) << log_files[i];
-        boost::system::error_code ec;
-        boost::filesystem::copy_file(
-            file, _log_dir + "/log.1.0", boost::filesystem::copy_option::overwrite_if_exists, ec);
-        ASSERT_TRUE(!ec) << ec.value() << ", " << ec.category().name() << ", " << ec.message();
+        auto s = dsn::utils::copy_file(log_files[i], _log_dir + "/log.1.0");
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
         // Start to verify.
         load_and_wait_all_entries_loaded(tests[i].puts, tests[i].total, tests[i].id, 1, 0);
