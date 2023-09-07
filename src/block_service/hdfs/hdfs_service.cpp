@@ -110,12 +110,12 @@ error_code hdfs_service::create_fs()
     hdfsBuilderSetNameNode(builder, _hdfs_name_node.c_str());
     _fs = hdfsBuilderConnect(builder);
     if (!_fs) {
-        LOG_ERROR("Fail to connect hdfs name node {}, error: {}.",
+        LOG_ERROR("Fail to connect HDFS name node {}, error: {}.",
                   _hdfs_name_node,
                   utils::safe_strerror(errno));
         return ERR_FS_INTERNAL;
     }
-    LOG_INFO("Succeed to connect hdfs name node {}.", _hdfs_name_node);
+    LOG_INFO("Succeed to connect HDFS name node {}.", _hdfs_name_node);
     return ERR_OK;
 }
 
@@ -124,10 +124,10 @@ void hdfs_service::close()
     // This method should be carefully called.
     // Calls to hdfsDisconnect() by individual threads would terminate
     // all other connections handed out via hdfsConnect() to the same URI.
-    LOG_INFO("Try to disconnect hdfs.");
+    LOG_INFO("Try to disconnect HDFS.");
     int result = hdfsDisconnect(_fs);
     if (result == -1) {
-        LOG_ERROR("Fail to disconnect from the hdfs file system, error: {}.",
+        LOG_ERROR("Fail to disconnect from the HDFS file system, error: {}.",
                   utils::safe_strerror(errno));
     }
     // Even if there is an error, the resources associated with the hdfsFS will be freed.
@@ -136,7 +136,7 @@ void hdfs_service::close()
 
 std::string hdfs_service::get_hdfs_entry_name(const std::string &hdfs_path)
 {
-    // get exact file name from an hdfs path.
+    // get exact file name from an HDFS path.
     int pos = hdfs_path.find_last_of("/");
     return hdfs_path.substr(pos + 1);
 }
@@ -307,7 +307,7 @@ error_code hdfs_file_object::write_data_in_batches(const char *data,
     hdfsFile write_file =
         hdfsOpenFile(_service->get_fs(), file_name().c_str(), O_WRONLY | O_CREAT, 0, 0, 0);
     if (!write_file) {
-        LOG_ERROR("Failed to open hdfs file {} for writting, error: {}.",
+        LOG_ERROR("Failed to open HDFS file {} for writting, error: {}.",
                   file_name(),
                   utils::safe_strerror(errno));
         return ERR_FS_INTERNAL;
@@ -325,7 +325,7 @@ error_code hdfs_file_object::write_data_in_batches(const char *data,
                                             (void *)(data + cur_pos),
                                             static_cast<tSize>(write_len));
         if (num_written_bytes == -1) {
-            LOG_ERROR("Failed to write hdfs file {}, error: {}.",
+            LOG_ERROR("Failed to write HDFS file {}, error: {}.",
                       file_name(),
                       utils::safe_strerror(errno));
             hdfsCloseFile(_service->get_fs(), write_file);
@@ -335,18 +335,18 @@ error_code hdfs_file_object::write_data_in_batches(const char *data,
     }
     if (hdfsHFlush(_service->get_fs(), write_file) != 0) {
         LOG_ERROR(
-            "Failed to flush hdfs file {}, error: {}.", file_name(), utils::safe_strerror(errno));
+            "Failed to flush HDFS file {}, error: {}.", file_name(), utils::safe_strerror(errno));
         hdfsCloseFile(_service->get_fs(), write_file);
         return ERR_FS_INTERNAL;
     }
     written_size = cur_pos;
     if (hdfsCloseFile(_service->get_fs(), write_file) != 0) {
         LOG_ERROR(
-            "Failed to close hdfs file {}, error: {}", file_name(), utils::safe_strerror(errno));
+            "Failed to close HDFS file {}, error: {}", file_name(), utils::safe_strerror(errno));
         return ERR_FS_INTERNAL;
     }
 
-    LOG_INFO("start to synchronize meta data after successfully wrote data to hdfs");
+    LOG_INFO("start to synchronize meta data after successfully wrote data to HDFS");
     return get_file_meta();
 }
 
@@ -447,7 +447,7 @@ error_code hdfs_file_object::read_data_in_batches(uint64_t start_pos,
 
     hdfsFile read_file = hdfsOpenFile(_service->get_fs(), file_name().c_str(), O_RDONLY, 0, 0, 0);
     if (!read_file) {
-        LOG_ERROR("Failed to open hdfs file {} for reading, error: {}.",
+        LOG_ERROR("Failed to open HDFS file {} for reading, error: {}.",
                   file_name(),
                   utils::safe_strerror(errno));
         return ERR_FS_INTERNAL;
@@ -476,7 +476,7 @@ error_code hdfs_file_object::read_data_in_batches(uint64_t start_pos,
             cur_pos += num_read_bytes;
             dst_buf += num_read_bytes;
         } else if (num_read_bytes == -1) {
-            LOG_ERROR("Failed to read hdfs file {}, error: {}.",
+            LOG_ERROR("Failed to read HDFS file {}, error: {}.",
                       file_name(),
                       utils::safe_strerror(errno));
             read_success = false;
@@ -485,7 +485,7 @@ error_code hdfs_file_object::read_data_in_batches(uint64_t start_pos,
     }
     if (hdfsCloseFile(_service->get_fs(), read_file) != 0) {
         LOG_ERROR(
-            "Failed to close hdfs file {}, error: {}.", file_name(), utils::safe_strerror(errno));
+            "Failed to close HDFS file {}, error: {}.", file_name(), utils::safe_strerror(errno));
         return ERR_FS_INTERNAL;
     }
     if (read_success) {

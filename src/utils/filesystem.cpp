@@ -251,7 +251,6 @@ bool file_exists(const std::string &path)
         return false;
     }
 
-    LOG_INFO("npath={}", npath);
     return dsn::utils::filesystem::path_exists_internal(npath, FTW_F);
 }
 
