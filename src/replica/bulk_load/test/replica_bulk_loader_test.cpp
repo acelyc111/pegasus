@@ -21,11 +21,12 @@
 // IWYU pragma: no_include <gtest/gtest-message.h>
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
+#include <rocksdb/env.h>
+#include <rocksdb/slice.h>
+#include <rocksdb/status.h>
 #include <fstream> // IWYU pragma: keep
 #include <memory>
 #include <vector>
-
-#include <rocksdb/env.h>
 
 #include "common/bulk_load_common.h"
 #include "common/gpid.h"
