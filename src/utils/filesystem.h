@@ -97,6 +97,7 @@ bool remove_path(const std::string &path);
 bool rename_path(const std::string &path1, const std::string &path2);
 
 bool file_size(const std::string &path, int64_t &sz);
+bool file_size(const std::string &path, FileDataType type, int64_t &sz);
 
 bool create_directory(const std::string &path);
 

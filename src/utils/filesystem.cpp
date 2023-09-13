@@ -36,27 +36,29 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/system/error_code.hpp>
 #include <errno.h>
-#include <fcntl.h>
 #include <fmt/core.h>
 #include <ftw.h>
 #include <limits.h>
 #include <openssl/md5.h>
+#include <rocksdb/slice.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 // IWYU pragma: no_include <bits/struct_stat.h>
 #include <sys/stat.h> // IWYU pragma: keep
 #include <unistd.h>
-#include <fstream>
+#include <memory>
 
+#include "rocksdb/env.h"
+#include "rocksdb/status.h"
 #include "utils/defer.h"
+#include "utils/env.h"
 #include "utils/fail_point.h"
 #include "utils/filesystem.h"
 #include "utils/fmt_logging.h"
 #include "utils/ports.h"
 #include "utils/safe_strerror_posix.h"
 #include "utils/string_view.h"
-#include "utils/strings.h"
 
 #define getcwd_ getcwd
 #define rmdir_ rmdir
@@ -388,32 +390,21 @@ bool rename_path(const std::string &path1, const std::string &path2)
     return ret;
 }
 
+// TODO(yingchun): refactor to use uint64_t.
 bool file_size(const std::string &path, int64_t &sz)
 {
-    struct stat_ st;
-    std::string npath;
-    int err;
+    return file_size(path, dsn::utils::FileDataType::kNonSensitive, sz);
+}
 
-    if (path.empty()) {
+bool file_size(const std::string &path, FileDataType type, int64_t &sz)
+{
+    uint64_t file_size = 0;
+    auto s = dsn::utils::PegasusEnv(type)->GetFileSize(path, &file_size);
+    if (!s.ok()) {
+        LOG_ERROR("GetFileSize failed, file '{}', err = {}", path, s.ToString());
         return false;
     }
-
-    err = get_normalized_path(path, npath);
-    if (err != 0) {
-        return false;
-    }
-
-    err = dsn::utils::filesystem::get_stat_internal(npath, st);
-    if (err != 0) {
-        return false;
-    }
-
-    if (!S_ISREG(st.st_mode)) {
-        return false;
-    }
-
-    sz = st.st_size;
-
+    sz = file_size;
     return true;
 }
 
