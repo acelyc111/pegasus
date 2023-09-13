@@ -36,6 +36,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/system/error_code.hpp>
 #include <errno.h>
+#include <fcntl.h>
 #include <fmt/core.h>
 #include <ftw.h>
 #include <limits.h>
@@ -59,6 +60,7 @@
 #include "utils/ports.h"
 #include "utils/safe_strerror_posix.h"
 #include "utils/string_view.h"
+#include "utils/strings.h"
 
 #define getcwd_ getcwd
 #define rmdir_ rmdir

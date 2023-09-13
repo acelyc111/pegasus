@@ -61,6 +61,8 @@
 
 namespace dsn {
 namespace utils {
+enum class FileDataType;
+
 namespace filesystem {
 
 int get_normalized_path(const std::string &path, std::string &npath);
