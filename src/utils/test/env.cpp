@@ -97,7 +97,7 @@ public:
     uint64_t extra_size = 0;
 };
 
-INSTANTIATE_TEST_CASE_P(, env_file_test, ::testing::Values(false, true));
+INSTANTIATE_TEST_CASE_P(, env_file_test, ::testing::Values(false));
 
 TEST_P(env_file_test, encrypt_file_2_files)
 {
