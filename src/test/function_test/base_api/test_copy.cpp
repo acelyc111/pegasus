@@ -21,7 +21,6 @@
 // IWYU pragma: no_include <gtest/gtest-test-part.h>
 #include <gtest/gtest.h>
 #include <limits.h>
-#include <s2/third_party/absl/base/port.h>
 #include <string.h>
 #include <time.h>
 #include <algorithm>

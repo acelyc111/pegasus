@@ -86,9 +86,9 @@ ExternalProject_Add(readerwriterqueue
         )
 
 ExternalProject_Add(googletest
-        URL ${OSS_URL_PREFIX}/googletest-release-1.8.0.tar.gz
-        https://codeload.github.com/google/googletest/tar.gz/release-1.8.0
-        URL_MD5 16877098823401d1bf2ed7891d7dce36
+        URL ${OSS_URL_PREFIX}/googletest-1.14.0.tar.gz
+        https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
+        URL_MD5 c8340a482851ef6a3fe618a082304cfc
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TP_OUTPUT}
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -336,21 +336,26 @@ ExternalProject_Add(nlohmann_json
         BUILD_IN_SOURCE 1
         )
 
-ExternalProject_Add(s2geometry
-        URL ${OSS_URL_PREFIX}/s2geometry-e8d16637a467d9f096a92a6d81a50a9b747ca828.zip
-        https://github.com/neverchanje/s2geometry/archive/e8d16637a467d9f096a92a6d81a50a9b747ca828.zip
-        URL_MD5 75cc44c9c31382083d8a2d0e42590788
-        PATCH_COMMAND patch -p0 < ${TP_DIR}/fix_s2_for_aarch64.patch
+ExternalProject_Add(abseil
+        URL ${OSS_URL_PREFIX}/abseil-20230802.1.zip
+        https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.zip
+        URL_MD5 5c6193dbc82834f8e762c6a28c9cc615
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TP_OUTPUT}
-        -DGTEST_ROOT=${googletest_SRC}/googletest
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DABSL_FIND_GOOGLETEST=OFF
+        -DCMAKE_CXX_STANDARD=17)
+
+ExternalProject_Add(s2geometry
+        URL ${OSS_URL_PREFIX}/s2geometry-0.10.0.tar.gz
+        https://github.com/google/s2geometry/archive/refs/tags/v0.10.0.tar.gz
+        URL_MD5 c68f3c5d326dde9255681b9201393a9f
+        PATCH_COMMAND patch -p1 < ${TP_DIR}/fix_s2_build_with_absl_and_gtest.patch
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TP_OUTPUT}
         -DBUILD_SHARED_LIBS=OFF
-        -DBUILD_PYTHON=OFF
-        -DBUILD_TESTING=OFF
+        -DGTEST_ROOT=${googletest_SRC}/googletest
+        -DWITH_PYTHON=OFF
         -DBUILD_EXAMPLES=OFF
-        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-        DEPENDS googletest
-        )
+        DEPENDS googletest abseil)
 
 option(USE_JEMALLOC "use jemalloc" OFF)
 message(STATUS "USE_JEMALLOC = ${USE_JEMALLOC}")
@@ -411,13 +416,4 @@ ExternalProject_Add(http-parser
         BUILD_COMMAND ""
         INSTALL_COMMAND cp -R http_parser.h ${TP_OUTPUT}/include/nodejs/http_parser.h
         BUILD_IN_SOURCE 1
-        )
-
-ExternalProject_Add(abseil
-        URL ${OSS_URL_PREFIX}/abseil-20230802.1.zip
-        https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.zip
-        URL_MD5 5c6193dbc82834f8e762c6a28c9cc615
-        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TP_OUTPUT}
-        -DABSL_FIND_GOOGLETEST=OFF
-        -DCMAKE_CXX_STANDARD=14
         )
