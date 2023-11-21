@@ -86,9 +86,9 @@ ExternalProject_Add(readerwriterqueue
         )
 
 ExternalProject_Add(googletest
-        URL ${OSS_URL_PREFIX}/googletest-release-1.8.0.tar.gz
-        https://codeload.github.com/google/googletest/tar.gz/release-1.8.0
-        URL_MD5 16877098823401d1bf2ed7891d7dce36
+        URL ${OSS_URL_PREFIX}/googletest-1.14.0.tar.gz
+        https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
+        URL_MD5 c8340a482851ef6a3fe618a082304cfc
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TP_OUTPUT}
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
