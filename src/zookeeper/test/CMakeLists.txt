@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.zookeeper.tests)
+set(MY_PROJ_NAME zookeeper_tests)
 
 # Source files under CURRENT project directory will be automatically included.
 # You can manually set MY_PROJ_SRC to include source files under other directories.
@@ -34,8 +34,8 @@ set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS 
-    dsn.replication.zookeeper_provider
-    dsn_runtime
+    replication_zookeeper_provider
+    runtime
     zookeeper
     hashtable
     gtest

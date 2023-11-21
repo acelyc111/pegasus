@@ -15,15 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn_http_test)
+set(MY_PROJ_NAME http_test)
 
 set(MY_PROJ_SRC "")
 
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-    dsn_http
-    dsn_runtime
+    http
+    runtime
     curl
     gtest
     rocksdb

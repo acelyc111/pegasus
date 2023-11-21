@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.failure_detector.tests)
+set(MY_PROJ_NAME failure_detector_tests)
 
 # Source files under CURRENT project directory will be automatically included.
 # You can manually set MY_PROJ_SRC to include source files under other directories.
@@ -34,11 +34,11 @@ set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-    dsn_runtime
-    dsn_meta_server
-    dsn_replica_server
-    dsn_replication_common
-    dsn.failure_detector
+    runtime
+    meta_server
+    replica_server
+    replication_common
+    failure_detector
     gtest
     hashtable
     rocksdb)

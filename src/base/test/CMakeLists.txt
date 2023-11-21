@@ -28,8 +28,8 @@ set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-        dsn_runtime
-        dsn_utils
+        runtime
+        utils
         pegasus_base
         gtest)
 

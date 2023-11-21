@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.replica.test)
+set(MY_PROJ_NAME replica_test)
 
 #Source files under CURRENT project directory will be automatically included.
 #You can manually set MY_PROJ_SRC to include source files under other directories.
@@ -33,17 +33,17 @@ set(MY_PROJ_SRC "")
 #"GLOB" for non - recursive search
 set(MY_SRC_SEARCH_MODE "GLOB")
 
-set(MY_PROJ_LIBS dsn_meta_server
-                 dsn_replica_server
-                 dsn.replication.zookeeper_provider
-                 dsn_replication_common
-                 dsn.block_service
-                 dsn.block_service.local
-                 dsn.block_service.fds
-                 dsn.block_service.hdfs
-                 dsn.failure_detector
-                 dsn_http
-                 dsn_runtime
+set(MY_PROJ_LIBS meta_server
+                 replica_server
+                 replication_zookeeper_provider
+                 replication_common
+                 block_service
+                 block_service_local
+                 block_service_fds
+                 block_service_hdfs
+                 failure_detector
+                 http
+                 runtime
                  zookeeper
                  hashtable
                  gtest

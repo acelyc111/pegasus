@@ -16,7 +16,7 @@
 # under the License.
 
 # TODO(yingchun): should export shared lib too!!!
-set(MY_PROJ_NAME "pegasus_client_static")
+set(MY_PROJ_NAME pegasus_client_static)
 
 add_definitions(-fPIC)
 
@@ -26,4 +26,4 @@ set(MY_PROJ_SRC "")
 
 dsn_add_static_library()
 
-target_link_libraries(pegasus_client_static PUBLIC pegasus_base dsn_runtime dsn_client dsn_replication_common)
+target_link_libraries(pegasus_client_static PUBLIC pegasus_base runtime client replication_common)

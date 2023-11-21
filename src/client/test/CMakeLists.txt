@@ -15,17 +15,17 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn_client_test)
+set(MY_PROJ_NAME client_test)
 
 set(MY_PROJ_SRC "")
 
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-    dsn_client
-    dsn_replication_common
-    dsn_runtime
-    dsn_utils
+    client
+    replication_common
+    runtime
+    utils
     gtest
     rocksdb)
 

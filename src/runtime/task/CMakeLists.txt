@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.task)
+set(MY_PROJ_NAME task)
 
 # Search mode for source files under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search

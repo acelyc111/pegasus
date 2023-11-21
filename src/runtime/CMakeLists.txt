@@ -28,13 +28,13 @@ add_subdirectory(task)
 add_subdirectory(security)
 add_subdirectory(ranger)
 
-# TODO(zlw) remove perf_counter from dsn_runtime after the refactor by WuTao
-add_library(dsn_runtime STATIC
-        $<TARGET_OBJECTS:dsn_ranger>
-        $<TARGET_OBJECTS:dsn.security>
-        $<TARGET_OBJECTS:dsn.rpc>
-        $<TARGET_OBJECTS:dsn.task>
-        $<TARGET_OBJECTS:dsn.perf_counter>
+# TODO(zlw) remove perf_counter from runtime after the refactor by WuTao
+ add_library(runtime STATIC
+        $<TARGET_OBJECTS:ranger>
+        $<TARGET_OBJECTS:security>
+        $<TARGET_OBJECTS:rpc>
+        $<TARGET_OBJECTS:task>
+        $<TARGET_OBJECTS:perf_counter>
         core_main.cpp
         dsn.layer2_types.cpp
         env.sim.cpp
@@ -53,6 +53,6 @@ add_library(dsn_runtime STATIC
         tracer.cpp
         zlocks.cpp
         )
-target_link_libraries(dsn_runtime PRIVATE dsn_utils sasl2 gssapi_krb5 krb5)
-define_file_basename_for_sources(dsn_runtime)
-install(TARGETS dsn_runtime DESTINATION "lib")
+target_link_libraries(runtime PRIVATE utils sasl2 gssapi_krb5 krb5)
+define_file_basename_for_sources(runtime)
+install(TARGETS runtime DESTINATION "lib")

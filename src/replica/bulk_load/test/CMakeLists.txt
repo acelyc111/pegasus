@@ -15,16 +15,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn_replica_bulk_load_test)
+set(MY_PROJ_NAME replica_bulk_load_test)
 
 set(MY_PROJ_SRC "")
 
 set(MY_SRC_SEARCH_MODE "GLOB")
 
-set(MY_PROJ_LIBS dsn_meta_server
-        dsn_replica_server
-        dsn_replication_common
-        dsn_runtime
+set(MY_PROJ_LIBS meta_server
+        replica_server
+        replication_common
+        runtime
         hashtable
         gtest
         test_utils

@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME "pegasus_kill_test")
+set(MY_PROJ_NAME pegasus_kill_test)
 project(${MY_PROJ_NAME} C CXX)
 
 # Source files under CURRENT project directory will be automatically included.
@@ -30,11 +30,11 @@ set(MY_SRC_SEARCH_MODE "GLOB")
 set(MY_PROJ_LIBS
     pegasus_base
     pegasus_client_static
-    dsn_client
-    dsn_replication_common
-    dsn_dist_cmd
-    dsn_runtime
-    dsn_utils
+    client
+    replication_common
+    dist_cmd
+    runtime
+    utils
     sasl2
     gssapi_krb5
     krb5

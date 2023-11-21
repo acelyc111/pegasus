@@ -15,18 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn_replica_dup_test)
+set(MY_PROJ_NAME replica_dup_test)
 
 set(MY_PROJ_SRC "")
 
 set(MY_SRC_SEARCH_MODE "GLOB")
 
-set(MY_PROJ_LIBS dsn_meta_server
-        dsn_replica_server
-        dsn.replication.zookeeper_provider
-        dsn_replication_common
-        dsn.failure_detector
-        dsn_utils
+set(MY_PROJ_LIBS meta_server
+        replica_server
+        replication_zookeeper_provider
+        replication_common
+        failure_detector
+        utils
         zookeeper
         hashtable
         gtest

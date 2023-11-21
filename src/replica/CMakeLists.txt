@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn_replica_server)
+set(MY_PROJ_NAME replica_server)
 
 set(DUPLICATION_SRC
         duplication/replica_duplicator_manager.cpp
@@ -58,18 +58,18 @@ set(MY_PROJ_SRC
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS 
-    dsn_replication_common
-    dsn.failure_detector
-    dsn.block_service
-    dsn.block_service.local
-    dsn.block_service.fds
-    dsn.block_service.hdfs
-    dsn_nfs
-    dsn_dist_cmd
-    dsn_http
-    dsn_runtime
-    dsn_aio
-    dsn_meta_server
+    replication_common
+    failure_detector
+    block_service
+    block_service_local
+    block_service_fds
+    block_service_hdfs
+    nfs
+    dist_cmd
+    http
+    runtime
+    aio
+    meta_server
     galaxy-fds-sdk-cpp
     PocoNet
     PocoFoundation

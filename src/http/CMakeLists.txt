@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn_http)
+set(MY_PROJ_NAME http)
 
 set(MY_PROJ_SRC ${THIRDPARTY_ROOT}/build/Source/http-parser/http_parser.c)
 

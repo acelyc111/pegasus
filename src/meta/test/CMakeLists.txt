@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.meta.test)
+set(MY_PROJ_NAME meta_test)
 
 # Source files under CURRENT project directory will be automatically included.
 # You can manually set MY_PROJ_SRC to include source files under other directories.
@@ -38,18 +38,18 @@ set(MY_PROJ_SRC ${MY_PROJ_SRC} misc/misc.cpp)
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-        dsn.replication.zookeeper_provider
-        dsn_replication_common
-        dsn.block_service
-        dsn.block_service.local
-        dsn.block_service.fds
-        dsn.block_service.hdfs
-        dsn.failure_detector
-        dsn_dist_cmd
-        dsn_http
-        dsn_meta_server
-        dsn_runtime
-        dsn_aio
+        replication_zookeeper_provider
+        replication_common
+        block_service
+        block_service_local
+        block_service_fds
+        block_service_hdfs
+        failure_detector
+        dist_cmd
+        http
+        meta_server
+        runtime
+        aio
         zookeeper
         hashtable
         galaxy-fds-sdk-cpp

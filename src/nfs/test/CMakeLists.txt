@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn_nfs_test)
+set(MY_PROJ_NAME nfs_test)
 
 # Source files under CURRENT project directory will be automatically included.
 # You can manually set MY_PROJ_SRC to include source files under other directories.
@@ -33,7 +33,7 @@ set(MY_PROJ_SRC "")
 # "GLOB" for non-recursive search
 set(MY_SRC_SEARCH_MODE "GLOB")
 
-set(MY_PROJ_LIBS dsn_nfs dsn_runtime gtest dsn_aio rocksdb test_utils)
+set(MY_PROJ_LIBS nfs runtime gtest aio rocksdb test_utils)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
 

@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.replication.simple_kv)
+set(MY_PROJ_NAME replication_simple_kv)
 
 thrift_generate_cpp(
     SIMPLE_KV_THRIFT_SRCS
@@ -37,7 +37,7 @@ set(MY_PROJ_SRC ${SIMPLE_KV_THRIFT_SRCS})
 # "GLOB" for non-recursive search
 set(MY_SRC_SEARCH_MODE "GLOB")
 
-set(MY_PROJ_LIBS dsn_replica_server dsn_meta_server dsn_client dsn_runtime hashtable rocksdb)
+set(MY_PROJ_LIBS replica_server meta_server client runtime hashtable rocksdb)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)
 

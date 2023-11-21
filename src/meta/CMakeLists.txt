@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn_meta_server)
+set(MY_PROJ_NAME meta_server)
 
 set(DUPLICATION_SRC
         duplication/duplication_info.cpp
@@ -34,17 +34,17 @@ set(DUPLICATION_SRC
 set(MY_PROJ_SRC "${DUPLICATION_SRC}")
 
 set(MY_PROJ_LIBS
-    dsn_replication_common
-    dsn.block_service
-    dsn.block_service.local
-    dsn.block_service.fds
-    dsn.block_service.hdfs
-    dsn.failure_detector
-    dsn.replication.zookeeper_provider
-    dsn_dist_cmd
-    dsn_http
-    dsn_runtime
-    dsn_aio
+    replication_common
+    block_service
+    block_service_local
+    block_service_fds
+    block_service_hdfs
+    failure_detector
+    replication_zookeeper_provider
+    dist_cmd
+    http
+    runtime
+    aio
     zookeeper
     galaxy-fds-sdk-cpp
     PocoNet

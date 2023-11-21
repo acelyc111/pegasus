@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn.security)
+set(MY_PROJ_NAME security)
 
 thrift_generate_cpp(
     SECURITY_THRIFT_SRCS

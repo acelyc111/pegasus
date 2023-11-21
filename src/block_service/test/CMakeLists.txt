@@ -17,18 +17,18 @@
 # under the License.
 ##############################################################################
 
-set(MY_PROJ_NAME dsn_block_service_test)
+set(MY_PROJ_NAME block_service_test)
 
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-    dsn_replication_common
-    dsn.block_service
-    dsn.block_service.local
-    dsn.block_service.fds
-    dsn.block_service.hdfs
-    dsn_runtime
-    dsn_utils
+    replication_common
+    block_service
+    block_service_local
+    block_service_fds
+    block_service_hdfs
+    runtime
+    utils
     galaxy-fds-sdk-cpp
     PocoNet
     PocoFoundation

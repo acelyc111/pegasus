@@ -32,7 +32,7 @@ set(MY_PROJ_LIBS
         s2testing
         s2
         pegasus_client_static
-        dsn_utils
+        utils
         gtest)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)

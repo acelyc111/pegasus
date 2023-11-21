@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn_replication_common)
+set(MY_PROJ_NAME replication_common)
 
 thrift_generate_cpp(
     METADATA_THRIFT_SRCS

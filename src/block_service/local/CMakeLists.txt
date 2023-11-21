@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn.block_service.local)
+set(MY_PROJ_NAME block_service_local)
 
 #Source files under CURRENT project directory will be automatically included.
 #You can manually set MY_PROJ_SRC to include source files under other directories.

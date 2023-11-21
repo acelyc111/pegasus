@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.replication.zookeeper_provider)
+set(MY_PROJ_NAME replication_zookeeper_provider)
 
 
 # Source files under CURRENT project directory will be automatically included.

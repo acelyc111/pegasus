@@ -22,13 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn_replication_common_test)
+set(MY_PROJ_NAME replication_common_test)
 
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-        dsn_replication_common
-        dsn_runtime
+        replication_common
+        runtime
         gtest
         rocksdb)
 

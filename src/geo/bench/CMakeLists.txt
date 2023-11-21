@@ -33,7 +33,7 @@ set(MY_PROJ_LIBS
         s2
         pegasus_client_static
         RocksDB::rocksdb
-        dsn_utils
+        utils
         )
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)

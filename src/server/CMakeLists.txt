@@ -27,16 +27,16 @@ set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-    dsn_replica_server
-    dsn_meta_server
-    dsn_replication_common
-    dsn_client
-    dsn.block_service.local
-    dsn.block_service.fds
-    dsn.block_service
-    dsn.failure_detector
-    dsn.replication.zookeeper_provider
-    dsn_utils
+    replica_server
+    meta_server
+    replication_common
+    client
+    block_service_local
+    block_service_fds
+    block_service
+    failure_detector
+    replication_zookeeper_provider
+    utils
     RocksDB::rocksdb
     pegasus_reporter
     pegasus_base

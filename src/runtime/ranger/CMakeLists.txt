@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn_ranger)
+set(MY_PROJ_NAME ranger)
 
 # Search mode for source files under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search

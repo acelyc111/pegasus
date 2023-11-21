@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.failure_detector)
+set(MY_PROJ_NAME failure_detector)
 
 thrift_generate_cpp(
     FD_THRIFT_SRCS

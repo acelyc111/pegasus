@@ -22,24 +22,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn.rep_tests.simple_kv)
+set(MY_PROJ_NAME rep_tests_simple_kv)
 
 # Search mode for source files under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search
 # "GLOB" for non-recursive search
 set(MY_SRC_SEARCH_MODE "GLOB")
 
-set(MY_PROJ_LIBS dsn_replica_server
-                 dsn_meta_server
-                 dsn_replication_common
-                 dsn_client
-                 dsn.failure_detector
-                 dsn.replication.zookeeper_provider
-                 dsn_runtime
+set(MY_PROJ_LIBS replica_server
+                 meta_server
+                 replication_common
+                 client
+                 failure_detector
+                 replication_zookeeper_provider
+                 runtime
                  zookeeper
                  hashtable
                  gtest
-                 dsn_utils
+                 utils
                  rocksdb)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem Boost::regex)

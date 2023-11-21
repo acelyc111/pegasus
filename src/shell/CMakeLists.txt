@@ -29,17 +29,17 @@ set(MY_SRC_SEARCH_MODE "GLOB_RECURSE")
 
 set(MY_PROJ_LIBS
     pegasus_base
-    dsn.replication.tool
-    dsn_replica_server
-    dsn_meta_server
-    dsn_replication_common
-    dsn_client
-    dsn_utils
-    dsn.block_service.local
-    dsn.block_service.fds
-    dsn.block_service.hdfs
-    dsn.block_service
-    dsn.failure_detector
+    replication_tool
+    replica_server
+    meta_server
+    replication_common
+    client
+    utils
+    block_service_local
+    block_service_fds
+    block_service_hdfs
+    block_service
+    failure_detector
     pegasus_client_static
     galaxy-fds-sdk-cpp
     PocoNet

@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME dsn.block_service.fds)
+set(MY_PROJ_NAME block_service_fds)
 
 #Source files under CURRENT project directory will be automatically included.
 #You can manually set MY_PROJ_SRC to include source files under other directories.
@@ -32,4 +32,4 @@ set(MY_PROJ_LIBS "")
 set(MY_BINPLACES "")
 
 dsn_add_static_library()
-target_include_directories(dsn.block_service.fds PRIVATE ${THIRDPARTY_INSTALL_DIR}/include/fds)
+target_include_directories(block_service_fds PRIVATE ${THIRDPARTY_INSTALL_DIR}/include/fds)

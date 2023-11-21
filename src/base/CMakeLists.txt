@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME "pegasus_base")
+set(MY_PROJ_NAME pegasus_base)
 
 if(UNIX)
     add_compile_options(-fPIC)
@@ -30,5 +30,5 @@ set(MY_PROJ_SRC "")
 
 dsn_add_static_library()
 
-target_link_libraries(pegasus_base PUBLIC RocksDB::rocksdb sasl2 gssapi_krb5 krb5 dsn_replication_common)
+target_link_libraries(pegasus_base PUBLIC RocksDB::rocksdb sasl2 gssapi_krb5 krb5 replication_common)
 target_include_directories(pegasus_base PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")

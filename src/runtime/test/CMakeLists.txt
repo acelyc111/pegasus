@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(MY_PROJ_NAME dsn_runtime_tests)
+set(MY_PROJ_NAME runtime_tests)
 
 # Search mode for source files under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search
@@ -30,9 +30,9 @@ set(MY_PROJ_NAME dsn_runtime_tests)
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS gtest
-                 dsn_runtime
-                 dsn_aio
-                 dsn_meta_server
+                 runtime
+                 aio
+                 meta_server
                  rocksdb
                  )
 
