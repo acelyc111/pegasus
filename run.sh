@@ -296,7 +296,7 @@ function run_build()
         echo "Running cmake Pegasus..."
         pushd $BUILD_DIR
         if [ ! -z "${IWYU}" ]; then
-            CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE=${IWYU}"
+            CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE='${IWYU}'"
         fi
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_TEST=${BUILD_TEST}"
         cmake ${ROOT} -DCMAKE_INSTALL_PREFIX=$BUILD_DIR/output $CMAKE_OPTIONS

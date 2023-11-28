@@ -175,7 +175,6 @@ endfunction(dsn_add_object)
 function(dsn_add_test)
   if(${BUILD_TEST})
     add_definitions(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_USE_OWN_TR1_TUPLE=0)
-    set(MY_EXECUTABLE_IS_TEST TRUE)
     dsn_add_executable()
 
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -282,6 +281,10 @@ function(dsn_setup_system_libs)
 
   # for md5 calculation
   find_package(OpenSSL REQUIRED)
+  include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+  link_libraries(${OPENSSL_CRYPTO_LIBRARY})
+  link_libraries(${OPENSSL_SSL_LIBRARY})
+
   set(DSN_SYSTEM_LIBS ${DSN_SYSTEM_LIBS} ${OPENSSL_CRYPTO_LIBRARY})
 
   if (NOT APPLE)
@@ -306,7 +309,7 @@ function(dsn_setup_system_libs)
 endfunction(dsn_setup_system_libs)
 
 function(dsn_setup_include_path)#TODO(huangwei5): remove this
-  include_directories(${THIRDPARTY_INSTALL_DIR}/include)
+  include_directories(SYSTEM ${THIRDPARTY_INSTALL_DIR}/include)
 endfunction(dsn_setup_include_path)
 
 function(dsn_setup_thirdparty_libs)
@@ -317,6 +320,7 @@ function(dsn_setup_thirdparty_libs)
   set(Boost_NO_SYSTEM_PATHS ON)
   set(Boost_NO_BOOST_CMAKE ON)
 
+  include_directories(SYSTEM ${THIRDPARTY_INSTALL_DIR}/include)
   set(CMAKE_PREFIX_PATH ${THIRDPARTY_INSTALL_DIR};${CMAKE_PREFIX_PATH})
   message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
   find_package(Boost COMPONENTS system filesystem REQUIRED)
@@ -345,13 +349,8 @@ function(dsn_setup_thirdparty_libs)
 
   # libhdfs
   find_package(JNI REQUIRED)
-  message (STATUS "JAVA_JVM_LIBRARY=${JAVA_JVM_LIBRARY}")
+  message(STATUS "JAVA_JVM_LIBRARY=${JAVA_JVM_LIBRARY}")
   link_libraries(${JAVA_JVM_LIBRARY})
-
-  find_package(OpenSSL REQUIRED)
-  include_directories(${OPENSSL_INCLUDE_DIR})
-  link_libraries(${OPENSSL_CRYPTO_LIBRARY})
-  link_libraries(${OPENSSL_SSL_LIBRARY})
 
   # abseil
   find_package(absl REQUIRED)
