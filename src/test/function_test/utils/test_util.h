@@ -65,16 +65,48 @@ public:
 
     void wait_table_healthy(const std::string &table_name) const;
 
+    void
+    write_data(const std::string &hashkey_prefix, const std::string &value_prefix, int count) const;
     void write_data(int count) const;
+
+    void verify_data(const std::string &table_name,
+                     const std::string &hashkey_prefix,
+                     const std::string &value_prefix,
+                     int count) const;
+    void verify_data(int count) const;
     void verify_data(const std::string &table_name, int count) const;
+
+    void
+    delete_data(const std::string &table_name, const std::string &hashkey_prefix, int count) const;
+
+    void check_not_found(const std::string &table_name,
+                         const std::string &hashkey_prefix,
+                         int count) const;
 
     void update_table_env(const std::vector<std::string> &keys,
                           const std::vector<std::string> &values) const;
 
 protected:
-    const std::string cluster_name_;
+    enum class OperateDataType
+    {
+        kSet,
+        kGet,
+        kDelete,
+        kCheckNotFound
+    };
+    std::map<test_util::OperateDataType, std::string> kOpNames;
+    void operate_data(OperateDataType type,
+                      const std::string &table_name,
+                      const std::string &hashkey_prefix,
+                      const std::optional<std::string> &value_prefix,
+                      int count) const;
+
+    const std::string kClusterName_;
+    const std::string kDefaultHashkeyPrefix;
+    const std::string kDefaultSortkey;
+    const std::string kDefaultValuePrefix;
+    const std::map<std::string, std::string> kCreateEnvs;
     std::string table_name_;
-    const std::map<std::string, std::string> create_envs_;
     int32_t table_id_;
     int32_t partition_count_ = 8;
     std::vector<dsn::partition_configuration> partitions_;

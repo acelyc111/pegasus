@@ -58,8 +58,8 @@ public:
 
         std::string provider_dir = "block_service/local_service";
         policy_dir = "onebox/" + provider_dir + '/' +
-                     dsn::utils::filesystem::path_combine(cluster_name_, policy_name);
-        backup_dir = "onebox/" + provider_dir + '/' + cluster_name_;
+                     dsn::utils::filesystem::path_combine(kClusterName_, policy_name);
+        backup_dir = "onebox/" + provider_dir + '/' + kClusterName_;
 
         NO_FATALS(write_data(kv_pair_cnt));
 
@@ -81,7 +81,7 @@ public:
         std::this_thread::sleep_for(std::chrono::seconds(30));
         ASSERT_EQ(ERR_OK,
                   ddl_client_->do_restore(backup_provider_name,
-                                          cluster_name_,
+                                          kClusterName_,
                                           /* policy_name */ "",
                                           time_stamp,
                                           table_name_,

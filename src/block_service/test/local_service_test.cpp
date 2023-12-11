@@ -50,10 +50,10 @@ INSTANTIATE_TEST_CASE_P(, local_service_test, ::testing::Values(false, true));
 TEST_P(local_service_test, store_metadata)
 {
     local_file_object file("a.txt");
-    error_code ec = file.store_metadata();
-    ASSERT_EQ(ERR_OK, ec);
-
     auto meta_file_path = local_service::get_metafile(file.file_name());
+
+    ASSERT_EQ(ERR_OK, file_metadata(0, "").write_to_file(meta_file_path));
+
     ASSERT_TRUE(boost::filesystem::exists(meta_file_path));
 
     std::string data;
