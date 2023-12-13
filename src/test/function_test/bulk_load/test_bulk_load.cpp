@@ -16,8 +16,6 @@
 // under the License.
 
 #include <fmt/core.h>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 #include <rocksdb/env.h>
 #include <rocksdb/options.h>
 #include <rocksdb/slice.h>
@@ -26,7 +24,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -41,22 +38,21 @@
 #include "bulk_load_types.h"
 #include "client/partition_resolver.h"
 #include "client/replication_ddl_client.h"
+#include "common/bulk_load_common.h"
 #include "common/json_helper.h"
 #include "gtest/gtest.h"
-#include "include/pegasus/client.h"
-#include "include/pegasus/error.h"
 #include "meta/meta_bulk_load_service.h"
+#include "metadata_types.h"
 #include "test/function_test/utils/global_env.h"
 #include "test/function_test/utils/test_util.h"
 #include "utils/blob.h"
-#include "utils/enum_helper.h"
 #include "utils/env.h"
 #include "utils/error_code.h"
 #include "utils/errors.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
 #include "utils/test_macros.h"
-#include "utils/singleton.h"
+#include "utils/utils.h"
 
 DSN_DECLARE_bool(encrypt_data_at_rest);
 

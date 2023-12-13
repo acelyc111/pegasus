@@ -49,6 +49,7 @@
 #include "utils/errors.h"
 #include "utils/filesystem.h"
 #include "utils/rand.h"
+#include "utils/test_macros.h"
 
 using dsn::partition_configuration;
 using dsn::replication::replica_helper;
