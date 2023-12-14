@@ -66,10 +66,12 @@ public:
 
     void wait_table_healthy(const std::string &table_name) const;
 
+    // Write some data to table 'table_name_' according to the parameters.
     void
     write_data(const std::string &hashkey_prefix, const std::string &value_prefix, int count) const;
     void write_data(int count) const;
 
+    // Verify the data can be read from the table according to the parameters.
     void verify_data(const std::string &table_name,
                      const std::string &hashkey_prefix,
                      const std::string &value_prefix,
@@ -77,9 +79,11 @@ public:
     void verify_data(int count) const;
     void verify_data(const std::string &table_name, int count) const;
 
+    // Delete some data from the table according to the parameters.
     void
     delete_data(const std::string &table_name, const std::string &hashkey_prefix, int count) const;
 
+    // Verify the data can NOT be read from the table according to the parameters.
     void check_not_found(const std::string &table_name,
                          const std::string &hashkey_prefix,
                          int count) const;

@@ -66,7 +66,7 @@ test_util::test_util(map<string, string> create_envs)
     : kOpNames({{test_util::OperateDataType::kSet, "set"},
                 {test_util::OperateDataType::kGet, "get"},
                 {test_util::OperateDataType::kDelete, "delete"},
-                {test_util::OperateDataType::kCheckNotFound, "check data not found"}}),
+                {test_util::OperateDataType::kCheckNotFound, "check not found"}}),
       kClusterName_("onebox"),
       kDefaultHashkeyPrefix("hashkey_"),
       kDefaultSortkey("sortkey"),
@@ -188,6 +188,8 @@ void test_util::operate_data(OperateDataType type,
     auto *client = pegasus_client_factory::get_client(kClusterName_.c_str(), table_name.c_str());
     ASSERT_NE(client, nullptr);
     int64_t start = dsn_now_ms();
+    ASSERT_GT(count, 0);
+    ASSERT_LT(count, 10000);
     for (int i = 0; i < count; i++) {
         auto hashkey = fmt::format("{}{:04}", hashkey_prefix, i);
         std::string value;

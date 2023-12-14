@@ -41,6 +41,7 @@
 #include "common/bulk_load_common.h"
 #include "common/json_helper.h"
 #include "gtest/gtest.h"
+#include "include/pegasus/client.h" // IWYU pragma: keep
 #include "meta/meta_bulk_load_service.h"
 #include "metadata_types.h"
 #include "test/function_test/utils/global_env.h"
