@@ -122,7 +122,7 @@ protected:
             NO_FATALS(run_cmd_from_project_root(fmt::format("mkdir -p {}", partition_path)));
 
             // Generate 2 sst files for each partition.
-            for (int j = 0; j < 2; j++) {
+            for (int j = 1; j <= 2; j++) {
                 auto sst_file = fmt::format("{}/{:05}.sst", partition_path, j);
 
                 // Create a SstFileWriter to generate the external sst file.
@@ -140,6 +140,9 @@ protected:
                 //  result.
                 //  We can improve to generate only the data which belongs to the partition later.
                 for (int k = 0; k < kBulkLoadItemCount; k++) {
+                    if (k % j != 0) {
+                        continue;
+                    }
                     dsn::blob bb_key;
                     pegasus_generate_key(
                         bb_key, fmt::format("{}{:04}", kHashKeyPrefix1, k), kDefaultSortkey);
@@ -153,6 +156,9 @@ protected:
 
                 // Write 2 hashkey prefixes to check the functionality.
                 for (int k = 0; k < kBulkLoadItemCount; k++) {
+                    if (k % j != 0) {
+                        continue;
+                    }
                     dsn::blob bb_key;
                     pegasus_generate_key(
                         bb_key, fmt::format("{}{:04}", kHashKeyPrefix2, k), kDefaultSortkey);
