@@ -189,7 +189,7 @@ void test_util::operate_data(OperateDataType type,
     ASSERT_NE(client, nullptr);
     int64_t start = dsn_now_ms();
     ASSERT_GT(count, 0);
-    ASSERT_LT(count, 10000);
+    ASSERT_LE(count, 10000);
     for (int i = 0; i < count; i++) {
         auto hashkey = fmt::format("{}{:04}", hashkey_prefix, i);
         std::string value;
