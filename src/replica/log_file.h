@@ -34,7 +34,7 @@
 #include <unordered_map>
 
 #include "aio/aio_task.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_other_types.h"
 #include "runtime/api_task.h"
 #include "runtime/task/task_code.h"

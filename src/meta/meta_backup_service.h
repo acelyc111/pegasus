@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "backup_types.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/json_helper.h"
 #include "common/replication_other_types.h"
 #include "meta_rpc_types.h"

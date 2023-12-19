@@ -27,6 +27,9 @@ set(MY_PROJ_LIBS
         dsn.block_service.local
         dsn.block_service.hdfs
         dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
         dsn_utils
         gtest
         gtest_main

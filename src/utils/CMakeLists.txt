@@ -33,6 +33,7 @@ set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 
 set(MY_PROJ_LIBS
         dsn_http
+        dsn_replication_common
         rocksdb
         lz4
         zstd
@@ -41,12 +42,7 @@ set(MY_PROJ_LIBS
 # Extra files that will be installed
 set(MY_BINPLACES "")
 
-if (APPLE)
-    dsn_add_static_library()
-    target_link_libraries(${MY_PROJ_NAME} PRIVATE dsn_http)
-else()
-    dsn_add_shared_library()
-endif()
+dsn_add_static_library()
 
 add_subdirectory(long_adder_bench)
 add_subdirectory(test)

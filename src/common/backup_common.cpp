@@ -17,7 +17,7 @@
 
 #include "backup_common.h"
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "runtime/api_layer1.h"
 #include "runtime/rpc/rpc_address.h"
 

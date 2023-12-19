@@ -29,7 +29,7 @@
 #include <fmt/core.h>
 #include <string>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/serialization_helper/dsn.layer2_types.h"
 #include "gtest/gtest.h"
 #include "runtime/message_utils.h"

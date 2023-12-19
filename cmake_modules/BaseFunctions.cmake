@@ -156,12 +156,6 @@ function(dsn_add_static_library)
   dsn_install_library()
 endfunction(dsn_add_static_library)
 
-function(dsn_add_shared_library)
-  set(MY_PROJ_TYPE "SHARED")
-  dsn_add_project()
-  dsn_install_library()
-endfunction(dsn_add_shared_library)
-
 function(dsn_add_executable)
   set(MY_PROJ_TYPE "EXECUTABLE")
   dsn_add_project()

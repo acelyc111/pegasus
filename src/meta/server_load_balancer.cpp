@@ -28,7 +28,7 @@
 
 #include <memory>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "dsn.layer2_types.h"
 #include "meta/meta_data.h"
 #include "meta_admin_types.h"

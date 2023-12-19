@@ -36,7 +36,7 @@
 #include "bulk_load/replica_bulk_loader.h"
 #include "common/backup_common.h"
 #include "common/fs_manager.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replica_envs.h"
 #include "common/replication_enums.h"
 #include "consensus_types.h"

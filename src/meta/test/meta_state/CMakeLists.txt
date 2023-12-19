@@ -31,8 +31,20 @@ set(MY_PROJ_LIBS
         dsn_replica_server
         dsn_replication_common
         dsn_runtime
+        dsn_aio
+        sasl2
+        gssapi_krb5
+        krb5
+        dsn_utils
+        gtest
+        zookeeper
         hashtable
-        gtest)
+        dsn.replication.zookeeper_provider
+        rocksdb
+        lz4
+        snappy
+        zstd)
+
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         run.sh

@@ -42,7 +42,7 @@
 #include "bulk_load_types.h"
 #include "common/bulk_load_common.h"
 #include "common/fs_manager.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_common.h"
 #include "common/replication_other_types.h"
 #include "consensus_types.h"

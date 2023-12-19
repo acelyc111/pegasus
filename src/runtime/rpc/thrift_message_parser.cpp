@@ -32,7 +32,7 @@
 #include <vector>
 
 #include "boost/smart_ptr/shared_ptr.hpp"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/serialization_helper/thrift_helper.h"
 #include "runtime/rpc/rpc_message.h"
 #include "runtime/rpc/rpc_stream.h"

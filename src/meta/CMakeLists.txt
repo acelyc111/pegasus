@@ -38,6 +38,12 @@ set(MY_PROJ_LIBS
         dsn_dist_cmd
         dsn_http
         dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
+        dsn_ranger
+        dsn.security
+        dsn.task
         dsn_aio
         zookeeper
         hashtable
@@ -48,5 +54,6 @@ set(MY_PROJ_LIBS
         snappy)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES "")
-dsn_add_shared_library()
+dsn_add_static_library()
+
 add_subdirectory(test)

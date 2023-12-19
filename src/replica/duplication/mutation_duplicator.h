@@ -66,11 +66,6 @@ public:
     /// \param cb: Call it when all the given mutations were sent successfully
     virtual void duplicate(mutation_tuple_set mutations, callback cb) = 0;
 
-    // Singleton creator of mutation_duplicator.
-    static std::function<std::unique_ptr<mutation_duplicator>(
-        replica_base *, absl::string_view /*remote cluster*/, absl::string_view /*app name*/)>
-        creator;
-
     explicit mutation_duplicator(replica_base *r) : replica_base(r) {}
 
     virtual ~mutation_duplicator() = default;
@@ -83,11 +78,11 @@ protected:
     pipeline::environment _env;
 };
 
-inline std::unique_ptr<mutation_duplicator> new_mutation_duplicator(
-    replica_base *r, absl::string_view remote_cluster_address, absl::string_view app)
-{
-    return mutation_duplicator::creator(r, remote_cluster_address, app);
-}
+// inline std::unique_ptr<mutation_duplicator> new_mutation_duplicator(
+//    replica_base *r, absl::string_view remote_cluster_address, absl::string_view app)
+//{
+//    return mutation_duplicator::create(r, remote_cluster_address, app);
+//}
 
 } // namespace replication
 } // namespace dsn

@@ -31,7 +31,7 @@
 #include <vector>
 
 #include "common/fs_manager.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "consensus_types.h"
 #include "dsn.layer2_types.h"
 #include "fmt/core.h"

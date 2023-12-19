@@ -35,15 +35,19 @@ set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
         dsn_nfs
-        dsn_runtime
-        gtest
-        dsn_aio
         dsn_http
+        dsn_runtime
+        dsn_aio
+        dsn_utils
+        sasl2
+        gssapi_krb5
+        krb5
+        test_utils
+        gtest
         rocksdb
         lz4
         zstd
-        snappy
-        test_utils)
+        snappy)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

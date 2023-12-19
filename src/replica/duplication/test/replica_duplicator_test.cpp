@@ -21,7 +21,7 @@
 #include <string>
 
 #include "common/duplication_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_other_types.h"
 #include "duplication_test_base.h"
 #include "duplication_types.h"

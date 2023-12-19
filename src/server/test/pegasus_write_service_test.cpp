@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "base/pegasus_key_schema.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "duplication_internal_types.h"
 #include "gtest/gtest.h"
 #include "message_utils.h"

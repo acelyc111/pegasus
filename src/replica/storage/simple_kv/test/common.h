@@ -34,7 +34,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_other_types.h"
 #include "metadata_types.h"
 #include "runtime/rpc/rpc_address.h"

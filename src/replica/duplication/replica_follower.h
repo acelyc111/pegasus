@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "dsn.layer2_types.h"
 #include "replica/replica_base.h"
 #include "runtime/rpc/rpc_address.h"

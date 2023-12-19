@@ -32,7 +32,7 @@
 #include <list>
 #include <set>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "runtime/api_layer1.h"
 #include "runtime/global_config.h"
 #include "runtime/rpc/group_address.h"

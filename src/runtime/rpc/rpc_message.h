@@ -31,7 +31,7 @@
 #include <atomic>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "rpc_address.h"
 #include "runtime/task/task_code.h"
 #include "runtime/task/task_spec.h"

@@ -23,7 +23,7 @@
 
 #include "aio/aio_task.h"
 #include "aio/file_io.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "common/replication_other_types.h"
 #include "consensus_types.h"

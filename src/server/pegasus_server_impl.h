@@ -37,7 +37,7 @@
 #include <vector>
 
 #include "bulk_load_types.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "metadata_types.h"
 #include "pegasus_manual_compact_service.h"
 #include "pegasus_read_service.h"

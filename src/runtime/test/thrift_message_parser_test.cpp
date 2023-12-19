@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/serialization_helper/thrift_helper.h"
 #include "gtest/gtest.h"
 #include "request_meta_types.h"

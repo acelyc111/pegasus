@@ -29,7 +29,7 @@
 #include <vector>
 
 #include "client/replication_ddl_client.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "meta_admin_types.h"
 #include "runtime/rpc/rpc_address.h"
 #include "shell/command_executor.h"

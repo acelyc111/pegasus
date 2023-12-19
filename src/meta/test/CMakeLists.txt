@@ -29,22 +29,31 @@ file(GLOB MY_PROJ_SRC
 set(MY_PROJ_SRC ${MY_PROJ_SRC} misc/misc.cpp)
 set(MY_SRC_SEARCH_MODE "GLOB")
 set(MY_PROJ_LIBS
-        dsn.replication.zookeeper_provider
-        dsn_replication_common
-        dsn.block_service
-        dsn.block_service.local
-        dsn.block_service.hdfs
-        dsn.failure_detector
-        dsn_dist_cmd
-        dsn_http
         dsn_meta_server
         dsn_ranger
-        dsn_runtime
-        dsn_aio
+        dsn_dist_cmd
+        dsn_replication_common
+        dsn.replication.zookeeper_provider
         zookeeper
         hashtable
+        dsn.block_service
+        dsn.block_service.hdfs
+        hdfs
+        dsn.block_service.local
+        dsn.failure_detector
+        dsn_aio
+        dsn_http
+        dsn_runtime
+        dsn_utils
+        sasl2
+        gssapi_krb5
+        krb5
         gtest
-        hdfs)
+        rocksdb
+        lz4
+        zstd
+        snappy)
+
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         clear.sh

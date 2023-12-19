@@ -32,7 +32,7 @@
 #include "backup_types.h"
 #include "base/pegasus_rpc_types.h"
 #include "common/duplication_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "duplication_internal_types.h"
 #include "gtest/gtest.h"
@@ -68,7 +68,7 @@ public:
     void test_duplicate()
     {
         replica_base replica(dsn::gpid(1, 1), "fake_replica", "temp");
-        auto duplicator = new_mutation_duplicator(&replica, "onebox2", "temp");
+        auto duplicator = pegasus_mutation_duplicator::create(&replica, "onebox2", "temp");
         duplicator->set_task_environment(&_env);
 
         std::string sort_key;
@@ -137,7 +137,7 @@ public:
     void test_duplicate_failed()
     {
         replica_base replica(dsn::gpid(1, 1), "fake_replica", "temp");
-        auto duplicator = new_mutation_duplicator(&replica, "onebox2", "temp");
+        auto duplicator = pegasus_mutation_duplicator::create(&replica, "onebox2", "temp");
         duplicator->set_task_environment(&_env);
 
         std::string sort_key;
@@ -213,7 +213,7 @@ public:
     void test_duplicate_isolated_hashkeys()
     {
         replica_base replica(dsn::gpid(1, 1), "fake_replica", "temp");
-        auto duplicator = new_mutation_duplicator(&replica, "onebox2", "temp");
+        auto duplicator = pegasus_mutation_duplicator::create(&replica, "onebox2", "temp");
         duplicator->set_task_environment(&_env);
 
         size_t total_size = 4000;
@@ -272,7 +272,7 @@ public:
     void test_create_duplicator()
     {
         replica_base replica(dsn::gpid(1, 1), "fake_replica", "temp");
-        auto duplicator = new_mutation_duplicator(&replica, "onebox2", "temp");
+        auto duplicator = pegasus_mutation_duplicator::create(&replica, "onebox2", "temp");
         duplicator->set_task_environment(&_env);
         auto duplicator_impl = dynamic_cast<pegasus_mutation_duplicator *>(duplicator.get());
         ASSERT_EQ(duplicator_impl->_remote_cluster_id, 2);
@@ -375,7 +375,7 @@ TEST_P(pegasus_mutation_duplicator_test, create_duplicator) { test_create_duplic
 TEST_P(pegasus_mutation_duplicator_test, duplicate_duplicate)
 {
     replica_base replica(dsn::gpid(1, 1), "fake_replica", "temp");
-    auto duplicator = new_mutation_duplicator(&replica, "onebox2", "temp");
+    auto duplicator = pegasus_mutation_duplicator::create(&replica, "onebox2", "temp");
     duplicator->set_task_environment(&_env);
 
     dsn::apps::update_request request;

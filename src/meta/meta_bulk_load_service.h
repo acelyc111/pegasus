@@ -30,7 +30,7 @@
 
 #include "bulk_load_types.h"
 #include "common/bulk_load_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/json_helper.h"
 #include "common/replication_other_types.h"
 #include "meta/meta_state_service_utils.h"

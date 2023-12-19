@@ -32,7 +32,7 @@
 #include <utility>
 
 #include "case.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "common/replication_other_types.h"
 #include "replica/storage/simple_kv/simple_kv.client.h"

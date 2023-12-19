@@ -42,14 +42,6 @@ namespace dsn {
 
 namespace replication {
 
-//                     //
-// mutation_duplicator //
-//                     //
-
-/*static*/ std::function<std::unique_ptr<mutation_duplicator>(
-    replica_base *, absl::string_view /*remote cluster*/, absl::string_view /*app*/)>
-    mutation_duplicator::creator;
-
 //               //
 // load_mutation //
 //               //
@@ -121,8 +113,8 @@ ship_mutation::ship_mutation(replica_duplicator *duplicator)
       _stub(duplicator->_replica->get_replica_stub()),
       METRIC_VAR_INIT_replica(dup_shipped_bytes)
 {
-    _mutation_duplicator = new_mutation_duplicator(
-        duplicator, _duplicator->remote_cluster_name(), _replica->get_app_info()->app_name);
+    //    _mutation_duplicator = new_mutation_duplicator(
+    //        duplicator, _duplicator->remote_cluster_name(), _replica->get_app_info()->app_name);
     _mutation_duplicator->set_task_environment(duplicator);
 }
 

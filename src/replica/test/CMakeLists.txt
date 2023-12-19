@@ -29,16 +29,24 @@ set(MY_PROJ_LIBS
         dsn_meta_server
         dsn_ranger
         dsn_replica_server
-        dsn.replication.zookeeper_provider
-        dsn_replication_common
-        dsn.block_service
-        dsn.block_service.local
-        dsn.block_service.hdfs
-        dsn.failure_detector
         dsn_http
         dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
+        dsn.security
+        dsn_nfs
+        dsn_aio
+        dsn_dist_cmd
+        dsn_replication_common
+        dsn.block_service
+        dsn.block_service.hdfs
+        dsn.block_service.local
+        dsn.failure_detector
+        dsn.replication.zookeeper_provider
         zookeeper
         hashtable
+        dsn_utils
         gtest
         test_utils
         rocksdb

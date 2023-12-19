@@ -27,10 +27,9 @@ set(MY_PROJ_SRC "")
 # "GLOB" for non-recursive search
 set(MY_SRC_SEARCH_MODE "GLOB")
 
-set(MY_PROJ_LIBS ""
-        # s2
-        # pegasus_client_static
-        )
+set(MY_PROJ_LIBS
+        s2
+        pegasus_client_static)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

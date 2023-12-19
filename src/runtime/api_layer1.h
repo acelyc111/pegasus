@@ -31,7 +31,7 @@
 #pragma once
 
 #include "runtime/api_task.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/task/task_tracker.h"
 

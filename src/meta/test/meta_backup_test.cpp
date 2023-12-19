@@ -24,7 +24,7 @@
 
 #include "backup_types.h"
 #include "common/backup_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "gtest/gtest.h"
 #include "meta/backup_engine.h"

@@ -32,7 +32,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "runtime/node_scoper.h"
 #include "runtime/rpc/rpc_engine.h"
 #include "runtime/rpc/rpc_message.h"

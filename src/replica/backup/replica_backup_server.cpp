@@ -20,7 +20,7 @@
 #include <string>
 
 #include "backup_types.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "replica/replica.h"
 #include "replica/replica_stub.h"

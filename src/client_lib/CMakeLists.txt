@@ -16,7 +16,7 @@
 # under the License.
 
 # TODO(yingchun): should export shared lib too!!!
-set(MY_PROJ_NAME "pegasus_client_static")
+set(MY_PROJ_NAME pegasus_client_static)
 
 add_definitions(-fPIC)
 

@@ -32,7 +32,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "replica.h"
 #include "runtime/api_task.h"

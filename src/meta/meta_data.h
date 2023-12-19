@@ -39,7 +39,7 @@
 #include <vector>
 
 #include "common/duplication_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/json_helper.h"
 #include "common/replication_other_types.h"
 #include "dsn.layer2_types.h"

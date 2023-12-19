@@ -26,8 +26,7 @@
 
 #include <stdio.h>
 
-#include "common/gpid.h"
-#include "utils/fixed_size_buffer_pool.h"
+#include "utils/gpid.h"
 
 namespace dsn {
 
@@ -36,11 +35,4 @@ bool gpid::parse_from(const char *str)
     return sscanf(str, "%d.%d", &_value.u.app_id, &_value.u.partition_index) == 2;
 }
 
-static __thread fixed_size_buffer_pool<8, 64> bf;
-const char *gpid::to_string() const
-{
-    char *b = bf.next();
-    snprintf(b, bf.get_chunk_size(), "%d.%d", _value.u.app_id, _value.u.partition_index);
-    return b;
-}
-}
+} // namespace dsn

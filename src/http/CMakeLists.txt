@@ -21,7 +21,8 @@ set(MY_PROJ_SRC ${THIRDPARTY_ROOT}/build/Source/http-parser/http_parser.c)
 
 set(MY_SRC_SEARCH_MODE "GLOB")
 
-set(MY_PROJ_LIBS "")
+set(MY_PROJ_LIBS
+        dsn_replication_common)
 
 dsn_add_static_library()
 

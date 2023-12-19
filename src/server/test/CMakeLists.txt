@@ -33,26 +33,37 @@ set(MY_PROJ_SRC
         "../compaction_operation.cpp")
 set(MY_SRC_SEARCH_MODE "GLOB")
 set(MY_PROJ_LIBS
-        dsn_replica_server
+        dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
         dsn_meta_server
         dsn_ranger
+        dsn_replica_server
+        dsn.security
+        dsn_nfs
+        dsn_aio
+        dsn_dist_cmd
         dsn_replication_common
         dsn_client
-        dsn.block_service.local
         dsn.block_service
+        dsn.block_service.hdfs
+        dsn.block_service.local
         dsn.failure_detector
         dsn.replication.zookeeper_provider
+        zookeeper
+        hashtable
         dsn_utils
-        rocksdb
-        lz4
-        zstd
-        snappy
         pegasus_client_static
         event
         pegasus_base
         gtest
         gmock
-        hashtable)
+        rocksdb
+        lz4
+        zstd
+        snappy)
+
 add_definitions(-DPEGASUS_UNIT_TEST)
 add_definitions(-DENABLE_FAIL)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)

@@ -35,6 +35,9 @@ set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
         dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
         rocksdb
         lz4
         zstd

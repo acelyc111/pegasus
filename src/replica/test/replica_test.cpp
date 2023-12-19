@@ -30,7 +30,7 @@
 #include "backup_types.h"
 #include "common/backup_common.h"
 #include "common/fs_manager.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replica_envs.h"
 #include "common/replication.codes.h"
 #include "common/replication_enums.h"

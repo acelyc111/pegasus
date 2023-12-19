@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME "pegasus_base")
+set(MY_PROJ_NAME pegasus_base)
 
 if(UNIX)
     add_compile_options(-fPIC)

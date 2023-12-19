@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "runtime/api_layer1.h"
 #include "runtime/api_task.h"
 #include "runtime/app_model.h"

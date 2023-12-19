@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "hashkey_transform.h"
 #include "hotkey_collector.h"
 #include "pegasus_event_listener.h"

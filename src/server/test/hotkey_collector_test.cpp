@@ -23,7 +23,7 @@
 #include <thread>
 
 #include "base/pegasus_key_schema.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "gtest/gtest.h"
 #include "pegasus_server_test_base.h"

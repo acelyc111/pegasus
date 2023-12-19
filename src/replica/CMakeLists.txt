@@ -67,19 +67,23 @@ set(MY_PROJ_LIBS
         dsn_dist_cmd
         dsn_http
         dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
         dsn_aio
         dsn_meta_server
         rocksdb
         lz4
         zstd
-        snappy)
+        snappy
+        zookeeper)
 
 set(MY_BOOST_LIBS Boost::filesystem)
 
 # Extra files that will be installed
 set(MY_BINPLACES "")
 
-dsn_add_shared_library()
+dsn_add_static_library()
 
 add_subdirectory(duplication/test)
 add_subdirectory(backup/test)

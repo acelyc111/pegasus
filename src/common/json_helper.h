@@ -50,7 +50,7 @@
 #include "utils/error_code.h"
 #include "utils/threadpool_code.h"
 #include "runtime/task/task_code.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "meta_admin_types.h"
 #include "partition_split_types.h"
 #include "duplication_types.h"

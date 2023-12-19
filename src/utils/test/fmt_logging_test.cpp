@@ -27,7 +27,7 @@
 #include <fmt/core.h>
 #include <memory>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "gtest/gtest.h"
 #include "runtime/task/task_code.h"

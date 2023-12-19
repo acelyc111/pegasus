@@ -28,7 +28,7 @@
 
 #include <string>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "absl/strings/string_view.h"
 #include "utils/fmt_logging.h"
 #include "utils/metrics.h"

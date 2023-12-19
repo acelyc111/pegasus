@@ -29,7 +29,7 @@
 
 #include "base/pegasus_const.h"
 #include "client/replication_ddl_client.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_other_types.h"
 #include "kill_testor.h"
 #include "runtime/rpc/rpc_address.h"

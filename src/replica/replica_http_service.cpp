@@ -27,7 +27,7 @@
 #include <utility>
 
 #include "common/duplication_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "duplication/duplication_sync_timer.h"
 #include "http/http_server.h"
 #include "replica/replica_stub.h"

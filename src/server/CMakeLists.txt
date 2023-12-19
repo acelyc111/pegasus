@@ -16,18 +16,27 @@
 # under the License.
 
 set(MY_PROJ_NAME pegasus_server)
+
 set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 set(MY_PROJ_LIBS
+        dsn_runtime
         dsn_replica_server
+        dsn_nfs
+        dsn_aio
         dsn_meta_server
         dsn_ranger
         dsn_replication_common
         dsn_client
-        dsn.block_service.local
+        dsn_dist_cmd
         dsn.block_service
+        dsn.block_service.hdfs
+        dsn.block_service.local
         dsn.failure_detector
         dsn.replication.zookeeper_provider
+        zookeeper
+        hashtable
+        dsn_http
         dsn_utils
         rocksdb
         lz4
@@ -35,8 +44,8 @@ set(MY_PROJ_LIBS
         snappy
         pegasus_base
         pegasus_client_static
-        event
-        hashtable)
+        event)
+
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         config.ini)

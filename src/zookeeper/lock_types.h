@@ -30,7 +30,7 @@
 #include "utils/error_code.h"
 #include "utils/threadpool_code.h"
 #include "runtime/task/task_code.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "utils/distributed_lock_service.h"
 
 namespace dsn {

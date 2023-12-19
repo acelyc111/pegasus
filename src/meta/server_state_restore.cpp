@@ -31,7 +31,7 @@
 #include "block_service/block_service.h"
 #include "block_service/block_service_manager.h"
 #include "common/backup_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/json_helper.h"
 #include "common/replication.codes.h"
 #include "dsn.layer2_types.h"

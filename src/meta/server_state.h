@@ -38,7 +38,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/manual_compact.h"
 #include "dsn.layer2_types.h"
 #include "meta/meta_rpc_types.h"
