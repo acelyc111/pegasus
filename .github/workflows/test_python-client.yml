@@ -67,7 +67,7 @@ jobs:
       - name: Install thrift
         # python-client imports thrift package of 0.13.0, so we must use thrift-compiler 0.13.0
         # to generate code as well. The thrift-compiler version on ubuntu-20.04 is 0.13.0
-        run: sudo apt-get install -y thrift-compiler
+        run: apt-get install -y thrift-compiler
       - name: Download artifact
         uses: "./.github/actions/download_artifact"
       - name: Start Pegasus cluster
