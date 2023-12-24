@@ -23,6 +23,7 @@ from __future__ import print_function
 from struct import unpack
 
 from .compat import BufferIO
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -36,8 +37,8 @@ from pypegasus.base import ttypes
 
 
 class TPegasusTransport(TTwisted.TCallbackTransport):
-    """Class that wraps another transport and buffers its I/O.
-    """
+    """Class that wraps another transport and buffers its I/O."""
+
     DEFAULT_BUFFER = 4096
 
     def __init__(self, trans, func, rbuf_size=DEFAULT_BUFFER):
@@ -45,7 +46,7 @@ class TPegasusTransport(TTwisted.TCallbackTransport):
         self.__trans = trans
         self.__wbuf = BufferIO()
         # Pass string argument to initialize read buffer as cStringIO.InputType
-        self.__rbuf = BufferIO(b'')
+        self.__rbuf = BufferIO(b"")
         self.__rbuf_size = rbuf_size
 
     def get_peer_addr(self):
@@ -98,16 +99,26 @@ class TPegasusTransport(TTwisted.TCallbackTransport):
 
 
 class TPegasusThriftClientProtocol(TTwisted.ThriftClientProtocol):
-
-    def __init__(self, client_class, iprot_factory, oprot_factory=None, container=None, timeout=2000):
-        TTwisted.ThriftClientProtocol.__init__(self, client_class, iprot_factory, oprot_factory)
+    def __init__(
+        self,
+        client_class,
+        iprot_factory,
+        oprot_factory=None,
+        container=None,
+        timeout=2000,
+    ):
+        TTwisted.ThriftClientProtocol.__init__(
+            self, client_class, iprot_factory, oprot_factory
+        )
         self.client = None
         self.container = container
         self.timeout = timeout
 
     def connectionMade(self):
         tmo = TPegasusTransport(self.transport, self.dispatch)
-        self.client = self._client_class(tmo, self._oprot_factory, self.container, self.timeout)
+        self.client = self._client_class(
+            tmo, self._oprot_factory, self.container, self.timeout
+        )
         self.started.callback(self.client)
 
     def connectionLost(self, reason=connectionDone):
@@ -136,7 +147,7 @@ class TPegasusThriftClientProtocol(TTwisted.ThriftClientProtocol):
         try:
             method = self.recv_map[fname]
         except KeyError:
-            method = getattr(self.client, 'recv_' + fname)
+            method = getattr(self.client, "recv_" + fname)
             self.recv_map[fname] = method
 
         method(iprot, mtype, rseqid, ec.errno)
@@ -152,18 +163,18 @@ class TPegasusThriftClientProtocol(TTwisted.ThriftClientProtocol):
         alldata = self._unprocessed + data
         currentOffset = 0
         prefixLength = self.prefixLength
-        fmt = self.structFormat     # "!I" 32bit
+        fmt = self.structFormat  # "!I" 32bit
         self._unprocessed = alldata
 
         while len(alldata) >= (currentOffset + prefixLength) and not self.paused:
             messageStart = currentOffset + prefixLength
-            length, = unpack(fmt, alldata[currentOffset:messageStart])
+            (length,) = unpack(fmt, alldata[currentOffset:messageStart])
             if length > self.MAX_LENGTH:
                 self._unprocessed = alldata
                 self._compatibilityOffset = currentOffset
                 self.lengthLimitExceeded(length)
                 return
-            messageEnd = currentOffset + length     # different with super function
+            messageEnd = currentOffset + length  # different with super function
             if len(alldata) < messageEnd:
                 break
 
@@ -177,8 +188,8 @@ class TPegasusThriftClientProtocol(TTwisted.ThriftClientProtocol):
             # Check to see if the backwards compat "recvd" attribute got written
             # to by application code.  If so, drop the current data buffer and
             # switch to the new buffer given by that attribute's value.
-            if 'recvd' in self.__dict__:
-                alldata = self.__dict__.pop('recvd')
+            if "recvd" in self.__dict__:
+                alldata = self.__dict__.pop("recvd")
                 self._unprocessed = alldata
                 self._compatibilityOffset = currentOffset = 0
                 if alldata:

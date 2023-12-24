@@ -37,7 +37,7 @@ env:
   ARTIFACT_NAME: release_for_python_client
 
 jobs:
-  flake8-lint:
+  black-formatter:
     runs-on: ubuntu-latest
     name: Lint
     steps:
@@ -46,15 +46,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-      - name: flake8 Lint
-        uses: py-actions/flake8@v2
-        with:
-          max-line-length: "100"
-          path: ./python-client
+      - name: Black
+        working-directory: ./python-client
+        run: |
+          pip install black
+          python3 -m black . --diff --color
+          python3 -m black . --check
 
   build_server:
     name: Build server
-    needs: flake8-lint
+    needs: black-formatter
     runs-on: ubuntu-latest
     env:
       USE_JEMALLOC: OFF

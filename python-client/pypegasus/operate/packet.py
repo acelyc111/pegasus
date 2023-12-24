@@ -21,19 +21,14 @@ import ctypes
 from thrift.Thrift import TMessageType
 
 from pypegasus import utils
-from pypegasus.rrdb import (
-        meta,
-        rrdb)
-from pypegasus.base.ttypes import (
-    rocksdb_error_types,
-    error_code,
-    gpid)
+from pypegasus.rrdb import meta, rrdb
+from pypegasus.base.ttypes import rocksdb_error_types, error_code, gpid
 from pypegasus.utils import tools
 
 
 class ThriftHeader(object):
     HEADER_LENGTH = 48
-    HEADER_TYPE = b'THFT'
+    HEADER_TYPE = b"THFT"
 
     def __init__(self, gpid, partition_hash=0):
         self.hdr_version = 0
@@ -48,18 +43,20 @@ class ThriftHeader(object):
         self.partition_hash = partition_hash
 
     def to_bytes(self):
-        v = (self.HEADER_TYPE,
-             self.hdr_version,
-             self.header_length,
-             self.header_crc32,
-             self.body_length,
-             self.body_crc32,
-             self.app_id,
-             self.partition_index,
-             self.client_timeout,
-             self.thread_hash,
-             self.partition_hash)
-        s = struct.Struct('>4siiiiiiiiiq')
+        v = (
+            self.HEADER_TYPE,
+            self.hdr_version,
+            self.header_length,
+            self.header_crc32,
+            self.body_length,
+            self.body_crc32,
+            self.app_id,
+            self.partition_index,
+            self.client_timeout,
+            self.thread_hash,
+            self.partition_hash,
+        )
+        s = struct.Struct(">4siiiiiiiiiq")
         buff = ctypes.create_string_buffer(s.size)
         s.pack_into(buff, 0, *v)
 
@@ -76,7 +73,9 @@ class ClientOperator(object):
 
     def prepare_thrift_header(self, body_length):
         self.header.body_length = body_length
-        self.header.thread_hash = tools.dsn_gpid_to_thread_hash(self.header.app_id, self.header.partition_index)
+        self.header.thread_hash = tools.dsn_gpid_to_thread_hash(
+            self.header.app_id, self.header.partition_index
+        )
         return self.header.to_bytes()
 
     @staticmethod
@@ -89,7 +88,9 @@ class QueryCfgOperator(ClientOperator):
         ClientOperator.__init__(self, gpid, request, partition_hash)
 
     def send_data(self, oprot, seqid):
-        oprot.writeMessageBegin("RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX", TMessageType.CALL, seqid)
+        oprot.writeMessageBegin(
+            "RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX", TMessageType.CALL, seqid
+        )
         args = meta.query_cfg_args(self.request)
         args.write(oprot)
         oprot.writeMessageEnd()
@@ -144,8 +145,10 @@ class RrdbMultiGetOperator(ClientOperator):
     @staticmethod
     def parse_result(resp):
         data = {}
-        if resp.error == rocksdb_error_types.kOk.value\
-           or resp.error == rocksdb_error_types.kIncomplete.value:
+        if (
+            resp.error == rocksdb_error_types.kOk.value
+            or resp.error == rocksdb_error_types.kIncomplete.value
+        ):
             for kv in resp.kvs:
                 data[kv.key.data] = kv.value.data
 
@@ -241,9 +244,7 @@ class RrdbGetScannerOperator(ClientOperator):
 
     @staticmethod
     def parse_result(resp):
-        return {'error': resp.error,
-                'context_id': resp.context_id,
-                'kvs': resp.kvs}
+        return {"error": resp.error, "context_id": resp.context_id, "kvs": resp.kvs}
 
 
 class RrdbScanOperator(ClientOperator):
@@ -258,9 +259,7 @@ class RrdbScanOperator(ClientOperator):
 
     @staticmethod
     def parse_result(resp):
-        return {'error': resp.error,
-                'context_id': resp.context_id,
-                'kvs': resp.kvs}
+        return {"error": resp.error, "context_id": resp.context_id, "kvs": resp.kvs}
 
 
 class RrdbClearScannerOperator(ClientOperator):

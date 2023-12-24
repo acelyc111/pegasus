@@ -33,8 +33,15 @@ from pypegasus.base.ttypes import *
 from pypegasus.operate.packet import *
 from pypegasus.replication.ttypes import query_cfg_request
 from pypegasus.rrdb import *
-from pypegasus.rrdb.ttypes import scan_request, get_scanner_request, update_request, key_value, multi_put_request, \
-    multi_get_request, multi_remove_request
+from pypegasus.rrdb.ttypes import (
+    scan_request,
+    get_scanner_request,
+    update_request,
+    key_value,
+    multi_put_request,
+    multi_get_request,
+    multi_remove_request,
+)
 from pypegasus.transport.protocol import *
 from pypegasus.utils.tools import restore_key, get_ttl, bytes_cmp, ScanOptions
 
@@ -44,18 +51,17 @@ except:
     fastbinary = None
 
 
-logging.config.fileConfig(os.path.dirname(__file__)+"/logger.conf")
+logging.config.fileConfig(os.path.dirname(__file__) + "/logger.conf")
 logger = logging.getLogger("pgclient")
 
-DEFAULT_TIMEOUT = 2000               # ms
-META_CHECK_INTERVAL = 2              # s
-MAX_TIMEOUT_THRESHOLD = 5            # times
+DEFAULT_TIMEOUT = 2000  # ms
+META_CHECK_INTERVAL = 2  # s
+MAX_TIMEOUT_THRESHOLD = 5  # times
 
 
 class BaseSession(object):
-
     def __init__(self, transport, oprot_factory, container, timeout):
-        self._transport = transport                     # TPegasusTransport
+        self._transport = transport  # TPegasusTransport
         self._oprot_factory = oprot_factory
         self._container = container
         self._seqid = 0
@@ -63,7 +69,7 @@ class BaseSession(object):
         self._default_timeout = timeout
 
     def __del__(self):
-       self.close()
+        self.close()
 
     def get_peer_addr(self):
         return self._transport.get_peer_addr()
@@ -74,26 +80,23 @@ class BaseSession(object):
     def eb_send(self, f, seqid):
         d = self._requests.pop(seqid)
         d.errback(f)
-        logger.warning('peer: %s, failure: %s',
-                       self.get_peer_addr(), f)
+        logger.warning("peer: %s, failure: %s", self.get_peer_addr(), f)
         return d
 
     def eb_recv(self, f):
-        logger.warning('peer: %s, failure: %s',
-                       self.get_peer_addr(), f)
+        logger.warning("peer: %s, failure: %s", self.get_peer_addr(), f)
 
     def on_timeout(self, _, seconds):
         ec = error_types.ERR_TIMEOUT
         self._container.update_state(ec)
-        logger.warning('peer: %s, time: %s s, timeout',
-                       self.get_peer_addr(), seconds)
+        logger.warning("peer: %s, time: %s s, timeout", self.get_peer_addr(), seconds)
         return ec.value, None
 
     def operate(self, op, timeout=None):
         if not isinstance(timeout, int) or timeout <= 0:
             timeout = self._default_timeout
 
-        seqid = self._seqid = self._seqid + 1           # TODO should keep atomic
+        seqid = self._seqid = self._seqid + 1  # TODO should keep atomic
         dr = defer.Deferred()
         dr.addErrback(self.eb_recv)
         self._requests[seqid] = dr
@@ -104,26 +107,28 @@ class BaseSession(object):
             callback=self.cb_send,
             callbackArgs=(seqid,),
             errback=self.eb_send,
-            errbackArgs=(seqid,))
-        ds.addTimeout(timeout/1000.0, reactor, self.on_timeout)
+            errbackArgs=(seqid,),
+        )
+        ds.addTimeout(timeout / 1000.0, reactor, self.on_timeout)
         return ds
 
     def send_req(self, op, seqid):
         oprot = self._oprot_factory.getProtocol(self._transport)
-        oprot.trans.seek(ThriftHeader.HEADER_LENGTH)                    # skip header
+        oprot.trans.seek(ThriftHeader.HEADER_LENGTH)  # skip header
         op.send_data(oprot, seqid)
         body_length = oprot.trans.tell() - ThriftHeader.HEADER_LENGTH
-        oprot.trans.seek(0)                                             # back to header
+        oprot.trans.seek(0)  # back to header
         oprot.trans.write(op.prepare_thrift_header(body_length))
         oprot.trans.flush()
 
     def recv_ACK(self, iprot, mtype, rseqid, errno, result_type, parser):
         if rseqid not in self._requests:
-            logger.warning('peer: %s rseqid: %s not found',
-                           self.get_peer_addr(), rseqid)
+            logger.warning(
+                "peer: %s rseqid: %s not found", self.get_peer_addr(), rseqid
+            )
             return
         d = self._requests.pop(rseqid)
-        if errno != 'ERR_OK':
+        if errno != "ERR_OK":
             rc = error_code.value_of(errno)
             self._container.update_state(rc)
             return d.callback(rc)
@@ -139,84 +144,123 @@ class BaseSession(object):
             if result.success:
                 return d.callback(parser(result.success))
 
-            return d.errback(TApplicationException(TApplicationException.MISSING_RESULT,
-                                                   "%s failed: unknown result" %
-                                                   getattr(result_type, '__name__')))
+            return d.errback(
+                TApplicationException(
+                    TApplicationException.MISSING_RESULT,
+                    "%s failed: unknown result" % getattr(result_type, "__name__"),
+                )
+            )
 
     def close(self):
         self._transport.close()
 
 
 class MetaSession(BaseSession):
-
     def __init__(self, transport, oprot_factory, container, timeout):
         BaseSession.__init__(self, transport, oprot_factory, container, timeout)
 
-    def recv_RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      meta.query_cfg_result,
-                      QueryCfgOperator.parse_result)
+    def recv_RPC_CM_QUERY_PARTITION_CONFIG_BY_INDEX_ACK(
+        self, iprot, mtype, rseqid, errno
+    ):
+        self.recv_ACK(
+            iprot,
+            mtype,
+            rseqid,
+            errno,
+            meta.query_cfg_result,
+            QueryCfgOperator.parse_result,
+        )
 
 
 class ReplicaSession(BaseSession):
-
     def __init__(self, transport, oprot_factory, container, timeout):
         BaseSession.__init__(self, transport, oprot_factory, container, timeout)
 
     def recv_RPC_RRDB_RRDB_PUT_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.put_result, RrdbPutOperator.parse_result)
+        self.recv_ACK(
+            iprot, mtype, rseqid, errno, rrdb.put_result, RrdbPutOperator.parse_result
+        )
 
     def recv_RPC_RRDB_RRDB_TTL_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.ttl_result,
-                      RrdbTtlOperator.parse_result)
+        self.recv_ACK(
+            iprot, mtype, rseqid, errno, rrdb.ttl_result, RrdbTtlOperator.parse_result
+        )
 
     def recv_RPC_RRDB_RRDB_GET_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.get_result,
-                      RrdbGetOperator.parse_result)
+        self.recv_ACK(
+            iprot, mtype, rseqid, errno, rrdb.get_result, RrdbGetOperator.parse_result
+        )
 
     def recv_RPC_RRDB_RRDB_REMOVE_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.put_result,
-                      RrdbRemoveOperator.parse_result)
+        self.recv_ACK(
+            iprot,
+            mtype,
+            rseqid,
+            errno,
+            rrdb.put_result,
+            RrdbRemoveOperator.parse_result,
+        )
 
     def recv_RPC_RRDB_RRDB_SORTKEY_COUNT_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.sortkey_count_result,
-                      RrdbSortkeyCountOperator.parse_result)
+        self.recv_ACK(
+            iprot,
+            mtype,
+            rseqid,
+            errno,
+            rrdb.sortkey_count_result,
+            RrdbSortkeyCountOperator.parse_result,
+        )
 
     def recv_RPC_RRDB_RRDB_MULTI_PUT_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.put_result,
-                      RrdbMultiPutOperator.parse_result)
+        self.recv_ACK(
+            iprot,
+            mtype,
+            rseqid,
+            errno,
+            rrdb.put_result,
+            RrdbMultiPutOperator.parse_result,
+        )
 
     def recv_RPC_RRDB_RRDB_MULTI_GET_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.multi_get_result,
-                      RrdbMultiGetOperator.parse_result)
+        self.recv_ACK(
+            iprot,
+            mtype,
+            rseqid,
+            errno,
+            rrdb.multi_get_result,
+            RrdbMultiGetOperator.parse_result,
+        )
 
     def recv_RPC_RRDB_RRDB_MULTI_REMOVE_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.multi_remove_result,
-                      RrdbMultiRemoveOperator.parse_result)
+        self.recv_ACK(
+            iprot,
+            mtype,
+            rseqid,
+            errno,
+            rrdb.multi_remove_result,
+            RrdbMultiRemoveOperator.parse_result,
+        )
 
     def recv_RPC_RRDB_RRDB_GET_SCANNER_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.get_scanner_result,
-                      RrdbGetScannerOperator.parse_result)
+        self.recv_ACK(
+            iprot,
+            mtype,
+            rseqid,
+            errno,
+            rrdb.get_scanner_result,
+            RrdbGetScannerOperator.parse_result,
+        )
 
     def recv_RPC_RRDB_RRDB_SCAN_ACK(self, iprot, mtype, rseqid, errno):
-        self.recv_ACK(iprot, mtype, rseqid, errno,
-                      rrdb.scan_result,
-                      RrdbScanOperator.parse_result)
+        self.recv_ACK(
+            iprot, mtype, rseqid, errno, rrdb.scan_result, RrdbScanOperator.parse_result
+        )
 
 
 class SessionManager(object):
     def __init__(self, name, timeout):
         self.name = name
-        self.session_dict = {}                                      # rpc_addr => session
+        self.session_dict = {}  # rpc_addr => session
         self.timeout = timeout
 
     def __del__(self):
@@ -224,13 +268,12 @@ class SessionManager(object):
 
     def got_conn(self, conn):
         addr = rpc_address()
-        addr.from_string(conn.transport.addr[0] + ':' + str(conn.transport.addr[1]))
+        addr.from_string(conn.transport.addr[0] + ":" + str(conn.transport.addr[1]))
         self.session_dict[addr] = conn.client
         return conn.client
 
     def got_err(self, err):
-        logger.error('table: %s, connect err: %s',
-                     self.name, err)
+        logger.error("table: %s, connect err: %s", self.name, err)
 
     def close(self):
         for session in self.session_dict.values():
@@ -241,7 +284,6 @@ class SessionManager(object):
 
 
 class MetaSessionManager(SessionManager):
-
     def __init__(self, table_name, timeout):
         SessionManager.__init__(self, table_name, timeout)
         self.addr_list = []
@@ -249,7 +291,7 @@ class MetaSessionManager(SessionManager):
     def add_meta_server(self, meta_addr):
         rpc_addr = rpc_address()
         if rpc_addr.from_string(meta_addr):
-            host_port_list = meta_addr.split(':')
+            host_port_list = meta_addr.split(":")
             if not len(host_port_list) == 2:
                 return False
 
@@ -268,33 +310,34 @@ class MetaSessionManager(SessionManager):
         defer.returnValue(ret)
 
     def got_results(self, res):
-        for (suc, result) in res:
-            if suc                                                    \
-               and result.__class__.__name__ == "query_cfg_response"  \
-               and result.is_stateful:
-                logger.info('table: %s, partition result: %s',
-                            self.name, result)
+        for suc, result in res:
+            if (
+                suc
+                and result.__class__.__name__ == "query_cfg_response"
+                and result.is_stateful
+            ):
+                logger.info("table: %s, partition result: %s", self.name, result)
                 return result
 
-        logger.error('query partition info err. table: %s err: %s',
-                     self.name, res)
+        logger.error("query partition info err. table: %s err: %s", self.name, res)
 
     def query(self):
         ds = []
-        for (host, port) in self.addr_list:
+        for host, port in self.addr_list:
             rpc_addr = rpc_address()
-            rpc_addr.from_string(host + ':' + str(port))
+            rpc_addr.from_string(host + ":" + str(port))
             if rpc_addr in self.session_dict:
                 self.session_dict[rpc_addr].close()
 
-            d = ClientCreator(reactor,
-                              TPegasusThriftClientProtocol,
-                              MetaSession,
-                              TBinaryProtocol.TBinaryProtocolFactory(),
-                              None,
-                              self,
-                              self.timeout
-                              ).connectTCP(host, port, self.timeout)
+            d = ClientCreator(
+                reactor,
+                TPegasusThriftClientProtocol,
+                MetaSession,
+                TBinaryProtocol.TBinaryProtocolFactory(),
+                None,
+                self,
+                self.timeout,
+            ).connectTCP(host, port, self.timeout)
             d.addCallbacks(self.got_conn, self.got_err)
             d.addCallbacks(self.query_one, self.got_err)
             ds.append(d)
@@ -310,19 +353,17 @@ class Table(SessionManager):
         self.app_id = 0
         self.partition_count = 0
         self.query_cfg_response = None
-        self.partition_dict = {}        # partition_index => rpc_addr
-        self.partition_ballot = {}      # partition_index => ballot
+        self.partition_dict = {}  # partition_index => rpc_addr
+        self.partition_ballot = {}  # partition_index => ballot
         self.container = container
 
     def got_results(self, res):
-        logger.info('table: %s, replica session: %s',
-                    self.name, res)
+        logger.info("table: %s, replica session: %s", self.name, res)
         return True
 
     def update_cfg(self, resp):
         if resp.__class__.__name__ != "query_cfg_response":
-            logger.error('table: %s, query_cfg_response is error',
-                         self.name)
+            logger.error("table: %s, query_cfg_response is error", self.name)
             return None
 
         self.query_cfg_response = resp
@@ -349,14 +390,15 @@ class Table(SessionManager):
             if rpc_addr in self.session_dict:
                 self.session_dict[rpc_addr].close()
 
-            d = ClientCreator(reactor,
-                              TPegasusThriftClientProtocol,
-                              ReplicaSession,
-                              TBinaryProtocol.TBinaryProtocolFactory(),
-                              None,
-                              self.container,
-                              self.timeout
-                              ).connectTCP(host, port, self.timeout)
+            d = ClientCreator(
+                reactor,
+                TPegasusThriftClientProtocol,
+                ReplicaSession,
+                TBinaryProtocol.TBinaryProtocolFactory(),
+                None,
+                self.container,
+                self.timeout,
+            ).connectTCP(host, port, self.timeout)
             connected_rpc_addrs[rpc_addr] = 1
             d.addCallbacks(self.got_conn, self.got_err)
             ds.append(d)
@@ -376,16 +418,17 @@ class Table(SessionManager):
     def get_gpid_by_hash(self, partition_hash):
         pidx = partition_hash % self.get_partition_count()
         if self.partition_ballot[pidx] < 0:
-            logger.warn("table[%s] partition[%d] is not ready, requests will send to parent partition[%d]", 
-                self.name, 
-                pidx, 
-                pidx - int(self.partition_count / 2))
+            logger.warn(
+                "table[%s] partition[%d] is not ready, requests will send to parent partition[%d]",
+                self.name,
+                pidx,
+                pidx - int(self.partition_count / 2),
+            )
             pidx -= int(self.partition_count / 2)
         return gpid(self.app_id, pidx)
 
     def get_all_gpid(self):
-        return [gpid(self.app_id, pidx)
-                for pidx in range(self.get_partition_count())]
+        return [gpid(self.app_id, pidx) for pidx in range(self.get_partition_count())]
 
     def get_partition_count(self):
         return self.query_cfg_response.partition_count
@@ -410,8 +453,16 @@ class PegasusScanner(object):
     CONTEXT_ID_COMPLETED = -1
     CONTEXT_ID_NOT_EXIST = -2
 
-    def __init__(self, table, gpid_list, scan_options, partition_hash_list, check_hash,
-                 start_key=blob(b'\x00\x00'), stop_key=blob(b'\xFF\xFF')):
+    def __init__(
+        self,
+        table,
+        gpid_list,
+        scan_options,
+        partition_hash_list,
+        check_hash,
+        start_key=blob(b"\x00\x00"),
+        stop_key=blob(b"\xFF\xFF"),
+    ):
         self._table = table
         self._gpid = gpid(0)
         self._gpid_list = gpid_list
@@ -426,9 +477,8 @@ class PegasusScanner(object):
         self._check_hash = check_hash
 
     def __repr__(self):
-        lst = ['%s=%r' % (key, value)
-               for key, value in self.__dict__.items()]
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(lst))
+        lst = ["%s=%r" % (key, value) for key, value in self.__dict__.items()]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(lst))
 
     @inlineCallbacks
     def get_next(self):
@@ -460,8 +510,9 @@ class PegasusScanner(object):
 
             self._p += 1
 
-        defer.returnValue((restore_key(self._kvs[self._p].key.data),
-                          self._kvs[self._p].value.data))
+        defer.returnValue(
+            (restore_key(self._kvs[self._p].key.data), self._kvs[self._p].value.data)
+        )
 
     def split_reset(self):
         self._kvs = []
@@ -469,18 +520,23 @@ class PegasusScanner(object):
         self._context_id = self.CONTEXT_ID_NOT_EXIST
 
     def scan_cb(self, ctx):
-        if isinstance(ctx, dict) and ctx['error'] == 0:
-            self._kvs = ctx['kvs']
+        if isinstance(ctx, dict) and ctx["error"] == 0:
+            self._kvs = ctx["kvs"]
             self._p = -1
-            self._context_id = ctx['context_id']
+            self._context_id = ctx["context_id"]
 
-            return ctx['error']
+            return ctx["error"]
         else:
-            raise Exception('operate error!')
+            raise Exception("operate error!")
 
     def scan_err_cb(self, err):
-        logger.error('scan table: %s start_key: %s stop_key: %s is error: %s',
-                     self._table.name, self._start_key, self._stop_key, err)
+        logger.error(
+            "scan table: %s start_key: %s stop_key: %s is error: %s",
+            self._table.name,
+            self._start_key,
+            self._stop_key,
+            err,
+        )
         return err
 
     def start_scan(self):
@@ -500,7 +556,7 @@ class PegasusScanner(object):
         op = RrdbGetScannerOperator(self._gpid, request, self._partition_hash)
         session = self._table.get_session(self._gpid)
         if not session or not op:
-            raise Exception('session or packet error!')
+            raise Exception("session or packet error!")
 
         ret = session.operate(op, self._scan_options.timeout_millis)
         ret.addCallbacks(self.scan_cb, self.scan_err_cb)
@@ -511,7 +567,7 @@ class PegasusScanner(object):
         op = RrdbScanOperator(self._gpid, request, self._partition_hash)
         session = self._table.get_session(self._gpid)
         if not session or not op:
-            raise Exception('session or packet error!')
+            raise Exception("session or packet error!")
 
         ret = session.operate(op, self._scan_options.timeout_millis)
         ret.addCallbacks(self.scan_cb, self.scan_err_cb)
@@ -519,17 +575,19 @@ class PegasusScanner(object):
 
     def close(self):
         if self._context_id >= self.CONTEXT_ID_VALID_MIN:
-            op = RrdbClearScannerOperator(self._gpid, self._context_id, self._partition_hash)
+            op = RrdbClearScannerOperator(
+                self._gpid, self._context_id, self._partition_hash
+            )
             session = self._table.get_session(self._gpid)
             self._context_id = self.CONTEXT_ID_COMPLETED
             if not session or not op:
-                raise Exception('session or packet error!')
+                raise Exception("session or packet error!")
 
             session.operate(op, self._scan_options.timeout_millis)
 
 
 class PegasusHash(object):
-    polynomial, = struct.unpack('<q', struct.pack('<Q', 0x9a6c9329ac4bc9b5))
+    (polynomial,) = struct.unpack("<q", struct.pack("<Q", 0x9A6C9329AC4BC9B5))
     table_forward = [0] * 256
 
     @classmethod
@@ -537,7 +595,7 @@ class PegasusHash(object):
         if val >= 0:
             val >>= n
         else:
-            val = ((val + 0x10000000000000000) >> n)
+            val = (val + 0x10000000000000000) >> n
         return val
 
     @classmethod
@@ -554,11 +612,11 @@ class PegasusHash(object):
 
     @classmethod
     def crc64(cls, data, offset, length):
-        crc = 0xffffffffffffffff
+        crc = 0xFFFFFFFFFFFFFFFF
         end = offset + length
 
         for c in data[offset:end:1]:
-                crc = cls.table_forward[(c ^ crc) & 0xFF] ^ cls.unsigned_right_shift(crc, 8)
+            crc = cls.table_forward[(c ^ crc) & 0xFF] ^ cls.unsigned_right_shift(crc, 8)
         return ~crc
 
     @classmethod
@@ -567,13 +625,15 @@ class PegasusHash(object):
 
     @classmethod
     def hash(cls, blob_key):
-        assert blob_key is not None and len(blob_key) >= 2, 'blob_key is invalid!'
+        assert blob_key is not None and len(blob_key) >= 2, "blob_key is invalid!"
 
         # hash_key_len is in big endian
-        s = struct.Struct('>H')
+        s = struct.Struct(">H")
         hash_key_len = s.unpack(blob_key.data[:2])[0]
 
-        assert hash_key_len != 0xFFFF and (2 + hash_key_len <= len(blob_key)), 'blob_key hash_key_len is invalid!'
+        assert hash_key_len != 0xFFFF and (
+            2 + hash_key_len <= len(blob_key)
+        ), "blob_key hash_key_len is invalid!"
         if hash_key_len == 0:
             return cls.crc64(blob_key.data, 2, len(blob_key) - 2)
         else:
@@ -599,10 +659,10 @@ class Pegasus(object):
 
         if sort_key_len > 0:
             values = (hash_key_len, hash_key, sort_key)
-            s = struct.Struct('>H'+str(hash_key_len)+'s'+str(sort_key_len)+'s')
+            s = struct.Struct(">H" + str(hash_key_len) + "s" + str(sort_key_len) + "s")
         else:
             values = (hash_key_len, hash_key)
-            s = struct.Struct('>H'+str(hash_key_len)+'s')
+            s = struct.Struct(">H" + str(hash_key_len) + "s")
 
         buff = ctypes.create_string_buffer(s.size)
         s.pack_into(buff, 0, *values)
@@ -630,8 +690,7 @@ class Pegasus(object):
         else:
             return cls.generate_next_bytes(hash_key), False
 
-    def __init__(self, meta_addrs=None, table_name='',
-                 timeout=DEFAULT_TIMEOUT):
+    def __init__(self, meta_addrs=None, table_name="", timeout=DEFAULT_TIMEOUT):
         """
         :param meta_addrs: (list) pagasus meta servers list.
                            example: ['127.0.0.1:34601', '127.0.0.1:34602', '127.0.0.1:34603']
@@ -669,8 +728,7 @@ class Pegasus(object):
 
     @inlineCallbacks
     def check_state(self):
-        logger.info('table: %s, checking meta ...',
-                    self.name)
+        logger.info("table: %s, checking meta ...", self.name)
         if self.update_partition:
             self.update_partition = False
             yield self.init()
@@ -683,19 +741,21 @@ class Pegasus(object):
                 self.update_partition = True
                 self.timeout_times = 0
         elif ec == error_types.ERR_INVALID_DATA:
-            logger.error('table: %s, ignore ec: %s:%s',
-                         self.name, ec.name, ec.value)                     # TODO when it happen?
+            logger.error(
+                "table: %s, ignore ec: %s:%s", self.name, ec.name, ec.value
+            )  # TODO when it happen?
         elif ec == error_types.ERR_SESSION_RESET:
             pass
-        elif (ec == error_types.ERR_OBJECT_NOT_FOUND
-              or ec == error_types.ERR_INACTIVE_STATE
-              or ec == error_types.ERR_INVALID_STATE
-              or ec == error_types.ERR_NOT_ENOUGH_MEMBER
-              or ec == error_types.ERR_PARENT_PARTITION_MISUSED):
+        elif (
+            ec == error_types.ERR_OBJECT_NOT_FOUND
+            or ec == error_types.ERR_INACTIVE_STATE
+            or ec == error_types.ERR_INVALID_STATE
+            or ec == error_types.ERR_NOT_ENOUGH_MEMBER
+            or ec == error_types.ERR_PARENT_PARTITION_MISUSED
+        ):
             self.update_partition = True
         else:
-            logger.error('table: %s, ignore ec: %s:%s',
-                         self.name, ec.name, ec.value)
+            logger.error("table: %s, ignore ec: %s:%s", self.name, ec.name, ec.value)
 
     def ttl(self, hash_key, sort_key, timeout=0):
         """
@@ -777,7 +837,11 @@ class Pegasus(object):
         partition_hash = self.table.get_blob_hash(blob_key)
         peer_gpid = self.table.get_gpid_by_hash(partition_hash)
         session = self.table.get_session(peer_gpid)
-        op = RrdbPutOperator(peer_gpid, update_request(blob_key, blob(value), get_ttl(ttl)), partition_hash)
+        op = RrdbPutOperator(
+            peer_gpid,
+            update_request(blob_key, blob(value), get_ttl(ttl)),
+            partition_hash,
+        )
         if not session or not op:
             return error_types.ERR_INVALID_STATE.value, 0
 
@@ -853,12 +917,15 @@ class Pegasus(object):
 
         return session.operate(op, timeout)
 
-    def multi_get(self, hash_key,
-                  sortkey_set,
-                  max_kv_count=100,
-                  max_kv_size=1000000,
-                  no_value=False,
-                  timeout=0):
+    def multi_get(
+        self,
+        hash_key,
+        sortkey_set,
+        max_kv_count=100,
+        max_kv_size=1000000,
+        no_value=False,
+        timeout=0,
+    ):
         """
         Get multiple values stored in <hash_key, sortkey> pairs.
 
@@ -885,21 +952,23 @@ class Pegasus(object):
         else:
             return error_types.ERR_INVALID_PARAMETERS.value, 0
 
-        req = multi_get_request(blob(hash_key), ks,
-                                max_kv_count, max_kv_size,
-                                no_value)
+        req = multi_get_request(blob(hash_key), ks, max_kv_count, max_kv_size, no_value)
         op = RrdbMultiGetOperator(peer_gpid, req, partition_hash)
         if not session or not op:
             return error_types.ERR_INVALID_STATE.value, 0
 
         return session.operate(op, timeout)
 
-    def multi_get_opt(self, hash_key,
-                      start_sort_key, stop_sort_key,
-                      multi_get_options,
-                      max_kv_count=100,
-                      max_kv_size=1000000,
-                      timeout=0):
+    def multi_get_opt(
+        self,
+        hash_key,
+        start_sort_key,
+        stop_sort_key,
+        multi_get_options,
+        max_kv_count=100,
+        max_kv_size=1000000,
+        timeout=0,
+    ):
         """
         Get multiple values stored in hash_key, and sort key range in [start_sort_key, stop_sort_key) as default.
 
@@ -919,28 +988,27 @@ class Pegasus(object):
         partition_hash = self.table.get_hashkey_hash(hash_key)
         peer_gpid = self.table.get_gpid_by_hash(partition_hash)
         session = self.table.get_session(peer_gpid)
-        req = multi_get_request(blob(hash_key),
-                                None,
-                                max_kv_count,
-                                max_kv_size,
-                                multi_get_options.no_value,
-                                blob(start_sort_key),
-                                blob(stop_sort_key),
-                                multi_get_options.start_inclusive,
-                                multi_get_options.stop_inclusive,
-                                multi_get_options.sortkey_filter_type,
-                                blob(multi_get_options.sortkey_filter_pattern),
-                                multi_get_options.reverse)
+        req = multi_get_request(
+            blob(hash_key),
+            None,
+            max_kv_count,
+            max_kv_size,
+            multi_get_options.no_value,
+            blob(start_sort_key),
+            blob(stop_sort_key),
+            multi_get_options.start_inclusive,
+            multi_get_options.stop_inclusive,
+            multi_get_options.sortkey_filter_type,
+            blob(multi_get_options.sortkey_filter_pattern),
+            multi_get_options.reverse,
+        )
         op = RrdbMultiGetOperator(peer_gpid, req, partition_hash)
         if not session or not op:
             return error_types.ERR_INVALID_STATE.value, 0
 
         return session.operate(op, timeout)
 
-    def get_sort_keys(self, hash_key,
-                      max_kv_count=100,
-                      max_kv_size=1000000,
-                      timeout=0):
+    def get_sort_keys(self, hash_key, max_kv_count=100, max_kv_size=1000000, timeout=0):
         """
         Get multiple sort keys under hash_key.
 
@@ -954,9 +1022,7 @@ class Pegasus(object):
                  code: error_types.ERR_OK.value when data got succeed.
                  ks: <sort_key, ign> pairs in dict, ign will always be empty str.
         """
-        return self.multi_get(hash_key, None,
-                              max_kv_count, max_kv_size,
-                              True, timeout)
+        return self.multi_get(hash_key, None, max_kv_count, max_kv_size, True, timeout)
 
     def multi_del(self, hash_key, sortkey_set, timeout=0):
         """
@@ -980,16 +1046,14 @@ class Pegasus(object):
         else:
             return error_types.ERR_INVALID_PARAMETERS.value, 0
 
-        req = multi_remove_request(blob(hash_key), ks)     # 100 limit?
+        req = multi_remove_request(blob(hash_key), ks)  # 100 limit?
         op = RrdbMultiRemoveOperator(peer_gpid, req, partition_hash)
         if not session or not op:
             return error_types.ERR_INVALID_STATE.value, 0
 
         return session.operate(op, timeout)
 
-    def get_scanner(self, hash_key,
-                    start_sort_key, stop_sort_key,
-                    scan_options):
+    def get_scanner(self, hash_key, start_sort_key, stop_sort_key, scan_options):
         """
         Get scanner for hash_key, start from start_sort_key, and stop at stop_sort_key.
         Whether the scanner include the start_sort_key and stop_sort_key is configurable by scan_options
@@ -1007,13 +1071,16 @@ class Pegasus(object):
         gpid_list = []
         hash_list = []
         r = bytes_cmp(start_key.data, stop_key.data)
-        if r < 0 or                                                                     \
-           (r == 0 and scan_options.start_inclusive and scan_options.stop_inclusive):
+        if r < 0 or (
+            r == 0 and scan_options.start_inclusive and scan_options.stop_inclusive
+        ):
             partition_hash = self.table.get_blob_hash(start_key)
             gpid_list.append(self.table.get_gpid_by_hash(partition_hash))
             hash_list.append(partition_hash)
 
-        return PegasusScanner(self.table, gpid_list, scan_options, hash_list, False, start_key, stop_key)
+        return PegasusScanner(
+            self.table, gpid_list, scan_options, hash_list, False, start_key, stop_key
+        )
 
     def get_unordered_scanners(self, max_split_count, scan_options):
         """
@@ -1048,6 +1115,8 @@ class Pegasus(object):
                     gpid_list.append(all_gpid_list[count])
                     hash_list.append(int(count))
 
-            scanner_list.append(PegasusScanner(self.table, gpid_list, opt, hash_list, True))
+            scanner_list.append(
+                PegasusScanner(self.table, gpid_list, opt, hash_list, True)
+            )
 
         return scanner_list

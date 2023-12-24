@@ -20,13 +20,10 @@
 import six
 import time
 import struct
-from pypegasus.base.ttypes import (
-    rocksdb_error_types,
-    error_types
-)
+from pypegasus.base.ttypes import rocksdb_error_types, error_types
 from pypegasus.rrdb.ttypes import filter_type
 
-epoch_begin = 1451606400            # seconds since 2016.01.01-00:00:00 GMT
+epoch_begin = 1451606400  # seconds since 2016.01.01-00:00:00 GMT
 
 
 def dsn_gpid_to_thread_hash(app_id, partition_index):
@@ -62,12 +59,11 @@ class ScanOptions(object):
         self.batch_size = 1000
         self.start_inclusive = True
         self.stop_inclusive = False
-        self.snapshot = None                   # for future use
+        self.snapshot = None  # for future use
 
     def __repr__(self):
-        lst = ['%s=%r' % (key, value)
-               for key, value in self.__dict__.items()]
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(lst))
+        lst = ["%s=%r" % (key, value) for key, value in self.__dict__.items()]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(lst))
 
 
 class MultiGetOptions(object):
@@ -84,24 +80,23 @@ class MultiGetOptions(object):
         self.reverse = False
 
     def __repr__(self):
-        lst = ['%s=%r' % (key, value)
-               for key, value in self.__dict__.items()]
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(lst))
+        lst = ["%s=%r" % (key, value) for key, value in self.__dict__.items()]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(lst))
 
 
 def restore_key(merge_key):
-    s = struct.Struct('>H')
+    s = struct.Struct(">H")
     if six.PY3 and isinstance(merge_key, str):
         merge_key = merge_key.encode("utf8")
     hash_key_len = s.unpack(merge_key[:2])[0]
 
-    hash_key = merge_key[2:2+hash_key_len]
-    sort_key = merge_key[2+hash_key_len:]
+    hash_key = merge_key[2 : 2 + hash_key_len]
+    sort_key = merge_key[2 + hash_key_len :]
 
     if six.PY3:
         hash_key = hash_key.decode("utf8", "ignore")
         sort_key = sort_key.decode("utf8", "ignore")
-    
+
     return hash_key, sort_key
 
 
