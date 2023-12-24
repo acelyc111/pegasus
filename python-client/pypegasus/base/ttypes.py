@@ -25,48 +25,46 @@ from thrift.Thrift import TType
 
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
+
 try:
-  from thrift.protocol import fastbinary
+    from thrift.protocol import fastbinary
 except:
-  fastbinary = None
+    fastbinary = None
 
 
 class blob:
+    thrift_spec = ()
 
-  thrift_spec = (
-  )
+    def read(self, iprot):
+        self.data = iprot.readBinary()
 
-  def read(self, iprot):
-    self.data = iprot.readBinary()
+    def write(self, oprot):
+        oprot.writeBinary(self.data)
 
-  def write(self, oprot):
-    oprot.writeBinary(self.data)
+    def validate(self):
+        return
 
-  def validate(self):
-    return
+    def __init__(self, data=None):
+        if isinstance(data, str):
+            data = data.encode("UTF-8")
+        self.data = data
 
-  def __init__(self, data=None):
-    if isinstance(data,str):
-        data = data.encode('UTF-8')
-    self.data = data
+    def __hash__(self):
+        value = 17
+        return value
 
-  def __hash__(self):
-    value = 17
-    return value
+    def __repr__(self):
+        L = ["%s=%r" % (key, value) for key, value in self.__dict__.items()]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(L))
 
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.items()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
 
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    def __ne__(self, other):
+        return not (self == other)
 
-  def __ne__(self, other):
-    return not (self == other)
-
-  def __len__(self):
-      return len(self.data)
+    def __len__(self):
+        return len(self.data)
 
 
 class rocksdb_error_types(Enum):
@@ -170,175 +168,197 @@ class error_types(Enum):
     ERR_SESSION_RESET = 78
     ERR_THREAD_INTERRUPTED = 79
 
+
 class error_code:
+    thrift_spec = ()
 
-  thrift_spec = (
-  )
+    def __init__(
+        self,
+    ):
+        self.errno = error_types.ERR_UNKNOWN
 
-  def __init__(self, ):
-    self.errno = error_types.ERR_UNKNOWN
+    @staticmethod
+    def value_of(error_name):
+        return error_types[error_name]
 
-  @staticmethod
-  def value_of(error_name):
-    return error_types[error_name]
+    def read(self, iprot):
+        self.errno = iprot.readString()
 
-  def read(self, iprot):
-    self.errno = iprot.readString()
+    def write(self, oprot):
+        oprot.writeString()
 
-  def write(self, oprot):
-    oprot.writeString()
+    def validate(self):
+        return
 
-  def validate(self):
-    return
+    def __hash__(self):
+        value = 17
+        return value
 
+    def __repr__(self):
+        L = ["%s=%r" % (key, value) for key, value in self.__dict__.items()]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(L))
 
-  def __hash__(self):
-    value = 17
-    return value
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
 
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.items()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+    def __ne__(self, other):
+        return not (self == other)
 
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
 
 class task_code:
+    thrift_spec = ()
 
-  thrift_spec = (
-  )
+    def read(self, iprot):
+        if (
+            iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated
+            and isinstance(iprot.trans, TTransport.CReadableTransport)
+            and self.thrift_spec is not None
+            and fastbinary is not None
+        ):
+            fastbinary.decode_binary(
+                self, iprot.trans, (self.__class__, self.thrift_spec)
+            )
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
 
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
+    def write(self, oprot):
+        if (
+            oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated
+            and self.thrift_spec is not None
+            and fastbinary is not None
+        ):
+            oprot.trans.write(
+                fastbinary.encode_binary(self, (self.__class__, self.thrift_spec))
+            )
+            return
+        oprot.writeStructBegin("task_code")
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
 
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('task_code')
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
+    def validate(self):
+        return
 
-  def validate(self):
-    return
+    def __hash__(self):
+        value = 17
+        return value
 
+    def __repr__(self):
+        L = ["%s=%r" % (key, value) for key, value in self.__dict__.items()]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(L))
 
-  def __hash__(self):
-    value = 17
-    return value
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
 
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.items()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+    def __ne__(self, other):
+        return not (self == other)
 
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
 
 class rpc_address:
+    thrift_spec = (
+        (
+            1,
+            TType.I64,
+            "address",
+            None,
+            None,
+        ),  # 1
+    )
 
-  thrift_spec = (
-    (1, TType.I64, 'address', None, None, ), # 1
-  )
+    def __init__(self):
+        self.address = 0
 
-  def __init__(self):
-    self.address = 0
+    def is_valid(self):
+        return self.address == 0
 
-  def is_valid(self):
-    return self.address == 0
+    def from_string(self, host_port):
+        host, port = host_port.split(":")
+        self.address = socket.ntohl(struct.unpack("I", socket.inet_aton(host))[0])
+        self.address = (self.address << 32) + (int(port) << 16) + 1  # TODO why + 1?
+        return True
 
-  def from_string(self, host_port):
-    host, port = host_port.split(':')
-    self.address = socket.ntohl(struct.unpack("I", socket.inet_aton(host))[0])
-    self.address = (self.address << 32) + (int(port) << 16) + 1     # TODO why + 1?
-    return True
+    def to_host_port(self):
+        s = []
+        address = self.address
+        port = (address >> 16) & 0xFFFF
+        address = address >> 32
+        for i in range(4):
+            s.append(str(address & 0xFF))
+            address = address >> 8
+        host = ".".join(s[::-1])
+        return host, port
 
-  def to_host_port(self):
-    s = []
-    address = self.address
-    port = (address >> 16) & 0xFFFF
-    address = address >> 32
-    for i in range(4):
-        s.append(str(address & 0xFF))
-        address = address >> 8
-    host = '.'.join(s[::-1])
-    return host, port
+    def read(self, iprot):
+        self.address = iprot.readI64() & 0xFFFFFFFFFFFFFFFF
 
-  def read(self, iprot):
-    self.address = iprot.readI64() & 0xFFFFFFFFFFFFFFFF
+    def write(self, oprot):
+        oprot.writeI64(self.address)
 
-  def write(self, oprot):
-    oprot.writeI64(self.address)
+    def validate(self):
+        return
 
-  def validate(self):
-    return
+    def __hash__(self):
+        return self.address ^ (self.address >> 32)
 
-  def __hash__(self):
-    return self.address ^ (self.address >> 32)
+    def __repr__(self):
+        L = ["%s=%r" % (key, value) for key, value in self.__dict__.items()]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(L))
 
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.items()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+    def __eq__(self, other):
+        return (
+            other.__class__.__name__ == "rpc_address"
+            and self.__dict__ == other.__dict__
+        )
 
-  def __eq__(self, other):
-    return other.__class__.__name__ == "rpc_address" and self.__dict__ == other.__dict__
+    def __ne__(self, other):
+        return not (self == other)
 
-  def __ne__(self, other):
-    return not (self == other)
 
 class gpid:
+    thrift_spec = (
+        (
+            1,
+            TType.I64,
+            "value",
+            None,
+            None,
+        ),  # 1
+    )
 
-  thrift_spec = (
-    (1, TType.I64, 'value', None, None, ), # 1
-  )
+    def __init__(self, app_id=0, pidx=0):
+        self.value = (pidx << 32) + app_id
 
-  def __init__(self, app_id=0, pidx=0):
-    self.value = (pidx << 32) + app_id
+    def read(self, iprot):
+        self.value = iprot.readI64()
 
-  def read(self, iprot):
-    self.value = iprot.readI64()
+    def write(self, oprot):
+        oprot.writeI64(self.value)
 
-  def write(self, oprot):
-    oprot.writeI64(self.value)
+    def validate(self):
+        return
 
-  def validate(self):
-    return
+    def __hash__(self):
+        return self.value >> 32 ^ self.value & 0x00000000FFFFFFFF
 
-  def __hash__(self):
-    return self.value >> 32 ^ self.value & 0x00000000ffffffff
+    def __repr__(self):
+        L = ["%s=%r" % (key, value) for key, value in self.__dict__.items()]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(L))
 
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.items()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
 
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    def __ne__(self, other):
+        return not (self == other)
 
-  def __ne__(self, other):
-    return not (self == other)
+    def get_app_id(self):
+        return self.value & 0x00000000FFFFFFFF
 
-  def get_app_id(self):
-    return self.value & 0x00000000ffffffff
-
-  def get_pidx(self):
-    return self.value >> 32
+    def get_pidx(self):
+        return self.value >> 32
