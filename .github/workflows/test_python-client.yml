@@ -37,8 +37,24 @@ env:
   ARTIFACT_NAME: release_for_python_client
 
 jobs:
+  flake8-lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+        with:
+          max-line-length: "100"
+          path: ./python-client
+
   build_server:
     name: Build server
+    needs: flake8-lint
     runs-on: ubuntu-latest
     env:
       USE_JEMALLOC: OFF
