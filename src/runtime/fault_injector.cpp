@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "aio/aio_task.h"
-#include "runtime/rpc/rpc_message.h"
+#include "rpc/rpc_message.h"
 #include "runtime/task/task.h"
 #include "runtime/task/task_code.h"
 #include "runtime/task/task_spec.h"
@@ -45,6 +45,7 @@
 #include "utils/fmt_logging.h"
 #include "utils/join_point.h"
 #include "utils/rand.h"
+#include "utils/crc.h"
 
 namespace dsn {
 struct service_spec;
@@ -208,14 +209,21 @@ static void fault_on_aio_enqueue(aio_task *this_)
     }
 }
 
-static void replace_value(std::vector<blob> &buffer_list, unsigned int offset)
+static void replace_value(std::vector<blob> &buffers, uint32_t offset)
 {
-    for (blob &bb : buffer_list) {
-        if (offset < bb.length()) {
-            (const_cast<char *>(bb.data()))[offset]++;
+    for (blob &buffer : buffers) {
+        if (offset < buffer.length()) {
+            LOG_ERROR("offset: {}, sizeof(message_header): {}", offset, sizeof(message_header));
+            LOG_ERROR("buffer last byte before: [{:#018x}], size: {}", buffer.data()[offset], buffer.length());
+            auto c1 = dsn::utils::crc32_calc(buffer.data(), buffer.length(), 0);
+            (const_cast<char *>(buffer.data()))[offset]++;
+            auto c2 = dsn::utils::crc32_calc(buffer.data(), buffer.length(), 0);
+            LOG_ERROR("buffer last byte after: [{:#018x}], size: {}", buffer.data()[offset], buffer.length());
+            LOG_ERROR("{} vs {}", c1, c2);
             break;
-        } else
-            offset -= bb.length();
+        } else {
+            offset -= buffer.length();
+        }
     }
 }
 
@@ -238,6 +246,8 @@ static void corrupt_data(message_ex *request, const std::string &corrupt_type)
 static bool fault_on_rpc_call(task *caller, message_ex *req, rpc_response_task *callee)
 {
     fj_opt &opt = s_fj_opts[req->local_rpc_code];
+    LOG_INFO("fault_on_rpc_call:rpc_request_data_corrupted_ratio: {}",
+             opt.rpc_request_data_corrupted_ratio);
     if (rand::next_double01() < opt.rpc_request_drop_ratio) {
         LOG_INFO("fault inject {} at {}: {} => {}",
                  req->header->rpc_name,
@@ -318,17 +328,25 @@ void fault_injector::install(service_spec &spec)
     fj_opt default_opt;
     read_config("task..default", default_opt);
 
+    LOG_ERROR("rpc_request_data_corrupted_ratio: {}",
+             default_opt.rpc_request_data_corrupted_ratio);
+
     for (int i = 0; i <= dsn::task_code::max(); i++) {
         if (i == TASK_CODE_INVALID)
             continue;
 
         std::string section_name =
             std::string("task.") + std::string(dsn::task_code(i).to_string());
+        LOG_ERROR("section_name: {}", section_name);
         task_spec *spec = task_spec::get(i);
         CHECK_NOTNULL(spec, "");
 
         fj_opt &lopt = s_fj_opts[i];
         read_config(section_name.c_str(), lopt, &default_opt);
+        LOG_ERROR("rpc_request_data_corrupted_ratio: {}",
+                  lopt.rpc_request_data_corrupted_ratio);
+        LOG_ERROR("fault_injection_enabled: {}",
+                  lopt.fault_injection_enabled);
 
         if (!lopt.fault_injection_enabled)
             continue;

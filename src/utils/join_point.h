@@ -34,6 +34,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "utils/fmt_logging.h"
+
 namespace dsn {
 
 // A join_point instance is a set of lambdas with the identical function signature.
@@ -102,6 +104,7 @@ public:
     {
         R ret = default_return_value;
         for (auto &func : BaseType::_ret_advice_entries) {
+            LOG_INFO("_ret_advice_entries");
             ret = absl::apply(func, std::make_tuple(std::forward<Args>(args)...));
         }
         for (auto &func : BaseType::_advice_entries) {
