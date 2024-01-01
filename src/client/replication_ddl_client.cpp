@@ -38,7 +38,7 @@
 #include "backup_types.h"
 #include "common//duplication_common.h"
 #include "common/bulk_load_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/manual_compact.h"
 #include "common/partition_split_common.h"
 #include "common/replication.codes.h"
@@ -513,8 +513,9 @@ std::string host_name_resolve(bool resolve_ip, std::string value)
 {
     if (resolve_ip) {
         std::string temp;
-        if (dsn::utils::hostname_from_ip_port(value.c_str(), &temp))
+        if (dsn::utils::hostname_from_ip_port(value.c_str(), &temp)) {
             return temp;
+        }
     }
     return value;
 }

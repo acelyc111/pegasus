@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "utils/autoref_ptr.h"
 #include "utils/fmt_logging.h"
 #include "utils/metrics.h"

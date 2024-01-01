@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "common/bulk_load_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/json_helper.h"
 #include "dsn.layer2_types.h"
 #include "gtest/gtest.h"

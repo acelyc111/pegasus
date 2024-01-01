@@ -113,12 +113,13 @@ public:
     {
         static std::once_flag flag;
         std::call_once(flag, [&]() {
-            register_handler("updateConfig",
-                             std::bind(&http_server_base::update_config_handler,
-                                       this,
-                                       std::placeholders::_1,
-                                       std::placeholders::_2),
-                             "ip:port/updateConfig?<key>=<value>");
+            // undefined reference to `dsn::http_server_base::update_config_handler
+            //            register_handler("updateConfig",
+            //                             std::bind(&http_server_base::update_config_handler,
+            //                                       this,
+            //                                       std::placeholders::_1,
+            //                                       std::placeholders::_2),
+            //                             "ip:port/updateConfig?<key>=<value>");
         });
     }
 

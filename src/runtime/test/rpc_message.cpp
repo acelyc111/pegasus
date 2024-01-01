@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "dsn.layer2_types.h"
 #include "gtest/gtest.h"
 #include "runtime/message_utils.cpp"

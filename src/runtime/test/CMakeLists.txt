@@ -23,12 +23,27 @@
 # THE SOFTWARE.
 
 set(MY_PROJ_NAME dsn_runtime_tests)
+set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 set(MY_PROJ_LIBS
         dsn_meta_server
         dsn_ranger
         dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
         dsn_aio
+        dsn_dist_cmd
+        dsn_replication_common
+        dsn.replication.zookeeper_provider
+        zookeeper
+        hashtable
+        dsn.block_service
+        dsn.block_service.hdfs
+        dsn.block_service.local
+        dsn.failure_detector
+        dsn_utils
+        gtest
         rocksdb
         lz4
         zstd

@@ -31,7 +31,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "dsn.layer2_types.h"
 #include "partition_resolver_simple.h"
 #include "runtime/api_layer1.h"

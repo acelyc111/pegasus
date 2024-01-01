@@ -23,7 +23,7 @@
 #include <string>
 
 #include "app_balance_policy.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "meta/load_balance_policy.h"
 #include "metadata_types.h"
 #include "utils/flags.h"

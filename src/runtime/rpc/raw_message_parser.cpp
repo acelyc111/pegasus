@@ -30,7 +30,7 @@
 #include <atomic>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "network.h"
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/rpc/rpc_message.h"

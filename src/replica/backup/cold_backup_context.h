@@ -30,7 +30,7 @@
 #include "backup_types.h"
 #include "block_service/block_service.h"
 #include "common/backup_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/json_helper.h"
 #include "common/replication_other_types.h"
 #include "metadata_types.h"

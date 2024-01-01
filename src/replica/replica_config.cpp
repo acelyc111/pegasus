@@ -40,7 +40,7 @@
 #include <vector>
 
 #include "bulk_load/replica_bulk_loader.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replica_envs.h"
 #include "common/replication.codes.h"
 #include "common/replication_common.h"

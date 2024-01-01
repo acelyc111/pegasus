@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "client/replication_ddl_client.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/json_helper.h"
 #include "dsn.layer2_types.h"
 #include "meta_admin_types.h"

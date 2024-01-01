@@ -60,6 +60,9 @@ class pegasus_mutation_duplicator : public dsn::replication::mutation_duplicator
     using duplicate_rpc = dsn::apps::duplicate_rpc;
 
 public:
+    static std::unique_ptr<dsn::replication::mutation_duplicator>
+    create(replica_base *, absl::string_view /*remote cluster*/, absl::string_view /*app name*/);
+
     pegasus_mutation_duplicator(dsn::replication::replica_base *r,
                                 absl::string_view remote_cluster,
                                 absl::string_view app);

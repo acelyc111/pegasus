@@ -30,8 +30,12 @@ set(MY_PROJ_LIBS
         dsn_meta_server
         dsn_ranger
         dsn_replication_common
+        sasl2
+        gssapi_krb5
+        krb5
         dsn_aio
         test_utils
+        dsn_utils
         gtest
         rocksdb
         lz4

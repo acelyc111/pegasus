@@ -25,18 +25,32 @@
 set(MY_PROJ_NAME dsn.rep_tests.simple_kv)
 set(MY_SRC_SEARCH_MODE "GLOB")
 set(MY_PROJ_LIBS
+        dsn_replica_server
+        dsn_nfs
+        dsn_dist_cmd
+        dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
+        dsn.block_service
+        dsn.block_service.hdfs
+        dsn.block_service.local
         dsn_meta_server
         dsn_ranger
-        dsn_replica_server
         dsn_replication_common
         dsn_client
         dsn.failure_detector
         dsn.replication.zookeeper_provider
-        dsn_runtime
         zookeeper
         hashtable
-        gtest
+        dsn_http
+        dsn_runtime
+        dsn_aio
         dsn_utils
+        sasl2
+        gssapi_krb5
+        krb5
+        gtest
         rocksdb
         lz4
         zstd

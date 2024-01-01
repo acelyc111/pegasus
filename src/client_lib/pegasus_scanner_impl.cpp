@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "base/pegasus_const.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "pegasus/client.h"
 #include "pegasus/error.h"
 #include "pegasus_client_impl.h"

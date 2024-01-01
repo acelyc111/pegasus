@@ -22,7 +22,7 @@
 #include "utils/error_code.h"
 #include "utils/threadpool_code.h"
 #include "runtime/task/task_code.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "runtime/task/task_tracker.h"
 #include "block_service/block_service.h"
 #include "replica/replica_context.h"

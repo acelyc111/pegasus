@@ -33,7 +33,7 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_enums.h"
 #include "fmt/core.h"
 #include "replica_admin_types.h"

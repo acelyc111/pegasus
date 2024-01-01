@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_other_types.h"
 #include "log_file.h"
 #include "mutation.h"

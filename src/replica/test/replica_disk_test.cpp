@@ -29,7 +29,7 @@
 #include <vector>
 
 #include "common/fs_manager.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "dsn.layer2_types.h"
 #include "gtest/gtest.h"

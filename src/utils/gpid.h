@@ -30,6 +30,7 @@
 #include <ostream>
 #include <thrift/protocol/TProtocol.h>
 
+#include "utils/fixed_size_buffer_pool.h"
 #include "utils/fmt_utils.h"
 
 namespace dsn {
@@ -67,7 +68,13 @@ public:
 
     bool parse_from(const char *str);
 
-    const char *to_string() const;
+    const char *to_string() const
+    {
+        static __thread fixed_size_buffer_pool<8, 64> bf;
+        char *b = bf.next();
+        snprintf(b, bf.get_chunk_size(), "%d.%d", _value.u.app_id, _value.u.partition_index);
+        return b;
+    }
 
     // for serialization in thrift format
     uint32_t read(::apache::thrift::protocol::TProtocol *iprot);

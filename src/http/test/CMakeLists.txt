@@ -24,12 +24,16 @@ set(MY_SRC_SEARCH_MODE "GLOB")
 set(MY_PROJ_LIBS
         dsn_http
         dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
+        dsn_utils
         curl
         gtest
         rocksdb
         lz4
-        zstd
-        snappy)
+        snappy
+        zstd)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

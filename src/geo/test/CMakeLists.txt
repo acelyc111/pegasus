@@ -28,12 +28,17 @@ set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
+        dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
         absl::flat_hash_set
         absl::strings
         pegasus_geo_lib
         s2testing
         s2
         pegasus_client_static
+        dsn_client
         dsn_utils
         gtest)
 

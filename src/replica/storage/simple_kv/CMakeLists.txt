@@ -35,8 +35,27 @@ set(MY_PROJ_LIBS
         dsn_meta_server
         dsn_ranger
         dsn_client
+        dsn_nfs
+        dsn_dist_cmd
         dsn_runtime
+        sasl2
+        gssapi_krb5
+        krb5
+        dsn.block_service
+        dsn.block_service.hdfs
+        dsn.block_service.local
+        dsn_replication_common
+        dsn.failure_detector
+        dsn.replication.zookeeper_provider
+        zookeeper
         hashtable
+        dsn_http
+        dsn_runtime
+        dsn_aio
+        dsn_utils
+        sasl2
+        gssapi_krb5
+        krb5
         rocksdb
         lz4
         zstd

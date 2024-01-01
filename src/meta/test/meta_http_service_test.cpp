@@ -26,7 +26,7 @@
 
 #include "backup_types.h"
 #include "bulk_load_types.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_other_types.h"
 #include "gtest/gtest.h"
 #include "http/http_server.h"

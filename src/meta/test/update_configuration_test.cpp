@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "common/replication_other_types.h"
 #include "dsn.layer2_types.h"

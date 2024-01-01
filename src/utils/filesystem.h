@@ -79,6 +79,8 @@ std::string get_file_name(const std::string &path);
 std::string path_combine(const std::string &path1, const std::string &path2);
 std::string concat_path_unix_style(const std::string &prefix, const std::string &postfix);
 
+std::string concat_path_unix_style(const std::string &prefix, const std::string &postfix);
+
 typedef std::function<int(const char *, int, struct FTW *)> ftw_handler;
 bool file_tree_walk(const std::string &dirpath, ftw_handler handler, bool recursive = true);
 

@@ -28,7 +28,7 @@
 #include "utils/error_code.h"
 #include "utils/threadpool_code.h"
 #include "runtime/task/task_code.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "runtime/rpc/serialization.h"
 #include "runtime/rpc/rpc_stream.h"
 #include "runtime/serverlet.h"

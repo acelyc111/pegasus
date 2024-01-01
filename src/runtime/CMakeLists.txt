@@ -22,13 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-add_subdirectory(test)
-add_subdirectory(rpc)
-add_subdirectory(task)
-add_subdirectory(security)
+set(MY_PROJ_NAME dsn_runtime)
 
 # TODO(zlw) remove perf_counter from dsn_runtime after the refactor by WuTao
-add_library(dsn_runtime STATIC
+set(MY_PROJ_SRC
+        $<TARGET_OBJECTS:dsn_ranger>
         $<TARGET_OBJECTS:dsn.security>
         $<TARGET_OBJECTS:dsn.rpc>
         $<TARGET_OBJECTS:dsn.task>
@@ -50,6 +48,18 @@ add_library(dsn_runtime STATIC
         tool_api.cpp
         tracer.cpp
         zlocks.cpp)
-target_link_libraries(dsn_runtime PRIVATE dsn_utils sasl2 gssapi_krb5 krb5)
-define_file_basename_for_sources(dsn_runtime)
-install(TARGETS dsn_runtime DESTINATION "lib")
+
+set(MY_PROJ_LIBS
+        dsn_meta_server
+        dsn_utils
+        sasl2
+        gssapi_krb5
+        krb5)
+
+dsn_add_static_library()
+
+add_subdirectory(rpc)
+add_subdirectory(task)
+add_subdirectory(security)
+add_subdirectory(ranger)
+add_subdirectory(test)

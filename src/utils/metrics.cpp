@@ -240,12 +240,13 @@ metric_entity_prototype::~metric_entity_prototype() {}
 
 metrics_http_service::metrics_http_service(metric_registry *registry) : _registry(registry)
 {
-    register_handler("metrics",
-                     std::bind(&metrics_http_service::get_metrics_handler,
-                               this,
-                               std::placeholders::_1,
-                               std::placeholders::_2),
-                     "ip:port/metrics");
+    // undefined reference to `dsn::http_service::register_handler
+    //    register_handler("metrics",
+    //                     std::bind(&metrics_http_service::get_metrics_handler,
+    //                               this,
+    //                               std::placeholders::_1,
+    //                               std::placeholders::_2),
+    //                     "ip:port/metrics");
 }
 
 namespace {

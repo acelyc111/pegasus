@@ -40,7 +40,7 @@
 #include <fmt/std.h> // IWYU pragma: keep
 
 #include "common/fs_manager.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "common/replication_enums.h"
 #include "common/replication_other_types.h"

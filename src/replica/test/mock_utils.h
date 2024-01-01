@@ -433,8 +433,9 @@ private:
 };
 typedef dsn::ref_ptr<mock_mutation_log_private> mock_mutation_log_private_ptr;
 
-struct mock_mutation_duplicator : public mutation_duplicator
+class mock_mutation_duplicator : public mutation_duplicator
 {
+public:
     explicit mock_mutation_duplicator(replica_base *r) : mutation_duplicator(r) {}
 
     void duplicate(mutation_tuple_set mut, callback cb) override { _func(mut, cb); }

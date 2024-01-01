@@ -23,7 +23,7 @@
 #include <cmath>
 
 #include "client/replication_ddl_client.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/serialization_helper/dsn.layer2_types.h"
 #include "perf_counter/perf_counter.h"
 #include "runtime/rpc/rpc_address.h"

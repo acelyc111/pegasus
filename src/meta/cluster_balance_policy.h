@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "load_balance_policy.h"
 #include "meta/meta_data.h"
 #include "metadata_types.h"

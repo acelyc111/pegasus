@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "common//duplication_common.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "replica/duplication/replica_duplicator.h"
 #include "replica_duplicator_manager.h"
 #include "utils/autoref_ptr.h"

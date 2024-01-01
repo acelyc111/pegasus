@@ -29,8 +29,25 @@ set(MY_PROJ_LIBS
         dsn_runtime
         dsn_meta_server
         dsn_ranger
+        dsn_dist_cmd
         dsn_replication_common
-        gtest)
+        dsn.block_service
+        dsn.block_service.hdfs
+        dsn.block_service.local
+        dsn.failure_detector
+        dsn.replication.zookeeper_provider
+        zookeeper
+        hashtable
+        dsn_utils
+        sasl2
+        gssapi_krb5
+        krb5
+        gtest
+        rocksdb
+        lz4
+        zstd
+        snappy)
+
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES "")
 dsn_add_test()

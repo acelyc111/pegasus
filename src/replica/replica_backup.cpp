@@ -36,7 +36,7 @@
 #include "backup/replica_backup_manager.h"
 #include "backup_types.h"
 #include "block_service/block_service_manager.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "common/replication_enums.h"
 #include "common/replication_other_types.h"

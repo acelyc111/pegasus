@@ -59,21 +59,6 @@ METRIC_DEFINE_counter(replica,
                       dsn::metric_unit::kRequests,
                       "The number of failed DUPLICATE requests sent from client");
 
-namespace dsn {
-namespace replication {
-struct replica_base;
-
-/// static definition of mutation_duplicator::creator.
-/*static*/ std::function<std::unique_ptr<mutation_duplicator>(
-    replica_base *, absl::string_view, absl::string_view)>
-    mutation_duplicator::creator =
-        [](replica_base *r, absl::string_view remote, absl::string_view app) {
-            return std::make_unique<pegasus::server::pegasus_mutation_duplicator>(r, remote, app);
-        };
-
-} // namespace replication
-} // namespace dsn
-
 namespace pegasus {
 namespace server {
 
@@ -103,6 +88,12 @@ using namespace dsn::literals::chrono_literals;
     }
     LOG_FATAL("unexpected task code: {}", tc);
     __builtin_unreachable();
+}
+
+std::unique_ptr<dsn::replication::mutation_duplicator> pegasus_mutation_duplicator::create(
+    replica_base *r, absl::string_view remote, absl::string_view app)
+{
+    return std::make_unique<pegasus::server::pegasus_mutation_duplicator>(r, remote, app);
 }
 
 pegasus_mutation_duplicator::pegasus_mutation_duplicator(dsn::replication::replica_base *r,

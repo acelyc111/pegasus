@@ -29,7 +29,7 @@
 #include <vector>
 
 #include "client/partition_resolver.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "dsn.layer2_types.h"
 #include "gtest/gtest.h"
 #include "meta/meta_data.h"

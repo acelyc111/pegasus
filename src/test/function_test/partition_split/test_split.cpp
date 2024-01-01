@@ -30,7 +30,7 @@
 
 #include "client/partition_resolver.h"
 #include "client/replication_ddl_client.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "gtest/gtest.h"
 #include "include/pegasus/client.h"
 #include "metadata_types.h"

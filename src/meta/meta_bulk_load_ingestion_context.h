@@ -21,7 +21,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "runtime/rpc/rpc_address.h"
 #include "utils/flags.h"
 

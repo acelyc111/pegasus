@@ -22,7 +22,7 @@
 
 #include "absl/strings/string_view.h"
 #include "common/fs_manager.h"
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication.codes.h"
 #include "common/replication_enums.h"
 #include "metadata_types.h"

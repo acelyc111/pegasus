@@ -24,6 +24,7 @@
 
 set(MY_PROJ_NAME dsn.rpc)
 
+set(MY_PROJ_SRC "")
 # Search mode for source files under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search
 # "GLOB" for non-recursive search

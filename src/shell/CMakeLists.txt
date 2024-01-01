@@ -22,30 +22,45 @@ set(MY_PROJ_SRC
         sds/sds.c)
 set(MY_SRC_SEARCH_MODE "GLOB_RECURSE")
 set(MY_PROJ_LIBS
-        pegasus_base
         dsn.replication.tool
-        dsn_replica_server
         dsn_meta_server
         dsn_ranger
+        dsn_runtime
+        dsn_replica_server
+        dsn_nfs
+        dsn_aio
         dsn_replication_common
         dsn_client
-        dsn_utils
-        dsn.block_service.local
-        dsn.block_service.hdfs
+        dsn_dist_cmd
         dsn.block_service
+        dsn.block_service.hdfs
+        hdfs
+        dsn.block_service.local
         dsn.failure_detector
-        pegasus_client_static
-        pegasus_geo_lib
+        dsn.replication.zookeeper_provider
+        zookeeper
+        hashtable
+        dsn_http
+        dsn_utils
         rocksdb
         lz4
         zstd
         snappy
+        pegasus_base
+        pegasus_client_static
+        event
+        pegasus_geo_lib
+        s2
         absl::flat_hash_set
         absl::strings
-        s2
-        hdfs)
+        sasl2
+        gssapi_krb5
+        krb5)
+
+
 set(MY_BINPLACES
         ${CMAKE_CURRENT_SOURCE_DIR}/config.ini)
+
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 SET(CMAKE_INSTALL_RPATH ".")
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)

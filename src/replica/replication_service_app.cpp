@@ -26,7 +26,7 @@
 
 #include "replica/replication_service_app.h"
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "common/replication_common.h"
 #include "http/http_server.h"
 #include "http/service_version.h"

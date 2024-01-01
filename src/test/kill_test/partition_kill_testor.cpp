@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/gpid.h"
+#include "utils/gpid.h"
 #include "dsn.layer2_types.h"
 #include "partition_kill_testor.h"
 #include "remote_cmd/remote_command.h"
