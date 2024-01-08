@@ -207,6 +207,7 @@ public:
     // RPC_REQUEST
     join_point<bool, task *, message_ex *, rpc_response_task *>
         on_rpc_call; // return true means continue, otherwise dropped and (optionally) timedout
+    join_point<void, message_ex *> on_rpc_send;
     join_point<bool, rpc_request_task *> on_rpc_request_enqueue;
     join_point<void, rpc_request_task *> on_rpc_task_dropped; // rpc task dropped
 

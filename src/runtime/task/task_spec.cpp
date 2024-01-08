@@ -164,6 +164,7 @@ task_spec::task_spec(int code,
       on_aio_enqueue((std::string(name) + std::string(".aio.enqueue")).c_str()),
 
       on_rpc_call((std::string(name) + std::string(".rpc.call")).c_str()),
+      on_rpc_send((std::string(name) + std::string(".rpc.send")).c_str()),
       on_rpc_request_enqueue((std::string(name) + std::string(".rpc.request.enqueue")).c_str()),
       on_rpc_task_dropped((std::string(name) + std::string(".dropped")).c_str()),
       on_rpc_reply((std::string(name) + std::string(".rpc.reply")).c_str()),

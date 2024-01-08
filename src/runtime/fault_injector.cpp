@@ -246,8 +246,6 @@ static void corrupt_data(message_ex *request, const std::string &corrupt_type)
 static bool fault_on_rpc_call(task *caller, message_ex *req, rpc_response_task *callee)
 {
     fj_opt &opt = s_fj_opts[req->local_rpc_code];
-    LOG_INFO("fault_on_rpc_call:rpc_request_data_corrupted_ratio: {}",
-             opt.rpc_request_data_corrupted_ratio);
     if (rand::next_double01() < opt.rpc_request_drop_ratio) {
         LOG_INFO("fault inject {} at {}: {} => {}",
                  req->header->rpc_name,
@@ -255,14 +253,21 @@ static bool fault_on_rpc_call(task *caller, message_ex *req, rpc_response_task *
                  req->header->from_address,
                  req->to_address);
         return false;
-    } else {
-        if (rand::next_double01() < opt.rpc_request_data_corrupted_ratio) {
-            LOG_INFO("corrupt the rpc call message from: {}, type: {}",
-                     req->header->from_address,
-                     opt.rpc_message_data_corrupted_type);
-            corrupt_data(req, opt.rpc_message_data_corrupted_type);
-        }
-        return true;
+    }
+    return true;
+}
+
+static void fault_on_rpc_send(message_ex *req)
+{
+    LOG_INFO("local_rpc_code: {}", req->local_rpc_code);
+    fj_opt &opt = s_fj_opts[req->local_rpc_code];
+    LOG_INFO("fault_on_rpc_send:rpc_request_data_corrupted_ratio: {}",
+             opt.rpc_request_data_corrupted_ratio);
+    if (rand::next_double01() < opt.rpc_request_data_corrupted_ratio) {
+        LOG_INFO("corrupt the rpc call message from: {}, type: {}",
+                 req->header->from_address,
+                 opt.rpc_message_data_corrupted_type);
+        corrupt_data(req, opt.rpc_message_data_corrupted_type);
     }
 }
 
@@ -361,6 +366,7 @@ void fault_injector::install(service_spec &spec)
         spec->on_aio_call.put_native(fault_on_aio_call);
         spec->on_aio_enqueue.put_back(fault_on_aio_enqueue, "fault_injector");
         spec->on_rpc_call.put_native(fault_on_rpc_call);
+        spec->on_rpc_send.put_back(fault_on_rpc_send, "fault_injector");
         spec->on_rpc_request_enqueue.put_back(fault_on_rpc_request_enqueue, "fault_injector");
         spec->on_rpc_reply.put_native(fault_on_rpc_reply);
         spec->on_rpc_response_enqueue.put_back(fault_on_rpc_response_enqueue, "fault_injector");

@@ -113,40 +113,60 @@ void dsn_message_parser::prepare_on_send(message_ex *msg)
     CHECK_EQ(len, header->body_length + sizeof(message_header));
 #endif
 
-    if (task_spec::get(msg->local_rpc_code)->rpc_message_crc_required) {
-        // compute data crc if necessary (only once for the first time)
-        if (header->body_crc32 == CRC_INVALID) {
-            int i_max = (int)buffers.size() - 1;
-            uint32_t crc32 = 0;
-            size_t len = 0;
-            for (int i = 0; i <= i_max; i++) {
-                uint32_t lcrc;
-                const void *ptr;
-                size_t sz;
+    LOG_ERROR("local_rpc_code: {}", msg->local_rpc_code);
+    auto sp = task_spec::get(msg->local_rpc_code);
+    if (!sp->rpc_message_crc_required) {
+        return;
+    }
 
-                if (i == 0) {
-                    ptr = (const void *)(buffers[i].data() + sizeof(message_header));
-                    sz = (size_t)buffers[i].length() - sizeof(message_header);
-                } else {
-                    ptr = (const void *)buffers[i].data();
-                    sz = (size_t)buffers[i].length();
-                }
+    // Calculate the body CRC if necessary (only once for the first time).
+    if (header->body_crc32 == CRC_INVALID) {
+        int i_max = (int)buffers.size() - 1;
+        uint32_t crc32 = 0;
+        size_t len = 0;
+        for (int i = 0; i <= i_max; i++) {
+            uint32_t lcrc;
+            const void *ptr;
+            size_t sz;
 
-                lcrc = dsn::utils::crc32_calc(ptr, sz, crc32);
-                crc32 = dsn::utils::crc32_concat(0, 0, crc32, len, crc32, lcrc, sz);
-
-                len += sz;
+            if (i == 0) {
+                ptr = (const void *)(buffers[i].data() + sizeof(message_header));
+                sz = (size_t)buffers[i].length() - sizeof(message_header);
+            } else {
+                ptr = (const void *)buffers[i].data();
+                sz = (size_t)buffers[i].length();
             }
 
-            CHECK_EQ(len, header->body_length);
-            header->body_crc32 = crc32;
+            lcrc = dsn::utils::crc32_calc(ptr, sz, crc32);
+            crc32 = dsn::utils::crc32_concat(0, 0, crc32, len, crc32, lcrc, sz);
+
+            len += sz;
         }
 
-        // always compute header crc
-        header->hdr_crc32 = CRC_INVALID;
-        header->hdr_crc32 = dsn::utils::crc32_calc(header, sizeof(message_header), 0);
-        LOG_ERROR("hdr_crc32: {}", header->hdr_crc32);
+        CHECK_EQ(len, header->body_length);
+        header->body_crc32 = crc32;
     }
+
+    // Always calculate the header CRC.
+    header->hdr_crc32 = CRC_INVALID;
+    header->hdr_crc32 = dsn::utils::crc32_calc(header, sizeof(message_header), 0);
+
+    LOG_ERROR("before_hdr_crc32: {}", header->hdr_crc32);
+    {
+        auto before_hdr_crc32_1 = dsn::utils::crc32_calc(header, sizeof(message_header), 0);
+        LOG_ERROR("before_hdr_crc32_1: {}", before_hdr_crc32_1);
+    }
+    {
+        auto before_hdr_crc32_1 = dsn::utils::crc32_calc(header, sizeof(message_header), 0);
+        LOG_ERROR("before_hdr_crc32_1: {}", before_hdr_crc32_1);
+    }
+    {
+        auto before_hdr_crc32_1 = dsn::utils::crc32_calc(header, sizeof(message_header), 0);
+        LOG_ERROR("before_hdr_crc32_1: {}", before_hdr_crc32_1);
+    }
+    sp->on_rpc_send.execute(msg);
+    auto after_hdr_crc32 = dsn::utils::crc32_calc(header, sizeof(message_header), 0);
+    LOG_ERROR("after_hdr_crc32: {}", after_hdr_crc32);
 }
 
 int dsn_message_parser::get_buffers_on_send(message_ex *msg, /*out*/ send_buf *buffers)

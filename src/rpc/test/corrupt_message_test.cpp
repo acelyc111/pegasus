@@ -59,9 +59,10 @@ TEST(corrupt_message_test, basic)
     ::dsn::rpc_address server("localhost", 20101);
 
     std::vector<task_code> codes({RPC_TEST_HASH1, RPC_TEST_HASH2, RPC_TEST_HASH3, RPC_TEST_HASH4});
+    LOG_ERROR("RPC_TEST_HASH1: {}", RPC_TEST_HASH1);
     for (const auto &code : codes) {
         auto result = ::dsn::rpc::call_wait<std::string>(
             server, code, 0, std::chrono::milliseconds(0), 1);
-        ASSERT_EQ(ERR_TIMEOUT, result.first);
+        ASSERT_EQ(ERR_TIMEOUT, result.first) << code;
     }
 }

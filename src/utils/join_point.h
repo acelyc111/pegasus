@@ -125,6 +125,7 @@ public:
     // Execute the hooks sequentially.
     void execute(Args... args)
     {
+        LOG_ERROR("BaseType::_advice_entries.size(): {}", BaseType::_advice_entries.size());
         for (auto &func : BaseType::_advice_entries) {
             absl::apply(func, std::make_tuple(std::forward<Args>(args)...));
         }
