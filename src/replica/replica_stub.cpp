@@ -65,7 +65,6 @@
 #include "ranger/access_type.h"
 #include "rpc/rpc_message.h"
 #include "rpc/serialization.h"
-#include "runtime/security/access_controller.h"
 #include "runtime/task/async_calls.h"
 #include "security/access_controller.h"
 #include "split/replica_split_manager.h"

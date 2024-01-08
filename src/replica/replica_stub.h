@@ -56,7 +56,6 @@
 #include "ranger/access_type.h"
 #include "rpc/rpc_address.h"
 #include "rpc/rpc_holder.h"
-#include "runtime/security/access_controller.h"
 #include "runtime/serverlet.h"
 #include "runtime/task/task.h"
 #include "runtime/task/task_code.h"
