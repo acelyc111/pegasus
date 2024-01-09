@@ -61,13 +61,13 @@ struct disk_engine_initializer
 static disk_engine_initializer disk_engine_init;
 
 //----------------- disk_file ------------------------
-aio_task *disk_write_queue::unlink_next_workload(void *plength)
+rw_task *disk_write_queue::unlink_next_workload(void *plength)
 {
     uint64_t next_offset = 0;
     uint64_t &sz = *(uint64_t *)plength;
     sz = 0;
 
-    aio_task *first = _hdr._first, *current = first, *last = first;
+    rw_task *first = _hdr._first, *current = first, *last = first;
     while (nullptr != current) {
         auto io = current->get_aio_context();
         if (sz == 0) {
@@ -88,7 +88,7 @@ aio_task *disk_write_queue::unlink_next_workload(void *plength)
 
         // continue next
         last = current;
-        current = (aio_task *)current->next;
+        current = (rw_task *)current->next;
     }
 
     // unlink [first, last] -> current
@@ -105,21 +105,21 @@ aio_task *disk_write_queue::unlink_next_workload(void *plength)
 disk_file::disk_file(std::unique_ptr<rocksdb::RandomAccessFile> rf) : _read_file(std::move(rf)) {}
 disk_file::disk_file(std::unique_ptr<rocksdb::RandomRWFile> wf) : _write_file(std::move(wf)) {}
 
-aio_task *disk_file::read(aio_task *tsk)
+rw_task *disk_file::read(rw_task *tsk)
 {
     CHECK(_read_file, "");
     tsk->add_ref(); // release on completion, see `on_read_completed`.
     return _read_queue.add_work(tsk, nullptr);
 }
 
-aio_task *disk_file::write(aio_task *tsk, void *ctx)
+rw_task *disk_file::write(rw_task *tsk, void *ctx)
 {
     CHECK(_write_file, "");
     tsk->add_ref(); // release on completion
     return _write_queue.add_work(tsk, ctx);
 }
 
-aio_task *disk_file::on_read_completed(aio_task *wk, error_code err, size_t size)
+rw_task *disk_file::on_read_completed(rw_task *wk, error_code err, size_t size)
 {
     CHECK(_read_file, "");
     CHECK(wk->next == nullptr, "");
@@ -130,13 +130,13 @@ aio_task *disk_file::on_read_completed(aio_task *wk, error_code err, size_t size
     return ret;
 }
 
-aio_task *disk_file::on_write_completed(aio_task *wk, void *ctx, error_code err, size_t size)
+rw_task *disk_file::on_write_completed(rw_task *wk, void *ctx, error_code err, size_t size)
 {
     CHECK(_write_file, "");
     auto ret = _write_queue.on_work_completed(wk, ctx);
 
     while (wk) {
-        aio_task *next = (aio_task *)wk->next;
+        rw_task *next = (rw_task *)wk->next;
         wk->next = nullptr;
 
         if (err == ERR_OK) {
@@ -168,11 +168,11 @@ disk_engine::disk_engine()
     _provider.reset(provider);
 }
 
-class batch_write_io_task : public aio_task
+class batch_write_io_task : public rw_task
 {
 public:
-    explicit batch_write_io_task(aio_task *tasks)
-        : aio_task(LPC_AIO_BATCH_WRITE, nullptr), _tasks(tasks)
+    explicit batch_write_io_task(rw_task *tasks)
+        : rw_task(LPC_AIO_BATCH_WRITE, nullptr), _tasks(tasks)
     {
     }
 
@@ -187,10 +187,10 @@ public:
     }
 
 public:
-    aio_task *_tasks;
+    rw_task *_tasks;
 };
 
-void disk_engine::write(aio_task *aio)
+void disk_engine::write(rw_task *aio)
 {
     if (!aio->spec().on_aio_call.execute(task::get_current_task(), aio, true)) {
         aio->enqueue(ERR_FILE_OPERATION_FAILED, 0);
@@ -207,9 +207,9 @@ void disk_engine::write(aio_task *aio)
     }
 }
 
-void disk_engine::process_write(aio_task *aio, uint64_t sz)
+void disk_engine::process_write(rw_task *aio, uint64_t sz)
 {
-    aio_context *dio = aio->get_aio_context();
+    rw_context *dio = aio->get_aio_context();
 
     // no batching
     if (dio->buffer_size == sz) {
@@ -226,7 +226,7 @@ void disk_engine::process_write(aio_task *aio, uint64_t sz)
         new_dio->file_offset = dio->file_offset;
         new_dio->dfile = dio->dfile;
         new_dio->engine = dio->engine;
-        new_dio->type = AIO_Write;
+        new_dio->type = kWrite;
 
         auto cur_task = aio;
         do {
@@ -241,7 +241,7 @@ void disk_engine::process_write(aio_task *aio, uint64_t sz)
                                                          cur_task->_unmerged_write_buffers.begin(),
                                                          cur_task->_unmerged_write_buffers.end());
             }
-            cur_task = (aio_task *)cur_task->next;
+            cur_task = (rw_task *)cur_task->next;
         } while (cur_task);
 
         new_task->add_ref(); // released in complete_io
@@ -249,7 +249,7 @@ void disk_engine::process_write(aio_task *aio, uint64_t sz)
     }
 }
 
-void disk_engine::complete_io(aio_task *aio, error_code err, uint64_t bytes)
+void disk_engine::complete_io(rw_task *aio, error_code err, uint64_t bytes)
 {
     if (err != ERR_OK) {
         LOG_DEBUG("disk operation failure with code {}, err = {}, aio_task_id = {:#018x}",
@@ -267,7 +267,7 @@ void disk_engine::complete_io(aio_task *aio, error_code err, uint64_t bytes)
     // no batching
     else {
         auto dfile = aio->get_aio_context()->dfile;
-        if (aio->get_aio_context()->type == AIO_Read) {
+        if (aio->get_aio_context()->type == rw_type::kRead) {
             auto wk = dfile->on_read_completed(aio, err, (size_t)bytes);
             if (wk) {
                 _provider->submit_aio_task(wk);

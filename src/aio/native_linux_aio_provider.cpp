@@ -110,7 +110,7 @@ error_code native_linux_aio_provider::flush(rocksdb::RandomRWFile *wf)
     return ERR_OK;
 }
 
-error_code native_linux_aio_provider::write(const aio_context &aio_ctx,
+error_code native_linux_aio_provider::write(const rw_context &aio_ctx,
                                             /*out*/ uint64_t *processed_bytes)
 {
     rocksdb::Slice data((const char *)(aio_ctx.buffer), aio_ctx.buffer_size);
@@ -124,7 +124,7 @@ error_code native_linux_aio_provider::write(const aio_context &aio_ctx,
     return ERR_OK;
 }
 
-error_code native_linux_aio_provider::read(const aio_context &aio_ctx,
+error_code native_linux_aio_provider::read(const rw_context &aio_ctx,
                                            /*out*/ uint64_t *processed_bytes)
 {
     rocksdb::Slice result;
@@ -142,7 +142,7 @@ error_code native_linux_aio_provider::read(const aio_context &aio_ctx,
     return ERR_OK;
 }
 
-void native_linux_aio_provider::submit_aio_task(aio_task *aio_tsk)
+void native_linux_aio_provider::submit_aio_task(rw_task *aio_tsk)
 {
     // for the tests which use simulator need sync submit for aio
     if (dsn_unlikely(service_engine::instance().is_simulator())) {
@@ -155,17 +155,17 @@ void native_linux_aio_provider::submit_aio_task(aio_task *aio_tsk)
         aio_tsk->code(), aio_tsk->tracker(), [=]() { aio_internal(aio_tsk); }, aio_tsk->hash());
 }
 
-error_code native_linux_aio_provider::aio_internal(aio_task *aio_tsk)
+error_code native_linux_aio_provider::aio_internal(rw_task *aio_tsk)
 {
     ADD_POINT(aio_tsk->_tracer);
-    aio_context *aio_ctx = aio_tsk->get_aio_context();
+    rw_context *aio_ctx = aio_tsk->get_aio_context();
     error_code err = ERR_UNKNOWN;
     uint64_t processed_bytes = 0;
     switch (aio_ctx->type) {
-    case AIO_Read:
+    case rw_type::kRead:
         err = read(*aio_ctx, &processed_bytes);
         break;
-    case AIO_Write:
+    case rw_type::kWrite:
         err = write(*aio_ctx, &processed_bytes);
         break;
     default:

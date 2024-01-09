@@ -599,7 +599,7 @@ error_code mutation_log::create_new_log_file()
     _log_files[_last_file_index] = logf;
 
     // switch the current log file
-    // the old log file may be hold by _log_files or aio_task
+    // the old log file may be hold by _log_files or rw_task
     _current_log_file = logf;
 
     // create new pending buffer because we need write file header

@@ -41,12 +41,12 @@
 
 namespace dsn {
 
-aio_task::aio_task(dsn::task_code code, const aio_handler &cb, int hash, service_node *node)
-    : aio_task(code, aio_handler(cb), hash, node)
+rw_task::rw_task(dsn::task_code code, const aio_handler &cb, int hash, service_node *node)
+    : rw_task(code, aio_handler(cb), hash, node)
 {
 }
 
-aio_task::aio_task(dsn::task_code code, aio_handler &&cb, int hash, service_node *node)
+rw_task::rw_task(dsn::task_code code, aio_handler &&cb, int hash, service_node *node)
     : task(code, hash, node), _cb(std::move(cb))
 {
     _is_null = (_cb == nullptr);
@@ -59,10 +59,10 @@ aio_task::aio_task(dsn::task_code code, aio_handler &&cb, int hash, service_node
 
     _aio_ctx = file::prepare_aio_context(this);
 
-    _tracer = std::make_shared<dsn::utils::latency_tracer>(true, "aio_task", 0, code);
+    _tracer = std::make_shared<dsn::utils::latency_tracer>(true, "rw_task", 0, code);
 }
 
-void aio_task::collapse()
+void rw_task::collapse()
 {
     if (!_unmerged_write_buffers.empty()) {
         std::shared_ptr<char> buffer(dsn::utils::make_shared_array<char>(_aio_ctx->buffer_size));
@@ -77,7 +77,7 @@ void aio_task::collapse()
     }
 }
 
-void aio_task::enqueue(error_code err, size_t transferred_size)
+void rw_task::enqueue(error_code err, size_t transferred_size)
 {
     set_error_code(err);
     _transferred_size = transferred_size;

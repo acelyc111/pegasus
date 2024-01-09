@@ -628,12 +628,14 @@ bool event_on_aio::check_satisfied(const event *ev) const
     return true;
 }
 
-void event_on_aio::init(aio_task *tsk)
+void event_on_aio::init(rw_task *tsk)
 {
     event_on_task::init(tsk);
-    if (tsk->get_aio_context()->type == dsn::AIO_Invalid)
-        return; // for flush task, the type is AIO_Invalid
-    _type = (tsk->get_aio_context()->type == dsn::AIO_Read ? "READ" : "WRITE");
+    // For flush task, the type is rw_type::kInvalid.
+    if (tsk->get_aio_context()->type == rw_type::kInvalid) {
+        return;
+    }
+    _type = (tsk->get_aio_context()->type == rw_type::kRead ? "READ" : "WRITE");
     _file_offset = boost::lexical_cast<std::string>(tsk->get_aio_context()->file_offset);
     _buffer_size = boost::lexical_cast<std::string>(tsk->get_aio_context()->buffer_size);
 }
@@ -671,7 +673,7 @@ bool event_on_aio_enqueue::check_satisfied(const event *ev) const
     return true;
 }
 
-void event_on_aio_enqueue::init(aio_task *tsk)
+void event_on_aio_enqueue::init(rw_task *tsk)
 {
     event_on_aio::init(tsk);
     _err = tsk->error().to_string();

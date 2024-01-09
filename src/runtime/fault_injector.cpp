@@ -174,14 +174,14 @@ static void fault_on_task_cancel_post(task *caller, task *callee, bool succ) {}
 static bool fault_on_aio_call(task *caller, aio_task *callee)
 {
     switch (callee->get_aio_context()->type) {
-    case AIO_Read:
+    case rw_type::kRead:
         if (rand::next_double01() < s_fj_opts[callee->spec().code].disk_read_fail_ratio) {
             LOG_INFO("fault inject {} at {}", callee->spec().name, __FUNCTION__);
             callee->set_error_code(ERR_FILE_OPERATION_FAILED);
             return false;
         }
         break;
-    case AIO_Write:
+    case rw_type::kWrite:
         if (rand::next_double01() < s_fj_opts[callee->spec().code].disk_write_fail_ratio) {
             LOG_INFO("fault inject {} at {}", callee->spec().name, __FUNCTION__);
             callee->set_error_code(ERR_FILE_OPERATION_FAILED);

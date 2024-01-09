@@ -39,7 +39,7 @@
 namespace dsn {
 class error_code;
 
-class disk_write_queue : public work_queue<aio_task>
+class disk_write_queue : public work_queue<rw_task>
 {
 public:
     disk_write_queue() : work_queue(2)
@@ -48,7 +48,7 @@ public:
     }
 
 private:
-    virtual aio_task *unlink_next_workload(void *plength) override;
+    virtual rw_task *unlink_next_workload(void *plength) override;
 
 private:
     uint32_t _max_batch_bytes;
@@ -59,11 +59,11 @@ class disk_file
 public:
     explicit disk_file(std::unique_ptr<rocksdb::RandomAccessFile> rf);
     explicit disk_file(std::unique_ptr<rocksdb::RandomRWFile> wf);
-    aio_task *read(aio_task *tsk);
-    aio_task *write(aio_task *tsk, void *ctx);
+    rw_task *read(rw_task *tsk);
+    rw_task *write(rw_task *tsk, void *ctx);
 
-    aio_task *on_read_completed(aio_task *wk, error_code err, size_t size);
-    aio_task *on_write_completed(aio_task *wk, void *ctx, error_code err, size_t size);
+    rw_task *on_read_completed(rw_task *wk, error_code err, size_t size);
+    rw_task *on_write_completed(rw_task *wk, void *ctx, error_code err, size_t size);
 
     rocksdb::RandomAccessFile *rfile() const { return _read_file.get(); }
     rocksdb::RandomRWFile *wfile() const { return _write_file.get(); }
@@ -73,13 +73,13 @@ private:
     std::unique_ptr<rocksdb::RandomAccessFile> _read_file;
     std::unique_ptr<rocksdb::RandomRWFile> _write_file;
     disk_write_queue _write_queue;
-    work_queue<aio_task> _read_queue;
+    work_queue<rw_task> _read_queue;
 };
 
 class disk_engine : public utils::singleton<disk_engine>
 {
 public:
-    void write(aio_task *aio);
+    void write(rw_task *aio);
     static aio_provider &provider() { return *instance()._provider.get(); }
 
 private:
@@ -87,8 +87,8 @@ private:
     disk_engine();
     ~disk_engine() = default;
 
-    void process_write(aio_task *wk, uint64_t sz);
-    void complete_io(aio_task *aio, error_code err, uint64_t bytes);
+    void process_write(rw_task *wk, uint64_t sz);
+    void complete_io(rw_task *aio, error_code err, uint64_t bytes);
 
     std::unique_ptr<aio_provider> _provider;
 

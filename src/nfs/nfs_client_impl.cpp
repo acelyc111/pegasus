@@ -131,7 +131,7 @@ nfs_client_impl::nfs_client_impl()
 nfs_client_impl::~nfs_client_impl() { _tracker.cancel_outstanding_tasks(); }
 
 void nfs_client_impl::begin_remote_copy(std::shared_ptr<remote_copy_request> &rci,
-                                        aio_task *nfs_task)
+                                        rw_task *nfs_task)
 {
     user_request_ptr req(new user_request());
     req->high_priority = rci->high_priority;
@@ -572,7 +572,7 @@ void nfs_client_impl::handle_completion(const user_request_ptr &req, error_code 
     // clear file_contexts to break circle reference
     req->file_contexts.clear();
 
-    // notify aio_task
+    // notify rw_task
     req->nfs_task->enqueue(err, err == ERR_OK ? total_size : 0);
 }
 

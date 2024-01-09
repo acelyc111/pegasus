@@ -99,7 +99,7 @@ namespace file {
     cb->get_aio_context()->buffer = buffer;
     cb->get_aio_context()->buffer_size = count;
     cb->get_aio_context()->file_offset = offset;
-    cb->get_aio_context()->type = AIO_Read;
+    cb->get_aio_context()->type = rw_type::kRead;
     cb->get_aio_context()->engine = &disk_engine::instance();
     cb->get_aio_context()->dfile = file;
 
@@ -128,7 +128,7 @@ namespace file {
     cb->get_aio_context()->buffer = (char *)buffer;
     cb->get_aio_context()->buffer_size = count;
     cb->get_aio_context()->file_offset = offset;
-    cb->get_aio_context()->type = AIO_Write;
+    cb->get_aio_context()->type = kWrite;
     cb->get_aio_context()->dfile = file;
     if (file->wfile() == nullptr) {
         cb->enqueue(ERR_FILE_OPERATION_FAILED, 0);
@@ -150,7 +150,7 @@ namespace file {
 {
     auto cb = create_aio_task(callback_code, tracker, std::move(callback), hash);
     cb->get_aio_context()->file_offset = offset;
-    cb->get_aio_context()->type = AIO_Write;
+    cb->get_aio_context()->type = kWrite;
     cb->get_aio_context()->dfile = file;
     for (int i = 0; i < buffer_count; i++) {
         if (buffers[i].size > 0) {
@@ -163,7 +163,7 @@ namespace file {
     return cb;
 }
 
-/*extern*/ aio_context_ptr prepare_aio_context(aio_task *tsk)
+/*extern*/ rw_context_ptr prepare_aio_context(rw_task *tsk)
 {
     return disk_engine::provider().prepare_aio_context(tsk);
 }

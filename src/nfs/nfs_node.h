@@ -111,6 +111,6 @@ public:
     virtual void register_async_rpc_handler_for_test() = 0;
 
 protected:
-    virtual void call(std::shared_ptr<remote_copy_request> rci, aio_task *callback) = 0;
+    virtual void call(std::shared_ptr<remote_copy_request> rci, rw_task *callback) = 0;
 };
 }

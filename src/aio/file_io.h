@@ -74,7 +74,7 @@ extern error_code flush(disk_file *file);
 inline aio_task_ptr
 create_aio_task(task_code code, task_tracker *tracker, aio_handler &&callback, int hash = 0)
 {
-    aio_task_ptr t(new aio_task(code, std::move(callback), hash));
+    aio_task_ptr t(new rw_task(code, std::move(callback), hash));
     t->set_tracker((task_tracker *)tracker);
     t->spec().on_task_create.execute(task::get_current_task(), t);
     return t;
@@ -107,7 +107,7 @@ extern aio_task_ptr write_vector(disk_file *file,
                                  aio_handler &&callback,
                                  int hash = 0);
 
-extern aio_context_ptr prepare_aio_context(aio_task *tsk);
+extern rw_context_ptr prepare_aio_context(rw_task *tsk);
 
 } // namespace file
 } // namespace dsn

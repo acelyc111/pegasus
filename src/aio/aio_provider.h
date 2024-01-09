@@ -40,8 +40,8 @@ class RandomRWFile;
 
 namespace dsn {
 
-class aio_context;
-class aio_task;
+class rw_context;
+class rw_task;
 class disk_engine;
 
 #define DSN_INVALID_FILE_HANDLE -1
@@ -68,21 +68,21 @@ public:
     virtual ~aio_provider() = default;
 
     virtual std::unique_ptr<rocksdb::RandomAccessFile> open_read_file(const std::string &fname) = 0;
-    virtual error_code read(const aio_context &aio_ctx, /*out*/ uint64_t *processed_bytes) = 0;
+    virtual error_code read(const rw_context &aio_ctx, /*out*/ uint64_t *processed_bytes) = 0;
 
     virtual std::unique_ptr<rocksdb::RandomRWFile> open_write_file(const std::string &fname) = 0;
-    virtual error_code write(const aio_context &aio_ctx, /*out*/ uint64_t *processed_bytes) = 0;
+    virtual error_code write(const rw_context &aio_ctx, /*out*/ uint64_t *processed_bytes) = 0;
     virtual error_code flush(rocksdb::RandomRWFile *rwf) = 0;
     virtual error_code close(rocksdb::RandomRWFile *rwf) = 0;
 
-    // Submits the aio_task to the underlying disk-io executor.
-    // This task may not be executed immediately, call `aio_task::wait`
+    // Submits the rw_task to the underlying disk-io executor.
+    // This task may not be executed immediately, call `rw_task::wait`
     // to wait until it completes.
-    virtual void submit_aio_task(aio_task *aio) = 0;
+    virtual void submit_aio_task(rw_task *aio) = 0;
 
-    virtual aio_context *prepare_aio_context(aio_task *) = 0;
+    virtual rw_context *prepare_aio_context(rw_task *) = 0;
 
-    void complete_io(aio_task *aio, error_code err, uint64_t bytes);
+    void complete_io(rw_task *aio, error_code err, uint64_t bytes);
 
 private:
     disk_engine *_engine;

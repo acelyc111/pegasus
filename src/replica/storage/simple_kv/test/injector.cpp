@@ -35,7 +35,7 @@
 #include "utils/join_point.h"
 
 namespace dsn {
-class aio_task;
+class rw_task;
 class message_ex;
 class rpc_request_task;
 class rpc_response_task;
@@ -107,7 +107,7 @@ static void inject_on_task_cancel_post(task *caller, task *callee, bool succ)
         return;
 }
 
-static bool inject_on_aio_call(task *caller, aio_task *callee)
+static bool inject_on_aio_call(task *caller, rw_task *callee)
 {
     if (!test_checker::s_inited)
         return true;
@@ -118,7 +118,7 @@ static bool inject_on_aio_call(task *caller, aio_task *callee)
     return test_case::instance().on_event(&event);
 }
 
-static void inject_on_aio_enqueue(aio_task *this_)
+static void inject_on_aio_enqueue(rw_task *this_)
 {
     if (!test_checker::s_inited)
         return;
