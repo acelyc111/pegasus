@@ -32,7 +32,7 @@
 #include "utils/error_code.h"
 
 namespace dsn {
-class aio_task;
+class rw_task;
 template <typename TResponse>
 class rpc_replier;
 
@@ -52,7 +52,7 @@ public:
 
     virtual ~nfs_node_simple();
 
-    void call(std::shared_ptr<remote_copy_request> rci, aio_task *callback) override;
+    void call(std::shared_ptr<remote_copy_request> rci, rw_task *callback) override;
 
     error_code start() override;
 

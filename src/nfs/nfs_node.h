@@ -67,37 +67,37 @@ public:
     static std::unique_ptr<nfs_node> create();
 
 public:
-    aio_task_ptr copy_remote_directory(const rpc_address &remote,
-                                       const std::string &source_disk_tag,
-                                       const std::string &source_dir,
-                                       const std::string &dest_disk_tag,
-                                       const std::string &dest_dir,
-                                       const dsn::gpid &pid,
-                                       bool overwrite,
-                                       bool high_priority,
-                                       task_code callback_code,
-                                       task_tracker *tracker,
-                                       aio_handler &&callback,
-                                       int hash = 0);
-    aio_task_ptr copy_remote_files(const rpc_address &remote,
-                                   const std::string &source_disk_tag,
-                                   const std::string &source_dir,
-                                   const std::vector<std::string> &files, // empty for all
-                                   const std::string &dest_disk_tag,
-                                   const std::string &dest_dir,
-                                   const dsn::gpid &pid,
-                                   bool overwrite,
-                                   bool high_priority,
-                                   task_code callback_code,
-                                   task_tracker *tracker,
-                                   aio_handler &&callback,
-                                   int hash = 0);
+    rw_task_ptr copy_remote_directory(const rpc_address &remote,
+                                      const std::string &source_disk_tag,
+                                      const std::string &source_dir,
+                                      const std::string &dest_disk_tag,
+                                      const std::string &dest_dir,
+                                      const dsn::gpid &pid,
+                                      bool overwrite,
+                                      bool high_priority,
+                                      task_code callback_code,
+                                      task_tracker *tracker,
+                                      rw_handler &&callback,
+                                      int hash = 0);
+    rw_task_ptr copy_remote_files(const rpc_address &remote,
+                                  const std::string &source_disk_tag,
+                                  const std::string &source_dir,
+                                  const std::vector<std::string> &files, // empty for all
+                                  const std::string &dest_disk_tag,
+                                  const std::string &dest_dir,
+                                  const dsn::gpid &pid,
+                                  bool overwrite,
+                                  bool high_priority,
+                                  task_code callback_code,
+                                  task_tracker *tracker,
+                                  rw_handler &&callback,
+                                  int hash = 0);
 
-    aio_task_ptr copy_remote_files(std::shared_ptr<remote_copy_request> &request,
-                                   task_code callback_code,
-                                   task_tracker *tracker,
-                                   aio_handler &&callback,
-                                   int hash = 0);
+    rw_task_ptr copy_remote_files(std::shared_ptr<remote_copy_request> &request,
+                                  task_code callback_code,
+                                  task_tracker *tracker,
+                                  rw_handler &&callback,
+                                  int hash = 0);
 
     nfs_node() {}
     virtual ~nfs_node() {}
@@ -111,6 +111,6 @@ public:
     virtual void register_async_rpc_handler_for_test() = 0;
 
 protected:
-    virtual void call(std::shared_ptr<remote_copy_request> rci, aio_task *callback) = 0;
+    virtual void call(std::shared_ptr<remote_copy_request> rci, rw_task *callback) = 0;
 };
 }

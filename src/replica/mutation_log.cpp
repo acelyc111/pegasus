@@ -73,14 +73,14 @@ mutation_log_private::mutation_log_private(const std::string &dir,
 ::dsn::task_ptr mutation_log_private::append(mutation_ptr &mu,
                                              dsn::task_code callback_code,
                                              dsn::task_tracker *tracker,
-                                             aio_handler &&callback,
+                                             rw_handler &&callback,
                                              int hash,
                                              int64_t *pending_size)
 {
-    dsn::aio_task_ptr cb =
-        callback ? file::create_aio_task(
-                       callback_code, tracker, std::forward<aio_handler>(callback), hash)
-                 : nullptr;
+    dsn::rw_task_ptr cb =
+        callback
+            ? file::create_rw_task(callback_code, tracker, std::forward<rw_handler>(callback), hash)
+            : nullptr;
 
     _plock.lock();
 
@@ -599,7 +599,7 @@ error_code mutation_log::create_new_log_file()
     _log_files[_last_file_index] = logf;
 
     // switch the current log file
-    // the old log file may be hold by _log_files or aio_task
+    // the old log file may be hold by _log_files or rw_task
     _current_log_file = logf;
 
     // create new pending buffer because we need write file header

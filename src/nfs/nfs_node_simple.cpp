@@ -33,7 +33,7 @@
 #include "utils/error_code.h"
 
 namespace dsn {
-class aio_task;
+class rw_task;
 template <typename TResponse>
 class rpc_replier;
 
@@ -51,7 +51,7 @@ nfs_node_simple::nfs_node_simple() : nfs_node()
 
 nfs_node_simple::~nfs_node_simple() { stop(); }
 
-void nfs_node_simple::call(std::shared_ptr<remote_copy_request> rci, aio_task *callback)
+void nfs_node_simple::call(std::shared_ptr<remote_copy_request> rci, rw_task *callback)
 {
     _client->begin_remote_copy(rci, callback); // copy file request entry
 }

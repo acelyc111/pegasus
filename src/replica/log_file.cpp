@@ -260,22 +260,22 @@ error_code log_file::read_next_log_block(/*out*/ ::dsn::blob &bb)
     return ERR_OK;
 }
 
-aio_task_ptr log_file::commit_log_block(log_block &block,
-                                        int64_t offset,
-                                        dsn::task_code evt,
-                                        dsn::task_tracker *tracker,
-                                        aio_handler &&callback,
-                                        int hash)
+rw_task_ptr log_file::commit_log_block(log_block &block,
+                                       int64_t offset,
+                                       dsn::task_code evt,
+                                       dsn::task_tracker *tracker,
+                                       rw_handler &&callback,
+                                       int hash)
 {
     log_appender pending(offset, block);
     return commit_log_blocks(pending, evt, tracker, std::move(callback), hash);
 }
 
-aio_task_ptr log_file::commit_log_blocks(log_appender &pending,
-                                         dsn::task_code evt,
-                                         dsn::task_tracker *tracker,
-                                         aio_handler &&callback,
-                                         int hash)
+rw_task_ptr log_file::commit_log_blocks(log_appender &pending,
+                                        dsn::task_code evt,
+                                        dsn::task_tracker *tracker,
+                                        rw_handler &&callback,
+                                        int hash)
 {
     CHECK(!_is_read, "log file must be of write mode");
     CHECK_GT(pending.size(), 0);
@@ -314,7 +314,7 @@ aio_task_ptr log_file::commit_log_blocks(log_appender &pending,
         _crc32 = hdr->body_crc;
     }
 
-    aio_task_ptr tsk;
+    rw_task_ptr tsk;
     int64_t local_offset = pending.start_offset() - start_offset();
     if (callback) {
         tsk = file::write_vector(_handle,
@@ -323,7 +323,7 @@ aio_task_ptr log_file::commit_log_blocks(log_appender &pending,
                                  static_cast<uint64_t>(local_offset),
                                  evt,
                                  tracker,
-                                 std::forward<aio_handler>(callback),
+                                 std::forward<rw_handler>(callback),
                                  hash);
     } else {
         tsk = file::write_vector(_handle,

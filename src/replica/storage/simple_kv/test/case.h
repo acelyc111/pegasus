@@ -42,7 +42,7 @@
 #include "utils/zlocks.h"
 
 namespace dsn {
-class aio_task;
+class rw_task;
 class message_ex;
 class rpc_request_task;
 class rpc_response_task;
@@ -312,7 +312,7 @@ public:
     virtual bool internal_parse(const std::map<std::string, std::string> &kv_map);
     virtual bool check_satisfied(const event *ev) const;
 
-    void init(aio_task *tsk);
+    void init(rw_task *tsk);
 
 public:
     std::string _type;
@@ -334,7 +334,7 @@ public:
     virtual bool internal_parse(const std::map<std::string, std::string> &kv_map);
     virtual bool check_satisfied(const event *ev) const;
 
-    void init(aio_task *tsk);
+    void init(rw_task *tsk);
 
 public:
     std::string _err;

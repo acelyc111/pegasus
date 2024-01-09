@@ -37,7 +37,7 @@ void log_block::init()
     add(temp_writer.get_buffer());
 }
 
-void log_appender::append_mutation(const mutation_ptr &mu, const aio_task_ptr &cb)
+void log_appender::append_mutation(const mutation_ptr &mu, const rw_task_ptr &cb)
 {
     _mutations.push_back(mu);
     if (cb) {

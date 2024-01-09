@@ -173,7 +173,7 @@ public:
         bool high_priority;
         int low_queue_index;
         get_file_size_request file_size_req;
-        ::dsn::ref_ptr<aio_task> nfs_task;
+        ::dsn::ref_ptr<rw_task> nfs_task;
         std::atomic<int> finished_files;
         std::atomic<int> concurrent_copy_count;
         bool is_finished;
@@ -272,7 +272,7 @@ public:
     virtual ~nfs_client_impl();
 
     // copy file request entry
-    void begin_remote_copy(std::shared_ptr<remote_copy_request> &rci, aio_task *nfs_task);
+    void begin_remote_copy(std::shared_ptr<remote_copy_request> &rci, rw_task *nfs_task);
 
 private:
     void end_get_file_size(::dsn::error_code err,

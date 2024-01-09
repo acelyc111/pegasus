@@ -102,7 +102,7 @@ TEST(core, dsn_task_code)
               dsn::task_code::try_get("TASK_CODE_AIO_FOR_TEST", TASK_CODE_INVALID));
     ASSERT_LE(TASK_CODE_AIO_FOR_TEST, dsn::task_code::max());
     spec = dsn::task_spec::get(TASK_CODE_AIO_FOR_TEST.code());
-    ASSERT_EQ(TASK_TYPE_AIO, spec->type);
+    ASSERT_EQ(TASK_TYPE_RW, spec->type);
     ASSERT_EQ(TASK_PRIORITY_COMMON, spec->priority);
     ASSERT_EQ(THREAD_POOL_DEFAULT, spec->pool_code);
 

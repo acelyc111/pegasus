@@ -121,7 +121,7 @@ DEFINE_CUSTOMIZED_ID(rpc_channel, RPC_CHANNEL_TCP)
 DEFINE_CUSTOMIZED_ID(rpc_channel, RPC_CHANNEL_UDP)
 USER_DEFINED_ENUM_FORMATTER(rpc_channel)
 
-class aio_task;
+class rw_task;
 class message_ex;
 class rpc_request_task;
 class rpc_response_task;
@@ -200,9 +200,9 @@ public:
     join_point<void, task *, task *, bool> on_task_cancel_post; // cancel succeeded or not
 
     // AIO
-    join_point<bool, task *, aio_task *> on_aio_call; // return true means continue, otherwise early
-                                                      // terminate with task::set_error_code
-    join_point<void, aio_task *> on_aio_enqueue;      // aio done, enqueue callback
+    join_point<bool, task *, rw_task *> on_aio_call; // return true means continue, otherwise early
+                                                     // terminate with task::set_error_code
+    join_point<void, rw_task *> on_aio_enqueue;      // aio done, enqueue callback
 
     // RPC_REQUEST
     join_point<bool, task *, message_ex *, rpc_response_task *>

@@ -229,7 +229,7 @@ static void profiler_on_task_wait_post(task *caller, task *callee, bool succ) {}
 static void profiler_on_task_cancel_post(task *caller, task *callee, bool succ) {}
 
 // return true means continue, otherwise early terminate with task::set_error_code
-static void profiler_on_aio_call(task *caller, aio_task *callee)
+static void profiler_on_aio_call(task *caller, rw_task *callee)
 {
     if (nullptr != caller) {
         auto caller_code = caller->spec().code;
@@ -249,7 +249,7 @@ static void profiler_on_aio_call(task *caller, aio_task *callee)
     task_ext_for_profiler::get(callee) = dsn_now_ns();
 }
 
-static void profiler_on_aio_enqueue(aio_task *this_)
+static void profiler_on_aio_enqueue(rw_task *this_)
 {
     auto code = this_->spec().code;
     CHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
@@ -477,7 +477,7 @@ task_spec_profiler::task_spec_profiler(int code)
                                       "whether to profile the timeout qps of a task")) {
             METRIC_VAR_ASSIGN_profiler(profiler_client_timeout_rpcs);
         }
-    } else if (spec->type == dsn_task_type_t::TASK_TYPE_AIO) {
+    } else if (spec->type == dsn_task_type_t::TASK_TYPE_RW) {
         if (dsn_config_get_value_bool(section_name.c_str(),
                                       "profiler::latency",
                                       true,

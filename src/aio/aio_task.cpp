@@ -41,43 +41,43 @@
 
 namespace dsn {
 
-aio_task::aio_task(dsn::task_code code, const aio_handler &cb, int hash, service_node *node)
-    : aio_task(code, aio_handler(cb), hash, node)
+rw_task::rw_task(dsn::task_code code, const rw_handler &cb, int hash, service_node *node)
+    : rw_task(code, rw_handler(cb), hash, node)
 {
 }
 
-aio_task::aio_task(dsn::task_code code, aio_handler &&cb, int hash, service_node *node)
+rw_task::rw_task(dsn::task_code code, rw_handler &&cb, int hash, service_node *node)
     : task(code, hash, node), _cb(std::move(cb))
 {
     _is_null = (_cb == nullptr);
 
-    CHECK_EQ_MSG(TASK_TYPE_AIO,
+    CHECK_EQ_MSG(TASK_TYPE_RW,
                  spec().type,
-                 "{} is not of AIO type, please use DEFINE_TASK_CODE_AIO to define the task code",
+                 "{} is not of RW type, please use DEFINE_TASK_CODE_AIO to define the task code",
                  spec().name);
     set_error_code(ERR_IO_PENDING);
 
-    _aio_ctx = file::prepare_aio_context(this);
+    _rw_ctx = file::prepare_rw_context(this);
 
-    _tracer = std::make_shared<dsn::utils::latency_tracer>(true, "aio_task", 0, code);
+    _tracer = std::make_shared<dsn::utils::latency_tracer>(true, "rw_task", 0, code);
 }
 
-void aio_task::collapse()
+void rw_task::collapse()
 {
     if (!_unmerged_write_buffers.empty()) {
-        std::shared_ptr<char> buffer(dsn::utils::make_shared_array<char>(_aio_ctx->buffer_size));
+        std::shared_ptr<char> buffer(dsn::utils::make_shared_array<char>(_rw_ctx->buffer_size));
         char *dest = buffer.get();
         for (const dsn_file_buffer_t &b : _unmerged_write_buffers) {
             ::memcpy(dest, b.buffer, b.size);
             dest += b.size;
         }
-        CHECK_EQ(dest - buffer.get(), _aio_ctx->buffer_size);
-        _aio_ctx->buffer = buffer.get();
-        _merged_write_buffer_holder.assign(std::move(buffer), 0, _aio_ctx->buffer_size);
+        CHECK_EQ(dest - buffer.get(), _rw_ctx->buffer_size);
+        _rw_ctx->buffer = buffer.get();
+        _merged_write_buffer_holder.assign(std::move(buffer), 0, _rw_ctx->buffer_size);
     }
 }
 
-void aio_task::enqueue(error_code err, size_t transferred_size)
+void rw_task::enqueue(error_code err, size_t transferred_size)
 {
     set_error_code(err);
     _transferred_size = transferred_size;

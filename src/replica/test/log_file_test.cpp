@@ -72,8 +72,8 @@ TEST_P(log_file_test, commit_log_blocks)
                                         },
                                         0);
     tsk->wait();
-    ASSERT_EQ(tsk->get_aio_context()->buffer_size, appender->size());
-    ASSERT_EQ(tsk->get_aio_context()->file_offset,
+    ASSERT_EQ(tsk->get_rw_context()->buffer_size, appender->size());
+    ASSERT_EQ(tsk->get_rw_context()->file_offset,
               appender->start_offset() - _start_offset); // local offset
 
     // write multiple blocks
@@ -92,8 +92,8 @@ TEST_P(log_file_test, commit_log_blocks)
                                    },
                                    0);
     tsk->wait();
-    ASSERT_EQ(tsk->get_aio_context()->buffer_size, appender->size());
-    ASSERT_EQ(tsk->get_aio_context()->file_offset, appender->start_offset() - _start_offset);
+    ASSERT_EQ(tsk->get_rw_context()->buffer_size, appender->size());
+    ASSERT_EQ(tsk->get_rw_context()->file_offset, appender->start_offset() - _start_offset);
 }
 
 } // namespace replication

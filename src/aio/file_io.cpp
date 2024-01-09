@@ -86,22 +86,22 @@ namespace file {
     return disk_engine::provider().flush(file->wfile());
 }
 
-/*extern*/ aio_task_ptr read(disk_file *file,
-                             char *buffer,
-                             int count,
-                             uint64_t offset,
-                             task_code callback_code,
-                             task_tracker *tracker,
-                             aio_handler &&callback,
-                             int hash /*= 0*/)
+/*extern*/ rw_task_ptr read(disk_file *file,
+                            char *buffer,
+                            int count,
+                            uint64_t offset,
+                            task_code callback_code,
+                            task_tracker *tracker,
+                            rw_handler &&callback,
+                            int hash /*= 0*/)
 {
-    auto cb = create_aio_task(callback_code, tracker, std::move(callback), hash);
-    cb->get_aio_context()->buffer = buffer;
-    cb->get_aio_context()->buffer_size = count;
-    cb->get_aio_context()->file_offset = offset;
-    cb->get_aio_context()->type = AIO_Read;
-    cb->get_aio_context()->engine = &disk_engine::instance();
-    cb->get_aio_context()->dfile = file;
+    auto cb = create_rw_task(callback_code, tracker, std::move(callback), hash);
+    cb->get_rw_context()->buffer = buffer;
+    cb->get_rw_context()->buffer_size = count;
+    cb->get_rw_context()->file_offset = offset;
+    cb->get_rw_context()->type = rw_type::kRead;
+    cb->get_rw_context()->engine = &disk_engine::instance();
+    cb->get_rw_context()->dfile = file;
 
     if (!cb->spec().on_aio_call.execute(task::get_current_task(), cb, true) ||
         file->rfile() == nullptr) {
@@ -110,26 +110,26 @@ namespace file {
     }
     auto wk = file->read(cb);
     if (wk) {
-        disk_engine::provider().submit_aio_task(wk);
+        disk_engine::provider().submit_rw_task(wk);
     }
     return cb;
 }
 
-/*extern*/ aio_task_ptr write(disk_file *file,
-                              const char *buffer,
-                              int count,
-                              uint64_t offset,
-                              task_code callback_code,
-                              task_tracker *tracker,
-                              aio_handler &&callback,
-                              int hash /*= 0*/)
+/*extern*/ rw_task_ptr write(disk_file *file,
+                             const char *buffer,
+                             int count,
+                             uint64_t offset,
+                             task_code callback_code,
+                             task_tracker *tracker,
+                             rw_handler &&callback,
+                             int hash /*= 0*/)
 {
-    auto cb = create_aio_task(callback_code, tracker, std::move(callback), hash);
-    cb->get_aio_context()->buffer = (char *)buffer;
-    cb->get_aio_context()->buffer_size = count;
-    cb->get_aio_context()->file_offset = offset;
-    cb->get_aio_context()->type = AIO_Write;
-    cb->get_aio_context()->dfile = file;
+    auto cb = create_rw_task(callback_code, tracker, std::move(callback), hash);
+    cb->get_rw_context()->buffer = (char *)buffer;
+    cb->get_rw_context()->buffer_size = count;
+    cb->get_rw_context()->file_offset = offset;
+    cb->get_rw_context()->type = rw_type::kWrite;
+    cb->get_rw_context()->dfile = file;
     if (file->wfile() == nullptr) {
         cb->enqueue(ERR_FILE_OPERATION_FAILED, 0);
         return cb;
@@ -139,23 +139,23 @@ namespace file {
     return cb;
 }
 
-/*extern*/ aio_task_ptr write_vector(disk_file *file,
-                                     const dsn_file_buffer_t *buffers,
-                                     int buffer_count,
-                                     uint64_t offset,
-                                     task_code callback_code,
-                                     task_tracker *tracker,
-                                     aio_handler &&callback,
-                                     int hash /*= 0*/)
+/*extern*/ rw_task_ptr write_vector(disk_file *file,
+                                    const dsn_file_buffer_t *buffers,
+                                    int buffer_count,
+                                    uint64_t offset,
+                                    task_code callback_code,
+                                    task_tracker *tracker,
+                                    rw_handler &&callback,
+                                    int hash /*= 0*/)
 {
-    auto cb = create_aio_task(callback_code, tracker, std::move(callback), hash);
-    cb->get_aio_context()->file_offset = offset;
-    cb->get_aio_context()->type = AIO_Write;
-    cb->get_aio_context()->dfile = file;
+    auto cb = create_rw_task(callback_code, tracker, std::move(callback), hash);
+    cb->get_rw_context()->file_offset = offset;
+    cb->get_rw_context()->type = rw_type::kWrite;
+    cb->get_rw_context()->dfile = file;
     for (int i = 0; i < buffer_count; i++) {
         if (buffers[i].size > 0) {
             cb->_unmerged_write_buffers.push_back(buffers[i]);
-            cb->get_aio_context()->buffer_size += buffers[i].size;
+            cb->get_rw_context()->buffer_size += buffers[i].size;
         }
     }
 
@@ -163,9 +163,9 @@ namespace file {
     return cb;
 }
 
-/*extern*/ aio_context_ptr prepare_aio_context(aio_task *tsk)
+/*extern*/ rw_context_ptr prepare_rw_context(rw_task *tsk)
 {
-    return disk_engine::provider().prepare_aio_context(tsk);
+    return disk_engine::provider().prepare_rw_context(tsk);
 }
 } // namespace file
 } // namespace dsn

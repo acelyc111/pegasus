@@ -39,7 +39,7 @@ class task_test : public ::testing::Test
 public:
     static void test_init()
     {
-        aio_task t1(LPC_TASK_TEST, nullptr);
+        rw_task t1(LPC_TASK_TEST, nullptr);
         ASSERT_TRUE(t1._is_null);
         ASSERT_EQ(t1._wait_event.load(), nullptr);
         ASSERT_EQ(t1.next, nullptr);
@@ -52,7 +52,7 @@ public:
 
     static void test_null_task()
     {
-        aio_task_ptr t1 = new aio_task(LPC_TASK_TEST, nullptr);
+        rw_task_ptr t1 = new rw_task(LPC_TASK_TEST, nullptr);
 
         // empty task will executed at once
         t1->enqueue(ERR_OK, 100);

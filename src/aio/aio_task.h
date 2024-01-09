@@ -46,13 +46,14 @@ namespace utils {
 class latency_tracer;
 }
 
-enum aio_type
+enum class rw_type
 {
-    AIO_Invalid,
-    AIO_Read,
-    AIO_Write
+    kInvalid,
+    kRead,
+    kWrite
 };
 
+// TODO(yingchun): can be replaced by string_view?
 typedef struct
 {
     void *buffer;
@@ -62,36 +63,26 @@ typedef struct
 class disk_engine;
 class disk_file;
 
-class aio_context : public ref_counter
+class rw_context : public ref_counter
 {
 public:
     // filled by apps
-    void *buffer;
-    uint64_t buffer_size;
-    uint64_t file_offset;
+    void *buffer = nullptr;
+    uint64_t buffer_size = 0;
+    uint64_t file_offset = 0;
 
     // filled by frameworks
-    aio_type type;
-    disk_engine *engine;
-    disk_file *dfile;
-
-    aio_context()
-        : buffer(nullptr),
-          buffer_size(0),
-          file_offset(0),
-          type(AIO_Invalid),
-          engine(nullptr),
-          dfile(nullptr)
-    {
-    }
+    rw_type type = rw_type::kInvalid;
+    disk_engine *engine = nullptr;
+    disk_file *dfile = nullptr;
 };
-typedef dsn::ref_ptr<aio_context> aio_context_ptr;
+typedef dsn::ref_ptr<rw_context> rw_context_ptr;
 
-class aio_task : public task
+class rw_task : public task
 {
 public:
-    aio_task(task_code code, const aio_handler &cb, int hash = 0, service_node *node = nullptr);
-    aio_task(task_code code, aio_handler &&cb, int hash = 0, service_node *node = nullptr);
+    rw_task(task_code code, const rw_handler &cb, int hash = 0, service_node *node = nullptr);
+    rw_task(task_code code, rw_handler &&cb, int hash = 0, service_node *node = nullptr);
 
     // tell the compiler that we want both the enqueue from base task and ours
     // to prevent the compiler complaining -Werror,-Woverloaded-virtual.
@@ -100,14 +91,14 @@ public:
 
     size_t get_transferred_size() const { return _transferred_size; }
 
-    // The ownership of `aio_context` is held by `aio_task`.
-    aio_context *get_aio_context() { return _aio_ctx.get(); }
+    // The ownership of `rw_context` is held by `rw_task`.
+    rw_context *get_rw_context() { return _rw_ctx.get(); }
 
     // merge buffers in _unmerged_write_buffers to a single merged buffer.
     // and store it in _merged_write_buffer_holder.
     void collapse();
 
-    // invoked on aio completed
+    // invoked on R/W operation completed
     virtual void exec() override
     {
         if (nullptr != _cb) {
@@ -123,10 +114,10 @@ protected:
     void clear_non_trivial_on_task_end() override { _cb = nullptr; }
 
 private:
-    aio_context_ptr _aio_ctx;
+    rw_context_ptr _rw_ctx;
     size_t _transferred_size;
-    aio_handler _cb;
+    rw_handler _cb;
 };
-typedef dsn::ref_ptr<aio_task> aio_task_ptr;
+typedef dsn::ref_ptr<rw_task> rw_task_ptr;
 
 } // namespace dsn

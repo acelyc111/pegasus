@@ -31,20 +31,20 @@
 #include "disk_engine.h"
 
 namespace dsn {
-class aio_task;
+class rw_task;
 
-aio_provider::aio_provider(disk_engine *disk) : _engine(disk) {}
+rw_provider::rw_provider(disk_engine *disk) : _engine(disk) {}
 
-void aio_provider::complete_io(aio_task *aio, error_code err, uint64_t bytes)
+void rw_provider::complete_io(rw_task *rw_tsk, error_code err, uint64_t bytes)
 {
-    _engine->complete_io(aio, err, bytes);
+    _engine->complete_io(rw_tsk, err, bytes);
 }
 
 namespace tools {
 namespace internal_use_only {
-bool register_component_provider(const char *name, aio_provider::factory f, dsn::provider_type type)
+bool register_component_provider(const char *name, rw_provider::factory f, dsn::provider_type type)
 {
-    return dsn::utils::factory_store<aio_provider>::register_factory(name, f, type);
+    return dsn::utils::factory_store<rw_provider>::register_factory(name, f, type);
 }
 } // namespace internal_use_only
 } // namespace tools
