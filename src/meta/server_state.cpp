@@ -38,7 +38,6 @@
 #include <sstream> // IWYU pragma: keep
 #include <string>
 #include <thread>
-#include <type_traits>
 #include <unordered_map>
 
 #include "app_env_validator.h"
@@ -64,11 +63,11 @@
 #include "runtime/rpc/rpc_message.h"
 #include "runtime/rpc/serialization.h"
 #include "security/access_controller.h"
-#include "runtime/task/async_calls.h"
-#include "runtime/task/task.h"
-#include "runtime/task/task_spec.h"
 #include "server_load_balancer.h"
 #include "server_state.h"
+#include "task/async_calls.h"
+#include "task/task.h"
+#include "task/task_spec.h"
 #include "utils/autoref_ptr.h"
 #include "utils/binary_reader.h"
 #include "utils/binary_writer.h"
