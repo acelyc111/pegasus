@@ -156,17 +156,17 @@ public:
     // returns:
     //   - non-null if io task is in pending
     //   - null if error
-    dsn::aio_task_ptr commit_log_block(log_block &block,
-                                       int64_t offset,
+    dsn::rw_task_ptr commit_log_block(log_block &block,
+                                      int64_t offset,
+                                      dsn::task_code evt,
+                                      dsn::task_tracker *tracker,
+                                      rw_handler &&callback,
+                                      int hash);
+    dsn::rw_task_ptr commit_log_blocks(log_appender &pending,
                                        dsn::task_code evt,
                                        dsn::task_tracker *tracker,
-                                       aio_handler &&callback,
+                                       rw_handler &&callback,
                                        int hash);
-    dsn::aio_task_ptr commit_log_blocks(log_appender &pending,
-                                        dsn::task_code evt,
-                                        dsn::task_tracker *tracker,
-                                        aio_handler &&callback,
-                                        int hash);
 
     //
     // others

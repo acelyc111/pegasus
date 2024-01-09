@@ -81,8 +81,8 @@ typedef dsn::ref_ptr<rw_context> rw_context_ptr;
 class rw_task : public task
 {
 public:
-    rw_task(task_code code, const aio_handler &cb, int hash = 0, service_node *node = nullptr);
-    rw_task(task_code code, aio_handler &&cb, int hash = 0, service_node *node = nullptr);
+    rw_task(task_code code, const rw_handler &cb, int hash = 0, service_node *node = nullptr);
+    rw_task(task_code code, rw_handler &&cb, int hash = 0, service_node *node = nullptr);
 
     // tell the compiler that we want both the enqueue from base task and ours
     // to prevent the compiler complaining -Werror,-Woverloaded-virtual.
@@ -92,13 +92,13 @@ public:
     size_t get_transferred_size() const { return _transferred_size; }
 
     // The ownership of `rw_context` is held by `rw_task`.
-    rw_context *get_aio_context() { return _aio_ctx.get(); }
+    rw_context *get_rw_context() { return _rw_ctx.get(); }
 
     // merge buffers in _unmerged_write_buffers to a single merged buffer.
     // and store it in _merged_write_buffer_holder.
     void collapse();
 
-    // invoked on aio completed
+    // invoked on R/W operation completed
     virtual void exec() override
     {
         if (nullptr != _cb) {
@@ -114,10 +114,10 @@ protected:
     void clear_non_trivial_on_task_end() override { _cb = nullptr; }
 
 private:
-    rw_context_ptr _aio_ctx;
+    rw_context_ptr _rw_ctx;
     size_t _transferred_size;
-    aio_handler _cb;
+    rw_handler _cb;
 };
-typedef dsn::ref_ptr<rw_task> aio_task_ptr;
+typedef dsn::ref_ptr<rw_task> rw_task_ptr;
 
 } // namespace dsn

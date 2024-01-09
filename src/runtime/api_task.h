@@ -63,13 +63,13 @@ typedef std::function<void(dsn::error_code, dsn::message_ex *, dsn::message_ex *
 /// Parameters:
 ///  - error_code
 ///  - size_t: the read or written size of bytes from file.
-typedef std::function<void(dsn::error_code, size_t)> aio_handler;
+typedef std::function<void(dsn::error_code, size_t)> rw_handler;
 
 class task;
 class raw_task;
 class rpc_request_task;
 class rpc_response_task;
-class aio_task;
+class rw_task;
 }
 /*!
 apps updates the value at dsn_task_queue_virtual_length_ptr(..) to control

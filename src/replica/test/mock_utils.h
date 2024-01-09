@@ -397,7 +397,7 @@ public:
     dsn::task_ptr append(dsn::replication::mutation_ptr &mu,
                          dsn::task_code callback_code,
                          dsn::task_tracker *tracker,
-                         dsn::aio_handler &&callback,
+                         dsn::rw_handler &&callback,
                          int hash = 0,
                          int64_t *pending_size = nullptr) override
     {

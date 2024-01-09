@@ -82,7 +82,7 @@ public:
     virtual ::dsn::task_ptr append(mutation_ptr &mu,
                                    dsn::task_code callback_code,
                                    dsn::task_tracker *tracker,
-                                   aio_handler &&callback,
+                                   rw_handler &&callback,
                                    int hash = 0,
                                    int64_t *pending_size = nullptr) = 0;
 
@@ -393,7 +393,7 @@ public:
     ::dsn::task_ptr append(mutation_ptr &mu,
                            dsn::task_code callback_code,
                            dsn::task_tracker *tracker,
-                           aio_handler &&callback,
+                           rw_handler &&callback,
                            int hash = 0,
                            int64_t *pending_size = nullptr) override;
 

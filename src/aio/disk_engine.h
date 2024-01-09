@@ -79,20 +79,20 @@ private:
 class disk_engine : public utils::singleton<disk_engine>
 {
 public:
-    void write(rw_task *aio);
-    static aio_provider &provider() { return *instance()._provider.get(); }
+    void write(rw_task *rw_tsk);
+    static rw_provider &provider() { return *instance()._provider.get(); }
 
 private:
     // the object of disk_engine must be created by `singleton::instance`
     disk_engine();
     ~disk_engine() = default;
 
-    void process_write(rw_task *wk, uint64_t sz);
-    void complete_io(rw_task *aio, error_code err, uint64_t bytes);
+    void process_write(rw_task *rw_tsk, uint64_t sz);
+    void complete_io(rw_task *rw_tsk, error_code err, uint64_t bytes);
 
-    std::unique_ptr<aio_provider> _provider;
+    std::unique_ptr<rw_provider> _provider;
 
-    friend class aio_provider;
+    friend class rw_provider;
     friend class batch_write_io_task;
     friend class utils::singleton<disk_engine>;
 };

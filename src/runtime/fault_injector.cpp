@@ -171,9 +171,9 @@ static void fault_on_task_wait_post(task *caller, task *callee, bool succ) {}
 static void fault_on_task_cancel_post(task *caller, task *callee, bool succ) {}
 
 // return true means continue, otherwise early terminate with task::set_error_code
-static bool fault_on_aio_call(task *caller, aio_task *callee)
+static bool fault_on_aio_call(task *caller, rw_task *callee)
 {
-    switch (callee->get_aio_context()->type) {
+    switch (callee->get_rw_context()->type) {
     case rw_type::kRead:
         if (rand::next_double01() < s_fj_opts[callee->spec().code].disk_read_fail_ratio) {
             LOG_INFO("fault inject {} at {}", callee->spec().name, __FUNCTION__);
@@ -195,7 +195,7 @@ static bool fault_on_aio_call(task *caller, aio_task *callee)
     return true;
 }
 
-static void fault_on_aio_enqueue(aio_task *this_)
+static void fault_on_aio_enqueue(rw_task *this_)
 {
     fj_opt &opt = s_fj_opts[this_->spec().code];
     if (this_->delay_milliseconds() == 0 && task_ext_for_fj::get(this_) == 0) {

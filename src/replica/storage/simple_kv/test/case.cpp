@@ -632,12 +632,12 @@ void event_on_aio::init(rw_task *tsk)
 {
     event_on_task::init(tsk);
     // For flush task, the type is rw_type::kInvalid.
-    if (tsk->get_aio_context()->type == rw_type::kInvalid) {
+    if (tsk->get_rw_context()->type == rw_type::kInvalid) {
         return;
     }
-    _type = (tsk->get_aio_context()->type == rw_type::kRead ? "READ" : "WRITE");
-    _file_offset = boost::lexical_cast<std::string>(tsk->get_aio_context()->file_offset);
-    _buffer_size = boost::lexical_cast<std::string>(tsk->get_aio_context()->buffer_size);
+    _type = (tsk->get_rw_context()->type == rw_type::kRead ? "READ" : "WRITE");
+    _file_offset = boost::lexical_cast<std::string>(tsk->get_rw_context()->file_offset);
+    _buffer_size = boost::lexical_cast<std::string>(tsk->get_rw_context()->buffer_size);
 }
 
 void event_on_aio_enqueue::internal_to_string(std::ostream &oss) const

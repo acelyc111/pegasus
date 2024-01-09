@@ -105,7 +105,7 @@ public:
         _blocks.emplace_back(std::move(block));
     }
 
-    void append_mutation(const mutation_ptr &mu, const aio_task_ptr &cb);
+    void append_mutation(const mutation_ptr &mu, const rw_task_ptr &cb);
 
     size_t size() const { return _full_blocks_size + _blocks.crbegin()->size(); }
     size_t blob_count() const { return _full_blocks_blob_cnt + _blocks.crbegin()->data().size(); }
@@ -113,7 +113,7 @@ public:
     std::vector<mutation_ptr> mutations() const { return _mutations; }
 
     // The callback registered for each write.
-    const std::vector<aio_task_ptr> &callbacks() const { return _callbacks; }
+    const std::vector<rw_task_ptr> &callbacks() const { return _callbacks; }
 
     // Returns the heading block's start_offset.
     int64_t start_offset() const { return _blocks.cbegin()->start_offset(); }
@@ -131,7 +131,7 @@ protected:
     std::vector<log_block> _blocks;
     size_t _full_blocks_size{0};
     size_t _full_blocks_blob_cnt{0};
-    std::vector<aio_task_ptr> _callbacks;
+    std::vector<rw_task_ptr> _callbacks;
     std::vector<mutation_ptr> _mutations;
 };
 

@@ -149,7 +149,7 @@ private:
         size_t _begin, _end;             // [buffer[begin]..buffer[end]) contains unconsumed_data
         size_t _file_offset_of_buffer;   // file offset projected to buffer[0]
         bool _have_ongoing_task;
-        aio_task_ptr _task;
+        rw_task_ptr _task;
 
         buffer_t()
             : _buffer(new char[block_size_bytes]),

@@ -40,12 +40,12 @@
 
 namespace dsn {
 
-native_linux_aio_provider::native_linux_aio_provider(disk_engine *disk) : aio_provider(disk) {}
+native_linux_rw_provider::native_linux_rw_provider(disk_engine *disk) : rw_provider(disk) {}
 
-native_linux_aio_provider::~native_linux_aio_provider() {}
+native_linux_rw_provider::~native_linux_rw_provider() {}
 
 std::unique_ptr<rocksdb::RandomAccessFile>
-native_linux_aio_provider::open_read_file(const std::string &fname)
+native_linux_rw_provider::open_read_file(const std::string &fname)
 {
     std::unique_ptr<rocksdb::RandomAccessFile> rfile;
     auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
@@ -57,7 +57,7 @@ native_linux_aio_provider::open_read_file(const std::string &fname)
 }
 
 std::unique_ptr<rocksdb::RandomRWFile>
-native_linux_aio_provider::open_write_file(const std::string &fname)
+native_linux_rw_provider::open_write_file(const std::string &fname)
 {
     // rocksdb::NewRandomRWFile() doesn't act as the docs described, it will not create the
     // file if it not exists, and an error Status will be returned, so we try to create the
@@ -88,7 +88,7 @@ native_linux_aio_provider::open_write_file(const std::string &fname)
     return wfile;
 }
 
-error_code native_linux_aio_provider::close(rocksdb::RandomRWFile *wf)
+error_code native_linux_rw_provider::close(rocksdb::RandomRWFile *wf)
 {
     auto s = wf->Close();
     if (!s.ok()) {
@@ -99,7 +99,7 @@ error_code native_linux_aio_provider::close(rocksdb::RandomRWFile *wf)
     return ERR_OK;
 }
 
-error_code native_linux_aio_provider::flush(rocksdb::RandomRWFile *wf)
+error_code native_linux_rw_provider::flush(rocksdb::RandomRWFile *wf)
 {
     auto s = wf->Fsync();
     if (!s.ok()) {
@@ -110,26 +110,26 @@ error_code native_linux_aio_provider::flush(rocksdb::RandomRWFile *wf)
     return ERR_OK;
 }
 
-error_code native_linux_aio_provider::write(const rw_context &aio_ctx,
-                                            /*out*/ uint64_t *processed_bytes)
+error_code native_linux_rw_provider::write(const rw_context &rw_ctx,
+                                           /*out*/ uint64_t *processed_bytes)
 {
-    rocksdb::Slice data((const char *)(aio_ctx.buffer), aio_ctx.buffer_size);
-    auto s = aio_ctx.dfile->wfile()->Write(aio_ctx.file_offset, data);
+    rocksdb::Slice data((const char *)(rw_ctx.buffer), rw_ctx.buffer_size);
+    auto s = rw_ctx.dfile->wfile()->Write(rw_ctx.file_offset, data);
     if (!s.ok()) {
         LOG_ERROR("write file failed, err = {}", s.ToString());
         return ERR_FILE_OPERATION_FAILED;
     }
 
-    *processed_bytes = aio_ctx.buffer_size;
+    *processed_bytes = rw_ctx.buffer_size;
     return ERR_OK;
 }
 
-error_code native_linux_aio_provider::read(const rw_context &aio_ctx,
-                                           /*out*/ uint64_t *processed_bytes)
+error_code native_linux_rw_provider::read(const rw_context &rw_ctx,
+                                          /*out*/ uint64_t *processed_bytes)
 {
     rocksdb::Slice result;
-    auto s = aio_ctx.dfile->rfile()->Read(
-        aio_ctx.file_offset, aio_ctx.buffer_size, &result, (char *)(aio_ctx.buffer));
+    auto s = rw_ctx.dfile->rfile()->Read(
+        rw_ctx.file_offset, rw_ctx.buffer_size, &result, (char *)(rw_ctx.buffer));
     if (!s.ok()) {
         LOG_ERROR("read file failed, err = {}", s.ToString());
         return ERR_FILE_OPERATION_FAILED;
@@ -142,39 +142,39 @@ error_code native_linux_aio_provider::read(const rw_context &aio_ctx,
     return ERR_OK;
 }
 
-void native_linux_aio_provider::submit_aio_task(rw_task *aio_tsk)
+void native_linux_rw_provider::submit_rw_task(rw_task *rw_tsk)
 {
-    // for the tests which use simulator need sync submit for aio
+    // for the tests which use simulator need sync submit for R/W
     if (dsn_unlikely(service_engine::instance().is_simulator())) {
-        aio_internal(aio_tsk);
+        rw_internal(rw_tsk);
         return;
     }
 
-    ADD_POINT(aio_tsk->_tracer);
+    ADD_POINT(rw_tsk->_tracer);
     tasking::enqueue(
-        aio_tsk->code(), aio_tsk->tracker(), [=]() { aio_internal(aio_tsk); }, aio_tsk->hash());
+        rw_tsk->code(), rw_tsk->tracker(), [=]() { rw_internal(rw_tsk); }, rw_tsk->hash());
 }
 
-error_code native_linux_aio_provider::aio_internal(rw_task *aio_tsk)
+error_code native_linux_rw_provider::rw_internal(rw_task *rw_tsk)
 {
-    ADD_POINT(aio_tsk->_tracer);
-    rw_context *aio_ctx = aio_tsk->get_aio_context();
+    ADD_POINT(rw_tsk->_tracer);
+    rw_context *rw_ctx = rw_tsk->get_rw_context();
     error_code err = ERR_UNKNOWN;
     uint64_t processed_bytes = 0;
-    switch (aio_ctx->type) {
+    switch (rw_ctx->type) {
     case rw_type::kRead:
-        err = read(*aio_ctx, &processed_bytes);
+        err = read(*rw_ctx, &processed_bytes);
         break;
     case rw_type::kWrite:
-        err = write(*aio_ctx, &processed_bytes);
+        err = write(*rw_ctx, &processed_bytes);
         break;
     default:
         return err;
     }
 
-    ADD_CUSTOM_POINT(aio_tsk->_tracer, "completed");
+    ADD_CUSTOM_POINT(rw_tsk->_tracer, "completed");
 
-    complete_io(aio_tsk, err, processed_bytes);
+    complete_io(rw_tsk, err, processed_bytes);
     return err;
 }
 

@@ -108,7 +108,7 @@ TEST_P(aio_test, basic)
         {
             pegasus::stop_watch sw;
             uint64_t offset = 0;
-            std::list<aio_task_ptr> tasks;
+            std::list<rw_task_ptr> tasks;
             for (int i = 0; i < kTotalBufferCount; i++) {
                 char read_buffer[kUnitBufferLength + 1];
                 read_buffer[kUnitBufferLength] = 0;
@@ -132,7 +132,7 @@ TEST_P(aio_test, basic)
         {
             pegasus::stop_watch sw;
             uint64_t offset = 0;
-            std::list<aio_task_ptr> tasks;
+            std::list<rw_task_ptr> tasks;
             char read_buffers[kTotalBufferCount][kUnitBufferLength + 1];
             for (int i = 0; i < kTotalBufferCount; i++) {
                 read_buffers[i][kUnitBufferLength] = 0;
@@ -165,7 +165,7 @@ TEST_P(aio_test, basic)
         ASSERT_NE(wfile, nullptr);
 
         uint64_t offset = 0;
-        std::list<aio_task_ptr> tasks;
+        std::list<rw_task_ptr> tasks;
         for (int i = 0; i < kTotalBufferCount; i++) {
             auto t = ::dsn::file::write(wfile,
                                         kUnitBuffer.c_str(),
@@ -203,7 +203,7 @@ TEST_P(aio_test, basic)
         std::mt19937 gen(rd());
         std::shuffle(offsets.begin(), offsets.end(), gen);
 
-        std::list<aio_task_ptr> tasks;
+        std::list<rw_task_ptr> tasks;
         for (const auto &offset : offsets) {
             auto t = ::dsn::file::write(wfile,
                                         kUnitBuffer.c_str(),
@@ -231,7 +231,7 @@ TEST_P(aio_test, basic)
         ASSERT_NE(wfile, nullptr);
 
         uint64_t offset = 0;
-        std::list<aio_task_ptr> tasks;
+        std::list<rw_task_ptr> tasks;
         for (int i = 0; i < kTotalBufferCount; i++) {
             auto t = ::dsn::file::write(wfile,
                                         kUnitBuffer.c_str(),
@@ -260,7 +260,7 @@ TEST_P(aio_test, basic)
         ASSERT_NE(wfile, nullptr);
 
         uint64_t offset = 0;
-        std::list<aio_task_ptr> tasks;
+        std::list<rw_task_ptr> tasks;
         std::unique_ptr<dsn_file_buffer_t[]> buffers(new dsn_file_buffer_t[kBufferCountPerBatch]);
         for (int i = 0; i < kBufferCountPerBatch; i++) {
             buffers[i].buffer = static_cast<void *>(const_cast<char *>(kUnitBuffer.c_str()));
@@ -388,17 +388,17 @@ TEST_P(aio_test, dsn_file)
     uint64_t offset = 0;
     while (true) {
         aio_result rin;
-        aio_task_ptr tin = file::read(fin,
-                                      kUnitBuffer,
-                                      1024,
-                                      offset,
-                                      LPC_AIO_TEST_READ,
-                                      nullptr,
-                                      [&rin](dsn::error_code err, size_t sz) {
-                                          rin.err = err;
-                                          rin.sz = sz;
-                                      },
-                                      0);
+        rw_task_ptr tin = file::read(fin,
+                                     kUnitBuffer,
+                                     1024,
+                                     offset,
+                                     LPC_AIO_TEST_READ,
+                                     nullptr,
+                                     [&rin](dsn::error_code err, size_t sz) {
+                                         rin.err = err;
+                                         rin.sz = sz;
+                                     },
+                                     0);
         ASSERT_NE(nullptr, tin);
 
         if (dsn::tools::get_current_tool()->name() != "simulator") {
@@ -420,17 +420,17 @@ TEST_P(aio_test, dsn_file)
         }
 
         aio_result rout;
-        aio_task_ptr tout = file::write(fout,
-                                        kUnitBuffer,
-                                        rin.sz,
-                                        offset,
-                                        LPC_AIO_TEST_WRITE,
-                                        nullptr,
-                                        [&rout](dsn::error_code err, size_t sz) {
-                                            rout.err = err;
-                                            rout.sz = sz;
-                                        },
-                                        0);
+        rw_task_ptr tout = file::write(fout,
+                                       kUnitBuffer,
+                                       rin.sz,
+                                       offset,
+                                       LPC_AIO_TEST_WRITE,
+                                       nullptr,
+                                       [&rout](dsn::error_code err, size_t sz) {
+                                           rout.err = err;
+                                           rout.sz = sz;
+                                       },
+                                       0);
         ASSERT_NE(nullptr, tout);
         tout->wait();
         ASSERT_EQ(ERR_OK, rout.err);

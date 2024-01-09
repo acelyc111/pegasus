@@ -89,47 +89,45 @@ static void tracer_on_task_enqueue(task *caller, task *callee)
              tls_dsn.last_worker_queue_size);
 }
 
-static void tracer_on_task_begin(task *this_)
+static void tracer_on_task_begin(task *tsk)
 {
-    switch (this_->spec().type) {
+    switch (tsk->spec().type) {
     case dsn_task_type_t::TASK_TYPE_COMPUTE:
-    case dsn_task_type_t::TASK_TYPE_AIO:
-        LOG_INFO("{} EXEC BEGIN, task_id = {:#018x}", this_->spec().name, this_->id());
+    case dsn_task_type_t::TASK_TYPE_RW:
+        LOG_INFO("{} EXEC BEGIN, task_id = {:#018x}", tsk->spec().name, tsk->id());
         break;
     case dsn_task_type_t::TASK_TYPE_RPC_REQUEST: {
-        rpc_request_task *tsk = (rpc_request_task *)this_;
+        auto *t = (rpc_request_task *)tsk;
         LOG_INFO("{} EXEC BEGIN, task_id = {:#018x}, {} => {}, trace_id = {:#018x}",
-                 this_->spec().name,
-                 this_->id(),
-                 tsk->get_request()->header->from_address,
-                 tsk->get_request()->to_address,
-                 tsk->get_request()->header->trace_id);
+                 t->spec().name,
+                 t->id(),
+                 t->get_request()->header->from_address,
+                 t->get_request()->to_address,
+                 t->get_request()->header->trace_id);
     } break;
     case dsn_task_type_t::TASK_TYPE_RPC_RESPONSE: {
-        rpc_response_task *tsk = (rpc_response_task *)this_;
+        auto *t = (rpc_response_task *)tsk;
         LOG_INFO("{} EXEC BEGIN, task_id = {:#018x}, {} => {}, trace_id = {:#018x}",
-                 this_->spec().name,
-                 this_->id(),
-                 tsk->get_request()->to_address,
-                 tsk->get_request()->header->from_address,
-                 tsk->get_request()->header->trace_id);
+                 t->spec().name,
+                 t->id(),
+                 t->get_request()->to_address,
+                 t->get_request()->header->from_address,
+                 t->get_request()->header->trace_id);
     } break;
     default:
         break;
     }
 }
 
-static void tracer_on_task_end(task *this_)
+static void tracer_on_task_end(task *tsk)
 {
-    LOG_INFO("{} EXEC END, task_id = {:#018x}, err = {}",
-             this_->spec().name,
-             this_->id(),
-             this_->error());
+    LOG_INFO(
+        "{} EXEC END, task_id = {:#018x}, err = {}", tsk->spec().name, tsk->id(), tsk->error());
 }
 
-static void tracer_on_task_cancelled(task *this_)
+static void tracer_on_task_cancelled(task *tsk)
 {
-    LOG_INFO("{} CANCELLED, task_id = {:#018x}", this_->spec().name, this_->id());
+    LOG_INFO("{} CANCELLED, task_id = {:#018x}", tsk->spec().name, tsk->id());
 }
 
 static void tracer_on_task_wait_pre(task *caller, task *callee, uint32_t timeout_ms) {}
@@ -139,20 +137,20 @@ static void tracer_on_task_wait_post(task *caller, task *callee, bool succ) {}
 static void tracer_on_task_cancel_post(task *caller, task *callee, bool succ) {}
 
 // return true means continue, otherwise early terminate with task::set_error_code
-static void tracer_on_aio_call(task *caller, aio_task *callee)
+static void tracer_on_aio_call(task *caller, rw_task *callee)
 {
     LOG_INFO("{} AIO.CALL, task_id = {:#018x}, offset = {}, size = {}",
              callee->spec().name,
              callee->id(),
-             callee->get_aio_context()->file_offset,
-             callee->get_aio_context()->buffer_size);
+             callee->get_rw_context()->file_offset,
+             callee->get_rw_context()->buffer_size);
 }
 
-static void tracer_on_aio_enqueue(aio_task *this_)
+static void tracer_on_aio_enqueue(rw_task *tsk)
 {
     LOG_INFO("{} AIO.ENQUEUE, task_id = {:#018x}, queue size = {}",
-             this_->spec().name,
-             this_->id(),
+             tsk->spec().name,
+             tsk->id(),
              tls_dsn.last_worker_queue_size);
 }
 

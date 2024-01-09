@@ -47,7 +47,7 @@ typedef enum dsn_task_type_t {
     TASK_TYPE_RPC_REQUEST,  ///< task handling rpc request
     TASK_TYPE_RPC_RESPONSE, ///< task handling rpc response or timeout
     TASK_TYPE_COMPUTE,      ///< async calls or timers
-    TASK_TYPE_AIO,          ///< callback for file read and write
+    TASK_TYPE_RW,           ///< callback for file read and write
     TASK_TYPE_CONTINUATION, ///< above tasks are seperated into several continuation
                             ///< tasks by thread-synchronization operations.
                             ///< so that each "task" is non-blocking
@@ -60,7 +60,7 @@ ENUM_BEGIN(dsn_task_type_t, TASK_TYPE_INVALID)
 ENUM_REG(TASK_TYPE_RPC_REQUEST)
 ENUM_REG(TASK_TYPE_RPC_RESPONSE)
 ENUM_REG(TASK_TYPE_COMPUTE)
-ENUM_REG(TASK_TYPE_AIO)
+ENUM_REG(TASK_TYPE_RW)
 ENUM_REG(TASK_TYPE_CONTINUATION)
 ENUM_END(dsn_task_type_t)
 
@@ -152,7 +152,7 @@ private:
     __selectany const ::dsn::task_code x(#name, TASK_TYPE_COMPUTE, pri, pool);
 
 #define DEFINE_NAMED_TASK_CODE_AIO(x, name, pri, pool)                                             \
-    __selectany const ::dsn::task_code x(#name, TASK_TYPE_AIO, pri, pool);
+    __selectany const ::dsn::task_code x(#name, TASK_TYPE_RW, pri, pool);
 
 #define DEFINE_NAMED_TASK_CODE_RPC(x, name, pri, pool)                                             \
     __selectany const ::dsn::task_code x(#name, TASK_TYPE_RPC_REQUEST, pri, pool);                 \
