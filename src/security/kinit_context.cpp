@@ -152,7 +152,7 @@ error_s kinit_context::kinit()
                        "couldn't parse principal");
 
     // get _user_name from _principal
-    RETURN_NOT_OK(parse_username_from_principal());
+    RETURN_ERRS_NOT_OK(parse_username_from_principal());
 
     // get a handle for a key table.
     KRB5_RETURN_NOT_OK(krb5_kt_resolve(_krb5_context, FLAGS_krb5_keytab, &_keytab),
@@ -171,7 +171,7 @@ error_s kinit_context::kinit()
                        "alloc get_init_creds_opt structure failed");
 
     // get and schedule to renew credentials from KDC and store it into _ccache
-    RETURN_NOT_OK(get_credentials());
+    RETURN_ERRS_NOT_OK(get_credentials());
     schedule_renew_credentials();
 
     return error_s::ok();
@@ -192,7 +192,7 @@ error_s kinit_context::get_principal_without_kinit()
                        "get principal from cache failed");
 
     // get '_user_name' from '_principal'
-    RETURN_NOT_OK(parse_username_from_principal());
+    RETURN_ERRS_NOT_OK(parse_username_from_principal());
 
     return error_s::ok();
 }

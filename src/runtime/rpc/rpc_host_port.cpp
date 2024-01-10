@@ -197,7 +197,7 @@ error_s host_port::resolve_addresses(std::vector<rpc_address> &addresses) const
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     AddrInfo result;
-    RETURN_NOT_OK(GetAddrInfo(_host, hints, &result));
+    RETURN_ERRS_NOT_OK(GetAddrInfo(_host, hints, &result));
 
     // DNS may return the same host multiple times. We want to return only the unique
     // addresses, but in the same order as DNS returned them. To do so, we keep track

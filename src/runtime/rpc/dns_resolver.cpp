@@ -54,7 +54,7 @@ error_s dns_resolver::resolve_addresses(const host_port &hp, std::vector<rpc_add
     }
 
     std::vector<rpc_address> resolved_addresses;
-    RETURN_NOT_OK(hp.resolve_addresses(resolved_addresses));
+    RETURN_ERRS_NOT_OK(hp.resolve_addresses(resolved_addresses));
 
     {
         utils::auto_write_lock l(_lock);

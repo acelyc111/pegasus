@@ -313,7 +313,7 @@ dsn::error_s http_client::exec_method(const http_client::recv_callback &callback
     // `callback`.
     _recv_callback = &callback;
 
-    RETURN_NOT_OK(process_header());
+    RETURN_ERRS_NOT_OK(process_header());
 
     RETURN_IF_EXEC_METHOD_NOT_OK();
     return dsn::error_s::ok();

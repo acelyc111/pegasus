@@ -225,16 +225,23 @@ USER_DEFINED_STRUCTURE_FORMATTER(::dsn::error_s);
 
 #define FMT_ERR(ec, msg, args...) error_s::make(ec, fmt::format(msg, ##args))
 
-#define RETURN_NOT_OK(s)                                                                           \
+#define RETURN_ERRS_NOT_OK(exp)                                                                    \
     do {                                                                                           \
-        const ::dsn::error_s &_s = (s);                                                            \
+        const ::dsn::error_s &_s = (exp);                                                          \
         if (dsn_unlikely(!_s)) {                                                                   \
             return _s;                                                                             \
         }                                                                                          \
     } while (false);
 
-#define CHECK_OK(s, ...)                                                                           \
+#define CHECK_OK(exp, ...)                                                                         \
     do {                                                                                           \
-        const ::dsn::error_s &_s = (s);                                                            \
-        CHECK(_s.is_ok(), fmt::format(__VA_ARGS__));                                               \
+        const ::dsn::error_s &_s = (exp);                                                          \
+        CHECK(_s.is_ok(), "{}: {}", _s, fmt::format(__VA_ARGS__));                                 \
+    } while (false);
+
+#define RETURN_ERRS_NOT_TRUE(exp, code, ...)                                                       \
+    do {                                                                                           \
+        if (dsn_unlikely(!exp)) {                                                                  \
+            return dsn::error_s::make(code, fmt::format(__VA_ARGS__));                             \
+        }                                                                                          \
     } while (false);
