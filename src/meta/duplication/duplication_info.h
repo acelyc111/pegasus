@@ -193,6 +193,11 @@ public:
         return os << di.to_string();
     }
 
+    friend std::ostream &operator<<(std::ostream &os, const duplication_info &di)
+    {
+        return os << di.to_string();
+    }
+
     const char *log_prefix() const { return prefix_for_log.c_str(); }
 
 private:
