@@ -1085,6 +1085,7 @@ function run_start_onebox_instance()
             exit 1
         fi
         cd $dir
+        ulimit -n 1000000
         $PWD/pegasus_server config.ini -app_list replica &>result &
         PID=$!
         ps -ef | grep '/pegasus_server config.ini' | grep "\<$PID\>"

@@ -533,6 +533,13 @@ static command_executor commands[] = {
         set_max_replica_count,
     },
     {
+        "local_partition_split",
+        "split the local partitions offline. It's needed to stop the replica server before "
+        "executing this command.",
+        local_partition_split_help.c_str(),
+        local_partition_split,
+    },
+    {
         "exit", "exit shell", "", exit_shell,
     },
     {
