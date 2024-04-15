@@ -40,6 +40,9 @@
 #include <utility>
 #include <vector>
 
+#include <prometheus/exposer.h>
+#include <prometheus/registry.h>
+
 #include "absl/strings/string_view.h"
 #include "common/json_helper.h"
 #include "http/http_server.h"
@@ -551,6 +554,24 @@ inline std::string take_snapshot_as_json(T *m, const metric_filters &filters)
         [m, &filters](metric_json_writer &writer) { m->take_snapshot(writer, filters); });
 }
 
+inline std::string encode_as_prometheus(std::function<void(metric_prometheus_writer &)> encoder)
+{
+    std::ostringstream out;
+//    rapidjson::OStreamWrapper wrapper(out);
+//    metric_json_writer writer(wrapper);
+//    encoder(writer);
+    return out.str();
+}
+
+template <typename T>
+inline std::string take_snapshot_as_prometheus(T *m, const metric_filters &filters)
+{
+    // create a metrics registry
+    auto prom_registry = std::make_shared<prometheus::Registry>();
+    return encode_as_prometheus(
+            [m, prom_registry, &filters]() { m->take_snapshot(prom_registry, filters); });
+}
+
 class metric_entity_prototype
 {
 public:
@@ -592,6 +613,8 @@ private:
     void get_metrics_handler(const http_request &req, http_response &resp);
 
     metric_registry *_registry;
+
+    prometheus::Exposer _exposer;
 
     DISALLOW_COPY_AND_ASSIGN(metrics_http_service);
 };

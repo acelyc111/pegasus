@@ -278,7 +278,7 @@ const std::string metrics_http_service::kMetricsQuerySubPath("metrics");
 const std::string
     metrics_http_service::kMetricsQueryPath('/' + metrics_http_service::kMetricsQuerySubPath);
 
-metrics_http_service::metrics_http_service(metric_registry *registry) : _registry(registry)
+metrics_http_service::metrics_http_service(metric_registry *registry) : _registry(registry), _exposer("127.0.0.1:8080")
 {
     register_handler(kMetricsQuerySubPath,
                      std::bind(&metrics_http_service::get_metrics_handler,
@@ -335,10 +335,14 @@ void metrics_http_service::get_metrics_handler(const http_request &req, http_res
     }
 
     metric_filters filters;
+    // Default in JSON format, otherwise in Prometheus format.
+    bool prometheus_format = false;
     bool with_metric_fields = false;
     bool detail = false;
     for (const auto &field : req.query_args) {
-        if (field.first == "with_metric_fields") {
+        if (field.first == "prometheus") {
+            prometheus_format = true;
+        } else if (field.first == "with_metric_fields") {
             parse_as(field.second, filters.with_metric_fields);
             with_metric_fields = true;
         } else if (field.first == "types") {
@@ -377,7 +381,11 @@ void metrics_http_service::get_metrics_handler(const http_request &req, http_res
         filters.with_metric_fields = kBriefMetricFields;
     }
 
-    resp.body = take_snapshot_as_json(_registry, filters);
+    if (prometheus_format) {
+        resp.body = take_snapshot_as_prometheus(filters);
+    } else {
+        resp.body = take_snapshot_as_json(_registry, filters);
+    }
     resp.status_code = http_status_code::kOk;
 }
 
