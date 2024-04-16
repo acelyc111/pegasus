@@ -28,17 +28,19 @@ set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-    pegasus_base
-    pegasus_client_static
-    dsn_client
-    dsn_replication_common
-    dsn_dist_cmd
-    dsn_runtime
-    dsn_utils
-    sasl2
-    gssapi_krb5
-    krb5
-    )
+        pegasus_base
+        pegasus_client_static
+        dsn_client
+        dsn_replication_common
+        dsn_dist_cmd
+        dsn_runtime
+        dsn_utils
+        sasl2
+        gssapi_krb5
+        krb5
+        prometheus-cpp-core
+        prometheus-cpp-pull)
+
 set(MY_BINPLACES "${CMAKE_CURRENT_SOURCE_DIR}/config.ini")
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)

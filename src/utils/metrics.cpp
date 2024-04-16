@@ -243,34 +243,68 @@ void metric_entity::take_snapshot(const std::shared_ptr<prometheus::Registry> &p
 
     // At least one metric of this entity has been chosen, thus take snapshot and encode
     // this entity as json format.
-    for (const auto &[mtx_pt*, mtx] : target_metrics) {
-        Collectable *collectable = nullptr;
+    for (const auto & [ mtx_pt, mtx ] : target_metrics) {
         switch (mtx_pt->type()) {
-        case metric_type::kGauge:
-            collectable = prometheus::BuildGauge();
+        case metric_type::kGauge: {
+            auto &family = prometheus::BuildGauge()
+                               .Name(mtx_pt->name().data())
+                               .Help(fmt::format(
+                                   "{}, {}", mtx_pt->description(), enum_to_string(mtx_pt->unit())))
+                               .Labels({{kMetricEntityTypeField, _prototype->name()}})
+                               .Register(*prometheus_registry);
+            for (const auto &attr : my_attrs) {
+                family.Add({{attr.first, attr.second}});
+            }
+            auto &metric = family.Add({{kMetricEntityIdField, _id}});
+            mtx->take_snapshot(&metric);
             break;
-        case metric_type::kCounter:
-            collectable = prometheus::BuildCounter();
+        }
+        case metric_type::kCounter: {
+            auto &family = prometheus::BuildCounter()
+                               .Name(mtx_pt->name().data())
+                               .Help(fmt::format(
+                                   "{}, {}", mtx_pt->description(), enum_to_string(mtx_pt->unit())))
+                               .Labels({{kMetricEntityTypeField, _prototype->name()}})
+                               .Register(*prometheus_registry);
+            for (const auto &attr : my_attrs) {
+                family.Add({{attr.first, attr.second}});
+            }
+            auto &metric = family.Add({{kMetricEntityIdField, _id}});
+            mtx->take_snapshot(&metric);
             break;
-        case metric_type::kVolatileCounter:
-            collectable = prometheus::BuildCounter();
+        }
+        case metric_type::kVolatileCounter: {
+            auto &family = prometheus::BuildCounter()
+                               .Name(mtx_pt->name().data())
+                               .Help(fmt::format(
+                                   "{}, {}", mtx_pt->description(), enum_to_string(mtx_pt->unit())))
+                               .Labels({{kMetricEntityTypeField, _prototype->name()}})
+                               .Register(*prometheus_registry);
+            for (const auto &attr : my_attrs) {
+                family.Add({{attr.first, attr.second}});
+            }
+            auto &metric = family.Add({{kMetricEntityIdField, _id}});
+            mtx->take_snapshot(&metric);
             break;
-        case metric_type::kPercentile:
-            collectable = prometheus::BuildSummary();
-            break;
+        }
+        case metric_type::kPercentile: {
+            //            auto &family = prometheus::BuildSummary()
+            //                    .Name(mtx_pt->name().data())
+            //                    .Help(fmt::format("{}, {}", mtx_pt->description(),
+            //                    enum_to_string(mtx_pt->unit())))
+            //                    .Labels({{kMetricEntityTypeField, _prototype->name()}})
+            //                    .Register(*prometheus_registry);
+            //            for (const auto &attr: my_attrs) {
+            //                family.Add({{attr.first, attr.second}});
+            //            }
+            //            auto &metric = family.Add({{kMetricEntityIdField, _id}});
+            //            mtx->take_snapshot(&metric, filters);
+            //            break;
+        }
         default:
             LOG_FATAL("unknown metric type: {}", static_cast<int>(mtx_pt->type()));
             break;
         }
-        collectable->Name(mtx_pt->name())
-            .Help(fmt::format("{}, {}", mtx_pt->description(), mtx_pt->unit()))
-            .Labels({{kMetricEntityTypeField, _prototype->name()}})
-            .Register(*prometheus_registry);
-        for (const auto &attr : my_attrs) {
-            collectable->Add({{attr.first, attr.second}});
-        }
-        auto *metric = collectable->Add({{kMetricEntityIdField, _id}});
-        mtx->take_snapshot(metric, filters);
     }
 }
 
@@ -347,7 +381,8 @@ const std::string metrics_http_service::kMetricsQuerySubPath("metrics");
 const std::string
     metrics_http_service::kMetricsQueryPath('/' + metrics_http_service::kMetricsQuerySubPath);
 
-metrics_http_service::metrics_http_service(metric_registry *registry) : _registry(registry), _exposer("127.0.0.1:8080")
+metrics_http_service::metrics_http_service(metric_registry *registry)
+    : _registry(registry), _exposer("127.0.0.1:8080")
 {
     register_handler(kMetricsQuerySubPath,
                      std::bind(&metrics_http_service::get_metrics_handler,
@@ -578,10 +613,11 @@ void encode_cluster(dsn::metric_json_writer &writer)
 void encode_cluster(const std::shared_ptr<prometheus::Registry> &prometheus_registry)
 {
     prometheus::BuildInfo()
-            .Name(kMetricClusterField)
-            .Help("Cluster name")
-            .Labels({{kMetricClusterField, utils::is_empty(FLAGS_cluster_name) ? "unknown" : FLAGS_cluster_name}})
-            .Register(*prometheus_registry);
+        .Name(kMetricClusterField)
+        .Help("Cluster name")
+        .Labels({{kMetricClusterField,
+                  utils::is_empty(FLAGS_cluster_name) ? "unknown" : FLAGS_cluster_name}})
+        .Register(*prometheus_registry);
 }
 
 void encode_role(dsn::metric_json_writer &writer)
@@ -596,10 +632,10 @@ void encode_role(const std::shared_ptr<prometheus::Registry> &prometheus_registr
 {
     const auto *const node = dsn::task::get_current_node2();
     prometheus::BuildInfo()
-            .Name(kMetricRoleField)
-            .Help("Role name")
-            .Labels({{kMetricRoleField, node ? node->get_service_app_info().full_name : "unknown"}})
-            .Register(*prometheus_registry);
+        .Name(kMetricRoleField)
+        .Help("Role name")
+        .Labels({{kMetricRoleField, node ? node->get_service_app_info().full_name : "unknown"}})
+        .Register(*prometheus_registry);
 }
 
 void encode_host(dsn::metric_json_writer &writer)
@@ -614,10 +650,11 @@ void encode_host(const std::shared_ptr<prometheus::Registry> &prometheus_registr
 {
     char hostname[1024];
     prometheus::BuildInfo()
-            .Name(kMetricHostField)
-            .Help("Host name")
-            .Labels({{kMetricHostField, ::gethostname(hostname, sizeof(hostname)) == 0 ? hostname : "unknown"}})
-            .Register(*prometheus_registry);
+        .Name(kMetricHostField)
+        .Help("Host name")
+        .Labels({{kMetricHostField,
+                  ::gethostname(hostname, sizeof(hostname)) == 0 ? hostname : "unknown"}})
+        .Register(*prometheus_registry);
 }
 
 void encode_port(dsn::metric_json_writer &writer)
@@ -632,10 +669,11 @@ void encode_port(const std::shared_ptr<prometheus::Registry> &prometheus_registr
 {
     const auto *const rpc = dsn::task::get_current_rpc2();
     prometheus::BuildInfo()
-            .Name(kMetricPortField)
-            .Help("Service RPC port")
-            .Labels({{kMetricPortField, rpc ? std::to_string(rpc->primary_host_port().port()) : "unknown"}})
-            .Register(*prometheus_registry);
+        .Name(kMetricPortField)
+        .Help("Service RPC port")
+        .Labels(
+            {{kMetricPortField, rpc ? std::to_string(rpc->primary_host_port().port()) : "unknown"}})
+        .Register(*prometheus_registry);
 }
 
 void encode_timestamp_ns(dsn::metric_json_writer &writer)
@@ -648,10 +686,10 @@ void encode_timestamp_ns(dsn::metric_json_writer &writer)
 void encode_timestamp_ns(const std::shared_ptr<prometheus::Registry> &prometheus_registry)
 {
     const auto *const rpc = dsn::task::get_current_rpc2();
-    auto& ts = prometheus::BuildGauge()
-            .Name(kMetricTimestampNsField)
-            .Help("Current timestamp in nanoseconds")
-            .Register(*prometheus_registry);
+    auto &ts = prometheus::BuildGauge()
+                   .Name(kMetricTimestampNsField)
+                   .Help("Current timestamp in nanoseconds")
+                   .Register(*prometheus_registry);
     ts.Add({}).Set(dsn_now_ns());
 }
 
@@ -677,8 +715,9 @@ void metric_registry::encode_entities(metric_json_writer &writer,
     writer.EndArray();
 }
 
-void metric_registry::encode_entities(const std::shared_ptr<prometheus::Registry> &prometheus_registry,
-                                      const metric_filters &filters) const
+void metric_registry::encode_entities(
+    const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+    const metric_filters &filters) const
 {
     utils::auto_read_lock l(_lock);
 
@@ -699,8 +738,9 @@ void metric_registry::take_snapshot(metric_json_writer &writer, const metric_fil
     writer.EndObject();
 }
 
-void metric_registry::take_snapshot(const std::shared_ptr<prometheus::Registry> &prometheus_registry,
-                                    const metric_filters &filters) const
+void metric_registry::take_snapshot(
+    const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+    const metric_filters &filters) const
 {
     encode_cluster(prometheus_registry);
     encode_role(prometheus_registry);

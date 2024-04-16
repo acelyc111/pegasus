@@ -24,7 +24,9 @@ set(MY_PROJ_LIBS
         dsn_meta_server
         dsn_replication_common
         dsn_utils
-        gtest)
+        gtest
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 set(MY_BINPLACES
         run.sh)
 dsn_add_test()

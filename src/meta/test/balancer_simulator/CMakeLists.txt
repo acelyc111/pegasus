@@ -30,7 +30,9 @@ set(MY_PROJ_LIBS
         dsn_meta_server
         dsn_ranger
         dsn_replication_common
-        gtest)
+        gtest
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES "")
 dsn_add_test()

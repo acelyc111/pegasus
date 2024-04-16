@@ -22,23 +22,24 @@ project(${MY_PROJ_NAME} C CXX)
 # You can manually set MY_PROJ_SRC to include source files under other directories.
 set(MY_PROJ_SRC "")
 
-# Search mode for source files under CURRENT project directory?
+# Search mode for source filÎes under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search
 # "GLOB" for non-recursive search
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-    dsn_client
-    dsn_replication_common
-    dsn_utils
-    pegasus_client_static
-    gtest
-    sasl2
-    gssapi_krb5
-    krb5
-    function_test_utils
-    test_utils
-    )
+        dsn_client
+        dsn_replication_common
+        dsn_utils
+        pegasus_client_static
+        gtest
+        sasl2
+        gssapi_krb5
+        krb5
+        function_test_utils
+        test_utils
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

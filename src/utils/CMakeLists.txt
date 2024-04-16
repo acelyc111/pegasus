@@ -38,7 +38,8 @@ set(MY_PROJ_LIBS
         zstd
         snappy
         absl::strings
-        prometheus-cpp-core)
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 
 # Extra files that will be installed
 set(MY_BINPLACES "")
