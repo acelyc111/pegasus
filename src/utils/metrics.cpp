@@ -393,6 +393,8 @@ metrics_http_service::metrics_http_service(metric_registry *registry)
                      "..][&attributes=attr1,value1,attr2,value2,...][&metrics=metric1,metric2,...]["
                      "&detail=true|false]"
                      "Query the node metrics.");
+    _prometheus_registry = std::make_shared<prometheus::Registry>();
+    _exposer.RegisterCollectable(_prometheus_registry);
 }
 
 namespace {
@@ -486,7 +488,7 @@ void metrics_http_service::get_metrics_handler(const http_request &req, http_res
     }
 
     if (prometheus_format) {
-        resp.body = take_snapshot_as_prometheus(_registry, filters);
+        take_snapshot_as_prometheus(_registry, _prometheus_registry, filters);
     } else {
         resp.body = take_snapshot_as_json(_registry, filters);
     }

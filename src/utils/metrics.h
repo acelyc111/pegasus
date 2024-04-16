@@ -349,7 +349,8 @@ namespace dsn {
 class metric;                  // IWYU pragma: keep
 class metric_entity_prototype; // IWYU pragma: keep
 class metric_prototype;        // IWYU pragma: keep
-struct metric_filters;         // IWYU pragma: keep
+class metric_registry;
+struct metric_filters; // IWYU pragma: keep
 
 using metric_ptr = ref_ptr<metric>;
 
@@ -559,24 +560,6 @@ inline std::string take_snapshot_as_json(T *m, const metric_filters &filters)
         [m, &filters](metric_json_writer &writer) { m->take_snapshot(writer, filters); });
 }
 
-inline std::string encode_as_prometheus(std::function<void()> encoder)
-{
-    std::ostringstream out;
-    //    rapidjson::OStreamWrapper wrapper(out);
-    //    metric_json_writer writer(wrapper);
-    //    encoder(writer);
-    return out.str();
-}
-
-template <typename T>
-inline std::string take_snapshot_as_prometheus(T *m, const metric_filters &filters)
-{
-    // create a metrics registry
-    auto prom_registry = std::make_shared<prometheus::Registry>();
-    return encode_as_prometheus(
-        [m, prom_registry, &filters]() { m->take_snapshot(prom_registry, filters); });
-}
-
 class metric_entity_prototype
 {
 public:
@@ -595,8 +578,6 @@ private:
 
     DISALLOW_COPY_AND_ASSIGN(metric_entity_prototype);
 };
-
-class metric_registry; // IWYU pragma: keep
 
 class metrics_http_service : public http_server_base
 {
@@ -620,6 +601,7 @@ private:
     metric_registry *_registry;
 
     prometheus::Exposer _exposer;
+    std::shared_ptr<prometheus::Registry> _prometheus_registry;
 
     DISALLOW_COPY_AND_ASSIGN(metrics_http_service);
 };
@@ -776,6 +758,14 @@ private:
 
     DISALLOW_COPY_AND_ASSIGN(metric_registry);
 };
+
+inline void
+take_snapshot_as_prometheus(metric_registry *registry,
+                            const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+                            const metric_filters &filters)
+{
+    registry->take_snapshot(prometheus_registry, filters);
+}
 
 // metric_type is needed while metrics are collected to monitoring systems. Generally
 // each monitoring system has its own types of metrics: firstly we should know which
