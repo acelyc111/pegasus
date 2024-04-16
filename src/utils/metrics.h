@@ -738,7 +738,7 @@ private:
                                             const metric_entity::attr_map &attrs);
 
     void encode_entities(metric_json_writer &writer, const metric_filters &filters) const;
-    void encode_entities(Collectable *collectable,
+    void encode_entities(prometheus::Collectable *collectable,
                          const metric_filters &filters) const;
 
     // These functions are used to retire stale entities.
@@ -978,7 +978,7 @@ public:
     // Take snapshot of each metric to collect current values as json format with fields chosen
     // by `filters`.
     virtual void take_snapshot(metric_json_writer &writer, const metric_filters &filters) = 0;
-    virtual void take_snapshot(Collectable *collectable, const metric_filters &filters) = 0;
+    virtual void take_snapshot(prometheus::Collectable *collectable, const metric_filters &filters) = 0;
 
 protected:
     explicit metric(const metric_prototype *prototype);
@@ -998,19 +998,6 @@ protected:
 
         writer.Key(field_name.c_str());
         json::json_encode(writer, value);
-    }
-
-    template <typename T, >
-    static inline void encode(Collectable *collectable,
-                              const std::string &field_name,
-                              const T &value,
-                              const metric_filters &filters)
-    {
-        if (!filters.match_with_metric_field(field_name)) {
-            return;
-        }
-
-        prom_metric.Add({{field_name, fmt::format("{}", value)}});
     }
 
     // Encode the metric type as json format, if it is chosen by `filters`.
