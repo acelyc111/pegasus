@@ -383,6 +383,8 @@ public:
     ref_ptr<MetricType> find_or_create(const metric_prototype *prototype, Args &&... args);
 
     void take_snapshot(metric_json_writer &writer, const metric_filters &filters) const;
+    void take_snapshot(const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+                       const metric_filters &filters) const;
 
 private:
     friend class metric_registry;
@@ -554,7 +556,7 @@ inline std::string take_snapshot_as_json(T *m, const metric_filters &filters)
         [m, &filters](metric_json_writer &writer) { m->take_snapshot(writer, filters); });
 }
 
-inline std::string encode_as_prometheus(std::function<void(metric_prometheus_writer &)> encoder)
+inline std::string encode_as_prometheus(std::function<void()> encoder)
 {
     std::ostringstream out;
 //    rapidjson::OStreamWrapper wrapper(out);
@@ -712,6 +714,9 @@ public:
 
     void take_snapshot(metric_json_writer &writer, const metric_filters &filters) const;
 
+    void take_snapshot(const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+                       const metric_filters &filters) const;
+
 private:
     friend class metric_entity_prototype;
     friend class utils::singleton<metric_registry>;
@@ -733,6 +738,8 @@ private:
                                             const metric_entity::attr_map &attrs);
 
     void encode_entities(metric_json_writer &writer, const metric_filters &filters) const;
+    void encode_entities(Collectable *collectable,
+                         const metric_filters &filters) const;
 
     // These functions are used to retire stale entities.
     //
@@ -971,6 +978,7 @@ public:
     // Take snapshot of each metric to collect current values as json format with fields chosen
     // by `filters`.
     virtual void take_snapshot(metric_json_writer &writer, const metric_filters &filters) = 0;
+    virtual void take_snapshot(Collectable *collectable, const metric_filters &filters) = 0;
 
 protected:
     explicit metric(const metric_prototype *prototype);
@@ -990,6 +998,19 @@ protected:
 
         writer.Key(field_name.c_str());
         json::json_encode(writer, value);
+    }
+
+    template <typename T, >
+    static inline void encode(Collectable *collectable,
+                              const std::string &field_name,
+                              const T &value,
+                              const metric_filters &filters)
+    {
+        if (!filters.match_with_metric_field(field_name)) {
+            return;
+        }
+
+        prom_metric.Add({{field_name, fmt::format("{}", value)}});
     }
 
     // Encode the metric type as json format, if it is chosen by `filters`.
@@ -1097,6 +1118,10 @@ public:
         encode_single_value(writer, value(), filters);
 
         writer.EndObject();
+    }
+    void take_snapshot(prometheus::Gauge *gauge) override
+    {
+        gauge->Set(value());
     }
 
     void set(const value_type &val) { _value.store(val, std::memory_order_relaxed); }
@@ -1214,6 +1239,11 @@ public:
         encode_single_value(writer, value(), filters);
 
         writer.EndObject();
+    }
+    void take_snapshot(prometheus::Counter *counter, const metric_filters &filters) override
+    {
+        counter->Reset();
+        counter->Increment(value());
     }
 
     // NOTICE: x MUST be a non-negative integer.
@@ -1408,6 +1438,16 @@ public:
         }
 
         writer.EndObject();
+    }
+    void take_snapshot(prometheus::Summary *summary, const metric_filters &filters) override
+    {
+        for (size_t i = 0; i < static_cast<size_t>(kth_percentile_type::COUNT); ++i) {
+            if (!_kth_percentile_bitset.test(i)) {
+                continue;
+            }
+
+//            encode(family, kAllKthPercentiles[i].name, value(i), filters);
+        }
     }
 
     bool timer_enabled() const { return !!_timer; }
