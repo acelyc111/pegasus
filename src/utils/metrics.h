@@ -368,6 +368,7 @@ const std::string kMetricPortField = "port";
 const std::string kMetricTimestampNsField = "timestamp_ns";
 const std::string kMetricEntitiesField = "entities";
 
+// prometheus::Family
 class metric_entity : public ref_counter
 {
 public:
@@ -654,6 +655,7 @@ private:
     DISALLOW_COPY_AND_ASSIGN(metric_timer);
 };
 
+// prometheus::Registry
 class metric_registry : public utils::singleton<metric_registry>
 {
 public:
@@ -1069,6 +1071,7 @@ private:
     DISALLOW_COPY_AND_ASSIGN(closeable_metric);
 };
 
+// prometheus::Gauge
 // A gauge is a metric that represents a single numerical value that can arbitrarily go up and
 // down. Usually there are 2 scenarios for a guage.
 //
@@ -1161,6 +1164,7 @@ using gauge_ptr = ref_ptr<gauge<T>>;
 template <typename T>
 using gauge_prototype = metric_prototype_with<gauge<T>>;
 
+// prometheus::Counter
 // A counter in essence is a 64-bit integer that increases monotonically. It should be noted that
 // the counter does not support to decrease. If decrease is needed, please consider to use the
 // gauge instead.
@@ -1348,6 +1352,7 @@ inline size_t kth_percentile_to_nth_index(size_t size, kth_percentile_type type)
     return kth_percentile_to_nth_index(size, static_cast<size_t>(type));
 }
 
+// prometheus::Summary
 // The percentile is a metric type that samples observations. The size of samples has an upper
 // bound. Once the maximum size is reached, the earliest observations will be overwritten.
 //
