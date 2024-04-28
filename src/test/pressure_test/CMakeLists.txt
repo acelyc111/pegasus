@@ -28,12 +28,13 @@ set(MY_PROJ_SRC "")
 set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_LIBS
-    pegasus_client_static
-    dsn_utils
-    sasl2
-    gssapi_krb5
-    krb5
-    )
+        pegasus_client_static
+        dsn_utils
+        sasl2
+        gssapi_krb5
+        krb5
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 
 set(MY_BINPLACES "${CMAKE_CURRENT_SOURCE_DIR}/config-pressure.ini")
 

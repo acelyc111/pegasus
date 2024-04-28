@@ -36,7 +36,9 @@ set(MY_PROJ_LIBS
         pegasus_base
         pegasus_client_static
         event
-        hashtable)
+        hashtable
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         config.ini)

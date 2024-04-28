@@ -43,7 +43,9 @@ set(MY_PROJ_LIBS
         lz4
         zstd
         snappy
-        test_utils)
+        test_utils
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

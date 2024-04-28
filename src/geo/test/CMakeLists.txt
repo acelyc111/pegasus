@@ -35,7 +35,9 @@ set(MY_PROJ_LIBS
         s2
         pegasus_client_static
         dsn_utils
-        gtest)
+        gtest
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

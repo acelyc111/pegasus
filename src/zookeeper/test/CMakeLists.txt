@@ -42,7 +42,9 @@ set(MY_PROJ_LIBS
         rocksdb
         lz4
         zstd
-        snappy)
+        snappy
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

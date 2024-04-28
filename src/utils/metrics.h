@@ -40,6 +40,12 @@
 #include <utility>
 #include <vector>
 
+#include <prometheus/counter.h>
+#include <prometheus/exposer.h>
+#include <prometheus/gauge.h>
+#include <prometheus/registry.h>
+#include <prometheus/summary.h>
+
 #include "absl/strings/string_view.h"
 #include "common/json_helper.h"
 #include "http/http_server.h"
@@ -343,7 +349,8 @@ namespace dsn {
 class metric;                  // IWYU pragma: keep
 class metric_entity_prototype; // IWYU pragma: keep
 class metric_prototype;        // IWYU pragma: keep
-struct metric_filters;         // IWYU pragma: keep
+class metric_registry;
+struct metric_filters; // IWYU pragma: keep
 
 using metric_ptr = ref_ptr<metric>;
 
@@ -361,6 +368,7 @@ const std::string kMetricPortField = "port";
 const std::string kMetricTimestampNsField = "timestamp_ns";
 const std::string kMetricEntitiesField = "entities";
 
+// prometheus::Family
 class metric_entity : public ref_counter
 {
 public:
@@ -380,6 +388,8 @@ public:
     ref_ptr<MetricType> find_or_create(const metric_prototype *prototype, Args &&... args);
 
     void take_snapshot(metric_json_writer &writer, const metric_filters &filters) const;
+    void take_snapshot(const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+                       const metric_filters &filters) const;
 
 private:
     friend class metric_registry;
@@ -570,8 +580,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN(metric_entity_prototype);
 };
 
-class metric_registry; // IWYU pragma: keep
-
 class metrics_http_service : public http_server_base
 {
 public:
@@ -592,6 +600,9 @@ private:
     void get_metrics_handler(const http_request &req, http_response &resp);
 
     metric_registry *_registry;
+
+    prometheus::Exposer _prom_exposer;
+    std::shared_ptr<prometheus::Registry> _prom_registry;
 
     DISALLOW_COPY_AND_ASSIGN(metrics_http_service);
 };
@@ -644,6 +655,7 @@ private:
     DISALLOW_COPY_AND_ASSIGN(metric_timer);
 };
 
+// prometheus::Registry
 class metric_registry : public utils::singleton<metric_registry>
 {
 public:
@@ -689,6 +701,9 @@ public:
 
     void take_snapshot(metric_json_writer &writer, const metric_filters &filters) const;
 
+    void take_snapshot(const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+                       const metric_filters &filters) const;
+
 private:
     friend class metric_entity_prototype;
     friend class utils::singleton<metric_registry>;
@@ -710,6 +725,8 @@ private:
                                             const metric_entity::attr_map &attrs);
 
     void encode_entities(metric_json_writer &writer, const metric_filters &filters) const;
+    void encode_entities(const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+                         const metric_filters &filters) const;
 
     // These functions are used to retire stale entities.
     //
@@ -737,12 +754,23 @@ private:
     mutable utils::rw_lock_nr _lock;
     entity_map _entities;
 
+
+    std::shared_ptr<prometheus::Registry> _prom_registry;
+
     metrics_http_service _http_service;
 
     std::unique_ptr<metric_timer> _timer;
 
     DISALLOW_COPY_AND_ASSIGN(metric_registry);
 };
+
+inline void
+take_snapshot_as_prometheus(metric_registry *registry,
+                            const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+                            const metric_filters &filters)
+{
+    registry->take_snapshot(prometheus_registry, filters);
+}
 
 // metric_type is needed while metrics are collected to monitoring systems. Generally
 // each monitoring system has its own types of metrics: firstly we should know which
@@ -914,7 +942,7 @@ ref_ptr<MetricType> metric_entity::find_or_create(const metric_prototype *protot
 
     utils::auto_write_lock l(_lock);
 
-    metric_map::const_iterator iter = _metrics.find(prototype);
+    const auto &iter = _metrics.find(prototype);
     if (iter != _metrics.end()) {
         auto raw_ptr = down_cast<MetricType *>(iter->second.get());
         return raw_ptr;
@@ -948,6 +976,12 @@ public:
     // Take snapshot of each metric to collect current values as json format with fields chosen
     // by `filters`.
     virtual void take_snapshot(metric_json_writer &writer, const metric_filters &filters) = 0;
+    virtual void take_snapshot(prometheus::Gauge *gauge) { CHECK_TRUE(false); }
+    virtual void take_snapshot(prometheus::Counter *counter) { CHECK_TRUE(false); }
+    virtual void take_snapshot(prometheus::Summary *summary, const metric_filters &filters)
+    {
+        CHECK_TRUE(false);
+    }
 
 protected:
     explicit metric(const metric_prototype *prototype);
@@ -1040,6 +1074,7 @@ private:
     DISALLOW_COPY_AND_ASSIGN(closeable_metric);
 };
 
+// prometheus::Gauge
 // A gauge is a metric that represents a single numerical value that can arbitrarily go up and
 // down. Usually there are 2 scenarios for a guage.
 //
@@ -1075,6 +1110,7 @@ public:
 
         writer.EndObject();
     }
+    void take_snapshot(prometheus::Gauge *gauge) override { gauge->Set(value()); }
 
     void set(const value_type &val) { _value.store(val, std::memory_order_relaxed); }
 
@@ -1131,6 +1167,7 @@ using gauge_ptr = ref_ptr<gauge<T>>;
 template <typename T>
 using gauge_prototype = metric_prototype_with<gauge<T>>;
 
+// prometheus::Counter
 // A counter in essence is a 64-bit integer that increases monotonically. It should be noted that
 // the counter does not support to decrease. If decrease is needed, please consider to use the
 // gauge instead.
@@ -1191,6 +1228,11 @@ public:
         encode_single_value(writer, value(), filters);
 
         writer.EndObject();
+    }
+    void take_snapshot(prometheus::Counter *counter) override
+    {
+        counter->Reset();
+        counter->Increment(value());
     }
 
     // NOTICE: x MUST be a non-negative integer.
@@ -1313,6 +1355,7 @@ inline size_t kth_percentile_to_nth_index(size_t size, kth_percentile_type type)
     return kth_percentile_to_nth_index(size, static_cast<size_t>(type));
 }
 
+// prometheus::Summary
 // The percentile is a metric type that samples observations. The size of samples has an upper
 // bound. Once the maximum size is reached, the earliest observations will be overwritten.
 //
@@ -1385,6 +1428,16 @@ public:
         }
 
         writer.EndObject();
+    }
+    void take_snapshot(prometheus::Summary *summary, const metric_filters &filters) override
+    {
+        for (size_t i = 0; i < static_cast<size_t>(kth_percentile_type::COUNT); ++i) {
+            if (!_kth_percentile_bitset.test(i)) {
+                continue;
+            }
+
+            //            encode(family, kAllKthPercentiles[i].name, value(i), filters);
+        }
     }
 
     bool timer_enabled() const { return !!_timer; }

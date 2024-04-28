@@ -34,7 +34,9 @@ set(MY_PROJ_LIBS
         lz4
         zstd
         snappy
-        gtest)
+        gtest
+        prometheus-cpp-core
+        prometheus-cpp-pull)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         clear.sh

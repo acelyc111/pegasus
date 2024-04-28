@@ -26,6 +26,9 @@
 #include <unistd.h>
 #include <new>
 
+#include <prometheus/gauge.h>
+#include <prometheus/info.h>
+
 #include "http/http_method.h"
 #include "http/http_status_code.h"
 #include "runtime/api_layer1.h"
@@ -205,6 +208,106 @@ void metric_entity::take_snapshot(metric_json_writer &writer, const metric_filte
     writer.EndObject();
 }
 
+void metric_entity::take_snapshot(const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+                                  const metric_filters &filters) const
+{
+    // TODO(yingchun): deplicate, refactor it.
+    if (!filters.match_entity_type(_prototype->name())) {
+        return;
+    }
+
+    if (!filters.match_entity_id(_id)) {
+        return;
+    }
+
+    attr_map my_attrs;
+    metric_map target_metrics;
+
+    {
+        utils::auto_read_lock l(_lock);
+
+        if (!filters.match_entity_attrs(_attrs)) {
+            return;
+        }
+
+        filters.extract_entity_metrics(_metrics, target_metrics);
+        if (target_metrics.empty()) {
+            // None of metrics is chosen, there is no need to take snapshot for
+            // this entity.
+            return;
+        }
+
+        my_attrs = _attrs;
+    }
+    //=================================================================
+
+    // At least one metric of this entity has been chosen, thus take snapshot and encode
+    // this entity as json format.
+    for (const auto & [ mtx_pt, mtx ] : target_metrics) {
+        switch (mtx_pt->type()) {
+        case metric_type::kGauge: {
+            auto &family = prometheus::BuildGauge()
+                               .Name(mtx_pt->name().data())
+                               .Help(fmt::format(
+                                   "{}, {}", mtx_pt->description(), enum_to_string(mtx_pt->unit())))
+                               .Labels({{kMetricEntityTypeField, _prototype->name()}})
+                               .Register(*prometheus_registry);
+            for (const auto &attr : my_attrs) {
+                family.Add({{attr.first, attr.second}});
+            }
+            auto &metric = family.Add({{kMetricEntityIdField, _id}});
+            mtx->take_snapshot(&metric);
+            break;
+        }
+        case metric_type::kCounter: {
+            auto &family = prometheus::BuildCounter()
+                               .Name(mtx_pt->name().data())
+                               .Help(fmt::format(
+                                   "{}, {}", mtx_pt->description(), enum_to_string(mtx_pt->unit())))
+                               .Labels({{kMetricEntityTypeField, _prototype->name()}})
+                               .Register(*prometheus_registry);
+            for (const auto &attr : my_attrs) {
+                family.Add({{attr.first, attr.second}});
+            }
+            auto &metric = family.Add({{kMetricEntityIdField, _id}});
+            mtx->take_snapshot(&metric);
+            break;
+        }
+        case metric_type::kVolatileCounter: {
+            auto &family = prometheus::BuildCounter()
+                               .Name(mtx_pt->name().data())
+                               .Help(fmt::format(
+                                   "{}, {}", mtx_pt->description(), enum_to_string(mtx_pt->unit())))
+                               .Labels({{kMetricEntityTypeField, _prototype->name()}})
+                               .Register(*prometheus_registry);
+            for (const auto &attr : my_attrs) {
+                family.Add({{attr.first, attr.second}});
+            }
+            auto &metric = family.Add({{kMetricEntityIdField, _id}});
+            mtx->take_snapshot(&metric);
+            break;
+        }
+        case metric_type::kPercentile: {
+            //            auto &family = prometheus::BuildSummary()
+            //                    .Name(mtx_pt->name().data())
+            //                    .Help(fmt::format("{}, {}", mtx_pt->description(),
+            //                    enum_to_string(mtx_pt->unit())))
+            //                    .Labels({{kMetricEntityTypeField, _prototype->name()}})
+            //                    .Register(*prometheus_registry);
+            //            for (const auto &attr: my_attrs) {
+            //                family.Add({{attr.first, attr.second}});
+            //            }
+            //            auto &metric = family.Add({{kMetricEntityIdField, _id}});
+            //            mtx->take_snapshot(&metric, filters);
+            //            break;
+        }
+        default:
+            LOG_FATAL("unknown metric type: {}", static_cast<int>(mtx_pt->type()));
+            break;
+        }
+    }
+}
+
 bool metric_entity::is_stale() const
 {
     // Since this entity itself is still being accessed, its reference count should be 1
@@ -278,7 +381,8 @@ const std::string metrics_http_service::kMetricsQuerySubPath("metrics");
 const std::string
     metrics_http_service::kMetricsQueryPath('/' + metrics_http_service::kMetricsQuerySubPath);
 
-metrics_http_service::metrics_http_service(metric_registry *registry) : _registry(registry)
+metrics_http_service::metrics_http_service(metric_registry *registry)
+    : _registry(registry), _prom_exposer("127.0.0.1:8080")
 {
     register_handler(kMetricsQuerySubPath,
                      std::bind(&metrics_http_service::get_metrics_handler,
@@ -289,6 +393,7 @@ metrics_http_service::metrics_http_service(metric_registry *registry) : _registr
                      "..][&attributes=attr1,value1,attr2,value2,...][&metrics=metric1,metric2,...]["
                      "&detail=true|false]"
                      "Query the node metrics.");
+    _prom_exposer.RegisterCollectable(_prom_registry);
 }
 
 namespace {
@@ -335,10 +440,14 @@ void metrics_http_service::get_metrics_handler(const http_request &req, http_res
     }
 
     metric_filters filters;
+    // Default in JSON format, otherwise in Prometheus format.
+    bool prometheus_format = false;
     bool with_metric_fields = false;
     bool detail = false;
     for (const auto &field : req.query_args) {
-        if (field.first == "with_metric_fields") {
+        if (field.first == "prometheus") {
+            prometheus_format = true;
+        } else if (field.first == "with_metric_fields") {
             parse_as(field.second, filters.with_metric_fields);
             with_metric_fields = true;
         } else if (field.first == "types") {
@@ -377,11 +486,17 @@ void metrics_http_service::get_metrics_handler(const http_request &req, http_res
         filters.with_metric_fields = kBriefMetricFields;
     }
 
-    resp.body = take_snapshot_as_json(_registry, filters);
+    if (prometheus_format) {
+        take_snapshot_as_prometheus(_registry, _prom_registry, filters);
+    } else {
+        resp.body = take_snapshot_as_json(_registry, filters);
+    }
     resp.status_code = http_status_code::kOk;
 }
 
-metric_registry::metric_registry() : _http_service(this)
+metric_registry::metric_registry() :
+        _prom_registry(std::make_shared<prometheus::Registry>()),
+        _http_service(this)
 {
     // We should ensure that metric_registry is destructed before shared_io_service is destructed.
     // Once shared_io_service is destructed before metric_registry is destructed,
@@ -456,11 +571,9 @@ metric_entity_ptr metric_registry::find_or_create_entity(const metric_entity_pro
                                                          const std::string &id,
                                                          const metric_entity::attr_map &attrs)
 {
-    utils::auto_write_lock l(_lock);
-
-    entity_map::const_iterator iter = _entities.find(id);
-
     metric_entity_ptr entity;
+    utils::auto_write_lock l(_lock);
+    const auto &iter = _entities.find(id);
     if (iter == _entities.end()) {
         entity = new metric_entity(prototype, id, attrs);
         _entities[id] = entity;
@@ -498,6 +611,16 @@ void encode_cluster(dsn::metric_json_writer &writer)
     ENCODE_OBJ_VAL(!utils::is_empty(FLAGS_cluster_name), FLAGS_cluster_name);
 }
 
+void encode_cluster(const std::shared_ptr<prometheus::Registry> &prometheus_registry)
+{
+    prometheus::BuildInfo()
+        .Name(kMetricClusterField)
+        .Help("Cluster name")
+        .Labels({{kMetricClusterField,
+                  utils::is_empty(FLAGS_cluster_name) ? "unknown" : FLAGS_cluster_name}})
+        .Register(*prometheus_registry);
+}
+
 void encode_role(dsn::metric_json_writer &writer)
 {
     writer.Key(dsn::kMetricRoleField.c_str());
@@ -506,12 +629,33 @@ void encode_role(dsn::metric_json_writer &writer)
     ENCODE_OBJ_VAL(node != nullptr, node->get_service_app_info().full_name);
 }
 
+void encode_role(const std::shared_ptr<prometheus::Registry> &prometheus_registry)
+{
+    const auto *const node = dsn::task::get_current_node2();
+    prometheus::BuildInfo()
+        .Name(kMetricRoleField)
+        .Help("Role name")
+        .Labels({{kMetricRoleField, node ? node->get_service_app_info().full_name : "unknown"}})
+        .Register(*prometheus_registry);
+}
+
 void encode_host(dsn::metric_json_writer &writer)
 {
     writer.Key(dsn::kMetricHostField.c_str());
 
     char hostname[1024];
-    ENCODE_OBJ_VAL(gethostname(hostname, sizeof(hostname)) == 0, hostname);
+    ENCODE_OBJ_VAL(::gethostname(hostname, sizeof(hostname)) == 0, hostname);
+}
+
+void encode_host(const std::shared_ptr<prometheus::Registry> &prometheus_registry)
+{
+    char hostname[1024];
+    prometheus::BuildInfo()
+        .Name(kMetricHostField)
+        .Help("Host name")
+        .Labels({{kMetricHostField,
+                  ::gethostname(hostname, sizeof(hostname)) == 0 ? hostname : "unknown"}})
+        .Register(*prometheus_registry);
 }
 
 void encode_port(dsn::metric_json_writer &writer)
@@ -522,11 +666,32 @@ void encode_port(dsn::metric_json_writer &writer)
     ENCODE_OBJ_VAL(rpc != nullptr, rpc->primary_host_port().port());
 }
 
+void encode_port(const std::shared_ptr<prometheus::Registry> &prometheus_registry)
+{
+    const auto *const rpc = dsn::task::get_current_rpc2();
+    prometheus::BuildInfo()
+        .Name(kMetricPortField)
+        .Help("Service RPC port")
+        .Labels(
+            {{kMetricPortField, rpc ? std::to_string(rpc->primary_host_port().port()) : "unknown"}})
+        .Register(*prometheus_registry);
+}
+
 void encode_timestamp_ns(dsn::metric_json_writer &writer)
 {
     writer.Key(dsn::kMetricTimestampNsField.c_str());
 
     ENCODE_OBJ_VAL(true, dsn_now_ns());
+}
+
+void encode_timestamp_ns(const std::shared_ptr<prometheus::Registry> &prometheus_registry)
+{
+    const auto *const rpc = dsn::task::get_current_rpc2();
+    auto &ts = prometheus::BuildGauge()
+                   .Name(kMetricTimestampNsField)
+                   .Help("Current timestamp in nanoseconds")
+                   .Register(*prometheus_registry);
+    ts.Add({}).Set(dsn_now_ns());
 }
 
 #undef ENCODE_OBJ_VAL
@@ -551,6 +716,17 @@ void metric_registry::encode_entities(metric_json_writer &writer,
     writer.EndArray();
 }
 
+void metric_registry::encode_entities(
+    const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+    const metric_filters &filters) const
+{
+    utils::auto_read_lock l(_lock);
+
+    for (const auto &entity : _entities) {
+        entity.second->take_snapshot(prometheus_registry, filters);
+    }
+}
+
 void metric_registry::take_snapshot(metric_json_writer &writer, const metric_filters &filters) const
 {
     writer.StartObject();
@@ -561,6 +737,18 @@ void metric_registry::take_snapshot(metric_json_writer &writer, const metric_fil
     encode_timestamp_ns(writer);
     encode_entities(writer, filters);
     writer.EndObject();
+}
+
+void metric_registry::take_snapshot(
+    const std::shared_ptr<prometheus::Registry> &prometheus_registry,
+    const metric_filters &filters) const
+{
+    encode_cluster(prometheus_registry);
+    encode_role(prometheus_registry);
+    encode_host(prometheus_registry);
+    encode_port(prometheus_registry);
+    encode_timestamp_ns(prometheus_registry);
+    encode_entities(prometheus_registry, filters);
 }
 
 metric_registry::collected_entities_info metric_registry::collect_stale_entities() const
