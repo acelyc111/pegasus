@@ -601,8 +601,8 @@ private:
 
     metric_registry *_registry;
 
-    prometheus::Exposer _exposer;
-    std::shared_ptr<prometheus::Registry> _prometheus_registry;
+    prometheus::Exposer _prom_exposer;
+    std::shared_ptr<prometheus::Registry> _prom_registry;
 
     DISALLOW_COPY_AND_ASSIGN(metrics_http_service);
 };
@@ -753,6 +753,9 @@ private:
 
     mutable utils::rw_lock_nr _lock;
     entity_map _entities;
+
+
+    std::shared_ptr<prometheus::Registry> _prom_registry;
 
     metrics_http_service _http_service;
 
@@ -939,7 +942,7 @@ ref_ptr<MetricType> metric_entity::find_or_create(const metric_prototype *protot
 
     utils::auto_write_lock l(_lock);
 
-    metric_map::const_iterator iter = _metrics.find(prototype);
+    const auto &iter = _metrics.find(prototype);
     if (iter != _metrics.end()) {
         auto raw_ptr = down_cast<MetricType *>(iter->second.get());
         return raw_ptr;

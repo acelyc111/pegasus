@@ -382,7 +382,7 @@ const std::string
     metrics_http_service::kMetricsQueryPath('/' + metrics_http_service::kMetricsQuerySubPath);
 
 metrics_http_service::metrics_http_service(metric_registry *registry)
-    : _registry(registry), _exposer("127.0.0.1:8080")
+    : _registry(registry), _prom_exposer("127.0.0.1:8080")
 {
     register_handler(kMetricsQuerySubPath,
                      std::bind(&metrics_http_service::get_metrics_handler,
@@ -393,8 +393,7 @@ metrics_http_service::metrics_http_service(metric_registry *registry)
                      "..][&attributes=attr1,value1,attr2,value2,...][&metrics=metric1,metric2,...]["
                      "&detail=true|false]"
                      "Query the node metrics.");
-    _prometheus_registry = std::make_shared<prometheus::Registry>();
-    _exposer.RegisterCollectable(_prometheus_registry);
+    _prom_exposer.RegisterCollectable(_prom_registry);
 }
 
 namespace {
@@ -488,14 +487,16 @@ void metrics_http_service::get_metrics_handler(const http_request &req, http_res
     }
 
     if (prometheus_format) {
-        take_snapshot_as_prometheus(_registry, _prometheus_registry, filters);
+        take_snapshot_as_prometheus(_registry, _prom_registry, filters);
     } else {
         resp.body = take_snapshot_as_json(_registry, filters);
     }
     resp.status_code = http_status_code::kOk;
 }
 
-metric_registry::metric_registry() : _http_service(this)
+metric_registry::metric_registry() :
+        _prom_registry(std::make_shared<prometheus::Registry>()),
+        _http_service(this)
 {
     // We should ensure that metric_registry is destructed before shared_io_service is destructed.
     // Once shared_io_service is destructed before metric_registry is destructed,
@@ -570,11 +571,9 @@ metric_entity_ptr metric_registry::find_or_create_entity(const metric_entity_pro
                                                          const std::string &id,
                                                          const metric_entity::attr_map &attrs)
 {
-    utils::auto_write_lock l(_lock);
-
-    entity_map::const_iterator iter = _entities.find(id);
-
     metric_entity_ptr entity;
+    utils::auto_write_lock l(_lock);
+    const auto &iter = _entities.find(id);
     if (iter == _entities.end()) {
         entity = new metric_entity(prototype, id, attrs);
         _entities[id] = entity;
