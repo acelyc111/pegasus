@@ -106,13 +106,17 @@ void primary_context::reset_membership(const partition_configuration &new_pc, bo
 
     pc = new_pc;
 
-    if (pc.hp_primary) {
-        statuses[pc.hp_primary] = partition_status::PS_PRIMARY;
+    dsn::host_port primary;
+    GET_HOST_PORT(pc, primary, primary);
+    if (primary) {
+        statuses[primary] = partition_status::PS_PRIMARY;
     }
 
-    for (auto it = new_pc.hp_secondaries.begin(); it != new_pc.hp_secondaries.end(); ++it) {
-        statuses[*it] = partition_status::PS_SECONDARY;
-        learners.erase(*it);
+    std::vector<dsn::host_port> secondaries;
+    GET_HOST_PORTS(new_pc, secondaries, secondaries);
+    for (const auto &secondary : secondaries) {
+        statuses[secondary] = partition_status::PS_SECONDARY;
+        learners.erase(secondary);
     }
 
     for (auto it = learners.begin(); it != learners.end(); ++it) {
@@ -135,8 +139,10 @@ bool primary_context::check_exist(const ::dsn::host_port &node, partition_status
 {
     switch (st) {
     case partition_status::PS_PRIMARY:
+        DCHECK(pc.__isset.hp_primary, "");
         return pc.hp_primary == node;
     case partition_status::PS_SECONDARY:
+        DCHECK(pc.__isset.hp_secondaries, "");
         return utils::contains(pc.hp_secondaries, node);
     case partition_status::PS_POTENTIAL_SECONDARY:
         return learners.find(node) != learners.end();
