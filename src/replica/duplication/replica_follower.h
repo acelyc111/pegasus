@@ -26,6 +26,7 @@
 #include "common/gpid.h"
 #include "dsn.layer2_types.h"
 #include "replica/replica_base.h"
+#include "runtime/rpc/dns_resolver.h"
 #include "runtime/rpc/rpc_host_port.h"
 #include "runtime/task/task_tracker.h"
 #include "utils/error_code.h"
@@ -60,7 +61,7 @@ private:
     std::string _master_cluster_name;
     std::string _master_app_name;
     std::vector<host_port> _master_meta_list;
-    partition_configuration _master_replica_config;
+    partition_configuration _pc;
 
     bool need_duplicate{false};
 
@@ -78,11 +79,10 @@ private:
     std::string master_replica_name()
     {
         std::string app_info = fmt::format("{}.{}", _master_cluster_name, _master_app_name);
-        if (_master_replica_config.hp_primary) {
-            return fmt::format("{}({}|{})",
-                               app_info,
-                               FMT_HOST_PORT_AND_IP(_master_replica_config, primary),
-                               _master_replica_config.pid);
+        dsn::host_port primary;
+        GET_HOST_PORT(_pc, primary1, primary);
+        if (primary) {
+            return fmt::format("{}({}|{})", app_info, FMT_HOST_PORT_AND_IP(_pc, primary1), _pc.pid);
         }
         return app_info;
     }

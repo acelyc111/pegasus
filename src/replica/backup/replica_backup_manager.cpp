@@ -233,7 +233,7 @@ void replica_backup_manager::send_clear_request_to_secondaries(const gpid &pid,
     request.__set_pid(pid);
     request.__set_policy_name(policy_name);
 
-    for (const auto &target_address : _replica->_primary_states.membership.secondaries) {
+    for (const auto &target_address : _replica->_primary_states.pc.secondaries1) {
         rpc::call_one_way_typed(
             target_address, RPC_CLEAR_COLD_BACKUP, request, get_gpid().thread_hash());
     }

@@ -674,10 +674,10 @@ TEST_F(meta_duplication_service_test, duplication_sync)
     auto app = find_app(test_app);
 
     // generate all primaries on node[0]
-    for (partition_configuration &pc : app->partitions) {
+    for (auto &pc : app->pcs) {
         pc.ballot = random32(1, 10000);
-        SET_IP_AND_HOST_PORT_BY_DNS(pc, primary, server_nodes[0]);
-        SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries, server_nodes[1], server_nodes[2]);
+        SET_IP_AND_HOST_PORT_BY_DNS(pc, primary1, server_nodes[0]);
+        SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries1, server_nodes[1], server_nodes[2]);
     }
 
     initialize_node_state();
@@ -897,8 +897,8 @@ TEST_F(meta_duplication_service_test, fail_mode)
 
     // ensure dup_sync will synchronize fail_mode
     const auto hp = generate_node_list(3)[0];
-    for (partition_configuration &pc : app->partitions) {
-        SET_IP_AND_HOST_PORT_BY_DNS(pc, primary, hp);
+    for (auto &pc : app->pcs) {
+        SET_IP_AND_HOST_PORT_BY_DNS(pc, primary1, hp);
     }
     initialize_node_state();
     auto sync_resp = duplication_sync(hp, {});

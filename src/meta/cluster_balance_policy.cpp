@@ -223,16 +223,21 @@ bool cluster_balance_policy::get_app_migration_info(std::shared_ptr<app_state> a
 {
     info.app_id = app->app_id;
     info.app_name = app->app_name;
-    info.partitions.resize(app->partitions.size());
-    for (auto i = 0; i < app->partitions.size(); ++i) {
+    info.partitions.resize(app->pcs.size());
+    for (auto i = 0; i < app->pcs.size(); ++i) {
         std::map<host_port, partition_status::type> pstatus_map;
-        pstatus_map[app->partitions[i].hp_primary] = partition_status::PS_PRIMARY;
-        if (app->partitions[i].hp_secondaries.size() != app->partitions[i].max_replica_count - 1) {
+        host_port primary;
+        GET_HOST_PORT(app->pcs[i], primary1, primary);
+        pstatus_map[primary] = partition_status::PS_PRIMARY;
+
+        std::vector<host_port> secondaries;
+        GET_HOST_PORTS(app->pcs[i], secondaries1, secondaries);
+        if (secondaries.size() != app->pcs[i].max_replica_count - 1) {
             // partition is unhealthy
             return false;
         }
-        for (const auto &hp : app->partitions[i].hp_secondaries) {
-            pstatus_map[hp] = partition_status::PS_SECONDARY;
+        for (const auto &secondary : secondaries) {
+            pstatus_map[secondary] = partition_status::PS_SECONDARY;
         }
         info.partitions[i] = pstatus_map;
     }
@@ -258,7 +263,7 @@ void cluster_balance_policy::get_node_migration_info(const node_state &ns,
             if (!context.get_disk_tag(ns.host_port(), disk_tag)) {
                 continue;
             }
-            auto pid = context.config_owner->pid;
+            auto pid = context.pc->pid;
             if (info.partitions.find(disk_tag) != info.partitions.end()) {
                 info.partitions[disk_tag].insert(pid);
             } else {
@@ -548,7 +553,7 @@ bool cluster_balance_policy::apply_move(const move_info &move,
     // add into the migration list and selected_pid
     partition_configuration pc;
     pc.pid = move.pid;
-    SET_IP_AND_HOST_PORT_BY_DNS(pc, primary, primary_hp);
+    SET_IP_AND_HOST_PORT_BY_DNS(pc, primary1, primary_hp);
     list[move.pid] = generate_balancer_request(*_global_view->apps, pc, move.type, source, target);
     _migration_result->emplace(
         move.pid, generate_balancer_request(*_global_view->apps, pc, move.type, source, target));

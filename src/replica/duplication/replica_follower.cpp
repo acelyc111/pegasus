@@ -178,18 +178,20 @@ error_code replica_follower::update_master_replica_config(error_code err, query_
         return ERR_INCONSISTENT_STATE;
     }
 
-    if (dsn_unlikely(!resp.partitions[0].hp_primary)) {
+    dsn::host_port primary;
+    GET_HOST_PORT(resp.partitions[0], primary1, primary);
+    if (dsn_unlikely(!primary)) {
         LOG_ERROR_PREFIX("master[{}] partition address is invalid", master_replica_name());
         return ERR_INVALID_STATE;
     }
 
     // since the request just specify one partition, the result size is single
-    _master_replica_config = resp.partitions[0];
+    _pc = resp.partitions[0];
     LOG_INFO_PREFIX(
         "query master[{}] config successfully and update local config: remote={}, gpid={}",
         master_replica_name(),
-        FMT_HOST_PORT_AND_IP(_master_replica_config, primary),
-        _master_replica_config.pid);
+        FMT_HOST_PORT_AND_IP(_pc, primary1),
+        _pc.pid);
     return ERR_OK;
 }
 
@@ -199,11 +201,13 @@ void replica_follower::copy_master_replica_checkpoint()
     LOG_INFO_PREFIX("query master[{}] replica checkpoint info and start use nfs copy the data",
                     master_replica_name());
     learn_request request;
-    request.pid = _master_replica_config.pid;
-    dsn::message_ex *msg = dsn::message_ex::create_request(
-        RPC_QUERY_LAST_CHECKPOINT_INFO, 0, _master_replica_config.pid.thread_hash());
+    request.pid = _pc.pid;
+    dsn::message_ex *msg =
+        dsn::message_ex::create_request(RPC_QUERY_LAST_CHECKPOINT_INFO, 0, _pc.pid.thread_hash());
     dsn::marshall(msg, request);
-    rpc::call(_master_replica_config.primary,
+    dsn::host_port primary;
+    GET_HOST_PORT(_pc, primary1, primary);
+    rpc::call(dsn::dns_resolver::instance().resolve_address(primary),
               msg,
               &_tracker,
               [&](error_code err, learn_response &&resp) mutable {

@@ -119,15 +119,15 @@ void meta_split_service::do_start_partition_split(std::shared_ptr<app_state> app
         app->helpers->split_states.splitting_count = app->partition_count;
         app->partition_count *= 2;
         app->helpers->contexts.resize(app->partition_count);
-        app->partitions.resize(app->partition_count);
+        app->pcs.resize(app->partition_count);
         _state->get_table_metric_entities().resize_partitions(app->app_id, app->partition_count);
         app->envs[replica_envs::SPLIT_VALIDATE_PARTITION_HASH] = "true";
 
         for (int i = 0; i < app->partition_count; ++i) {
-            app->helpers->contexts[i].config_owner = &app->partitions[i];
+            app->helpers->contexts[i].pc = &app->pcs[i];
             if (i >= app->partition_count / 2) { // child partitions
-                app->partitions[i].ballot = invalid_ballot;
-                app->partitions[i].pid = gpid(app->app_id, i);
+                app->pcs[i].ballot = invalid_ballot;
+                app->pcs[i].pid = gpid(app->app_id, i);
             } else { // parent partitions
                 app->helpers->split_states.status[i] = split_status::SPLITTING;
             }
@@ -162,7 +162,7 @@ void meta_split_service::register_child_on_meta(register_child_rpc rpc)
 
     const gpid &parent_gpid = request.parent_config.pid;
     const gpid &child_gpid = request.child_config.pid;
-    const auto &parent_config = app->partitions[parent_gpid.get_partition_index()];
+    const auto &parent_config = app->pcs[parent_gpid.get_partition_index()];
     if (request.parent_config.ballot != parent_config.ballot) {
         LOG_ERROR("app({}) partition({}) register child({}) failed, request is outdated, request "
                   "parent ballot = {}, local parent ballot = {}",
@@ -202,7 +202,7 @@ void meta_split_service::register_child_on_meta(register_child_rpc rpc)
             "duplicated register request, app({}) child partition({}) has already been registered",
             app_name,
             child_gpid);
-        const auto &child_config = app->partitions[child_gpid.get_partition_index()];
+        const auto &child_config = app->pcs[child_gpid.get_partition_index()];
         CHECK_GT_MSG(child_config.ballot,
                      0,
                      "app({}) partition({}) should have been registered",
@@ -307,16 +307,16 @@ void meta_split_service::on_add_child_on_remote_storage_reply(error_code ec,
     update_child_request->type = config_type::CT_REGISTER_CHILD;
     SET_OBJ_IP_AND_HOST_PORT(*update_child_request, node, request, primary);
 
-    partition_configuration child_config = app->partitions[child_gpid.get_partition_index()];
-    child_config.secondaries = request.child_config.secondaries;
-    child_config.__set_hp_secondaries(request.child_config.hp_secondaries);
+    partition_configuration pc = app->pcs[child_gpid.get_partition_index()];
+    pc.secondaries1 = request.child_config.secondaries1;
+    pc.__set_hp_secondaries1(request.child_config.hp_secondaries1);
     _state->update_configuration_locally(*app, update_child_request);
 
     if (parent_context.msg) {
         response.err = ERR_OK;
         response.app = *app;
-        response.parent_config = app->partitions[parent_gpid.get_partition_index()];
-        response.child_config = app->partitions[child_gpid.get_partition_index()];
+        response.parent_config = app->pcs[parent_gpid.get_partition_index()];
+        response.child_config = app->pcs[child_gpid.get_partition_index()];
         parent_context.msg = nullptr;
     }
     parent_context.pending_sync_task = nullptr;
@@ -562,7 +562,7 @@ void meta_split_service::do_cancel_partition_split(std::shared_ptr<app_state> ap
 
         app->partition_count /= 2;
         app->helpers->contexts.resize(app->partition_count);
-        app->partitions.resize(app->partition_count);
+        app->pcs.resize(app->partition_count);
         _state->get_table_metric_entities().resize_partitions(app->app_id, app->partition_count);
     };
 
@@ -597,7 +597,7 @@ void meta_split_service::query_child_state(query_child_state_rpc rpc)
                  app_name);
 
     auto child_pidx = parent_pid.get_partition_index() + request.partition_count;
-    if (app->partitions[child_pidx].ballot == invalid_ballot) {
+    if (app->pcs[child_pidx].ballot == invalid_ballot) {
         response.err = ERR_INVALID_STATE;
         LOG_ERROR("app({}) parent partition({}) split has been canceled", app_name, parent_pid);
         return;
@@ -606,7 +606,7 @@ void meta_split_service::query_child_state(query_child_state_rpc rpc)
         "app({}) child partition({}.{}) is ready", app_name, parent_pid.get_app_id(), child_pidx);
     response.err = ERR_OK;
     response.__set_partition_count(app->partition_count);
-    response.__set_child_config(app->partitions[child_pidx]);
+    response.__set_child_config(app->pcs[child_pidx]);
 }
 
 } // namespace replication

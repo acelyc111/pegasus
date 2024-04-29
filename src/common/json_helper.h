@@ -448,8 +448,8 @@ inline bool json_decode(const dsn::json::JsonObject &in, dsn::host_port &hp)
     return static_cast<bool>(hp);
 }
 
-inline void json_encode(JsonWriter &out, const dsn::partition_configuration &config);
-inline bool json_decode(const JsonObject &in, dsn::partition_configuration &config);
+inline void json_encode(JsonWriter &out, const dsn::partition_configuration &pc);
+inline bool json_decode(const JsonObject &in, dsn::partition_configuration &pc);
 inline void json_encode(JsonWriter &out, const dsn::app_info &info);
 inline bool json_decode(const JsonObject &in, dsn::app_info &info);
 inline void json_encode(JsonWriter &out, const dsn::replication::file_meta &f_meta);
@@ -717,14 +717,14 @@ NON_MEMBER_JSON_SERIALIZATION(dsn::partition_configuration,
                               pid,
                               ballot,
                               max_replica_count,
-                              primary,
-                              secondaries,
-                              last_drops,
+                              primary1,
+                              secondaries1,
+                              last_drops1,
                               last_committed_decree,
                               partition_flags,
-                              hp_primary,
-                              hp_secondaries,
-                              hp_last_drops)
+                              hp_primary1,
+                              hp_secondaries1,
+                              hp_last_drops1)
 
 NON_MEMBER_JSON_SERIALIZATION(dsn::app_info,
                               status,

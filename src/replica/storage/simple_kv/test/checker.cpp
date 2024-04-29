@@ -84,18 +84,18 @@ public:
             return pc_status::healthy;
 
         pc_status result;
-        if (!pc.hp_primary) {
-            if (pc.hp_secondaries.size() > 0) {
-                SET_OBJ_IP_AND_HOST_PORT(action, node, pc, secondaries[0]);
-                for (unsigned int i = 1; i < pc.hp_secondaries.size(); ++i)
-                    if (pc.hp_secondaries[i] < action.hp_node) {
-                        SET_OBJ_IP_AND_HOST_PORT(action, node, pc, secondaries[i]);
+        if (!pc.hp_primary1) {
+            if (pc.hp_secondaries1.size() > 0) {
+                SET_OBJ_IP_AND_HOST_PORT(action, node, pc, secondaries1[0]);
+                for (unsigned int i = 1; i < pc.hp_secondaries1.size(); ++i)
+                    if (pc.hp_secondaries1[i] < action.hp_node) {
+                        SET_OBJ_IP_AND_HOST_PORT(action, node, pc, secondaries1[i]);
                     }
                 action.type = config_type::CT_UPGRADE_TO_PRIMARY;
                 result = pc_status::ill;
             }
 
-            else if (pc.hp_last_drops.size() == 0) {
+            else if (pc.hp_last_drops1.size() == 0) {
                 std::vector<host_port> sort_result;
                 sort_alive_nodes(*view.nodes,
                                  server_load_balancer::primary_comparator(*view.nodes),
@@ -108,7 +108,7 @@ public:
             // DDD
             else {
                 SET_IP_AND_HOST_PORT(
-                    action, node, *pc.last_drops.rbegin(), *pc.hp_last_drops.rbegin());
+                    action, node, *pc.last_drops1.rbegin(), *pc.hp_last_drops1.rbegin());
                 action.type = config_type::CT_ASSIGN_PRIMARY;
                 LOG_ERROR("{} enters DDD state, we are waiting for its last primary node {} to "
                           "come back ...",
@@ -119,7 +119,7 @@ public:
             SET_OBJ_IP_AND_HOST_PORT(action, target, action, node);
         }
 
-        else if (static_cast<int>(pc.hp_secondaries.size()) + 1 < pc.max_replica_count) {
+        else if (static_cast<int>(pc.hp_secondaries1.size()) + 1 < pc.max_replica_count) {
             std::vector<host_port> sort_result;
             sort_alive_nodes(
                 *view.nodes, server_load_balancer::partition_comparator(*view.nodes), sort_result);
@@ -130,7 +130,7 @@ public:
                     break;
                 }
             }
-            SET_OBJ_IP_AND_HOST_PORT(action, target, pc, primary);
+            SET_OBJ_IP_AND_HOST_PORT(action, target, pc, primary1);
             action.type = config_type::CT_ADD_SECONDARY;
             result = pc_status::ill;
         } else {
@@ -323,7 +323,7 @@ bool test_checker::get_current_config(parti_config &config)
     meta_service_app *meta = meta_leader();
     if (meta == nullptr)
         return false;
-    partition_configuration c;
+    partition_configuration pc;
 
     // we should never try to acquire lock when we are in checker. Because we are the only
     // thread that is running.
@@ -332,11 +332,9 @@ bool test_checker::get_current_config(parti_config &config)
     // the rDSN's
     //"enqueue,dequeue and lock..."
 
-    // meta->_service->_state->query_configuration_by_gpid(g_default_gpid, c);
+    // meta->_service->_state->query_configuration_by_gpid(g_default_gpid, pc);
     const meta_view view = meta->_service->_state->get_meta_view();
-    const partition_configuration *pc = get_config(*(view.apps), g_default_gpid);
-    c = *pc;
-    config.convert_from(c);
+    config.convert_from(*get_config(*(view.apps), g_default_gpid));
     return true;
 }
 

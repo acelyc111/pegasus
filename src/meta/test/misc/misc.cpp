@@ -79,10 +79,9 @@ void verbose_apps(const app_mapper &input_apps)
         const std::shared_ptr<app_state> &app = apps.second;
         std::cout << apps.first << " " << app->partition_count << std::endl;
         for (int i = 0; i < app->partition_count; ++i) {
-            std::cout << app->partitions[i].hp_secondaries.size() + 1 << " "
-                      << app->partitions[i].hp_primary;
-            for (int j = 0; j < app->partitions[i].hp_secondaries.size(); ++j) {
-                std::cout << " " << app->partitions[i].hp_secondaries[j];
+            std::cout << app->pcs[i].hp_secondaries1.size() + 1 << " " << app->pcs[i].hp_primary1;
+            for (int j = 0; j < app->pcs[i].hp_secondaries1.size(); ++j) {
+                std::cout << " " << app->pcs[i].hp_secondaries1[j];
             }
             std::cout << std::endl;
         }
@@ -101,13 +100,13 @@ void generate_node_mapper(
 
     for (auto &kv : input_apps) {
         const std::shared_ptr<app_state> &app = kv.second;
-        for (const dsn::partition_configuration &pc : app->partitions) {
+        for (const auto &pc : app->pcs) {
             node_state *ns;
-            if (pc.hp_primary) {
-                ns = get_node_state(output_nodes, pc.hp_primary, true);
+            if (pc.hp_primary1) {
+                ns = get_node_state(output_nodes, pc.hp_primary1, true);
                 ns->put_partition(pc.pid, true);
             }
-            for (const auto &sec : pc.hp_secondaries) {
+            for (const auto &sec : pc.hp_secondaries1) {
                 CHECK(sec, "");
                 ns = get_node_state(output_nodes, sec, true);
                 ns->put_partition(pc.pid, false);
@@ -119,7 +118,7 @@ void generate_node_mapper(
 void generate_app(/*out*/ std::shared_ptr<app_state> &app,
                   const std::vector<dsn::host_port> &node_list)
 {
-    for (dsn::partition_configuration &pc : app->partitions) {
+    for (auto &pc : app->pcs) {
         pc.ballot = random32(1, 10000);
         std::vector<int> indices(3, 0);
         indices[0] = random32(0, node_list.size() - 3);
@@ -127,18 +126,18 @@ void generate_app(/*out*/ std::shared_ptr<app_state> &app,
         indices[2] = random32(indices[1] + 1, node_list.size() - 1);
 
         int p = random32(0, 2);
-        SET_IP_AND_HOST_PORT_BY_DNS(pc, primary, node_list[indices[p]]);
+        SET_IP_AND_HOST_PORT_BY_DNS(pc, primary1, node_list[indices[p]]);
         for (unsigned int i = 0; i != indices.size(); ++i) {
             if (i != p) {
-                ADD_IP_AND_HOST_PORT_BY_DNS(pc, secondaries, node_list[indices[i]]);
+                ADD_IP_AND_HOST_PORT_BY_DNS(pc, secondaries1, node_list[indices[i]]);
             }
         }
 
-        CHECK(pc.hp_primary, "");
-        CHECK(!is_secondary(pc, pc.hp_primary), "");
-        CHECK(!is_secondary(pc, pc.primary), "");
-        CHECK_EQ(pc.hp_secondaries.size(), 2);
-        CHECK_NE(pc.hp_secondaries[0], pc.hp_secondaries[1]);
+        CHECK(pc.hp_primary1, "");
+        CHECK(!is_secondary(pc, pc.hp_primary1), "");
+        CHECK(!is_secondary(pc, pc.primary1), "");
+        CHECK_EQ(pc.hp_secondaries1.size(), 2);
+        CHECK_NE(pc.hp_secondaries1[0], pc.hp_secondaries1[1]);
     }
 }
 
@@ -148,14 +147,14 @@ void generate_app_serving_replica_info(/*out*/ std::shared_ptr<dsn::replication:
     char buffer[256];
     for (int i = 0; i < app->partition_count; ++i) {
         config_context &cc = app->helpers->contexts[i];
-        dsn::partition_configuration &pc = app->partitions[i];
+        dsn::partition_configuration &pc = app->pcs[i];
         replica_info ri;
 
         snprintf(buffer, 256, "disk%u", dsn::rand::next_u32(1, total_disks));
         ri.disk_tag = buffer;
-        cc.collect_serving_replica(pc.hp_primary, ri);
+        cc.collect_serving_replica(pc.hp_primary1, ri);
 
-        for (const auto &hp : pc.hp_secondaries) {
+        for (const auto &hp : pc.hp_secondaries1) {
             snprintf(buffer, 256, "disk%u", dsn::rand::next_u32(1, total_disks));
             ri.disk_tag = buffer;
             cc.collect_serving_replica(hp, ri);
@@ -180,14 +179,14 @@ void generate_apps(/*out*/ dsn::replication::app_mapper &mapper,
         info.app_type = "test";
         info.max_replica_count = 3;
         info.partition_count = random32(partitions_range.first, partitions_range.second);
-        std::shared_ptr<app_state> the_app = app_state::create(info);
-        generate_app(the_app, node_list);
+        std::shared_ptr<app_state> app = app_state::create(info);
+        generate_app(app, node_list);
 
         if (generate_serving_info) {
-            generate_app_serving_replica_info(the_app, disks_per_node);
+            generate_app_serving_replica_info(app, disks_per_node);
         }
         LOG_DEBUG("generated app, partitions({})", info.partition_count);
-        mapper.emplace(the_app->app_id, the_app);
+        mapper.emplace(app->app_id, app);
     }
 }
 
@@ -305,11 +304,11 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
     case config_type::CT_ASSIGN_PRIMARY: {
         CHECK_EQ(act.hp_node, act.hp_target);
         CHECK_EQ(act.node, act.target);
-        CHECK(!pc.hp_primary, "");
-        CHECK(!pc.primary, "");
-        CHECK(pc.hp_secondaries.empty(), "");
-        CHECK(pc.secondaries.empty(), "");
-        SET_IP_AND_HOST_PORT(pc, primary, act.node, hp_node);
+        CHECK(!pc.hp_primary1, "");
+        CHECK(!pc.primary1, "");
+        CHECK(pc.hp_secondaries1.empty(), "");
+        CHECK(pc.secondaries1.empty(), "");
+        SET_IP_AND_HOST_PORT(pc, primary1, act.node, hp_node);
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
@@ -318,12 +317,12 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         break;
     }
     case config_type::CT_ADD_SECONDARY: {
-        CHECK_EQ(hp_target, pc.hp_primary);
-        CHECK_EQ(act.hp_target, pc.hp_primary);
-        CHECK_EQ(act.target, pc.primary);
+        CHECK_EQ(hp_target, pc.hp_primary1);
+        CHECK_EQ(act.hp_target, pc.hp_primary1);
+        CHECK_EQ(act.target, pc.primary1);
         CHECK(!is_member(pc, hp_node), "");
         CHECK(!is_member(pc, act.node), "");
-        ADD_IP_AND_HOST_PORT(pc, secondaries, act.node, hp_node);
+        ADD_IP_AND_HOST_PORT(pc, secondaries1, act.node, hp_node);
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
@@ -335,22 +334,22 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         CHECK_EQ(act.hp_node, act.hp_target);
         CHECK_EQ(act.node, act.target);
         CHECK_EQ(hp_node, hp_target);
-        CHECK_EQ(act.hp_node, pc.hp_primary);
-        CHECK_EQ(act.node, pc.primary);
-        CHECK_EQ(hp_node, pc.hp_primary);
-        CHECK(!is_secondary(pc, pc.hp_primary), "");
-        CHECK(!is_secondary(pc, pc.primary), "");
+        CHECK_EQ(act.hp_node, pc.hp_primary1);
+        CHECK_EQ(act.node, pc.primary1);
+        CHECK_EQ(hp_node, pc.hp_primary1);
+        CHECK(!is_secondary(pc, pc.hp_primary1), "");
+        CHECK(!is_secondary(pc, pc.primary1), "");
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
         ns->remove_partition(pc.pid, true);
-        ADD_IP_AND_HOST_PORT(pc, secondaries, pc.primary, pc.hp_primary);
-        RESET_IP_AND_HOST_PORT(pc, primary);
+        ADD_IP_AND_HOST_PORT(pc, secondaries1, pc.primary1, pc.hp_primary1);
+        RESET_IP_AND_HOST_PORT(pc, primary1);
         break;
     }
     case config_type::CT_UPGRADE_TO_PRIMARY: {
-        CHECK(!pc.hp_primary, "");
-        CHECK(!pc.primary, "");
+        CHECK(!pc.hp_primary1, "");
+        CHECK(!pc.primary1, "");
         CHECK_EQ(hp_node, hp_target);
         CHECK_EQ(act.hp_node, act.hp_target);
         CHECK_EQ(act.node, act.target);
@@ -359,21 +358,21 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
-        SET_IP_AND_HOST_PORT(pc, primary, act.node, hp_node);
-        CHECK(replica_helper::remove_node(hp_node, pc.hp_secondaries), "");
-        CHECK(replica_helper::remove_node(act.node, pc.secondaries), "");
+        SET_IP_AND_HOST_PORT(pc, primary1, act.node, hp_node);
+        CHECK(replica_helper::remove_node(hp_node, pc.hp_secondaries1), "");
+        CHECK(replica_helper::remove_node(act.node, pc.secondaries1), "");
         ns->put_partition(pc.pid, true);
         break;
     }
     case config_type::CT_ADD_SECONDARY_FOR_LB: {
-        CHECK_EQ(hp_target, pc.hp_primary);
-        CHECK_EQ(act.hp_target, pc.hp_primary);
-        CHECK_EQ(act.target, pc.primary);
+        CHECK_EQ(hp_target, pc.hp_primary1);
+        CHECK_EQ(act.hp_target, pc.hp_primary1);
+        CHECK_EQ(act.target, pc.primary1);
         CHECK(!is_member(pc, hp_node), "");
         CHECK(!is_member(pc, act.node), "");
         CHECK(act.hp_node, "");
         CHECK(act.node, "");
-        ADD_IP_AND_HOST_PORT(pc, secondaries, act.node, hp_node);
+        ADD_IP_AND_HOST_PORT(pc, secondaries1, act.node, hp_node);
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
@@ -384,15 +383,15 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
     // in balancer, remove primary is not allowed
     case config_type::CT_REMOVE:
     case config_type::CT_DOWNGRADE_TO_INACTIVE: {
-        CHECK(pc.hp_primary, "");
-        CHECK(pc.primary, "");
-        CHECK_EQ(pc.hp_primary, hp_target);
-        CHECK_EQ(pc.hp_primary, act.hp_target);
-        CHECK_EQ(pc.primary, act.target);
+        CHECK(pc.hp_primary1, "");
+        CHECK(pc.primary1, "");
+        CHECK_EQ(pc.hp_primary1, hp_target);
+        CHECK_EQ(pc.hp_primary1, act.hp_target);
+        CHECK_EQ(pc.primary1, act.target);
         CHECK(is_secondary(pc, hp_node), "");
         CHECK(is_secondary(pc, act.node), "");
-        CHECK(replica_helper::remove_node(hp_node, pc.hp_secondaries), "");
-        CHECK(replica_helper::remove_node(act.node, pc.secondaries), "");
+        CHECK(replica_helper::remove_node(hp_node, pc.hp_secondaries1), "");
+        CHECK(replica_helper::remove_node(act.node, pc.secondaries1), "");
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
@@ -415,20 +414,19 @@ void migration_check_and_apply(app_mapper &apps,
     for (auto kv = ml.begin(); kv != ml.end(); ++kv) {
         std::shared_ptr<configuration_balancer_request> &proposal = kv->second;
         LOG_DEBUG("the {}th round of proposal, gpid({})", i++, proposal->gpid);
-        std::shared_ptr<app_state> &the_app = apps.find(proposal->gpid.get_app_id())->second;
+        std::shared_ptr<app_state> &app = apps.find(proposal->gpid.get_app_id())->second;
 
-        CHECK_EQ(proposal->gpid.get_app_id(), the_app->app_id);
-        CHECK_LT(proposal->gpid.get_partition_index(), the_app->partition_count);
-        dsn::partition_configuration &pc =
-            the_app->partitions[proposal->gpid.get_partition_index()];
+        CHECK_EQ(proposal->gpid.get_app_id(), app->app_id);
+        CHECK_LT(proposal->gpid.get_partition_index(), app->partition_count);
+        dsn::partition_configuration &pc = app->pcs[proposal->gpid.get_partition_index()];
 
-        CHECK(pc.hp_primary, "");
-        CHECK_EQ(pc.hp_secondaries.size(), 2);
-        for (const auto &hp : pc.hp_secondaries) {
+        CHECK(pc.hp_primary1, "");
+        CHECK_EQ(pc.hp_secondaries1.size(), 2);
+        for (const auto &hp : pc.hp_secondaries1) {
             CHECK(hp, "");
         }
-        CHECK(!is_secondary(pc, pc.hp_primary), "");
-        CHECK(!is_secondary(pc, pc.primary), "");
+        CHECK(!is_secondary(pc, pc.hp_primary1), "");
+        CHECK(!is_secondary(pc, pc.primary1), "");
 
         for (unsigned int j = 0; j < proposal->action_list.size(); ++j) {
             configuration_proposal_action &act = proposal->action_list[j];
@@ -460,7 +458,7 @@ void app_mapper_compare(const app_mapper &mapper1, const app_mapper &mapper2)
         if (app1->status == dsn::app_status::AS_AVAILABLE) {
             CHECK_EQ(app1->partition_count, app2->partition_count);
             for (unsigned int i = 0; i < app1->partition_count; ++i) {
-                CHECK(is_partition_config_equal(app1->partitions[i], app2->partitions[i]), "");
+                CHECK(is_partition_config_equal(app1->pcs[i], app2->pcs[i]), "");
             }
         }
     }

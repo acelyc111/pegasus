@@ -85,20 +85,21 @@ void meta_service_test_app::json_compacity()
     ASSERT_EQ(info2.partition_count, 16);
 
     // 4. old pc version
-    const char *json3 = "{\"pid\":\"1.1\",\"ballot\":234,\"max_replica_count\":3,"
-                        "\"primary\":\"invalid address\",\"secondaries\":[\"127.0.0.1:6\"],"
-                        "\"hp_primary\":\"invalid host_port\",\"hp_secondaries\":[\"localhost:6\"],"
-                        "\"last_drops\":[],\"last_committed_decree\":157}";
+    const char *json3 =
+        "{\"pid\":\"1.1\",\"ballot\":234,\"max_replica_count\":3,"
+        "\"primary\":\"invalid address\",\"secondaries\":[\"127.0.0.1:6\"],"
+        "\"hp_primary\":\"invalid host_port\",\"hp_secondaries1\":[\"localhost:6\"],"
+        "\"last_drops\":[],\"last_committed_decree\":157}";
     dsn::partition_configuration pc;
     dsn::json::json_forwarder<dsn::partition_configuration>::decode(
         dsn::blob(json3, 0, strlen(json3)), pc);
     ASSERT_EQ(234, pc.ballot);
-    ASSERT_TRUE(!pc.hp_primary);
-    ASSERT_TRUE(!pc.primary);
-    ASSERT_EQ(1, pc.hp_secondaries.size());
-    ASSERT_EQ(1, pc.secondaries.size());
-    ASSERT_STREQ("127.0.0.1:6", pc.secondaries[0].to_string());
-    ASSERT_EQ("localhost:6", pc.hp_secondaries[0].to_string());
+    ASSERT_TRUE(!pc.hp_primary1);
+    ASSERT_TRUE(!pc.primary1);
+    ASSERT_EQ(1, pc.hp_secondaries1.size());
+    ASSERT_EQ(1, pc.secondaries1.size());
+    ASSERT_STREQ("127.0.0.1:6", pc.secondaries1[0].to_string());
+    ASSERT_EQ("localhost:6", pc.hp_secondaries1[0].to_string());
     ASSERT_EQ(157, pc.last_committed_decree);
     ASSERT_EQ(0, pc.partition_flags);
 

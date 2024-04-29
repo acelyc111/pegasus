@@ -356,7 +356,7 @@ bool bulk_load_service::check_partition_status(
     const gpid &pid,
     bool always_unhealthy_check,
     const std::function<void(const std::string &, const gpid &)> &retry_function,
-    /*out*/ partition_configuration &pconfig)
+    /*out*/ partition_configuration &pc)
 {
     std::shared_ptr<app_state> app = get_app(pid.get_app_id());
     if (app == nullptr || app->status != app_status::AS_AVAILABLE) {
@@ -369,8 +369,10 @@ bool bulk_load_service::check_partition_status(
         return false;
     }
 
-    pconfig = app->partitions[pid.get_partition_index()];
-    if (!pconfig.hp_primary) {
+    pc = app->pcs[pid.get_partition_index()];
+    host_port primary;
+    GET_HOST_PORT(pc, primary1, primary);
+    if (!primary) {
         LOG_WARNING("app({}) partition({}) primary is invalid, try it later", app_name, pid);
         tasking::enqueue(LPC_META_STATE_NORMAL,
                          _meta_svc->tracker(),
@@ -380,7 +382,9 @@ bool bulk_load_service::check_partition_status(
         return false;
     }
 
-    if (pconfig.hp_secondaries.size() < pconfig.max_replica_count - 1) {
+    std::vector<host_port> secondaries;
+    GET_HOST_PORTS(pc, secondaries1, secondaries);
+    if (secondaries.size() < pc.max_replica_count - 1) {
         bulk_load_status::type p_status;
         {
             zauto_read_lock l(_lock);
@@ -413,7 +417,7 @@ void bulk_load_service::partition_bulk_load(const std::string &app_name, const g
 {
     FAIL_POINT_INJECT_F("meta_bulk_load_partition_bulk_load", [](absl::string_view) {});
 
-    partition_configuration pconfig;
+    partition_configuration pc;
     if (!check_partition_status(app_name,
                                 pid,
                                 false,
@@ -421,7 +425,7 @@ void bulk_load_service::partition_bulk_load(const std::string &app_name, const g
                                           this,
                                           std::placeholders::_1,
                                           std::placeholders::_2),
-                                pconfig)) {
+                                pc)) {
         return;
     }
 
@@ -431,18 +435,18 @@ void bulk_load_service::partition_bulk_load(const std::string &app_name, const g
         const app_bulk_load_info &ainfo = _app_bulk_load_info[pid.get_app_id()];
         req->pid = pid;
         req->app_name = app_name;
-        SET_IP_AND_HOST_PORT(*req, primary, pconfig.primary, pconfig.hp_primary);
+        SET_OBJ_IP_AND_HOST_PORT(*req, primary, pc, primary1);
         req->remote_provider_name = ainfo.file_provider_type;
         req->cluster_name = ainfo.cluster_name;
         req->meta_bulk_load_status = get_partition_bulk_load_status_unlocked(pid);
-        req->ballot = pconfig.ballot;
+        req->ballot = pc.ballot;
         req->query_bulk_load_metadata = is_partition_metadata_not_updated_unlocked(pid);
         req->remote_root_path = ainfo.remote_root_path;
     }
 
     LOG_INFO("send bulk load request to node({}), app({}), partition({}), partition "
              "status = {}, remote provider = {}, cluster_name = {}, remote_root_path = {}",
-             FMT_HOST_PORT_AND_IP(pconfig, primary),
+             FMT_HOST_PORT_AND_IP(pc, primary1),
              app_name,
              pid,
              dsn::enum_to_string(req->meta_bulk_load_status),
@@ -451,17 +455,16 @@ void bulk_load_service::partition_bulk_load(const std::string &app_name, const g
              req->remote_root_path);
 
     bulk_load_rpc rpc(std::move(req), RPC_BULK_LOAD, 0_ms, 0, pid.thread_hash());
-    rpc.call(
-        pconfig.primary, _meta_svc->tracker(), [this, pid, rpc, pconfig](error_code err) mutable {
-            // The remote server may not support FQDN, but do not try to reverse resolve the
-            // IP addresses because they may be unresolved. Just warning and ignore this.
-            LOG_WARNING_IF(!rpc.response().__isset.hp_group_bulk_load_state,
-                           "The {} primary {} doesn't support FQDN, the response "
-                           "hp_group_bulk_load_state field is not set",
-                           pid,
-                           FMT_HOST_PORT_AND_IP(pconfig, primary));
-            on_partition_bulk_load_reply(err, rpc.request(), rpc.response());
-        });
+    rpc.call(pc.primary1, _meta_svc->tracker(), [this, pid, rpc, pc](error_code err) mutable {
+        // The remote server may not support FQDN, but do not try to reverse resolve the
+        // IP addresses because they may be unresolved. Just warning and ignore this.
+        LOG_WARNING_IF(!rpc.response().__isset.hp_group_bulk_load_state,
+                       "The {} primary {} doesn't support FQDN, the response "
+                       "hp_group_bulk_load_state field is not set",
+                       pid,
+                       FMT_HOST_PORT_AND_IP(pc, primary1));
+        on_partition_bulk_load_reply(err, rpc.request(), rpc.response());
+    });
 }
 
 // ThreadPool: THREAD_POOL_META_STATE
@@ -530,7 +533,7 @@ void bulk_load_service::on_partition_bulk_load_reply(error_code err,
         handle_app_unavailable(pid.get_app_id(), app_name);
         return;
     }
-    ballot current_ballot = app->partitions[pid.get_partition_index()].ballot;
+    ballot current_ballot = app->pcs[pid.get_partition_index()].ballot;
     if (request.ballot < current_ballot) {
         LOG_WARNING(
             "receive out-date response from node({}), app({}), partition({}), request ballot = "
@@ -1184,7 +1187,7 @@ void bulk_load_service::update_app_status_on_remote_storage_reply(const app_bulk
 }
 
 // ThreadPool: THREAD_POOL_META_STATE
-bool bulk_load_service::check_ever_ingestion_succeed(const partition_configuration &config,
+bool bulk_load_service::check_ever_ingestion_succeed(const partition_configuration &pc,
                                                      const std::string &app_name,
                                                      const gpid &pid)
 {
@@ -1199,8 +1202,12 @@ bool bulk_load_service::check_ever_ingestion_succeed(const partition_configurati
     }
 
     std::vector<host_port> current_nodes;
-    current_nodes.emplace_back(config.hp_primary);
-    for (const auto &secondary : config.hp_secondaries) {
+    dsn::host_port primary;
+    GET_HOST_PORT(pc, primary1, primary);
+    current_nodes.emplace_back(primary);
+    std::vector<host_port> secondaries;
+    GET_HOST_PORTS(pc, secondaries1, secondaries);
+    for (const auto &secondary : secondaries) {
         current_nodes.emplace_back(secondary);
     }
 
@@ -1240,7 +1247,7 @@ void bulk_load_service::partition_ingestion(const std::string &app_name, const g
         return;
     }
 
-    partition_configuration pconfig;
+    partition_configuration pc;
     if (!check_partition_status(app_name,
                                 pid,
                                 true,
@@ -1248,16 +1255,16 @@ void bulk_load_service::partition_ingestion(const std::string &app_name, const g
                                           this,
                                           std::placeholders::_1,
                                           std::placeholders::_2),
-                                pconfig)) {
+                                pc)) {
         return;
     }
 
-    if (check_ever_ingestion_succeed(pconfig, app_name, pid)) {
+    if (check_ever_ingestion_succeed(pc, app_name, pid)) {
         return;
     }
 
     auto app = get_app(pid.get_app_id());
-    if (!try_partition_ingestion(pconfig, app->helpers->contexts[pid.get_partition_index()])) {
+    if (!try_partition_ingestion(pc, app->helpers->contexts[pid.get_partition_index()])) {
         LOG_WARNING(
             "app({}) partition({}) couldn't execute ingestion, wait and try later", app_name, pid);
         tasking::enqueue(LPC_META_STATE_NORMAL,
@@ -1268,18 +1275,15 @@ void bulk_load_service::partition_ingestion(const std::string &app_name, const g
         return;
     }
 
-    const auto &primary_addr = pconfig.hp_primary;
-    ballot meta_ballot = pconfig.ballot;
-    tasking::enqueue(LPC_BULK_LOAD_INGESTION,
-                     _meta_svc->tracker(),
-                     std::bind(&bulk_load_service::send_ingestion_request,
-                               this,
-                               app_name,
-                               pid,
-                               primary_addr,
-                               meta_ballot),
-                     0,
-                     std::chrono::seconds(bulk_load_constant::BULK_LOAD_REQUEST_INTERVAL));
+    host_port primary;
+    GET_HOST_PORT(pc, primary1, primary);
+    tasking::enqueue(
+        LPC_BULK_LOAD_INGESTION,
+        _meta_svc->tracker(),
+        std::bind(
+            &bulk_load_service::send_ingestion_request, this, app_name, pid, primary, pc.ballot),
+        0,
+        std::chrono::seconds(bulk_load_constant::BULK_LOAD_REQUEST_INTERVAL));
 }
 
 // ThreadPool: THREAD_POOL_DEFAULT

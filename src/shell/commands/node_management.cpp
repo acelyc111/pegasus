@@ -340,21 +340,25 @@ bool ls_nodes(command_executor *e, shell_context *sc, arguments args)
         for (auto &app : apps) {
             int32_t app_id;
             int32_t partition_count;
-            std::vector<dsn::partition_configuration> partitions;
-            r = sc->ddl_client->list_app(app.app_name, app_id, partition_count, partitions);
+            std::vector<dsn::partition_configuration> pcs;
+            r = sc->ddl_client->list_app(app.app_name, app_id, partition_count, pcs);
             if (r != dsn::ERR_OK) {
                 std::cout << "list app " << app.app_name << " failed, error=" << r << std::endl;
                 return true;
             }
 
-            for (const dsn::partition_configuration &p : partitions) {
-                if (p.hp_primary) {
-                    auto find = tmp_map.find(p.hp_primary);
+            for (const auto &pc : pcs) {
+                dsn::host_port primary;
+                GET_HOST_PORT(pc, primary1, primary);
+                if (primary) {
+                    auto find = tmp_map.find(primary);
                     if (find != tmp_map.end()) {
                         find->second.primary_count++;
                     }
                 }
-                for (const auto &hp : p.hp_secondaries) {
+                std::vector<dsn::host_port> secondaries;
+                GET_HOST_PORTS(pc, secondaries1, secondaries);
+                for (const auto &hp : secondaries) {
                     auto find = tmp_map.find(hp);
                     if (find != tmp_map.end()) {
                         find->second.secondary_count++;

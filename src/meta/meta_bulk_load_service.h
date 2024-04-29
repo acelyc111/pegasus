@@ -189,7 +189,7 @@ private:
         const gpid &pid,
         bool always_unhealthy_check,
         const std::function<void(const std::string &, const gpid &)> &retry_function,
-        /*out*/ partition_configuration &pconfig);
+        /*out*/ partition_configuration &pc);
 
     void partition_bulk_load(const std::string &app_name, const gpid &pid);
 
@@ -236,7 +236,7 @@ private:
     // - true : this partition has ever executed ingestion succeed, no need to send ingestion
     // request
     // - false: this partition has not executed ingestion or executed ingestion failed
-    bool check_ever_ingestion_succeed(const partition_configuration &config,
+    bool check_ever_ingestion_succeed(const partition_configuration &pc,
                                       const std::string &app_name,
                                       const gpid &pid);
 
@@ -252,9 +252,9 @@ private:
     ///
     /// ingestion_context functions
     ///
-    bool try_partition_ingestion(const partition_configuration &config, const config_context &cc)
+    bool try_partition_ingestion(const partition_configuration &pc, const config_context &cc)
     {
-        return _ingestion_context->try_partition_ingestion(config, cc);
+        return _ingestion_context->try_partition_ingestion(pc, cc);
     }
 
     void finish_ingestion(const gpid &pid) { _ingestion_context->remove_partition(pid); }

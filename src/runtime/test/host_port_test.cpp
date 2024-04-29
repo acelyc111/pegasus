@@ -372,58 +372,58 @@ TEST(host_port_test, test_macros)
     // Test ADD_IP_AND_HOST_PORT.
     {
         partition_configuration pc;
-        ADD_IP_AND_HOST_PORT(pc, secondaries, kAddr1, kHp1);
-        ASSERT_EQ(1, pc.secondaries.size());
-        ASSERT_EQ(1, pc.hp_secondaries.size());
-        ASSERT_EQ(kAddr1, pc.secondaries[0]);
-        ASSERT_EQ(kHp1, pc.hp_secondaries[0]);
-        ADD_IP_AND_HOST_PORT(pc, secondaries, kAddr2, kHp2);
-        ASSERT_EQ(2, pc.secondaries.size());
-        ASSERT_EQ(2, pc.hp_secondaries.size());
-        ASSERT_EQ(kAddr2, pc.secondaries[1]);
-        ASSERT_EQ(kHp2, pc.hp_secondaries[1]);
+        ADD_IP_AND_HOST_PORT(pc, secondaries1, kAddr1, kHp1);
+        ASSERT_EQ(1, pc.secondaries1.size());
+        ASSERT_EQ(1, pc.hp_secondaries1.size());
+        ASSERT_EQ(kAddr1, pc.secondaries1[0]);
+        ASSERT_EQ(kHp1, pc.hp_secondaries1[0]);
+        ADD_IP_AND_HOST_PORT(pc, secondaries1, kAddr2, kHp2);
+        ASSERT_EQ(2, pc.secondaries1.size());
+        ASSERT_EQ(2, pc.hp_secondaries1.size());
+        ASSERT_EQ(kAddr2, pc.secondaries1[1]);
+        ASSERT_EQ(kHp2, pc.hp_secondaries1[1]);
     }
 
     // Test ADD_IP_AND_HOST_PORT_BY_DNS.
     {
         partition_configuration pc;
-        ADD_IP_AND_HOST_PORT_BY_DNS(pc, secondaries, kHp1);
-        ASSERT_EQ(1, pc.secondaries.size());
-        ASSERT_EQ(1, pc.hp_secondaries.size());
-        ASSERT_EQ(kAddr1, pc.secondaries[0]);
-        ASSERT_EQ(kHp1, pc.hp_secondaries[0]);
-        ADD_IP_AND_HOST_PORT_BY_DNS(pc, secondaries, kHp2);
-        ASSERT_EQ(2, pc.secondaries.size());
-        ASSERT_EQ(2, pc.hp_secondaries.size());
-        ASSERT_EQ(kAddr2, pc.secondaries[1]);
-        ASSERT_EQ(kHp2, pc.hp_secondaries[1]);
+        ADD_IP_AND_HOST_PORT_BY_DNS(pc, secondaries1, kHp1);
+        ASSERT_EQ(1, pc.secondaries1.size());
+        ASSERT_EQ(1, pc.hp_secondaries1.size());
+        ASSERT_EQ(kAddr1, pc.secondaries1[0]);
+        ASSERT_EQ(kHp1, pc.hp_secondaries1[0]);
+        ADD_IP_AND_HOST_PORT_BY_DNS(pc, secondaries1, kHp2);
+        ASSERT_EQ(2, pc.secondaries1.size());
+        ASSERT_EQ(2, pc.hp_secondaries1.size());
+        ASSERT_EQ(kAddr2, pc.secondaries1[1]);
+        ASSERT_EQ(kHp2, pc.hp_secondaries1[1]);
     }
 
     // Test SET_IPS_AND_HOST_PORTS_BY_DNS.
     {
         partition_configuration pc;
-        SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries, kHp1);
-        ASSERT_EQ(1, pc.secondaries.size());
-        ASSERT_EQ(1, pc.hp_secondaries.size());
-        ASSERT_EQ(kAddr1, pc.secondaries[0]);
-        ASSERT_EQ(kHp1, pc.hp_secondaries[0]);
+        SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries1, kHp1);
+        ASSERT_EQ(1, pc.secondaries1.size());
+        ASSERT_EQ(1, pc.hp_secondaries1.size());
+        ASSERT_EQ(kAddr1, pc.secondaries1[0]);
+        ASSERT_EQ(kHp1, pc.hp_secondaries1[0]);
 
-        SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries, kHp2, kHp3);
-        ASSERT_EQ(2, pc.secondaries.size());
-        ASSERT_EQ(2, pc.hp_secondaries.size());
-        ASSERT_EQ(kAddr2, pc.secondaries[0]);
-        ASSERT_EQ(kHp2, pc.hp_secondaries[0]);
-        ASSERT_EQ(kAddr3, pc.secondaries[1]);
-        ASSERT_EQ(kHp3, pc.hp_secondaries[1]);
+        SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries1, kHp2, kHp3);
+        ASSERT_EQ(2, pc.secondaries1.size());
+        ASSERT_EQ(2, pc.hp_secondaries1.size());
+        ASSERT_EQ(kAddr2, pc.secondaries1[0]);
+        ASSERT_EQ(kHp2, pc.hp_secondaries1[0]);
+        ASSERT_EQ(kAddr3, pc.secondaries1[1]);
+        ASSERT_EQ(kHp3, pc.hp_secondaries1[1]);
     }
 
     // Test CLEAR_IP_AND_HOST_PORT.
     {
         partition_configuration pc;
-        ADD_IP_AND_HOST_PORT(pc, secondaries, kAddr1, kHp1);
-        CLEAR_IP_AND_HOST_PORT(pc, secondaries);
-        ASSERT_TRUE(pc.secondaries.empty());
-        ASSERT_TRUE(pc.hp_secondaries.empty());
+        ADD_IP_AND_HOST_PORT(pc, secondaries1, kAddr1, kHp1);
+        CLEAR_IP_AND_HOST_PORT(pc, secondaries1);
+        ASSERT_TRUE(pc.secondaries1.empty());
+        ASSERT_TRUE(pc.hp_secondaries1.empty());
     }
 
     // Test SET_VALUE_FROM_IP_AND_HOST_PORT.

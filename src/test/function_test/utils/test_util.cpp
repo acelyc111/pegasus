@@ -108,11 +108,10 @@ void test_util::SetUp()
     ASSERT_TRUE(client_ != nullptr);
 
     int32_t partition_count;
-    ASSERT_EQ(dsn::ERR_OK,
-              ddl_client_->list_app(table_name_, table_id_, partition_count, partitions_));
+    ASSERT_EQ(dsn::ERR_OK, ddl_client_->list_app(table_name_, table_id_, partition_count, pcs_));
     ASSERT_NE(0, table_id_);
     ASSERT_EQ(partition_count_, partition_count);
-    ASSERT_EQ(partition_count_, partitions_.size());
+    ASSERT_EQ(partition_count_, pcs_.size());
 }
 
 void test_util::run_cmd_from_project_root(const string &cmd)
@@ -175,8 +174,12 @@ void test_util::wait_table_healthy(const std::string &table_name) const
             std::vector<partition_configuration> pcs;
             ASSERT_EQ(dsn::ERR_OK, ddl_client_->list_app(table_name, table_id, pcount, pcs));
             for (const auto &pc : pcs) {
-                ASSERT_TRUE(pc.primary);
-                ASSERT_EQ(1 + pc.secondaries.size(), pc.max_replica_count);
+                dsn::host_port primary;
+                GET_HOST_PORT(pc, primary1, primary);
+                ASSERT_TRUE(primary);
+                std::vector<dsn::host_port> secondaries;
+                GET_HOST_PORTS(pc, secondaries1, secondaries);
+                ASSERT_EQ(1 + secondaries.size(), pc.max_replica_count);
             }
         },
         180);

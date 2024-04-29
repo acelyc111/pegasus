@@ -36,6 +36,7 @@
 #include "consensus_types.h"
 #include "replica_admin_types.h"
 #include "common/replication_enums.h"
+#include "runtime/rpc/dns_resolver.h"
 #include "runtime/rpc/rpc_address.h"
 #include "runtime/rpc/rpc_host_port.h"
 
@@ -53,19 +54,19 @@ typedef int64_t decree;
 
 inline bool is_primary(const partition_configuration &pc, const host_port &node)
 {
-    return node && pc.hp_primary == node;
+    return node && pc.hp_primary1 == node;
 }
 inline bool is_primary(const partition_configuration &pc, const rpc_address &node)
 {
-    return node && pc.primary == node;
+    return node && pc.primary1 == node;
 }
 inline bool is_secondary(const partition_configuration &pc, const host_port &node)
 {
-    return node && utils::contains(pc.hp_secondaries, node);
+    return node && utils::contains(pc.hp_secondaries1, node);
 }
 inline bool is_secondary(const partition_configuration &pc, const rpc_address &node)
 {
-    return node && utils::contains(pc.secondaries, node);
+    return node && utils::contains(pc.secondaries1, node);
 }
 inline bool is_member(const partition_configuration &pc, const host_port &node)
 {
@@ -79,16 +80,24 @@ inline bool is_partition_config_equal(const partition_configuration &pc1,
                                       const partition_configuration &pc2)
 {
     // secondaries no need to be same order
-    for (const auto &hp : pc1.hp_secondaries) {
-        if (!is_secondary(pc2, hp)) {
+    std::vector<host_port> pc1_secondaries;
+    GET_HOST_PORTS(pc1, secondaries1, pc1_secondaries);
+    for (const auto &pc1_secondary : pc1_secondaries) {
+        if (!is_secondary(pc2, pc1_secondary)) {
             return false;
         }
     }
+
     // last_drops is not considered into equality check
+    host_port pc1_primary;
+    GET_HOST_PORT(pc1, primary1, pc1_primary);
+    host_port pc2_primary;
+    GET_HOST_PORT(pc2, primary1, pc2_primary);
+    std::vector<host_port> pc2_secondaries;
+    GET_HOST_PORTS(pc2, secondaries1, pc2_secondaries);
     return pc1.ballot == pc2.ballot && pc1.pid == pc2.pid &&
-           pc1.max_replica_count == pc2.max_replica_count && pc1.primary == pc2.primary &&
-           pc1.hp_primary == pc2.hp_primary && pc1.secondaries.size() == pc2.secondaries.size() &&
-           pc1.hp_secondaries.size() == pc2.hp_secondaries.size() &&
+           pc1.max_replica_count == pc2.max_replica_count && pc1_primary == pc2_primary &&
+           pc1_secondaries.size() == pc2_secondaries.size() &&
            pc1.last_committed_decree == pc2.last_committed_decree;
 }
 
@@ -106,9 +115,9 @@ public:
         }
         return false;
     }
-    static bool get_replica_config(const partition_configuration &partition_config,
+    static bool get_replica_config(const partition_configuration &pc,
                                    const ::dsn::host_port &node,
-                                   /*out*/ replica_configuration &replica_config);
+                                   /*out*/ replica_configuration &rc);
 
     // Return true if 'server_list' is a valid comma-separated list of servers, otherwise return
     // false. The result is filled into 'servers' if success.

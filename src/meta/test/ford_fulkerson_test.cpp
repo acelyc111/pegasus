@@ -98,9 +98,9 @@ TEST(ford_fulkerson, update_decree)
     info.partition_count = 1;
     std::shared_ptr<app_state> app = app_state::create(info);
     partition_configuration pc;
-    SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries, hp2, hp3);
-    app->partitions.push_back(pc);
-    app->partitions.push_back(pc);
+    SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries1, hp2, hp3);
+    app->pcs.push_back(pc);
+    app->pcs.push_back(pc);
 
     node_mapper nodes;
     node_state ns;
@@ -135,10 +135,10 @@ TEST(ford_fulkerson, find_shortest_path)
     std::shared_ptr<app_state> app = app_state::create(info);
 
     partition_configuration pc;
-    SET_IP_AND_HOST_PORT_BY_DNS(pc, primary, hp1);
-    SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries, hp2, hp3);
-    app->partitions[0] = pc;
-    app->partitions[1] = pc;
+    SET_IP_AND_HOST_PORT_BY_DNS(pc, primary1, hp1);
+    SET_IPS_AND_HOST_PORTS_BY_DNS(pc, secondaries1, hp2, hp3);
+    app->pcs[0] = pc;
+    app->pcs[1] = pc;
 
     node_mapper nodes;
     node_state ns1;

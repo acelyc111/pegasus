@@ -102,38 +102,34 @@ dsn::error_code kill_testor::get_partition_info(bool debug_unhealthy,
     healthy_partition_cnt = 0, unhealthy_partition_cnt = 0;
     int32_t app_id;
     int32_t partition_count;
-    partitions.clear();
-    dsn::error_code err =
-        ddl_client->list_app(FLAGS_verify_app_name, app_id, partition_count, partitions);
+    pcs.clear();
+    dsn::error_code err = ddl_client->list_app(FLAGS_verify_app_name, app_id, partition_count, pcs);
 
     if (err == ::dsn::ERR_OK) {
         LOG_DEBUG("access meta and query partition status success");
-        for (int i = 0; i < partitions.size(); i++) {
-            const dsn::partition_configuration &p = partitions[i];
+        for (const auto &pc : pcs) {
             int replica_count = 0;
-            if (p.hp_primary) {
+            dsn::host_port primary;
+            GET_HOST_PORT(pc, primary1, primary);
+            if (primary) {
                 replica_count++;
             }
-            replica_count += p.hp_secondaries.size();
-            if (replica_count == p.max_replica_count) {
+            std::vector<dsn::host_port> secondaries;
+            GET_HOST_PORTS(pc, secondaries1, secondaries);
+            replica_count += secondaries.size();
+            if (replica_count == pc.max_replica_count) {
                 healthy_partition_cnt++;
             } else {
-                std::stringstream info;
-                info << "gpid=" << p.pid.get_app_id() << "." << p.pid.get_partition_index() << ", ";
-                info << "primay=" << p.hp_primary << ", ";
-                info << "secondaries=[";
-                for (int idx = 0; idx < p.hp_secondaries.size(); idx++) {
-                    if (idx != 0)
-                        info << "," << p.hp_secondaries[idx];
-                    else
-                        info << p.hp_secondaries[idx];
-                }
-                info << "], ";
-                info << "last_committed_decree=" << p.last_committed_decree;
+                const auto &info =
+                    fmt::format("gpid={}, primary={}, secondaries=[{}], last_committed_decree={}",
+                                pc.pid,
+                                primary,
+                                fmt::join(secondaries, ", "),
+                                pc.last_committed_decree);
                 if (debug_unhealthy) {
-                    LOG_INFO("found unhealthy partition, {}", info.str());
+                    LOG_INFO("found unhealthy partition, {}", info);
                 } else {
-                    LOG_DEBUG("found unhealthy partition, {}", info.str());
+                    LOG_DEBUG("found unhealthy partition, {}", info);
                 }
             }
         }

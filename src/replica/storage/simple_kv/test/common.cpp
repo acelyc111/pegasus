@@ -315,12 +315,12 @@ bool parti_config::from_string(const std::string &str)
     return true;
 }
 
-void parti_config::convert_from(const partition_configuration &c)
+void parti_config::convert_from(const partition_configuration &pc)
 {
-    pid = c.pid;
-    ballot = c.ballot;
-    primary = address_to_node(c.hp_primary);
-    for (auto &s : c.hp_secondaries) {
+    pid = pc.pid;
+    ballot = pc.ballot;
+    primary = address_to_node(pc.hp_primary1);
+    for (auto &s : pc.hp_secondaries1) {
         secondaries.push_back(address_to_node(s));
     }
     std::sort(secondaries.begin(), secondaries.end());
