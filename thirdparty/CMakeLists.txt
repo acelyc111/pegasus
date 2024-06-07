@@ -58,12 +58,14 @@ file(MAKE_DIRECTORY ${TP_OUTPUT}/include)
 file(MAKE_DIRECTORY ${TP_OUTPUT}/lib)
 
 ExternalProject_Add(boost
-        URL ${OSS_URL_PREFIX}/boost_1_69_0.tar.bz2
-        https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.bz2
-        URL_MD5 a1332494397bf48332cb152abfefcec2
-        CONFIGURE_COMMAND ./bootstrap.sh --prefix=. --with-libraries=system,filesystem --with-toolset=gcc
+        GIT_REPOSITORY https://github.com/boostorg/boost.git
+        GIT_TAG boost-1.85.0
+        GIT_SHALLOW true
+        GIT_PROGRESS true
+        GIT_SUBMODULES_RECURSE true
+        GIT_SUBMODULES libs/asio libs/filesystem libs/system tools/build
+        CONFIGURE_COMMAND ./bootstrap.sh --prefix=${TP_OUTPUT} --with-libraries=system,filesystem --with-toolset=gcc --without-icu
         BUILD_COMMAND ./b2 toolset=gcc cxxflags=-fPIC cxxstd=11 install
-        INSTALL_COMMAND cp -R include/boost ${TP_OUTPUT}/include && cp -R lib ${TP_OUTPUT}/
         BUILD_IN_SOURCE 1
         DOWNLOAD_EXTRACT_TIMESTAMP true
         DOWNLOAD_NO_PROGRESS true
