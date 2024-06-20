@@ -114,6 +114,7 @@ ExternalProject_Add(gperftools
         URL ${OSS_URL_PREFIX}/gperftools-2.13.tar.gz
         https://github.com/gperftools/gperftools/releases/download/gperftools-2.13/gperftools-2.13.tar.gz
         URL_MD5 4e218a40a354748c50d054c285caaae8
+        PATCH_COMMAND patch -p1 < ${TP_DIR}/fix_gperftools-generic_fp.patch
         CONFIGURE_COMMAND ./configure --prefix=${TP_OUTPUT} --enable-static=no --enable-frame-pointers=yes
         BUILD_IN_SOURCE 1
         DOWNLOAD_EXTRACT_TIMESTAMP true
