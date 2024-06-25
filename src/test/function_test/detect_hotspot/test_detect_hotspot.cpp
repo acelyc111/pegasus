@@ -96,11 +96,9 @@ protected:
 
         bool find_hotkey = false;
         dsn::replication::detect_hotkey_response resp;
-        for (int partition_index = 0; partition_index < partitions_.size(); partition_index++) {
-            req.pid = dsn::gpid(table_id_, partition_index);
-            ASSERT_EQ(
-                dsn::ERR_OK,
-                ddl_client_->detect_hotkey(partitions_[partition_index].hp_primary, req, resp));
+        for (const auto &pc : pcs_) {
+            req.pid = pc.pid;
+            ASSERT_EQ(dsn::ERR_OK, ddl_client_->detect_hotkey(pc.hp_primary, req, resp));
             if (!resp.hotkey_result.empty()) {
                 find_hotkey = true;
                 break;
@@ -118,19 +116,15 @@ protected:
         sleep(15);
 
         req.action = dsn::replication::detect_action::STOP;
-        for (int partition_index = 0; partition_index < partitions_.size(); partition_index++) {
-            ASSERT_EQ(
-                dsn::ERR_OK,
-                ddl_client_->detect_hotkey(partitions_[partition_index].hp_primary, req, resp));
+        for (const auto &pc : pcs_) {
+            ASSERT_EQ(dsn::ERR_OK, ddl_client_->detect_hotkey(pc.hp_primary, req, resp));
             ASSERT_EQ(dsn::ERR_OK, resp.err);
         }
 
         req.action = dsn::replication::detect_action::QUERY;
-        for (int partition_index = 0; partition_index < partitions_.size(); partition_index++) {
-            req.pid = dsn::gpid(table_id_, partition_index);
-            ASSERT_EQ(
-                dsn::ERR_OK,
-                ddl_client_->detect_hotkey(partitions_[partition_index].hp_primary, req, resp));
+        for (const auto &pc : pcs_) {
+            req.pid = pc.pid;
+            ASSERT_EQ(dsn::ERR_OK, ddl_client_->detect_hotkey(pc.hp_primary, req, resp));
             ASSERT_EQ("Can't get hotkey now, now state: hotkey_collector_state::STOPPED",
                       resp.err_hint);
         }
@@ -162,12 +156,12 @@ protected:
 
         dsn::replication::detect_hotkey_response resp;
         ASSERT_EQ(dsn::ERR_OK,
-                  ddl_client_->detect_hotkey(partitions_[target_partition].hp_primary, req, resp));
+                  ddl_client_->detect_hotkey(pcs_[target_partition].hp_primary, req, resp));
         ASSERT_EQ(dsn::ERR_OK, resp.err);
 
         req.action = dsn::replication::detect_action::QUERY;
         ASSERT_EQ(dsn::ERR_OK,
-                  ddl_client_->detect_hotkey(partitions_[target_partition].hp_primary, req, resp));
+                  ddl_client_->detect_hotkey(pcs_[target_partition].hp_primary, req, resp));
         ASSERT_EQ("Can't get hotkey now, now state: hotkey_collector_state::COARSE_DETECTING",
                   resp.err_hint);
 
@@ -178,7 +172,7 @@ protected:
 
         req.action = dsn::replication::detect_action::QUERY;
         ASSERT_EQ(dsn::ERR_OK,
-                  ddl_client_->detect_hotkey(partitions_[target_partition].hp_primary, req, resp));
+                  ddl_client_->detect_hotkey(pcs_[target_partition].hp_primary, req, resp));
         ASSERT_EQ("Can't get hotkey now, now state: hotkey_collector_state::STOPPED",
                   resp.err_hint);
     }
