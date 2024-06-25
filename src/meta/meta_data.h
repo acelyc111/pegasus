@@ -483,13 +483,18 @@ inline config_context *get_config_context(app_mapper &apps, const dsn::gpid &gpi
     return &(iter->second->helpers->contexts[gpid.get_partition_index()]);
 }
 
-inline int replica_count(const partition_configuration &pc)
+inline size_t replica_count(const partition_configuration &pc)
 {
-    host_port primary;
-    GET_HOST_PORT(pc, primary1, primary);
+    size_t rc = 0;
+    if (pc.primary1) {
+        host_port primary;
+        GET_HOST_PORT(pc, primary1, primary);
+        rc += (primary ? 1 : 0);
+    }
     std::vector<host_port> secondaries;
     GET_HOST_PORTS(pc, secondaries1, secondaries);
-    return (primary ? 1 : 0) + secondaries.size();
+    rc += secondaries.size();
+    return rc;
 }
 
 enum health_status

@@ -136,7 +136,7 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
     GET_HOST_PORTS(pc, last_drops1, last_drops);
     CHECK(last_drops.empty(), "last_drops of partition({}) must be empty", pid);
     for (auto iter = drop_list.rbegin(); iter != drop_list.rend(); ++iter) {
-        if (last_drops.size() + 1 >= max_replica_count) {
+        if (pc.hp_last_drops1.size() + 1 >= max_replica_count) {
             break;
         }
         // similar to cc.drop_list, pc.last_drop is also a stack structure

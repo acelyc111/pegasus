@@ -30,6 +30,7 @@
 #include "partition_kill_testor.h"
 #include "remote_cmd/remote_command.h"
 #include "runtime/rpc/dns_resolver.h"
+#include "runtime/rpc/rpc_host_port.h"
 #include "runtime/task/task.h"
 #include "test/kill_test/kill_testor.h"
 #include "utils/autoref_ptr.h"

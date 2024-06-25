@@ -47,6 +47,8 @@
 #include "replica/replication_app_base.h"
 #include "replica_stub.h"
 #include "runtime/api_layer1.h"
+#include "runtime/rpc/dns_resolver.h"
+#include "runtime/rpc/rpc_host_port.h"
 #include "runtime/task/async_calls.h"
 #include "utils/autoref_ptr.h"
 #include "utils/env.h"

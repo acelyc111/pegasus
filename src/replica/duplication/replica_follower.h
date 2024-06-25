@@ -26,7 +26,7 @@
 #include "common/gpid.h"
 #include "dsn.layer2_types.h"
 #include "replica/replica_base.h"
-#include "runtime/rpc/dns_resolver.h"
+#include "runtime/rpc/dns_resolver.h" // IWYU pragma: keep
 #include "runtime/rpc/rpc_host_port.h"
 #include "runtime/task/task_tracker.h"
 #include "utils/error_code.h"

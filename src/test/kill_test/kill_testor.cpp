@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <fmt/core.h>
+#include <fmt/format.h>
 #include <pegasus/client.h>
 #include <stdint.h>
 #include <stdlib.h>

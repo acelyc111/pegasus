@@ -85,17 +85,21 @@ void meta_service_test_app::json_compacity()
     ASSERT_EQ(info2.partition_count, 16);
 
     // 4. old pc version
-    const char *json3 =
-        "{\"pid\":\"1.1\",\"ballot\":234,\"max_replica_count\":3,"
-        "\"primary\":\"invalid address\",\"secondaries\":[\"127.0.0.1:6\"],"
-        "\"hp_primary\":\"invalid host_port\",\"hp_secondaries1\":[\"localhost:6\"],"
-        "\"last_drops\":[],\"last_committed_decree\":157}";
+    const char *json3 = "{\"pid\":\"1.1\",\"ballot\":234,\"max_replica_count\":3,"
+                        "\"primary1\":\"127.0.0.1:1\",\"secondaries1\":[\"127.0.0.1:6\"],"
+                        "\"hp_primary1\":\"localhost:1\",\"hp_secondaries1\":[\"localhost:6\"],"
+                        "\"last_drops\":[],\"last_committed_decree\":157}";
     dsn::partition_configuration pc;
     dsn::json::json_forwarder<dsn::partition_configuration>::decode(
         dsn::blob(json3, 0, strlen(json3)), pc);
     ASSERT_EQ(234, pc.ballot);
-    ASSERT_TRUE(!pc.hp_primary1);
-    ASSERT_TRUE(!pc.primary1);
+    // As how we do in src/meta/server_state.cpp, we have to set the '__isset' fields manually.
+    ASSERT_FALSE(pc.__isset.hp_primary1);
+    ASSERT_TRUE(pc.hp_primary1);
+    ASSERT_TRUE(pc.primary1);
+    ASSERT_STREQ("127.0.0.1:1", pc.primary1.to_string());
+    ASSERT_EQ("localhost:1", pc.hp_primary1.to_string());
+    ASSERT_FALSE(pc.__isset.hp_secondaries1);
     ASSERT_EQ(1, pc.hp_secondaries1.size());
     ASSERT_EQ(1, pc.secondaries1.size());
     ASSERT_STREQ("127.0.0.1:6", pc.secondaries1[0].to_string());

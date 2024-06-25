@@ -16,6 +16,7 @@
 // under the License.
 
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <rapidjson/ostreamwrapper.h>
 #include <algorithm>
 #include <map>

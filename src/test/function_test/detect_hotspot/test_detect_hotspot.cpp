@@ -26,11 +26,13 @@
 
 #include "client/replication_ddl_client.h"
 #include "common/gpid.h"
+#include "dsn.layer2_types.h"
 #include "gtest/gtest.h"
 #include "include/pegasus/client.h"
 #include "include/pegasus/error.h"
 #include "replica_admin_types.h"
 #include "runtime/api_layer1.h"
+#include "runtime/rpc/rpc_host_port.h"
 #include "test/function_test/utils/test_util.h"
 #include "test/function_test/utils/utils.h"
 #include "utils/error_code.h"
