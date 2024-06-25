@@ -57,16 +57,35 @@ message(STATUS "Setting up third-parties...")
 file(MAKE_DIRECTORY ${TP_OUTPUT}/include)
 file(MAKE_DIRECTORY ${TP_OUTPUT}/lib)
 
+set(ENV{BOOST_USER_JAMFILE} "${TP_DIR}/build/Source/boost/tools/build/src/user-config.jam")
 ExternalProject_Add(boost
         GIT_REPOSITORY https://github.com/boostorg/boost.git
         GIT_TAG boost-1.85.0
         GIT_SHALLOW true
         GIT_PROGRESS true
-        GIT_SUBMODULES_RECURSE true
-        GIT_SUBMODULES libs/asio libs/filesystem libs/system tools/build
+        GIT_SUBMODULES_RECURSE false
+        GIT_SUBMODULES libs/asio
+        libs/align
+        libs/assert
+        libs/atomic
+        libs/config
+        libs/core
+        libs/detail
+        libs/filesystem
+        libs/headers
+        libs/io
+        libs/iterator
+        libs/mpl
+        libs/predef
+        libs/preprocessor
+        libs/scope
+        libs/static_assert
+        libs/system
+        tools/boost_install
+        tools/build
         CONFIGURE_COMMAND ./bootstrap.sh --prefix=${TP_OUTPUT} --with-libraries=system,filesystem --with-toolset=gcc --without-icu
-        BUILD_COMMAND ./b2 toolset=gcc cxxflags=-fPIC cxxstd=11 install
-        BUILD_IN_SOURCE 1
+        BUILD_COMMAND ./b2 -j${PARALLEL} cxxflags=-fPIC link=static
+        BUILD_IN_SOURCE true
         DOWNLOAD_EXTRACT_TIMESTAMP true
         DOWNLOAD_NO_PROGRESS true
 )
