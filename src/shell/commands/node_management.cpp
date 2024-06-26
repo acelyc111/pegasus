@@ -651,7 +651,11 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
         nlohmann::json node_info;
         node_info["role"] = nodes[i].desc;
         node_info["acked"] = results[i].first;
-        node_info["message"] = results[i].second;
+        try {
+            node_info["message"] = nlohmann::json::parse(results[i].second);
+        } catch (nlohmann::json::exception &exp) {
+            node_info["message"] = results[i].second;
+        }
         if (results[i].first) {
             succeed++;
         } else {
