@@ -332,7 +332,6 @@ bool test_checker::get_current_config(parti_config &config)
     // the rDSN's
     //"enqueue,dequeue and lock..."
 
-    // meta->_service->_state->query_configuration_by_gpid(g_default_gpid, pc);
     const meta_view view = meta->_service->_state->get_meta_view();
     config.convert_from(*get_config(*(view.apps), g_default_gpid));
     return true;

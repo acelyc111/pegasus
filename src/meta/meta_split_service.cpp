@@ -308,7 +308,7 @@ void meta_split_service::on_add_child_on_remote_storage_reply(error_code ec,
     SET_OBJ_IP_AND_HOST_PORT(*update_child_request, node, request, primary);
 
     // TODO(yingchun): should use conference?
-    auto &child_pc = app->pcs[child_gpid.get_partition_index()];
+    auto child_pc = app->pcs[child_gpid.get_partition_index()];
     child_pc.secondaries = request.child_config.secondaries;
     child_pc.__set_hp_secondaries(request.child_config.hp_secondaries);
     _state->update_configuration_locally(*app, update_child_request);

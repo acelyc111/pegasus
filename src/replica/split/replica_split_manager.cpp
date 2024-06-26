@@ -987,7 +987,7 @@ void replica_split_manager::register_child_on_meta(ballot b) // on primary paren
         return;
     }
 
-    partition_configuration child_pc = _replica->_primary_states.pc;
+    auto child_pc = _replica->_primary_states.pc;
     child_pc.ballot++;
     child_pc.last_committed_decree = 0;
     CLEAR_IP_AND_HOST_PORT(child_pc, last_drops);

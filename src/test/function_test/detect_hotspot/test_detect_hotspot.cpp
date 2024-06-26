@@ -26,6 +26,7 @@
 
 #include "client/replication_ddl_client.h"
 #include "common/gpid.h"
+#include "dsn.layer2_types.h"
 #include "gtest/gtest.h"
 #include "include/pegasus/client.h"
 #include "include/pegasus/error.h"

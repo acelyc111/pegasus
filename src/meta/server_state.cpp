@@ -2564,8 +2564,8 @@ bool server_state::check_all_partitions()
             continue;
         }
         for (unsigned int i = 0; i != app->partition_count; ++i) {
-            partition_configuration &pc = app->pcs[i];
-            config_context &cc = app->helpers->contexts[i];
+            const auto &pc = app->pcs[i];
+            const auto &cc = app->helpers->contexts[i];
             // partition is under re-configuration or is child partition
             if (cc.stage != config_status::pending_remote_sync && pc.ballot != invalid_ballot) {
                 configuration_proposal_action action;
@@ -3260,8 +3260,7 @@ template <typename Response>
 bool server_state::check_max_replica_count_consistent(const std::shared_ptr<app_state> &app,
                                                       Response &response) const
 {
-    for (int i = 0; i < static_cast<int>(app->pcs.size()); ++i) {
-        const auto &pc = app->pcs[i];
+    for (const auto &pc : app->pcs) {
         if (pc.max_replica_count == app->max_replica_count) {
             continue;
         }
@@ -3271,7 +3270,7 @@ bool server_state::check_max_replica_count_consistent(const std::shared_ptr<app_
                                             "app_max_replica_count({}) for partition {}",
                                             pc.max_replica_count,
                                             app->max_replica_count,
-                                            i);
+                                            pc.pid);
         return false;
     }
 
