@@ -570,9 +570,9 @@ bool server_stat(command_executor *e, shell_context *sc, arguments args)
 bool remote_command(command_executor *e, shell_context *sc, arguments args)
 {
     // Command format: remote_command <command> [arguments...]
-    //                                           [-t all|meta-server|replica-server]
-    //                                           [-r|--resolve_ip]
-    //                                           [-l ip:port,ip:port...]
+    //                                          [-t all|meta-server|replica-server]
+    //                                          [-r|--resolve_ip]
+    //                                          [-l ip:port,ip:port...]
     argh::parser cmd(args.argc, args.argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
     CHECK(cmd(0), "the first command is missing");
