@@ -141,7 +141,9 @@ private:
 
         // Invalid arguments size.
         if (args.size() > 1) {
-            return fmt::format("ERR: invalid arguments, only one integer argument is acceptable");
+            return fmt::format(
+                "ERR: invalid arguments '{}', only one integer argument is acceptable",
+                fmt::join(args, " "));
         }
 
         // Reset to the default value.
@@ -154,7 +156,8 @@ private:
         T new_value = 0;
         if (!internal::buf2signed(args[0], new_value) ||
             !validator(static_cast<int64_t>(new_value))) {
-            return {"ERR: invalid arguments"};
+            return fmt::format("ERR: invalid argument '{}', only an integer is acceptable",
+                               args[0]);
         }
 
         // Set to a new value.

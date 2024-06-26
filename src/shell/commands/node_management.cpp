@@ -575,6 +575,8 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
     //                                           [-l ip:port,ip:port...]
     argh::parser cmd(args.argc, args.argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
+    CHECK(cmd(0), "the first command is missing");
+    CHECK_EQ_MSG("remote_command", cmd(0).str(), "the first command must be 'remote_command'");
     if (!cmd(1)) {
         SHELL_PRINTLN_ERROR("missing param <command>");
         return false;
@@ -600,11 +602,6 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
         return false;
     }
 
-    std::vector<std::string> arguments;
-    for (int i = 1; i < args.argc; i++) {
-        arguments.emplace_back(args.argv[i]);
-    }
-
     std::vector<node_desc> nodes;
     do {
         if (node_type.empty()) {
@@ -625,24 +622,25 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
         }
     } while (false);
 
+    const std::vector<std::string> arguments(cmd.pos_args().begin() + 2, cmd.pos_args().end());
     nlohmann::json info;
     info["command"] = fmt::format("{} {}", command, fmt::join(arguments, " "));
     const auto results = call_remote_command(sc, nodes, command, arguments);
-
     int succeed = 0;
     int failed = 0;
     CHECK_EQ(results.size(), nodes.size());
     for (int i = 0; i < nodes.size(); ++i) {
         nlohmann::json node_info;
-        info["role"] = nodes[i].desc;
-        info["result"] = results[i].first;
-        info["message"] = results[i].second;
+        node_info["role"] = nodes[i].desc;
+        node_info["acked"] = results[i].first;
+        node_info["message"] = results[i].second;
         if (results[i].first) {
             succeed++;
         } else {
             failed++;
         }
-        info["details"].emplace(replication_ddl_client::node_name(nodes[i].hp, resolve_ip), node_info);
+        info["details"].emplace(replication_ddl_client::node_name(nodes[i].hp, resolve_ip),
+                                node_info);
     }
     info["succeed_count"] = succeed;
     info["failed_count"] = failed;
