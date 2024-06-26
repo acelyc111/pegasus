@@ -34,6 +34,9 @@
 #include <utility>
 #include <vector>
 
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+
 #include "client/replication_ddl_client.h"
 #include "common/replication_enums.h"
 #include "dsn.layer2_types.h"
@@ -566,113 +569,84 @@ bool server_stat(command_executor *e, shell_context *sc, arguments args)
 
 bool remote_command(command_executor *e, shell_context *sc, arguments args)
 {
-    static struct option long_options[] = {{"node_type", required_argument, 0, 't'},
-                                           {"node_list", required_argument, 0, 'l'},
-                                           {"resolve_ip", no_argument, 0, 'r'},
-                                           {0, 0, 0, 0}};
+    // Command format: remote_command <command> [arguments...]
+    //                                           [-t all|meta-server|replica-server]
+    //                                           [-r|--resolve_ip]
+    //                                           [-l ip:port,ip:port...]
+    argh::parser cmd(args.argc, args.argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
-    std::string type;
-    std::string nodes;
-    optind = 0;
-    bool resolve_ip = false;
-    while (true) {
-        int option_index = 0;
-        int c;
-        c = getopt_long(args.argc, args.argv, "t:l:r", long_options, &option_index);
-        if (c == -1)
+    if (!cmd(1)) {
+        SHELL_PRINTLN_ERROR("missing param <command>");
+        return false;
+    }
+    const auto command = cmd(1).str();
+    const auto resolve_ip = cmd[{"-r", "--resolve_ip"}];
+    auto node_type = (cmd({"-t"}).str());
+    std::vector<std::string> nodes_str;
+    PARSE_OPT_STRS(nodes_str, "", {"-l"});
+
+    if (!node_type.empty() && !nodes_str.empty()) {
+        SHELL_PRINTLN_ERROR("can not specify both node_type and nodes_str");
+        return false;
+    }
+
+    if (node_type.empty() && nodes_str.empty()) {
+        node_type = "all";
+    }
+
+    static const std::set<std::string> kValidNodeTypes({"all", "meta-server", "replica-server"});
+    if (!node_type.empty() && kValidNodeTypes.count(node_type) == 0) {
+        SHELL_PRINTLN_ERROR("invalid node_type, should be: {}", fmt::join(kValidNodeTypes, ", "));
+        return false;
+    }
+
+    std::vector<std::string> arguments;
+    for (int i = 1; i < args.argc; i++) {
+        arguments.emplace_back(args.argv[i]);
+    }
+
+    std::vector<node_desc> nodes;
+    do {
+        if (node_type.empty()) {
+            for (const auto &node_str : nodes_str) {
+                const auto node = dsn::host_port::from_string(node_str);
+                if (!node) {
+                    SHELL_PRINTLN_ERROR("parse {} as host:port failed", node_str);
+                    return false;
+                }
+                nodes.emplace_back("user-specified", node);
+            }
             break;
-        switch (c) {
-        case 't':
-            type = optarg;
-            break;
-        case 'l':
-            nodes = optarg;
-            break;
-        case 'r':
-            resolve_ip = true;
-            break;
-        default:
+        }
+
+        if (!fill_nodes(sc, node_type, nodes)) {
+            SHELL_PRINTLN_ERROR("prepare nodes failed, node_type = {}", node_type);
             return false;
         }
-    }
+    } while (false);
 
-    if (!type.empty() && !nodes.empty()) {
-        fprintf(stderr, "can not specify both node_type and node_list\n");
-        return false;
-    }
-
-    if (type.empty() && nodes.empty()) {
-        type = "all";
-    }
-
-    if (!type.empty() && type != "all" && type != "meta-server" && type != "replica-server") {
-        fprintf(stderr, "invalid type, should be: all | meta-server | replica-server\n");
-        return false;
-    }
-
-    if (optind == args.argc) {
-        fprintf(stderr, "command not specified\n");
-        return false;
-    }
-
-    std::string cmd = args.argv[optind];
-    std::vector<std::string> arguments;
-    for (int i = optind + 1; i < args.argc; i++) {
-        arguments.push_back(args.argv[i]);
-    }
-
-    std::vector<node_desc> node_list;
-    if (!type.empty()) {
-        if (!fill_nodes(sc, type, node_list)) {
-            fprintf(stderr, "prepare nodes failed, type = %s\n", type.c_str());
-            return true;
-        }
-    } else {
-        std::vector<std::string> tokens;
-        dsn::utils::split_args(nodes.c_str(), tokens, ',');
-        if (tokens.empty()) {
-            fprintf(stderr, "can't parse node from node_list\n");
-            return true;
-        }
-
-        for (std::string &token : tokens) {
-            const auto node = dsn::host_port::from_string(token);
-            if (!node) {
-                fprintf(stderr, "parse %s as a ip:port node failed\n", token.c_str());
-                return true;
-            }
-            node_list.emplace_back("user-specified", node);
-        }
-    }
-
-    fprintf(stderr, "COMMAND: %s", cmd.c_str());
-    for (auto &s : arguments) {
-        fprintf(stderr, " %s", s.c_str());
-    }
-    fprintf(stderr, "\n\n");
-
-    std::vector<std::pair<bool, std::string>> results =
-        call_remote_command(sc, node_list, cmd, arguments);
+    nlohmann::json info;
+    info["command"] = fmt::format("{} {}", command, fmt::join(arguments, " "));
+    const auto results = call_remote_command(sc, nodes, command, arguments);
 
     int succeed = 0;
     int failed = 0;
-    // TODO (yingchun) output is hard to read, need do some refactor
-    for (int i = 0; i < node_list.size(); ++i) {
-        const auto &node = node_list[i];
-        const auto hostname = replication_ddl_client::node_name(node.hp, resolve_ip);
-        fprintf(stderr, "CALL [%s] [%s] ", node.desc.c_str(), hostname.c_str());
+    CHECK_EQ(results.size(), nodes.size());
+    for (int i = 0; i < nodes.size(); ++i) {
+        nlohmann::json node_info;
+        info["role"] = nodes[i].desc;
+        info["result"] = results[i].first;
+        info["message"] = results[i].second;
         if (results[i].first) {
-            fprintf(stderr, "succeed:\n%s\n", results[i].second.c_str());
             succeed++;
         } else {
-            fprintf(stderr, "failed:\n%s\n", results[i].second.c_str());
             failed++;
         }
+        info["details"].emplace(replication_ddl_client::node_name(nodes[i].hp, resolve_ip), node_info);
     }
-
-    fprintf(stderr, "\nSucceed count: %d\n", succeed);
-    fprintf(stderr, "Failed count: %d\n", failed);
-
+    info["succeed_count"] = succeed;
+    info["failed_count"] = failed;
+    fmt::println(stdout, "{}", info.dump(2));
     return true;
 }
 
