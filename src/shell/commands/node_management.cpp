@@ -549,41 +549,58 @@ bool ls_nodes(command_executor *e, shell_context *sc, arguments args)
 
 bool server_info(command_executor *e, shell_context *sc, arguments args)
 {
-    char *argv[args.argc + 1];
-    memcpy(argv, args.argv, sizeof(char *) * args.argc);
-    argv[args.argc] = (char *)"server-info";
-    arguments new_args;
-    new_args.argc = args.argc + 1;
-    new_args.argv = argv;
-    return remote_command(e, sc, new_args);
+    return remote_command(e, sc, args);
 }
 
 bool server_stat(command_executor *e, shell_context *sc, arguments args)
 {
-    char *argv[args.argc + 1];
-    memcpy(argv, args.argv, sizeof(char *) * args.argc);
-    argv[args.argc] = (char *)"server-stat";
-    arguments new_args;
-    new_args.argc = args.argc + 1;
-    new_args.argv = argv;
-    return remote_command(e, sc, new_args);
+    return remote_command(e, sc, args);
+}
+
+bool flush_log(command_executor *e, shell_context *sc, arguments args)
+{
+    return remote_command(e, sc, args);
 }
 
 bool remote_command(command_executor *e, shell_context *sc, arguments args)
 {
-    // Command format: remote_command <command> [arguments...]
-    //                                          [-t all|meta-server|replica-server]
-    //                                          [-r|--resolve_ip]
-    //                                          [-l ip:port,ip:port...]
+    // Command format: [remote_command] <command> [arguments...]
+    //                                            [-t all|meta-server|replica-server]
+    //                                            [-r|--resolve_ip]
+    //                                            [-l host:port,host:port...]
     argh::parser cmd(args.argc, args.argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
-    CHECK(cmd(0), "the first command is missing");
-    CHECK_EQ_MSG("remote_command", cmd(0).str(), "the first command must be 'remote_command'");
-    if (!cmd(1)) {
+    std::string command;
+    std::vector<std::string> arguments;
+    int param_index = 0;
+    do {
+        const auto param = cmd(param_index++);
+        if (!param) {
+            break;
+        }
+        const std::set<std::string> kIgnoreCmds({"remote_command"});
+        if (kIgnoreCmds.count(param.str()) == 1) {
+            continue;
+        }
+        if (!command.empty()) {
+            arguments.emplace_back(param.str());
+            continue;
+        }
+
+        const std::map<std::string, std::string> kCmdsMapping({{"server_info", "server-info"},
+                                                               {"server_stat", "server-stat"},
+                                                               {"flush_log", "flush-log"}});
+        const auto &it = kCmdsMapping.find(param.str());
+        if (it != kCmdsMapping.end()) {
+            command = it->second;
+        } else {
+            command = param.str();
+        }
+    } while (true);
+    if (command.empty()) {
         SHELL_PRINTLN_ERROR("missing param <command>");
         return false;
     }
-    const auto command = cmd(1).str();
     const auto resolve_ip = cmd[{"-r", "--resolve_ip"}];
     auto node_type = (cmd({"-t"}).str());
     std::vector<std::string> nodes_str;
@@ -624,7 +641,6 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
         }
     } while (false);
 
-    const std::vector<std::string> arguments(cmd.pos_args().begin() + 2, cmd.pos_args().end());
     nlohmann::json info;
     info["command"] = fmt::format("{} {}", command, fmt::join(arguments, " "));
     const auto results = call_remote_command(sc, nodes, command, arguments);
@@ -648,15 +664,4 @@ bool remote_command(command_executor *e, shell_context *sc, arguments args)
     info["failed_count"] = failed;
     fmt::println(stdout, "{}", info.dump(2));
     return true;
-}
-
-bool flush_log(command_executor *e, shell_context *sc, arguments args)
-{
-    char *argv[args.argc + 1];
-    memcpy(argv, args.argv, sizeof(char *) * args.argc);
-    argv[args.argc] = (char *)"flush-log";
-    arguments new_args;
-    new_args.argc = args.argc + 1;
-    new_args.argv = argv;
-    return remote_command(e, sc, new_args);
 }
