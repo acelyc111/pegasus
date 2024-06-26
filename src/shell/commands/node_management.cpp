@@ -17,7 +17,11 @@
  * under the License.
  */
 
+#include <fmt/core.h>
+#include <fmt/format.h>
 #include <getopt.h>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,33 +32,31 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
-
 #include "client/replication_ddl_client.h"
 #include "common/replication_enums.h"
 #include "dsn.layer2_types.h"
 #include "meta_admin_types.h"
 #include "runtime/rpc/rpc_host_port.h"
+#include "shell/argh.h"
 #include "shell/command_executor.h"
 #include "shell/command_helper.h"
 #include "shell/command_utils.h"
 #include "shell/commands.h"
-#include "shell/sds/sds.h"
 #include "utils/error_code.h"
 #include "utils/errors.h"
 #include "utils/flags.h"
+#include "utils/fmt_logging.h"
 #include "utils/math.h"
 #include "utils/metrics.h"
 #include "utils/output_utils.h"
 #include "utils/ports.h"
-#include "utils/strings.h"
 
 DSN_DEFINE_uint32(shell, nodes_sample_interval_ms, 1000, "The interval between sampling metrics.");
 DSN_DEFINE_validator(nodes_sample_interval_ms, [](uint32_t value) -> bool { return value > 0; });
