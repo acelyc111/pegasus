@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "gutil/map_util.h"
 #include "nfs/nfs_code_definition.h"
 #include "nlohmann/json.hpp"
 #include "runtime/api_layer1.h"
@@ -95,24 +96,22 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
 
     do {
         zauto_lock l(_handles_map_lock);
-        auto it = _handles_map.find(file_path); // find file handle cache first
-        if (it == _handles_map.end()) {
+        auto fh = gutil::LookupOrInsert(&_handles_map, file_path, nullptr);
+        if (!fh) {
             dfile = file::open(file_path, file::FileOpenType::kReadOnly);
-            if (dfile == nullptr) {
+            if (dsn_unlikely(dfile == nullptr)) {
+                gutil::EraseKeyReturnValuePtr(&_handles_map, file_path);
                 LOG_ERROR("[nfs_service] open file {} failed", file_path);
                 ::dsn::service::copy_response resp;
                 resp.error = ERR_OBJECT_NOT_FOUND;
                 reply(resp);
                 return;
             }
-
-            auto fh = std::make_shared<file_handle_info_on_server>();
             fh->file_handle = dfile;
-            it = _handles_map.insert(std::make_pair(file_path, std::move(fh))).first;
         }
-        dfile = it->second->file_handle;
-        it->second->file_access_count++;
-        it->second->last_access_time = dsn_now_ms();
+        dfile = fh->file_handle;
+        fh->file_access_count++;
+        fh->last_access_time = dsn_now_ms();
     } while (false);
 
     CHECK_NOTNULL(dfile, "");

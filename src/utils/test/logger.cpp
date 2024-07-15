@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "gutil/map_util.h"
 #include "utils/api_utilities.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
@@ -85,7 +86,7 @@ public:
         for (const auto &path : sub_list) {
             std::string name(utils::filesystem::get_file_name(path));
             if (std::regex_match(name, pattern)) {
-                ASSERT_TRUE(file_names.insert(name).second);
+                ASSERT_TRUE(gutil::InsertIfNotPresent(&file_names, name));
             }
         }
     }
