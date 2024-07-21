@@ -27,6 +27,5 @@ set(MY_PROJ_LIBS
         gmock
         gtest)
 set(MY_BINPLACES
-        run.sh
-        config.ini)
+        run.sh)
 dsn_add_test()
