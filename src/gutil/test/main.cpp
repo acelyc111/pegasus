@@ -26,7 +26,5 @@ DSN_DECLARE_string(stderr_start_level);
 GTEST_API_ int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
-    FLAGS_stderr_start_level = "LOG_LEVEL_ERROR";
-    int ret = RUN_ALL_TESTS();
-    dsn_exit(ret);
+    dsn_exit(RUN_ALL_TESTS());
 }
