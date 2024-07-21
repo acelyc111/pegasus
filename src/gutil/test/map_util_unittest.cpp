@@ -37,6 +37,7 @@
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "map_util_test.h"
+#include "utils/flags.h"
 
 namespace gutil {
 
@@ -193,7 +194,7 @@ TEST(MapUtilDeathTest, FindOrDieNoPrint)
     std::map<Unprintable, int> m;
     m[Unprintable(1)] = 8;
     EXPECT_EQ(8, FindOrDieNoPrint(m, Unprintable(1)));
-    ASSERT_DEATH(FindOrDieNoPrint(m, Unprintable(2)), ""); // Map key not found
+    ASSERT_DEATH(FindOrDieNoPrint(m, Unprintable(2)), "Map key not found");
 
     // Make sure the non-const reference returning version works.
     FindOrDieNoPrint(m, Unprintable(1)) = 20;
@@ -209,7 +210,7 @@ TEST(MapUtilDeathTest, SetInsertOrDieTest)
     std::set<int> s;
     InsertOrDie(&s, 1);
     EXPECT_TRUE(ContainsKey(s, 1));
-    ASSERT_DEATH(InsertOrDie(&s, 1), ""); // duplicate
+    ASSERT_DEATH(InsertOrDie(&s, 1), "duplicate");
 }
 
 TEST(MapUtilDeathTest, InsertOrDieNoPrint)
@@ -219,12 +220,12 @@ TEST(MapUtilDeathTest, InsertOrDieNoPrint)
     std::map<std::pair<int, int>, int> m;
     InsertOrDieNoPrint(&m, key, 2);
     EXPECT_EQ(m[key], 2);
-    ASSERT_DEATH(InsertOrDieNoPrint(&m, key, 3), ""); // duplicate
+    ASSERT_DEATH(InsertOrDieNoPrint(&m, key, 3), "duplicate");
 
     std::set<std::pair<int, int>> s;
     InsertOrDieNoPrint(&s, key);
     EXPECT_TRUE(ContainsKey(s, key));
-    ASSERT_DEATH(InsertOrDieNoPrint(&s, key), ""); // duplicate
+    ASSERT_DEATH(InsertOrDieNoPrint(&s, key), "duplicate");
 }
 
 TEST(MapUtil, InsertKeysFromMap)

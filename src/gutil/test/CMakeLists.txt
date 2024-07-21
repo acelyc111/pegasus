@@ -27,6 +27,6 @@ set(MY_PROJ_LIBS
         gmock
         gtest)
 set(MY_BINPLACES
-    "${CMAKE_CURRENT_SOURCE_DIR}/run.sh"
-)
+        run.sh
+        config.ini)
 dsn_add_test()

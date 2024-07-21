@@ -171,7 +171,8 @@ inline void process_fatal_log(log_level_t log_level)
 
 void screen_logger::print_header(log_level_t log_level)
 {
-    ::dsn::tools::print_header(stdout, LOG_LEVEL_COUNT, log_level);
+    ::dsn::tools::print_header(
+        stdout, enum_from_string(FLAGS_stderr_start_level, LOG_LEVEL_INVALID), log_level);
 }
 
 void screen_logger::print_long_header(const char *file,
@@ -179,13 +180,19 @@ void screen_logger::print_long_header(const char *file,
                                       const int line,
                                       log_level_t log_level)
 {
-    ::dsn::tools::print_long_header(
-        stdout, file, function, line, _short_header, LOG_LEVEL_COUNT, log_level);
+    ::dsn::tools::print_long_header(stdout,
+                                    file,
+                                    function,
+                                    line,
+                                    _short_header,
+                                    enum_from_string(FLAGS_stderr_start_level, LOG_LEVEL_INVALID),
+                                    log_level);
 }
 
 void screen_logger::print_body(const char *body, log_level_t log_level)
 {
-    ::dsn::tools::print_body(stdout, body, LOG_LEVEL_COUNT, log_level);
+    ::dsn::tools::print_body(
+        stdout, body, enum_from_string(FLAGS_stderr_start_level, LOG_LEVEL_INVALID), log_level);
 }
 
 void screen_logger::log(
