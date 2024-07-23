@@ -188,8 +188,9 @@ void replica::on_client_write(dsn::message_ex *request, bool ignore_throttling)
         return;
     }
 
-    std::vector<dsn::host_port> secondaries;
-    GET_HOST_PORTS(_primary_states.pc, secondaries, secondaries);
+
+    CHECK(_primary_states.pc.__isset.hp_secondaries, "");
+    const auto &secondaries = _primary_states.pc.hp_secondaries;
     if (request->rpc_code() == dsn::apps::RPC_RRDB_RRDB_BULK_LOAD) {
         auto cur_bulk_load_status = _bulk_loader->get_bulk_load_status();
         if (cur_bulk_load_status != bulk_load_status::BLS_DOWNLOADED &&
@@ -258,8 +259,8 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
     mu->set_is_sync_to_child(_primary_states.sync_send_write_request);
 
     // check bounded staleness
-    std::vector<dsn::host_port> secondaries;
-    GET_HOST_PORTS(_primary_states.pc, secondaries, secondaries);
+    CHECK(_primary_states.pc.__isset.hp_secondaries, "");
+    const auto &secondaries = _primary_states.pc.hp_secondaries;
     if (mu->data.header.decree > last_committed_decree() + FLAGS_staleness_for_commit) {
         err = ERR_CAPACITY_EXCEEDED;
         goto ErrOut;
