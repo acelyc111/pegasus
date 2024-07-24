@@ -188,7 +188,8 @@ void replica::on_client_write(dsn::message_ex *request, bool ignore_throttling)
         return;
     }
 
-    CHECK(_primary_states.pc.__isset.hp_secondaries, "");
+    CHECK(_primary_states.pc.__isset.hp_secondaries,
+          "The primary partition_configuration must be normalized before using it");
     const auto &secondaries = _primary_states.pc.hp_secondaries;
     if (request->rpc_code() == dsn::apps::RPC_RRDB_RRDB_BULK_LOAD) {
         auto cur_bulk_load_status = _bulk_loader->get_bulk_load_status();

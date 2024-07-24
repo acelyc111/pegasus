@@ -855,6 +855,7 @@ void replica_stub::on_config_proposal(const configuration_update_request &propos
              enum_to_string(proposal.type),
              FMT_HOST_PORT_AND_IP(proposal, node));
 
+    // Normalize the partition_configuration type 'config' before using it.
     configuration_update_request normalized_proposal = proposal;
     if (!normalized_proposal.config.__isset.hp_primary) {
         dsn::host_port primary;

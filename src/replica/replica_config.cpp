@@ -174,14 +174,9 @@ void replica::assign_primary(configuration_update_request &proposal)
     SET_IP_AND_HOST_PORT(
         proposal.config, primary, _stub->primary_address(), _stub->primary_host_port());
     replica_helper::remove_node(_stub->primary_address(), proposal.config.secondaries);
-    if (proposal.config.__isset.hp_secondaries) {
-        replica_helper::remove_node(_stub->primary_host_port(), proposal.config.hp_secondaries);
-    } else {
-        // In a rolling upgrade scenario, the proposal request may not have the hp_secondaries
-        // field.
-        LOG_WARNING_PREFIX("proposal.config.hp_secondaries field is not set, it's happened in a "
-                           "rolling upgrade scenario");
-    }
+    CHECK(proposal.config.__isset.hp_secondaries,
+          "The proposal's partition_configuration is not normalized");
+    replica_helper::remove_node(_stub->primary_host_port(), proposal.config.hp_secondaries);
     update_configuration_on_meta_server(proposal.type, node, proposal.config);
 }
 
@@ -333,17 +328,11 @@ void replica::downgrade_to_inactive_on_primary(configuration_update_request &pro
         CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
               "remove node failed, node = {}",
               proposal.node);
-        if (proposal.config.__isset.hp_secondaries) {
-            CHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
-                  "remove node failed, node = {}",
-                  node);
-        } else {
-            // In a rolling upgrade scenario, the proposal request may not have the hp_secondaries
-            // field.
-            LOG_WARNING_PREFIX(
-                "proposal.config.hp_secondaries field is not set, it's happened in a "
-                "rolling upgrade scenario");
-        }
+        CHECK(proposal.config.__isset.hp_secondaries,
+              "The proposal's partition_configuration is not normalized");
+        CHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
+              "remove node failed, node = {}",
+              node);
     }
 
     update_configuration_on_meta_server(
@@ -383,17 +372,11 @@ void replica::remove(configuration_update_request &proposal)
         CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
               "remove node failed, node = {}",
               proposal.node);
-        if (proposal.config.__isset.hp_secondaries) {
-            CHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
-                  "remove_node failed, node = {}",
-                  node);
-        } else {
-            // In a rolling upgrade scenario, the proposal request may not have the hp_secondaries
-            // field.
-            LOG_WARNING_PREFIX(
-                "proposal.config.hp_secondaries field is not set, it's happened in a "
-                "rolling upgrade scenario");
-        }
+        CHECK(proposal.config.__isset.hp_secondaries,
+              "The proposal's partition_configuration is not normalized");
+        CHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
+              "remove_node failed, node = {}",
+              node);
     } break;
     case partition_status::PS_POTENTIAL_SECONDARY:
         break;

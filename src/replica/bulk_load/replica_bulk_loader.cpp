@@ -1035,7 +1035,7 @@ void replica_bulk_loader::report_group_cleaned_up(bulk_load_response &response)
 
     std::vector<dsn::host_port> secondaries;
     GET_HOST_PORTS(_replica->_primary_states.pc, secondaries, secondaries);
-    bool group_flag = (primary_state.is_cleaned_up) &&
+    bool group_flag = primary_state.is_cleaned_up &&
                       (secondaries.size() + 1 == _replica->_primary_states.pc.max_replica_count);
     for (const auto &secondary : secondaries) {
         const auto &secondary_state =

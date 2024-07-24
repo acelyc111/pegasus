@@ -106,10 +106,12 @@ void primary_context::reset_membership(const partition_configuration &new_pc, bo
 
     pc = new_pc;
 
+    // Normalize the partition_configuration type 'pc' before using it.
     dsn::host_port primary;
     GET_HOST_PORT(pc, primary, primary);
     if (primary) {
         statuses[primary] = partition_status::PS_PRIMARY;
+        // Normalize 'hp_primary'.
         if (!pc.__isset.hp_primary) {
             pc.__set_hp_primary(primary);
         }
@@ -121,6 +123,7 @@ void primary_context::reset_membership(const partition_configuration &new_pc, bo
         statuses[secondary] = partition_status::PS_SECONDARY;
         learners.erase(secondary);
     }
+    // Normalize 'hp_secondaries'.
     if (!pc.__isset.hp_secondaries) {
         pc.__set_hp_secondaries(secondaries);
     }
