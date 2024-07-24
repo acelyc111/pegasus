@@ -258,7 +258,6 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
     mu->set_is_sync_to_child(_primary_states.sync_send_write_request);
 
     // check bounded staleness
-    CHECK(_primary_states.pc.__isset.hp_secondaries, "");
     const auto &secondaries = _primary_states.pc.hp_secondaries;
     if (mu->data.header.decree > last_committed_decree() + FLAGS_staleness_for_commit) {
         err = ERR_CAPACITY_EXCEEDED;

@@ -108,10 +108,11 @@ void primary_context::reset_membership(const partition_configuration &new_pc, bo
 
     dsn::host_port primary;
     GET_HOST_PORT(pc, primary, primary);
-    DCHECK(primary, "");
-    statuses[primary] = partition_status::PS_PRIMARY;
-    if (!pc.__isset.hp_primary) {
-        pc.__set_hp_primary(primary);
+    if (primary) {
+        statuses[primary] = partition_status::PS_PRIMARY;
+        if (!pc.__isset.hp_primary) {
+            pc.__set_hp_primary(primary);
+        }
     }
 
     std::vector<dsn::host_port> secondaries;
@@ -124,8 +125,8 @@ void primary_context::reset_membership(const partition_configuration &new_pc, bo
         pc.__set_hp_secondaries(secondaries);
     }
 
-    for (auto it = learners.begin(); it != learners.end(); ++it) {
-        statuses[it->first] = partition_status::PS_POTENTIAL_SECONDARY;
+    for (const auto &[learner, _] : learners) {
+        statuses[learner] = partition_status::PS_POTENTIAL_SECONDARY;
     }
 }
 
