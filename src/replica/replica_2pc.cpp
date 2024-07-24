@@ -188,7 +188,6 @@ void replica::on_client_write(dsn::message_ex *request, bool ignore_throttling)
         return;
     }
 
-
     CHECK(_primary_states.pc.__isset.hp_secondaries, "");
     const auto &secondaries = _primary_states.pc.hp_secondaries;
     if (request->rpc_code() == dsn::apps::RPC_RRDB_RRDB_BULK_LOAD) {
