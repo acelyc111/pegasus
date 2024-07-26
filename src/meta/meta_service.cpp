@@ -692,16 +692,16 @@ void meta_service::on_list_nodes(configuration_list_nodes_rpc rpc)
         dsn::replication::node_info info;
         if (request.status == node_status::NS_INVALID || request.status == node_status::NS_ALIVE) {
             info.status = node_status::NS_ALIVE;
-            for (auto &node : _alive_set) {
-                SET_IP_AND_HOST_PORT_BY_DNS(info, node, node);
+            for (const auto &node : _alive_set) {
+                SET_IP_AND_HOST_PORT_BY_DNS(info, node1, node);
                 response.infos.push_back(info);
             }
         }
         if (request.status == node_status::NS_INVALID ||
             request.status == node_status::NS_UNALIVE) {
             info.status = node_status::NS_UNALIVE;
-            for (auto &node : _dead_set) {
-                SET_IP_AND_HOST_PORT_BY_DNS(info, node, node);
+            for (const auto &node : _dead_set) {
+                SET_IP_AND_HOST_PORT_BY_DNS(info, node1, node);
                 response.infos.push_back(info);
             }
         }

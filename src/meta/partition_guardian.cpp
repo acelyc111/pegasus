@@ -136,16 +136,16 @@ void partition_guardian::reconfig(meta_view view, const configuration_update_req
         }
     } else {
         when_update_replicas(request.type, [cc, &request](bool is_adding) {
-            host_port hp;
-            GET_HOST_PORT(request, node, hp);
+            host_port node;
+            GET_HOST_PORT(request, node1, node);
             if (is_adding) {
-                cc->remove_from_dropped(hp);
+                cc->remove_from_dropped(node);
                 // when some replicas are added to partition_config
                 // we should try to adjust the size of drop_list
                 cc->check_size();
             } else {
-                cc->remove_from_serving(hp);
-                CHECK(cc->record_drop_history(hp), "node({}) has been in the dropped", hp);
+                cc->remove_from_serving(node);
+                CHECK(cc->record_drop_history(node), "node({}) has been in the dropped", node);
             }
         });
     }
@@ -166,7 +166,7 @@ bool partition_guardian::from_proposals(meta_view &view,
     action = *(cc.lb_actions.front());
     host_port target;
     host_port node;
-    GET_HOST_PORT(action, target, target);
+    GET_HOST_PORT(action, target1, target);
     host_port primary;
     GET_HOST_PORT(pc, primary, primary);
     std::string reason;
@@ -178,7 +178,7 @@ bool partition_guardian::from_proposals(meta_view &view,
         reason = fmt::format("action target({}) is not alive", target);
         goto invalid_action;
     }
-    GET_HOST_PORT(action, node, node);
+    GET_HOST_PORT(action, node1, node);
     if (!node) {
         reason = "action node is invalid";
         goto invalid_action;
@@ -258,7 +258,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
     std::vector<host_port> last_drops;
     GET_HOST_PORTS(pc, last_drops, last_drops);
     if (!secondaries.empty()) {
-        RESET_IP_AND_HOST_PORT(action, node);
+        RESET_IP_AND_HOST_PORT(action, node1);
         for (const auto &secondary : secondaries) {
             const auto ns = get_node_state(*(view.nodes), secondary, false);
             CHECK_NOTNULL(ns, "invalid secondary: {}", secondary);
@@ -268,16 +268,16 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
 
             // find a node with minimal primaries
             host_port node;
-            GET_HOST_PORT(action, node, node);
+            GET_HOST_PORT(action, node1, node);
             auto *np = newly_partitions_ext::get_inited(ns);
             if (!node ||
                 np->less_primaries(*get_newly_partitions(*(view.nodes), node), gpid.get_app_id())) {
-                SET_IP_AND_HOST_PORT_BY_DNS(action, node, ns->host_port());
+                SET_IP_AND_HOST_PORT_BY_DNS(action, node1, ns->host_port());
             }
         }
 
         host_port node;
-        GET_HOST_PORT(action, node, node);
+        GET_HOST_PORT(action, node1, node);
         if (!node) {
             LOG_ERROR(
                 "all nodes for gpid({}) are dead, waiting for some secondary to come back....",
@@ -288,7 +288,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
             newly_partitions *np = get_newly_partitions(*(view.nodes), node);
             np->newly_add_primary(gpid.get_app_id(), true);
 
-            SET_OBJ_IP_AND_HOST_PORT(action, target, action, node);
+            SET_OBJ_IP_AND_HOST_PORT(action, target1, action, node1);
             result = pc_status::ill;
         }
     }
@@ -312,8 +312,8 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
         }
 
         if (min_primary_server_np != nullptr) {
-            SET_IP_AND_HOST_PORT_BY_DNS(action, node, min_primary_server);
-            SET_OBJ_IP_AND_HOST_PORT(action, target, action, node);
+            SET_IP_AND_HOST_PORT_BY_DNS(action, node1, min_primary_server);
+            SET_OBJ_IP_AND_HOST_PORT(action, target1, action, node1);
             action.type = config_type::CT_ASSIGN_PRIMARY;
             min_primary_server_np->newly_add_primary(gpid.get_app_id(), false);
         }
@@ -330,7 +330,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
         // so the last removed replica can't act as primary directly.
         std::string reason;
         config_context &cc = *get_config_context(*view.apps, gpid);
-        RESET_IP_AND_HOST_PORT(action, node);
+        RESET_IP_AND_HOST_PORT(action, node1);
         for (int i = 0; i < cc.dropped.size(); ++i) {
             const dropped_replica &dr = cc.dropped[i];
             char time_buf[30] = {0};
@@ -367,7 +367,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
             LOG_WARNING("{}: the only node({}) is dead, waiting it to come back",
                         gpid_name,
                         FMT_HOST_PORT_AND_IP(pc, last_drops.back()));
-            SET_OBJ_IP_AND_HOST_PORT(action, node, pc, last_drops.back());
+            SET_OBJ_IP_AND_HOST_PORT(action, node1, pc, last_drops.back());
         } else {
             std::vector<dsn::host_port> nodes(last_drops.end() - 2, last_drops.end());
             std::vector<dropped_replica> collected_info(2);
@@ -446,10 +446,10 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
                                      ? previous_dead.node
                                      : recent_dead.node;
                         }
-                        SET_IP_AND_HOST_PORT_BY_DNS(action, node, hp);
+                        SET_IP_AND_HOST_PORT_BY_DNS(action, node1, hp);
                         LOG_INFO("{}: select {} as a new primary",
                                  gpid_name,
-                                 FMT_HOST_PORT_AND_IP(action, node));
+                                 FMT_HOST_PORT_AND_IP(action, node1));
                     } else {
                         char buf[1000];
                         sprintf(buf,
@@ -470,12 +470,12 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
         }
 
         // Use the action.hp_node after being updated.
-        if (action.hp_node) {
-            CHECK(action.node, "");
-            SET_OBJ_IP_AND_HOST_PORT(action, target, action, node);
+        if (action.hp_node1) {
+            CHECK(action.node1, "");
+            SET_OBJ_IP_AND_HOST_PORT(action, target1, action, node1);
             action.type = config_type::CT_ASSIGN_PRIMARY;
 
-            get_newly_partitions(*view.nodes, action.hp_node)
+            get_newly_partitions(*view.nodes, action.hp_node1)
                 ->newly_add_primary(gpid.get_app_id(), false);
         } else {
             LOG_WARNING("{}: don't select any node for security reason, administrator can select "
@@ -489,7 +489,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
             for (int i = 0; i < cc.dropped.size(); ++i) {
                 const dropped_replica &dr = cc.dropped[i];
                 ddd_node_info ninfo;
-                SET_IP_AND_HOST_PORT_BY_DNS(ninfo, node, dr.node);
+                SET_IP_AND_HOST_PORT_BY_DNS(ninfo, node1, dr.node);
                 ninfo.drop_time_ms = dr.time;
                 ninfo.ballot = invalid_ballot;
                 ninfo.last_committed_decree = invalid_decree;
@@ -555,7 +555,7 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
                  cc.dropped.back().node);
         is_emergency = true;
     }
-    RESET_IP_AND_HOST_PORT(action, node);
+    RESET_IP_AND_HOST_PORT(action, node1);
 
     if (is_emergency) {
         std::ostringstream oss;
@@ -589,7 +589,7 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
                          cc.prefered_dropped,
                          cc.prefered_dropped,
                          cc.prefered_dropped - 1);
-                SET_IP_AND_HOST_PORT_BY_DNS(action, node, server.node);
+                SET_IP_AND_HOST_PORT_BY_DNS(action, node1, server.node);
                 cc.prefered_dropped--;
                 break;
             } else {
@@ -605,7 +605,7 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
         }
 
         host_port node;
-        GET_HOST_PORT(action, node, node);
+        GET_HOST_PORT(action, node1, node);
         if (!node || in_black_list(node)) {
             if (node) {
                 LOG_INFO(
@@ -619,17 +619,18 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
                 newly_partitions *np = newly_partitions_ext::get_inited(&ns);
                 if (min_server_np == nullptr ||
                     np->less_partitions(*min_server_np, gpid.get_app_id())) {
-                    SET_IP_AND_HOST_PORT_BY_DNS(action, node, ns.host_port());
+                    SET_IP_AND_HOST_PORT_BY_DNS(action, node1, ns.host_port());
                     min_server_np = np;
                 }
             }
 
             // Use the action.hp_node after being updated.
-            if (action.hp_node) {
+            DCHECK(action.__isset.node1, "");
+            if (action.hp_node1) {
                 LOG_INFO("gpid({}): can't find valid node in dropped list to add as secondary, "
                          "choose new node({}) with minimal partitions serving",
                          gpid,
-                         action.hp_node);
+                         node);
             } else {
                 LOG_INFO("gpid({}): can't find valid node in dropped list to add as secondary, "
                          "but also we can't find a new node to add as secondary",
@@ -641,11 +642,12 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
         const dropped_replica &server = cc.dropped.back();
         if (is_node_alive(*view.nodes, server.node)) {
             CHECK(server.node, "invalid server address, address = {}", server.node);
-            SET_IP_AND_HOST_PORT_BY_DNS(action, node, server.node);
+            SET_IP_AND_HOST_PORT_BY_DNS(action, node1, server.node);
         }
 
         // Use the action.hp_node after being updated.
-        if (action.hp_node) {
+        DCHECK(action.__isset.node1, "");
+        if (action.hp_node1) {
             LOG_INFO("gpid({}): choose node({}) as secondary coz it is last_dropped_node and is "
                      "alive now",
                      gpid,
@@ -659,11 +661,12 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
     }
 
     // Use the action.hp_node after being updated.
-    if (action.hp_node) {
+    DCHECK(action.__isset.node1, "");
+    if (action.hp_node1) {
         action.type = config_type::CT_ADD_SECONDARY;
-        SET_OBJ_IP_AND_HOST_PORT(action, target, pc, primary);
+        SET_OBJ_IP_AND_HOST_PORT(action, target1, pc, primary);
 
-        newly_partitions *np = get_newly_partitions(*(view.nodes), action.hp_node);
+        newly_partitions *np = get_newly_partitions(*(view.nodes), action.hp_node1);
         CHECK_NOTNULL(np, "");
         np->newly_add_partition(gpid.get_app_id());
 
@@ -691,8 +694,8 @@ pc_status partition_guardian::on_redundant_secondary(meta_view &view, const dsn:
 
     configuration_proposal_action action;
     action.type = config_type::CT_REMOVE;
-    SET_OBJ_IP_AND_HOST_PORT(action, node, pc, secondaries[target]);
-    SET_OBJ_IP_AND_HOST_PORT(action, target, pc, primary);
+    SET_OBJ_IP_AND_HOST_PORT(action, node1, pc, secondaries[target]);
+    SET_OBJ_IP_AND_HOST_PORT(action, target1, pc, primary);
 
     // TODO: treat remove as cure proposals too
     get_config_context(*view.apps, gpid)->lb_actions.assign_balancer_proposals({action});
@@ -704,7 +707,7 @@ void partition_guardian::finish_cure_proposal(meta_view &view,
                                               const configuration_proposal_action &act)
 {
     host_port target;
-    GET_HOST_PORT(act, node, target);
+    GET_HOST_PORT(act, node1, target);
     newly_partitions *np = get_newly_partitions(*(view.nodes), target);
     if (np == nullptr) {
         LOG_INFO("can't get the newly_partitions extension structure for node({}), "

@@ -151,7 +151,7 @@ void replica::on_config_proposal(configuration_update_request &proposal)
 void replica::assign_primary(configuration_update_request &proposal)
 {
     host_port node;
-    GET_HOST_PORT(proposal, node, node);
+    GET_HOST_PORT(proposal, node1, node);
     CHECK_EQ(node, _stub->primary_host_port());
 
     if (status() == partition_status::PS_PRIMARY) {
@@ -204,7 +204,7 @@ void replica::add_potential_secondary(const configuration_update_request &propos
     CHECK(_primary_states.pc.__isset.hp_secondaries, "");
     CHECK(secondaries == _primary_states.pc.hp_secondaries, "");
     host_port node;
-    GET_HOST_PORT(proposal, node, node);
+    GET_HOST_PORT(proposal, node1, node);
     CHECK(!_primary_states.check_exist(node, partition_status::PS_PRIMARY), "node = {}", node);
     CHECK(!_primary_states.check_exist(node, partition_status::PS_SECONDARY), "node = {}", node);
 
@@ -246,7 +246,7 @@ void replica::add_potential_secondary(const configuration_update_request &propos
 
     group_check_request request;
     request.app = _app_info;
-    SET_OBJ_IP_AND_HOST_PORT(request, node, proposal, node);
+    SET_OBJ_IP_AND_HOST_PORT(request, node1, proposal, node1);
     _primary_states.get_replica_config(
         partition_status::PS_POTENTIAL_SECONDARY, request.config, state.signature);
     request.last_committed_decree = last_committed_decree();
