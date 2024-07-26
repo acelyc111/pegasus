@@ -2595,8 +2595,9 @@ bool server_state::check_all_partitions()
         if (!add_secondary_proposed[i] && secondaries.empty()) {
             const auto &action = add_secondary_actions[i];
             CHECK(action.hp_node1, "");
-            if (_add_secondary_enable_flow_control && add_secondary_running_nodes[action.hp_node1] >=
-                                                          _add_secondary_max_count_for_one_node) {
+            if (_add_secondary_enable_flow_control &&
+                add_secondary_running_nodes[action.hp_node1] >=
+                    _add_secondary_max_count_for_one_node) {
                 // ignore
                 continue;
             }
@@ -2615,8 +2616,9 @@ bool server_state::check_all_partitions()
             CHECK(action.hp_node1, "");
             gpid pid = add_secondary_gpids[i];
             const auto *pc = get_config(_all_apps, pid);
-            if (_add_secondary_enable_flow_control && add_secondary_running_nodes[action.hp_node1] >=
-                                                          _add_secondary_max_count_for_one_node) {
+            if (_add_secondary_enable_flow_control &&
+                add_secondary_running_nodes[action.hp_node1] >=
+                    _add_secondary_max_count_for_one_node) {
                 LOG_INFO("do not send {} proposal for gpid({}) for flow control reason, target = "
                          "{}, node = {}",
                          ::dsn::enum_to_string(action.type),

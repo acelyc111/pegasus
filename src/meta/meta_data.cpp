@@ -189,7 +189,8 @@ void proposal_actions::reset_tracked_current_learner()
     current_learner.last_prepared_decree = invalid_decree;
 }
 
-void proposal_actions::track_current_learner(const dsn::host_port &learner, const replica_info &info)
+void proposal_actions::track_current_learner(const dsn::host_port &learner,
+                                             const replica_info &info)
 {
     if (empty()) {
         return;
