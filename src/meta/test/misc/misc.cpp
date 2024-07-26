@@ -236,13 +236,13 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
     config_context *cc = get_config_context(apps, pid);
     CHECK_NOTNULL(cc, "");
 
-    dsn::host_port hp_target, hp_node;
-    GET_HOST_PORT(act, target, hp_target);
-    GET_HOST_PORT(act, node, hp_node);
+    dsn::host_port hp_target, node;
+    GET_HOST_PORT(act, target1, hp_target);
+    GET_HOST_PORT(act, node1, node);
 
     fs_manager *target_manager = get_fs_manager(manager, hp_target);
     CHECK_NOTNULL(target_manager, "");
-    fs_manager *node_manager = get_fs_manager(manager, hp_node);
+    fs_manager *node_manager = get_fs_manager(manager, node);
     CHECK_NOTNULL(node_manager, "");
 
     std::string dir;
@@ -260,7 +260,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
         auto selected = node_manager->find_best_dir_for_new_replica(pid);
         CHECK_NOTNULL(selected, "");
         selected->holding_replicas[pid.get_app_id()].emplace(pid);
-        cc->collect_serving_replica(hp_node, ri);
+        cc->collect_serving_replica(node, ri);
         break;
     }
     case config_type::CT_DOWNGRADE_TO_SECONDARY:
@@ -270,7 +270,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
     case config_type::CT_REMOVE:
     case config_type::CT_DOWNGRADE_TO_INACTIVE:
         node_manager->remove_replica(pid);
-        cc->remove_from_serving(hp_node);
+        cc->remove_from_serving(node);
         break;
 
     default:
@@ -290,26 +290,26 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
 
     ++pc.ballot;
     CHECK_NE(act.type, config_type::CT_INVALID);
-    CHECK(act.target, "");
-    CHECK(act.node, "");
+    CHECK(act.target1, "");
+    CHECK(act.node1, "");
 
     if (manager) {
         track_disk_info_check_and_apply(act, pid, apps, nodes, *manager);
     }
 
     dsn::host_port hp_target, hp_node;
-    GET_HOST_PORT(act, target, hp_target);
-    GET_HOST_PORT(act, node, hp_node);
+    GET_HOST_PORT(act, target1, hp_target);
+    GET_HOST_PORT(act, node1, hp_node);
 
     switch (act.type) {
     case config_type::CT_ASSIGN_PRIMARY: {
-        CHECK_EQ(act.hp_node, act.hp_target);
-        CHECK_EQ(act.node, act.target);
+        CHECK_EQ(act.hp_node1, act.hp_target1);
+        CHECK_EQ(act.node1, act.target1);
         CHECK(!pc.hp_primary, "");
         CHECK(!pc.primary, "");
         CHECK(pc.hp_secondaries.empty(), "");
         CHECK(pc.secondaries.empty(), "");
-        SET_IP_AND_HOST_PORT(pc, primary, act.node, hp_node);
+        SET_IP_AND_HOST_PORT(pc, primary, act.node1, hp_node);
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
@@ -319,11 +319,11 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
     }
     case config_type::CT_ADD_SECONDARY: {
         CHECK_EQ(hp_target, pc.hp_primary);
-        CHECK_EQ(act.hp_target, pc.hp_primary);
-        CHECK_EQ(act.target, pc.primary);
+        CHECK_EQ(act.hp_target1, pc.hp_primary);
+        CHECK_EQ(act.target1, pc.primary);
         CHECK(!is_member(pc, hp_node), "");
-        CHECK(!is_member(pc, act.node), "");
-        ADD_IP_AND_HOST_PORT(pc, secondaries, act.node, hp_node);
+        CHECK(!is_member(pc, act.node1), "");
+        ADD_IP_AND_HOST_PORT(pc, secondaries, act.node1, hp_node);
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
@@ -332,11 +332,11 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         break;
     }
     case config_type::CT_DOWNGRADE_TO_SECONDARY: {
-        CHECK_EQ(act.hp_node, act.hp_target);
-        CHECK_EQ(act.node, act.target);
+        CHECK_EQ(act.hp_node1, act.hp_target1);
+        CHECK_EQ(act.node1, act.target1);
         CHECK_EQ(hp_node, hp_target);
-        CHECK_EQ(act.hp_node, pc.hp_primary);
-        CHECK_EQ(act.node, pc.primary);
+        CHECK_EQ(act.hp_node1, pc.hp_primary);
+        CHECK_EQ(act.node1, pc.primary);
         CHECK_EQ(hp_node, pc.hp_primary);
         CHECK(!is_secondary(pc, pc.hp_primary), "");
         CHECK(!is_secondary(pc, pc.primary), "");
@@ -352,28 +352,28 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         CHECK(!pc.hp_primary, "");
         CHECK(!pc.primary, "");
         CHECK_EQ(hp_node, hp_target);
-        CHECK_EQ(act.hp_node, act.hp_target);
-        CHECK_EQ(act.node, act.target);
+        CHECK_EQ(act.hp_node1, act.hp_target1);
+        CHECK_EQ(act.node1, act.target1);
         CHECK(is_secondary(pc, hp_node), "");
-        CHECK(is_secondary(pc, act.node), "");
+        CHECK(is_secondary(pc, act.node1), "");
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
-        SET_IP_AND_HOST_PORT(pc, primary, act.node, hp_node);
+        SET_IP_AND_HOST_PORT(pc, primary, act.node1, hp_node);
         CHECK(replica_helper::remove_node(hp_node, pc.hp_secondaries), "");
-        CHECK(replica_helper::remove_node(act.node, pc.secondaries), "");
+        CHECK(replica_helper::remove_node(act.node1, pc.secondaries), "");
         ns->put_partition(pc.pid, true);
         break;
     }
     case config_type::CT_ADD_SECONDARY_FOR_LB: {
         CHECK_EQ(hp_target, pc.hp_primary);
-        CHECK_EQ(act.hp_target, pc.hp_primary);
-        CHECK_EQ(act.target, pc.primary);
+        CHECK_EQ(act.hp_target1, pc.hp_primary);
+        CHECK_EQ(act.target1, pc.primary);
         CHECK(!is_member(pc, hp_node), "");
-        CHECK(!is_member(pc, act.node), "");
-        CHECK(act.hp_node, "");
-        CHECK(act.node, "");
-        ADD_IP_AND_HOST_PORT(pc, secondaries, act.node, hp_node);
+        CHECK(!is_member(pc, act.node1), "");
+        CHECK(act.hp_node1, "");
+        CHECK(act.node1, "");
+        ADD_IP_AND_HOST_PORT(pc, secondaries, act.node1, hp_node);
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
@@ -387,12 +387,12 @@ void proposal_action_check_and_apply(const configuration_proposal_action &act,
         CHECK(pc.hp_primary, "");
         CHECK(pc.primary, "");
         CHECK_EQ(pc.hp_primary, hp_target);
-        CHECK_EQ(pc.hp_primary, act.hp_target);
-        CHECK_EQ(pc.primary, act.target);
+        CHECK_EQ(pc.hp_primary, act.hp_target1);
+        CHECK_EQ(pc.primary, act.target1);
         CHECK(is_secondary(pc, hp_node), "");
-        CHECK(is_secondary(pc, act.node), "");
+        CHECK(is_secondary(pc, act.node1), "");
         CHECK(replica_helper::remove_node(hp_node, pc.hp_secondaries), "");
-        CHECK(replica_helper::remove_node(act.node, pc.secondaries), "");
+        CHECK(replica_helper::remove_node(act.node1, pc.secondaries), "");
         const auto node = nodes.find(hp_node);
         CHECK(node != nodes.end(), "");
         ns = &node->second;
@@ -433,8 +433,8 @@ void migration_check_and_apply(app_mapper &apps,
             LOG_DEBUG("the {}th round of action, type: {}, node: {}, target: {}",
                       j,
                       dsn::enum_to_string(act.type),
-                      FMT_HOST_PORT_AND_IP(act, node),
-                      FMT_HOST_PORT_AND_IP(act, target));
+                      FMT_HOST_PORT_AND_IP(act, node1),
+                      FMT_HOST_PORT_AND_IP(act, target1));
             proposal_action_check_and_apply(act, proposal->gpid, apps, nodes, manager);
         }
     }
