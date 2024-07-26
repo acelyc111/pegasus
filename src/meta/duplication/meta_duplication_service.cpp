@@ -389,11 +389,11 @@ void meta_duplication_service::duplication_sync(duplication_sync_rpc rpc)
     auto &response = rpc.response();
     response.err = ERR_OK;
 
-    host_port src_hp;
-    GET_HOST_PORT(request, node, src_hp);
-    const auto *ns = get_node_state(_state->_nodes, src_hp, false);
+    host_port src_node;
+    GET_HOST_PORT(request, node1, src_node);
+    const auto *ns = get_node_state(_state->_nodes, src_node, false);
     if (ns == nullptr) {
-        LOG_WARNING("node({}) is not found in meta server", FMT_HOST_PORT_AND_IP(request, node));
+        LOG_WARNING("node({}) is not found in meta server", FMT_HOST_PORT_AND_IP(request, node1));
         response.err = ERR_OBJECT_NOT_FOUND;
         return;
     }
