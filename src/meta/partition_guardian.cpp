@@ -623,9 +623,9 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
                 }
             }
 
-            // Use the action.hp_node after being updated.
-            DCHECK(action.__isset.node1, "");
-            if (action.hp_node1) {
+            host_port node;
+            GET_HOST_PORT(action, node1, node);
+            if (node) {
                 LOG_INFO("gpid({}): can't find valid node in dropped list to add as secondary, "
                          "choose new node({}) with minimal partitions serving",
                          gpid,
