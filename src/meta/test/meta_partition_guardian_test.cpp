@@ -89,7 +89,7 @@ static void apply_update_request(/*in-out*/ configuration_update_request &update
 
     case config_type::CT_ADD_SECONDARY:
     case config_type::CT_ADD_SECONDARY_FOR_LB:
-        ADD_IP_AND_HOST_PORT(pc, secondaries, update_req.node1, update_req.hp_node1);
+        ADD_OBJ_IP_AND_HOST_PORT(pc, secondaries, update_req, node1);
         update_req.type = config_type::CT_UPGRADE_TO_SECONDARY;
         break;
 

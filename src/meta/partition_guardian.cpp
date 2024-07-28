@@ -469,14 +469,13 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
             }
         }
 
-        // Use the action.hp_node after being updated.
-        if (action.hp_node1) {
-            CHECK(action.node1, "");
+        host_port node;
+        GET_HOST_PORT(action, node1, node);
+        if (node) {
             SET_OBJ_IP_AND_HOST_PORT(action, target1, action, node1);
             action.type = config_type::CT_ASSIGN_PRIMARY;
 
-            get_newly_partitions(*view.nodes, action.hp_node1)
-                ->newly_add_primary(gpid.get_app_id(), false);
+            get_newly_partitions(*view.nodes, node)->newly_add_primary(gpid.get_app_id(), false);
         } else {
             LOG_WARNING("{}: don't select any node for security reason, administrator can select "
                         "a proper one by shell",
@@ -645,9 +644,9 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
             SET_IP_AND_HOST_PORT_BY_DNS(action, node1, server.node);
         }
 
-        // Use the action.hp_node after being updated.
-        DCHECK(action.__isset.node1, "");
-        if (action.hp_node1) {
+        host_port node;
+        GET_HOST_PORT(action, node1, node);
+        if (node) {
             LOG_INFO("gpid({}): choose node({}) as secondary coz it is last_dropped_node and is "
                      "alive now",
                      gpid,
@@ -660,13 +659,13 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
         }
     }
 
-    // Use the action.hp_node after being updated.
-    DCHECK(action.__isset.node1, "");
-    if (action.hp_node1) {
+    host_port node;
+    GET_HOST_PORT(action, node1, node);
+    if (node) {
         action.type = config_type::CT_ADD_SECONDARY;
         SET_OBJ_IP_AND_HOST_PORT(action, target1, pc, primary);
 
-        newly_partitions *np = get_newly_partitions(*(view.nodes), action.hp_node1);
+        newly_partitions *np = get_newly_partitions(*(view.nodes), node);
         CHECK_NOTNULL(np, "");
         np->newly_add_partition(gpid.get_app_id());
 

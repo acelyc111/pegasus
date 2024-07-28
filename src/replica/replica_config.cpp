@@ -296,9 +296,9 @@ void replica::downgrade_to_secondary_on_primary(configuration_update_request &pr
     CHECK_EQ(proposal.node1, proposal.config.primary);
 
     RESET_IP_AND_HOST_PORT(proposal.config, primary);
-    ADD_IP_AND_HOST_PORT(proposal.config, secondaries, proposal.node1, proposal.hp_node1);
+    ADD_OBJ_IP_AND_HOST_PORT(proposal.config, secondaries, proposal, node1);
     update_configuration_on_meta_server(
-        config_type::CT_DOWNGRADE_TO_SECONDARY, proposal.hp_node1, proposal.config);
+        config_type::CT_DOWNGRADE_TO_SECONDARY, node, proposal.config);
 }
 
 void replica::downgrade_to_inactive_on_primary(configuration_update_request &proposal)

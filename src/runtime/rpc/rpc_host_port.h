@@ -177,6 +177,24 @@ class TProtocol;
         DCHECK_EQ(_obj.field.size(), _obj.hp_##field.size());                                      \
     } while (0)
 
+// Add '<src_field>' and 'hp_<src_field>' of 'src_obj' to the '<dst_field>' and optional
+// 'hp_<dst_field>' of 'dst_obj'. The types of the fields are rpc_address and host_port,
+// respectively.
+#define ADD_OBJ_IP_AND_HOST_PORT(dst_obj, dst_field, src_obj, src_field)                           \
+    do {                                                                                           \
+        const auto &_src_obj = (src_obj);                                                          \
+        auto &_dst_obj = (dst_obj);                                                                \
+        DCHECK_EQ(_src_obj.src_field,                                                              \
+                  dsn::dns_resolver::instance().resolve_address(_src_obj.hp_##src_field));         \
+        _dst_obj.dst_field.push_back(_src_obj.src_field);                                          \
+        if (!_dst_obj.__isset.hp_##dst_field) {                                                    \
+            _dst_obj.__set_hp_##dst_field({_src_obj.hp_##src_field});                              \
+        } else {                                                                                   \
+            _dst_obj.hp_##dst_field.push_back(_src_obj.hp_##src_field);                            \
+        }                                                                                          \
+        DCHECK_EQ(_dst_obj.dst_field.size(), _dst_obj.hp_##dst_field.size());                      \
+    } while (0)
+
 #define SET_IPS_AND_HOST_PORTS_BY_DNS_1(obj, field, hp1)                                           \
     do {                                                                                           \
         auto &_obj = (obj);                                                                        \

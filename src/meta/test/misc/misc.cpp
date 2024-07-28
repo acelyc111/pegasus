@@ -236,13 +236,13 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
     config_context *cc = get_config_context(apps, pid);
     CHECK_NOTNULL(cc, "");
 
-    dsn::host_port hp_target, node;
+    dsn::host_port hp_target, hp_node;
     GET_HOST_PORT(act, target1, hp_target);
-    GET_HOST_PORT(act, node1, node);
+    GET_HOST_PORT(act, node1, hp_node);
 
     fs_manager *target_manager = get_fs_manager(manager, hp_target);
     CHECK_NOTNULL(target_manager, "");
-    fs_manager *node_manager = get_fs_manager(manager, node);
+    fs_manager *node_manager = get_fs_manager(manager, hp_node);
     CHECK_NOTNULL(node_manager, "");
 
     std::string dir;
@@ -260,7 +260,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
         auto selected = node_manager->find_best_dir_for_new_replica(pid);
         CHECK_NOTNULL(selected, "");
         selected->holding_replicas[pid.get_app_id()].emplace(pid);
-        cc->collect_serving_replica(node, ri);
+        cc->collect_serving_replica(hp_node, ri);
         break;
     }
     case config_type::CT_DOWNGRADE_TO_SECONDARY:
@@ -270,7 +270,7 @@ void track_disk_info_check_and_apply(const dsn::replication::configuration_propo
     case config_type::CT_REMOVE:
     case config_type::CT_DOWNGRADE_TO_INACTIVE:
         node_manager->remove_replica(pid);
-        cc->remove_from_serving(node);
+        cc->remove_from_serving(hp_node);
         break;
 
     default:

@@ -931,6 +931,9 @@ dsn::error_code replication_ddl_client::do_recovery(const std::vector<host_port>
     CLEAR_IP_AND_HOST_PORT(*req, recovery_nodes1);
     for (const auto &node : replica_nodes) {
         if (utils::contains(req->hp_recovery_nodes1, node)) {
+            DCHECK(utils::contains(req->recovery_nodes1,
+                                   dsn::dns_resolver::instance().resolve_address(node)),
+                   "");
             out << "duplicate replica node " << node << ", just ignore it" << std::endl;
         } else {
             ADD_IP_AND_HOST_PORT_BY_DNS(*req, recovery_nodes1, node);
