@@ -519,10 +519,10 @@ dsn::error_code replication_ddl_client::list_nodes(
         return resp.err;
     }
 
-    for (const auto &n : resp.infos) {
-        host_port hp;
-        GET_HOST_PORT(n, node, hp);
-        nodes[hp] = n.status;
+    for (const auto &ni : resp.infos) {
+        host_port node;
+        GET_HOST_PORT(ni, node, node);
+        nodes[node] = ni.status;
     }
 
     return dsn::ERR_OK;
@@ -931,19 +931,23 @@ dsn::error_code replication_ddl_client::do_recovery(const std::vector<host_port>
     CLEAR_IP_AND_HOST_PORT(*req, recovery_nodes);
     for (const auto &node : replica_nodes) {
         if (utils::contains(req->hp_recovery_nodes, node)) {
-            out << "duplicate replica node " << node << ", just ingore it" << std::endl;
+            DCHECK(utils::contains(req->recovery_nodes,
+                                   dsn::dns_resolver::instance().resolve_address(node)),
+                   "");
+            out << "duplicate replica node " << node << ", just ignore it" << std::endl;
         } else {
             ADD_IP_AND_HOST_PORT_BY_DNS(*req, recovery_nodes, node);
         }
     }
     if (req->hp_recovery_nodes.empty()) {
-        CHECK(req->recovery_nodes.empty(),
-              "recovery_nodes should be set together with hp_recovery_nodes");
+        DCHECK(req->recovery_nodes.empty(),
+               "recovery_nodes should be set together with hp_recovery_nodes");
         out << "node set for recovery it empty" << std::endl;
         return ERR_INVALID_PARAMETERS;
     }
-    CHECK(!req->recovery_nodes.empty(),
-          "recovery_nodes should be set together with hp_recovery_nodes");
+    DCHECK(!req->hp_recovery_nodes.empty(), "");
+    DCHECK(!req->recovery_nodes.empty(),
+           "recovery_nodes should be set together with hp_recovery_nodes");
     req->skip_bad_nodes = skip_bad_nodes;
     req->skip_lost_partitions = skip_lost_partitions;
 

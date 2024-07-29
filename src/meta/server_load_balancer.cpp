@@ -175,7 +175,9 @@ void server_load_balancer::register_proposals(meta_view view,
         // to send the proposal to.
         // for these proposals, they should keep the target empty and
         // the meta-server will fill primary as target.
-        if (act.target) {
+        host_port target;
+        GET_HOST_PORT(act, target, target);
+        if (target) {
             continue;
         }
 

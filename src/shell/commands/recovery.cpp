@@ -173,18 +173,23 @@ dsn::host_port diagnose_recommend(const ddd_partition_info &pinfo)
 
     std::vector<dsn::host_port> last_two_nodes(last_drops.end() - 2, last_drops.end());
     std::vector<ddd_node_info> last_dropped;
-    for (auto &node : last_two_nodes) {
-        auto it = std::find_if(pinfo.dropped.begin(),
-                               pinfo.dropped.end(),
-                               [&node](const ddd_node_info &r) { return r.hp_node == node; });
+    for (const auto &node : last_two_nodes) {
+        auto it = std::find_if(
+            pinfo.dropped.begin(), pinfo.dropped.end(), [&node](const ddd_node_info &r) {
+                dsn::host_port drop_node;
+                GET_HOST_PORT(r, node, drop_node);
+                return drop_node == node;
+            });
         if (it->is_alive && it->is_collected)
             last_dropped.push_back(*it);
     }
 
     if (last_dropped.size() == 1) {
-        const ddd_node_info &ninfo = last_dropped.back();
-        if (ninfo.last_committed_decree >= pinfo.config.last_committed_decree) {
-            return ninfo.hp_node;
+        const ddd_node_info &latest = last_dropped.back();
+        if (latest.last_committed_decree >= pinfo.config.last_committed_decree) {
+            dsn::host_port node;
+            GET_HOST_PORT(latest, node, node);
+            return node;
         }
     } else if (last_dropped.size() == 2) {
         const ddd_node_info &secondary = last_dropped.front();
@@ -194,19 +199,23 @@ dsn::host_port diagnose_recommend(const ddd_partition_info &pinfo)
         //  - choose the node with the largest last committed decree
         //  - if last committed decree is the same, choose node with the largest ballot
 
+        dsn::host_port latest_node;
+        GET_HOST_PORT(latest, node, latest_node);
+        dsn::host_port secondary_node;
+        GET_HOST_PORT(secondary, node, secondary_node);
         if (latest.last_committed_decree == secondary.last_committed_decree &&
             latest.last_committed_decree >= pinfo.config.last_committed_decree) {
-            return latest.ballot >= secondary.ballot ? latest.hp_node : secondary.hp_node;
+            return latest.ballot >= secondary.ballot ? latest_node : secondary_node;
         }
 
         if (latest.last_committed_decree > secondary.last_committed_decree &&
             latest.last_committed_decree >= pinfo.config.last_committed_decree) {
-            return latest.hp_node;
+            return latest_node;
         }
 
         if (secondary.last_committed_decree > latest.last_committed_decree &&
             secondary.last_committed_decree >= pinfo.config.last_committed_decree) {
-            return secondary.hp_node;
+            return secondary_node;
         }
     }
 

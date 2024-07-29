@@ -189,14 +189,16 @@ void proposal_actions::reset_tracked_current_learner()
     current_learner.last_prepared_decree = invalid_decree;
 }
 
-void proposal_actions::track_current_learner(const dsn::host_port &node, const replica_info &info)
+void proposal_actions::track_current_learner(const dsn::host_port &learner,
+                                             const replica_info &info)
 {
     if (empty()) {
         return;
     }
     const auto &act = acts.front();
-    CHECK(act.hp_node, "");
-    if (act.hp_node != node) {
+    host_port first_act_node;
+    GET_HOST_PORT(act, node, first_act_node);
+    if (first_act_node != learner) {
         return;
     }
 
@@ -216,7 +218,7 @@ void proposal_actions::track_current_learner(const dsn::host_port &node, const r
                 learning_progress_abnormal_detected = true;
             } else {
                 LOG_DEBUG(
-                    "{}: ignore abnormal status of {}, perhaps learn not start", info.pid, node);
+                    "{}: ignore abnormal status of {}, perhaps learn not start", info.pid, learner);
             }
         } else if (info.status == partition_status::PS_POTENTIAL_SECONDARY) {
             if (current_learner.ballot > info.ballot ||
@@ -226,7 +228,7 @@ void proposal_actions::track_current_learner(const dsn::host_port &node, const r
                 // TODO: need to add a metric here.
                 LOG_WARNING("{}: learner({})'s progress step back, please trace this carefully",
                             info.pid,
-                            node);
+                            learner);
             }
 
             // NOTICE: the flag may be abormal currently. it's balancer's duty to make use of the

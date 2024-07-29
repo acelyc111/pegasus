@@ -136,16 +136,16 @@ void partition_guardian::reconfig(meta_view view, const configuration_update_req
         }
     } else {
         when_update_replicas(request.type, [cc, &request](bool is_adding) {
-            host_port hp;
-            GET_HOST_PORT(request, node, hp);
+            host_port node;
+            GET_HOST_PORT(request, node, node);
             if (is_adding) {
-                cc->remove_from_dropped(hp);
+                cc->remove_from_dropped(node);
                 // when some replicas are added to partition_config
                 // we should try to adjust the size of drop_list
                 cc->check_size();
             } else {
-                cc->remove_from_serving(hp);
-                CHECK(cc->record_drop_history(hp), "node({}) has been in the dropped", hp);
+                cc->remove_from_serving(node);
+                CHECK(cc->record_drop_history(node), "node({}) has been in the dropped", node);
             }
         });
     }
@@ -469,14 +469,13 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
             }
         }
 
-        // Use the action.hp_node after being updated.
-        if (action.hp_node) {
-            CHECK(action.node, "");
+        host_port node;
+        GET_HOST_PORT(action, node, node);
+        if (node) {
             SET_OBJ_IP_AND_HOST_PORT(action, target, action, node);
             action.type = config_type::CT_ASSIGN_PRIMARY;
 
-            get_newly_partitions(*view.nodes, action.hp_node)
-                ->newly_add_primary(gpid.get_app_id(), false);
+            get_newly_partitions(*view.nodes, node)->newly_add_primary(gpid.get_app_id(), false);
         } else {
             LOG_WARNING("{}: don't select any node for security reason, administrator can select "
                         "a proper one by shell",
@@ -624,12 +623,13 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
                 }
             }
 
-            // Use the action.hp_node after being updated.
-            if (action.hp_node) {
+            host_port node;
+            GET_HOST_PORT(action, node, node);
+            if (node) {
                 LOG_INFO("gpid({}): can't find valid node in dropped list to add as secondary, "
                          "choose new node({}) with minimal partitions serving",
                          gpid,
-                         action.hp_node);
+                         node);
             } else {
                 LOG_INFO("gpid({}): can't find valid node in dropped list to add as secondary, "
                          "but also we can't find a new node to add as secondary",
@@ -644,8 +644,9 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
             SET_IP_AND_HOST_PORT_BY_DNS(action, node, server.node);
         }
 
-        // Use the action.hp_node after being updated.
-        if (action.hp_node) {
+        host_port node;
+        GET_HOST_PORT(action, node, node);
+        if (node) {
             LOG_INFO("gpid({}): choose node({}) as secondary coz it is last_dropped_node and is "
                      "alive now",
                      gpid,
@@ -658,12 +659,13 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
         }
     }
 
-    // Use the action.hp_node after being updated.
-    if (action.hp_node) {
+    host_port node;
+    GET_HOST_PORT(action, node, node);
+    if (node) {
         action.type = config_type::CT_ADD_SECONDARY;
         SET_OBJ_IP_AND_HOST_PORT(action, target, pc, primary);
 
-        newly_partitions *np = get_newly_partitions(*(view.nodes), action.hp_node);
+        newly_partitions *np = get_newly_partitions(*(view.nodes), node);
         CHECK_NOTNULL(np, "");
         np->newly_add_partition(gpid.get_app_id());
 

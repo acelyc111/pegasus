@@ -115,7 +115,7 @@ private:
 public:
     proposal_actions();
     void reset_tracked_current_learner();
-    void track_current_learner(const host_port &node, const replica_info &info);
+    void track_current_learner(const host_port &learner, const replica_info &info);
     void clear();
 
     // return the action in acts & whether the action is from balancer
