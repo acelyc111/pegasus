@@ -55,6 +55,7 @@
 #include "utils/ports.h"
 #include "utils/string_conv.h"
 #include "utils/zlocks.h"
+#include "spdlog/common.h"
 
 DSN_DECLARE_bool(dup_ignore_other_cluster_ids);
 
@@ -174,10 +175,10 @@ void meta_duplication_service::do_modify_duplication(std::shared_ptr<app_state> 
     } while (0)
 
 #define LOG_WARNING_DUP_HINT_AND_RETURN_IF_NOT(expr, resp, ec, ...)                                \
-    LOG_DUP_HINT_AND_RETURN_IF_NOT(expr, resp, ec, LOG_LEVEL_WARNING, __VA_ARGS__)
+    LOG_DUP_HINT_AND_RETURN_IF_NOT(expr, resp, ec, spdlog::level::warn, __VA_ARGS__)
 
 #define LOG_ERROR_DUP_HINT_AND_RETURN_IF_NOT(expr, resp, ec, ...)                                  \
-    LOG_DUP_HINT_AND_RETURN_IF_NOT(expr, resp, ec, LOG_LEVEL_ERROR, __VA_ARGS__)
+    LOG_DUP_HINT_AND_RETURN_IF_NOT(expr, resp, ec, spdlog::level::err, __VA_ARGS__)
 
 // This call will not recreate if the duplication
 // with the same app name and remote end point already exists.

@@ -15,19 +15,28 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <gtest/gtest.h>
-#include <memory>
+#pragma once
 
-#include "utils/flags.h"
-#include "utils/logging.h"
+#include <string>
 
-GTEST_API_ int main(int argc, char **argv)
+#include "spdlog/pattern_formatter.h"
+
+extern std::string log_prefixed_message_func();
+
+class pegasus_formatter_flag : public spdlog::custom_flag_formatter
 {
-    testing::InitGoogleTest(&argc, argv);
+public:
+    void
+    format(const spdlog::details::log_msg &, const std::tm &, spdlog::memory_buf_t &dest) override
+    {
+        const auto prefix = log_prefixed_message_func();
+        dest.append(prefix.data(), prefix.data() + prefix.size());
+    }
 
-    dsn_log_init("./", "test");
+    std::unique_ptr<custom_flag_formatter> clone() const override
+    {
+        return spdlog::details::make_unique<pegasus_formatter_flag>();
+    }
+};
 
-    dsn::flags_initialize();
-
-    return RUN_ALL_TESTS();
-}
+extern void dsn_log_init(const std::string &log_dir, const std::string &role_name);

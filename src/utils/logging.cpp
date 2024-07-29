@@ -31,107 +31,176 @@
 #include <utility>
 
 #include "runtime/tool_api.h"
-#include "simple_logger.h"
 #include "utils/api_utilities.h"
 #include "utils/factory_store.h"
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/join_point.h"
-#include "utils/logging_provider.h"
 #include "utils/sys_exit_hook.h"
+#include "spdlog/common.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/rotating_file_sink.h"
+#include "spdlog/sinks/stdout_sinks.h"
+#include "utils/command_manager.h"
 
 DSN_DEFINE_string(core,
                   logging_start_level,
                   "LOG_LEVEL_INFO",
                   "Logs with level larger than or equal to this level be logged");
+DSN_DEFINE_validator(logging_start_level, [](const char *value) -> bool {
+    const auto level = enum_from_string(value, LOG_LEVEL_INVALID);
+    return LOG_LEVEL_DEBUG <= level && level <= LOG_LEVEL_FATAL;
+});
 
 DSN_DEFINE_bool(core,
                 logging_flush_on_exit,
                 true,
                 "Whether to flush the logs when the process exits");
 
-log_level_t log_start_level = LOG_LEVEL_INFO;
+DSN_DEFINE_bool(tools.simple_logger,
+                short_header,
+                false,
+                "Whether to use short header (excluding "
+                "file, file number and function name "
+                "fields in each line)");
 
-namespace dsn {
+DSN_DEFINE_bool(tools.simple_logger, fast_flush, false, "Whether to flush logs every second");
 
-using namespace tools;
-DSN_REGISTER_COMPONENT_PROVIDER(screen_logger, "dsn::tools::screen_logger");
-DSN_REGISTER_COMPONENT_PROVIDER(simple_logger, "dsn::tools::simple_logger");
+DSN_DEFINE_uint64(tools.simple_logger,
+                  max_log_file_bytes,
+                  64 * 1024 * 1024,
+                  "The maximum bytes of a log file. A new log file will be created if the current "
+                  "log file exceeds this size.");
+DSN_DEFINE_validator(max_log_file_bytes, [](int32_t value) -> bool { return value > 0; });
 
-std::function<std::string()> log_prefixed_message_func = []() -> std::string { return ": "; };
+DSN_DEFINE_uint64(
+    tools.simple_logger,
+    max_number_of_log_files_on_disk,
+    20,
+    "The maximum number of log files to be reserved on disk, older logs are deleted automatically");
+DSN_DEFINE_validator(max_number_of_log_files_on_disk,
+                     [](int32_t value) -> bool { return value > 0; });
 
-void set_log_prefixed_message_func(std::function<std::string()> func)
+DSN_DEFINE_string(tools.simple_logger, base_name, "pegasus", "The default base name for log file");
+
+DSN_DEFINE_string(
+    tools.simple_logger,
+    stderr_start_level,
+    "LOG_LEVEL_WARNING",
+    "The lowest level of log messages to be copied to stderr in addition to log files");
+DSN_DEFINE_validator(stderr_start_level, [](const char *value) -> bool {
+    const auto level = enum_from_string(value, LOG_LEVEL_INVALID);
+    return LOG_LEVEL_DEBUG <= level && level <= LOG_LEVEL_FATAL;
+});
+
+std::shared_ptr<spdlog::logger> g_stderr_logger = spdlog::stderr_logger_mt("stderr");
+std::shared_ptr<spdlog::logger> g_file_logger;
+
+static std::map<log_level_t, spdlog::level::level_enum> to_spdlog_levels = {
+    {LOG_LEVEL_DEBUG, spdlog::level::debug},
+    {LOG_LEVEL_INFO, spdlog::level::info},
+    {LOG_LEVEL_WARNING, spdlog::level::warn},
+    {LOG_LEVEL_ERROR, spdlog::level::err},
+    {LOG_LEVEL_FATAL, spdlog::level::critical}};
+static std::vector<std::unique_ptr<dsn::command_deregister>> log_cmds;
+
+spdlog::level::level_enum g_stderr_start_level;
+spdlog::level::level_enum g_file_log_start_level;
+
+void dsn_log_init(const std::string &log_dir, const std::string &role_name)
 {
-    log_prefixed_message_func = std::move(func);
-}
-} // namespace dsn
-
-static void log_on_sys_exit(::dsn::sys_exit_type)
-{
-    dsn::logging_provider *logger = dsn::logging_provider::instance();
-    logger->flush();
-}
-
-void dsn_log_init(const std::string &logging_factory_name,
-                  const std::string &log_dir,
-                  const std::string &role_name,
-                  const std::function<std::string()> &dsn_log_prefixed_message_func)
-{
-    log_start_level = enum_from_string(FLAGS_logging_start_level, LOG_LEVEL_INVALID);
-
-    CHECK_NE_MSG(
-        log_start_level, LOG_LEVEL_INVALID, "invalid [core] logging_start_level specified");
+    g_file_logger = spdlog::rotating_logger_mt(
+        "file",
+        fmt::format("{}/{}.log", log_dir, role_name.empty() ? FLAGS_base_name : role_name),
+        FLAGS_max_log_file_bytes,
+        FLAGS_max_number_of_log_files_on_disk);
+    //    _symlink_path = utils::filesystem::path_combine(_log_dir, symlink_name);
+    const auto spdlog_start_level =
+        to_spdlog_levels[enum_from_string(FLAGS_logging_start_level, LOG_LEVEL_INVALID)];
+    g_file_log_start_level = spdlog_start_level;
+    g_file_logger->set_level(spdlog_start_level);
+    g_stderr_start_level =
+        to_spdlog_levels[enum_from_string(FLAGS_stderr_start_level, LOG_LEVEL_INVALID)];
+    g_file_logger->flush_on(spdlog::level::err);
+    g_stderr_logger->flush_on(spdlog::level::err);
+    if (FLAGS_fast_flush) {
+        spdlog::flush_every(std::chrono::seconds(1));
+    }
 
     // register log flush on exit
     if (FLAGS_logging_flush_on_exit) {
-        ::dsn::tools::sys_exit.put_back(log_on_sys_exit, "log.flush");
+        //        ::dsn::tools::sys_exit.put_back(log_on_sys_exit, "log.flush");
     }
 
-    dsn::logging_provider *logger = dsn::utils::factory_store<dsn::logging_provider>::create(
-        logging_factory_name.c_str(), dsn::PROVIDER_TYPE_MAIN, log_dir.c_str(), role_name.c_str());
-    dsn::logging_provider::set_logger(logger);
-
-    if (dsn_log_prefixed_message_func != nullptr) {
-        dsn::set_log_prefixed_message_func(dsn_log_prefixed_message_func);
+    // See: https://github.com/gabime/spdlog/wiki/3.-Custom-formatting#pattern-flags
+    auto formatter = std::make_unique<spdlog::pattern_formatter>();
+    if (FLAGS_short_header) {
+        static const std::string kPattern = "%L%Y-%m-%d %H:%M:%S.%e %t %* %v";
+        formatter->add_flag<pegasus_formatter_flag>('*').set_pattern(kPattern);
+    } else {
+        static const std::string kPattern = "%L%Y-%m-%d %H:%M:%S.%e %t %* %s:%#:%!(): %v";
+        formatter->add_flag<pegasus_formatter_flag>('*').set_pattern(kPattern);
     }
+    spdlog::set_formatter(std::move(formatter));
+
+    // Flush when exit
+    //    ::fflush(_log);
+    //    ::fflush(stderr);
+    //    ::fflush(stdout);
+    // TODO(yingchun): simple_logger is destroyed after command_manager, so will cause crash like
+    //  "assertion expression: [_handlers.empty()] All commands must be deregistered before
+    //  command_manager is destroyed, however 'flush-log' is still registered".
+    //  We need to fix it.
+    log_cmds.emplace_back(::dsn::command_manager::instance().register_single_command(
+        "flush-log", "Flush log to stderr or file", "", [](const std::vector<std::string> &args) {
+            // TODO(yingchun): not support now!
+            return "Flush done.";
+        }));
+
+    log_cmds.emplace_back(::dsn::command_manager::instance().register_single_command(
+        "reset-log-start-level",
+        "Reset the log start level",
+        "[DEBUG | INFO | WARNING | ERROR | FATAL]",
+        [](const std::vector<std::string> &args) {
+            log_level_t start_level;
+            if (args.empty()) {
+                start_level = enum_from_string(FLAGS_logging_start_level, LOG_LEVEL_INVALID);
+            } else {
+                std::string level_str = "LOG_LEVEL_" + args[0];
+                start_level = enum_from_string(level_str.c_str(), LOG_LEVEL_INVALID);
+                if (start_level == LOG_LEVEL_INVALID) {
+                    return "ERROR: invalid level '" + args[0] + "'";
+                }
+            }
+            g_file_logger->set_level(to_spdlog_levels[start_level]);
+            return std::string("OK, current level is ") + enum_to_string(start_level);
+        }));
 }
 
-log_level_t get_log_start_level() { return log_start_level; }
-
-void set_log_start_level(log_level_t level) { log_start_level = level; }
-
-void global_log(
-    const char *file, const char *function, const int line, log_level_t log_level, const char *str)
+std::string log_prefixed_message_func()
 {
-    dsn::logging_provider *logger = dsn::logging_provider::instance();
-    logger->log(file, function, line, log_level, str);
+    const static thread_local int tid = dsn::utils::get_current_tid();
+    const auto t = dsn::task::get_current_task_id();
+    if (t) {
+        if (nullptr != dsn::task::get_current_worker2()) {
+            return fmt::format("{}.{}{}.{:016}",
+                               dsn::task::get_current_node_name(),
+                               dsn::task::get_current_worker2()->pool_spec().name,
+                               dsn::task::get_current_worker2()->index(),
+                               t);
+        }
+        return fmt::format("{}.io-thrd.{}.{:016}", dsn::task::get_current_node_name(), tid, t);
+    }
+
+    if (nullptr != dsn::task::get_current_worker2()) {
+        const static thread_local std::string prefix =
+            fmt::format("{}.{}{}",
+                        dsn::task::get_current_node_name(),
+                        dsn::task::get_current_worker2()->pool_spec().name,
+                        dsn::task::get_current_worker2()->index());
+        return prefix;
+    }
+    const static thread_local std::string prefix =
+        fmt::format("{}.io-thrd.{}", dsn::task::get_current_node_name(), tid);
+    return prefix;
 }
-
-namespace dsn {
-
-std::unique_ptr<logging_provider> logging_provider::_logger;
-
-logging_provider *logging_provider::instance()
-{
-    static std::unique_ptr<logging_provider> default_logger(create_default_instance());
-    return _logger ? _logger.get() : default_logger.get();
-}
-
-logging_provider *logging_provider::create_default_instance()
-{
-    return new tools::screen_logger(nullptr, nullptr);
-}
-
-void logging_provider::set_logger(logging_provider *logger) { _logger.reset(logger); }
-
-namespace tools {
-namespace internal_use_only {
-bool register_component_provider(const char *name,
-                                 logging_provider::factory f,
-                                 ::dsn::provider_type type)
-{
-    return dsn::utils::factory_store<logging_provider>::register_factory(name, f, type);
-}
-} // namespace internal_use_only
-} // namespace tools
-} // namespace dsn

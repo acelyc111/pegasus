@@ -31,6 +31,7 @@
 #include "utils/enum_helper.h"
 #include "utils/fmt_utils.h"
 #include "utils/ports.h"
+#include "spdlog/common.h"
 
 /*!
 @defgroup logging Logging Service
@@ -65,12 +66,6 @@ ENUM_END(log_level_t)
 
 USER_DEFINED_ENUM_FORMATTER(log_level_t)
 
-// logs with level smaller than this start_level will not be logged
-extern log_level_t log_start_level;
-extern log_level_t get_log_start_level();
-extern void set_log_start_level(log_level_t level);
-extern void global_log(
-    const char *file, const char *function, const int line, log_level_t log_level, const char *str);
 extern void dsn_coredump();
 
 #define dreturn_not_ok_logged(err, ...)                                                            \

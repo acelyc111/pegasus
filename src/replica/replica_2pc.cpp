@@ -77,6 +77,7 @@
 #include "utils/ports.h"
 #include "utils/thread_access_checker.h"
 #include "utils/uniq_timestamp_us.h"
+#include "spdlog/common.h"
 
 DSN_DEFINE_bool(replication,
                 reject_write_when_disk_insufficient,
@@ -238,13 +239,13 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
     const auto request_count = mu->client_requests.size();
     mu->data.header.last_committed_decree = last_committed_decree();
 
-    log_level_t level = LOG_LEVEL_DEBUG;
+    spdlog::level::level_enum level = spdlog::level::debug;
     if (mu->data.header.decree == invalid_decree) {
         mu->set_id(get_ballot(), _prepare_list->max_decree() + 1);
         // print a debug log if necessary
         if (FLAGS_prepare_decree_gap_for_debug_logging > 0 &&
             mu->get_decree() % FLAGS_prepare_decree_gap_for_debug_logging == 0)
-            level = LOG_LEVEL_INFO;
+            level = spdlog::level::info;
         mu->set_timestamp(_uniq_timestamp_us.next());
     } else {
         mu->set_id(get_ballot(), mu->data.header.decree);

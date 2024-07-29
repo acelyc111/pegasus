@@ -27,24 +27,26 @@
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/synchronize.h"
+#include "spdlog/common.h"
+#include "spdlog/spdlog.h"
 
 DSN_DEFINE_string(security, sasl_plugin_path, "/usr/lib/sasl2", "path to search sasl plugins");
 
 namespace dsn {
 namespace security {
 
-log_level_t get_log_level(int level)
+spdlog::level::level_enum get_log_level(int level)
 {
     switch (level) {
     case SASL_LOG_ERR:
-        return LOG_LEVEL_ERROR;
+        return spdlog::level::err;
     case SASL_LOG_FAIL:
     case SASL_LOG_WARN:
-        return LOG_LEVEL_WARNING;
+        return spdlog::level::warn;
     case SASL_LOG_NOTE:
-        return LOG_LEVEL_INFO;
+        return spdlog::level::info;
     default:
-        return LOG_LEVEL_DEBUG;
+        return spdlog::level::debug;
     }
 }
 

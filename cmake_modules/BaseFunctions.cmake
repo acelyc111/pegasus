@@ -208,6 +208,8 @@ function(dsn_setup_compiler_flags)
   if(${BUILD_TEST})
     add_definitions(-DMOCK_TEST)
   endif()
+  add_definitions(-DSPDLOG_FMT_EXTERNAL)
+  add_definitions(-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -gdwarf-4" CACHE STRING "" FORCE)
 

@@ -19,28 +19,51 @@
 
 #pragma once
 
+#include <memory>
 #include <fmt/ostream.h>
 #include <rocksdb/status.h>
 
 #include "utils/api_utilities.h"
+#include "spdlog/common.h"
+#include "spdlog/spdlog.h"
+#include "utils/logging.h"
 
-// The macros below no longer use the default snprintf method for log message formatting,
-// instead we use fmt::format.
-// TODO(wutao1): prevent construction of std::string for each log.
+extern spdlog::level::level_enum g_stderr_start_level;
+extern spdlog::level::level_enum g_file_log_start_level;
+extern std::shared_ptr<spdlog::logger> g_stderr_logger;
+extern std::shared_ptr<spdlog::logger> g_file_logger;
 
-// __FILENAME__ macro comes from the cmake, in which we calculate a filename without path.
 #define LOG(level, ...)                                                                            \
     do {                                                                                           \
-        if (level >= log_start_level)                                                              \
-            global_log(                                                                            \
-                __FILENAME__, __FUNCTION__, __LINE__, level, fmt::format(__VA_ARGS__).c_str());    \
+        const auto _lvl = (level);                                                                 \
+        if (_lvl < g_file_log_start_level) {                                                       \
+            break;                                                                                 \
+        }                                                                                          \
+        if (dsn_likely(!!g_file_logger)) {                                                         \
+            g_file_logger->log(_lvl, __VA_ARGS__);                                                 \
+        } else {                                                                                   \
+            g_stderr_logger->log(_lvl, __VA_ARGS__);                                               \
+        }                                                                                          \
     } while (false)
 
-#define LOG_DEBUG(...) LOG(LOG_LEVEL_DEBUG, __VA_ARGS__)
-#define LOG_INFO(...) LOG(LOG_LEVEL_INFO, __VA_ARGS__)
-#define LOG_WARNING(...) LOG(LOG_LEVEL_WARNING, __VA_ARGS__)
-#define LOG_ERROR(...) LOG(LOG_LEVEL_ERROR, __VA_ARGS__)
-#define LOG_FATAL(...) LOG(LOG_LEVEL_FATAL, __VA_ARGS__)
+#define LOG_ON_LEVEL(UPPER_CASE_LEVEL, lower_case_level, ...)                                      \
+    do {                                                                                           \
+        if (lower_case_level >= g_stderr_start_level) {                                            \
+            SPDLOG_LOGGER_##UPPER_CASE_LEVEL(g_stderr_logger, __VA_ARGS__);                        \
+        }                                                                                          \
+        if (dsn_likely(!!g_file_logger)) {                                                         \
+            SPDLOG_LOGGER_##UPPER_CASE_LEVEL(g_file_logger, __VA_ARGS__);                          \
+            if (dsn_unlikely(lower_case_level == spdlog::level::critical)) {                       \
+                dsn_coredump();                                                                    \
+            }                                                                                      \
+        }                                                                                          \
+    } while (false)
+
+#define LOG_DEBUG(...) LOG_ON_LEVEL(DEBUG, spdlog::level::debug, __VA_ARGS__)
+#define LOG_INFO(...) LOG_ON_LEVEL(INFO, spdlog::level::info, __VA_ARGS__)
+#define LOG_WARNING(...) LOG_ON_LEVEL(WARN, spdlog::level::warn, __VA_ARGS__)
+#define LOG_ERROR(...) LOG_ON_LEVEL(ERROR, spdlog::level::err, __VA_ARGS__)
+#define LOG_FATAL(...) LOG_ON_LEVEL(CRITICAL, spdlog::level::critical, __VA_ARGS__)
 
 #define LOG_WARNING_IF(x, ...)                                                                     \
     do {                                                                                           \
