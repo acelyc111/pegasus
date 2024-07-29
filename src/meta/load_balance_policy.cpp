@@ -53,8 +53,8 @@ configuration_proposal_action
 new_proposal_action(const host_port &target, const host_port &node, config_type::type type)
 {
     configuration_proposal_action act;
-    SET_IP_AND_HOST_PORT_BY_DNS(act, target1, target);
-    SET_IP_AND_HOST_PORT_BY_DNS(act, node1, node);
+    SET_IP_AND_HOST_PORT_BY_DNS(act, target, target);
+    SET_IP_AND_HOST_PORT_BY_DNS(act, node, node);
     act.__set_type(type);
     return act;
 }
@@ -583,9 +583,9 @@ void ford_fulkerson::update_decree(int node_id, const node_state &ns)
 
 void ford_fulkerson::handle_corner_case()
 {
-    // Suppose you have an 8-shard app in a cluster with 3 nodes(which name are node1, node2,
+    // Suppose you have an 8-shard app in a cluster with 3 nodes(which name are node, node2,
     // node3). The distribution of primaries among these nodes is as follow:
-    // node1 : [0, 1, 2, 3]
+    // node : [0, 1, 2, 3]
     // node2 : [4, 5]
     // node2 : [6, 7]
     // This is obviously unbalanced.

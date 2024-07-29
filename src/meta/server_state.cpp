@@ -806,7 +806,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
     response.__isset.gc_replicas = false;
 
     host_port req_node;
-    GET_HOST_PORT(request, node1, req_node);
+    GET_HOST_PORT(request, node, req_node);
     LOG_INFO("got config sync request from {}, stored_replicas_count({})",
              req_node,
              request.stored_replicas.size());
@@ -841,7 +841,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
                     }
 
                     host_port target;
-                    GET_HOST_PORT(*pending_request, node1, target);
+                    GET_HOST_PORT(*pending_request, node, target);
                     if (target == req_node) {
                         return false;
                     }
@@ -849,7 +849,7 @@ void server_state::on_config_sync(configuration_query_by_node_rpc rpc)
 
                 response.partitions[i].info = *app;
                 response.partitions[i].config = app->pcs[pid.get_partition_index()];
-                response.partitions[i].host_node1 = request.node1;
+                response.partitions[i].host_node = request.node;
                 // set meta_split_status
                 const split_state &app_split_states = app->helpers->split_states;
                 if (app->splitting()) {
@@ -1442,7 +1442,7 @@ void server_state::send_proposal(const host_port &target,
              proposal.config.pid,
              proposal.config.ballot,
              target,
-             FMT_HOST_PORT_AND_IP(proposal, node1));
+             FMT_HOST_PORT_AND_IP(proposal, node));
     dsn::message_ex *msg =
         dsn::message_ex::create_request(RPC_CONFIG_PROPOSAL, 0, proposal.config.pid.thread_hash());
     dsn::marshall(msg, proposal);
@@ -1456,10 +1456,10 @@ void server_state::send_proposal(const configuration_proposal_action &action,
     configuration_update_request request;
     request.info = app;
     request.type = action.type;
-    SET_OBJ_IP_AND_HOST_PORT(request, node1, action, node1);
+    SET_OBJ_IP_AND_HOST_PORT(request, node, action, node);
     request.config = pc;
     host_port target;
-    GET_HOST_PORT(action, target1, target);
+    GET_HOST_PORT(action, target, target);
     send_proposal(target, request);
 }
 
@@ -1470,7 +1470,7 @@ void server_state::request_check(const partition_configuration &old_pc,
     host_port old_primary;
     GET_HOST_PORT(old_pc, primary, old_primary);
     host_port req_node;
-    GET_HOST_PORT(request, node1, req_node);
+    GET_HOST_PORT(request, node, req_node);
     std::vector<host_port> old_secondaries;
     GET_HOST_PORTS(old_pc, secondaries, old_secondaries);
     switch (request.type) {
@@ -1521,7 +1521,7 @@ void server_state::update_configuration_locally(
     health_status new_health_status = partition_health_status(new_pc, min_2pc_count);
 
     host_port node;
-    GET_HOST_PORT(*config_request, node1, node);
+    GET_HOST_PORT(*config_request, node, node);
 
     if (app.is_stateful) {
         CHECK(old_pc.ballot == invalid_ballot || old_pc.ballot + 1 == new_pc.ballot,
@@ -1605,9 +1605,9 @@ void server_state::update_configuration_locally(
         }
     } else {
         CHECK_EQ(old_pc.ballot, new_pc.ballot);
-        const auto host_node = host_port::from_address(config_request->host_node1);
+        const auto host_node = host_port::from_address(config_request->host_node);
         // The non-stateful app is just for testing, so just check the host_node is resolvable.
-        CHECK(host_node, "'{}' can not be reverse resolved", config_request->host_node1);
+        CHECK(host_node, "'{}' can not be reverse resolved", config_request->host_node);
         new_pc = old_pc;
         partition_configuration_stateless pcs(new_pc);
         if (config_request->type == config_type::type::CT_ADD_SECONDARY) {
@@ -1746,10 +1746,10 @@ void server_state::on_update_configuration_on_remote_reply(
                     // ignore adding secondary if add_secondary_enable_flow_control = true
                 } else {
                     config_request->type = action.type;
-                    SET_OBJ_IP_AND_HOST_PORT(*config_request, node1, action, node1);
+                    SET_OBJ_IP_AND_HOST_PORT(*config_request, node, action, node);
                     config_request->info = *app;
                     host_port target;
-                    GET_HOST_PORT(action, target1, target);
+                    GET_HOST_PORT(action, target, target);
                     send_proposal(target, *config_request);
                 }
             }
@@ -1798,7 +1798,7 @@ void server_state::drop_partition(std::shared_ptr<app_state> &app, int pidx)
 
     request.info = *app;
     request.type = config_type::CT_DROP_PARTITION;
-    SET_OBJ_IP_AND_HOST_PORT(request, node1, pc, primary);
+    SET_OBJ_IP_AND_HOST_PORT(request, node, pc, primary);
 
     request.config = pc;
     for (const auto &secondary : pc.hp_secondaries) {
@@ -1870,7 +1870,7 @@ void server_state::downgrade_primary_to_inactive(std::shared_ptr<app_state> &app
     request.info = *app;
     request.config = pc;
     request.type = config_type::CT_DOWNGRADE_TO_INACTIVE;
-    SET_OBJ_IP_AND_HOST_PORT(request, node1, pc, primary);
+    SET_OBJ_IP_AND_HOST_PORT(request, node, pc, primary);
     request.config.ballot++;
     RESET_IP_AND_HOST_PORT(request.config, primary);
     maintain_drops(request.config.hp_last_drops, pc.hp_primary, request.type);
@@ -1898,7 +1898,7 @@ void server_state::downgrade_secondary_to_inactive(std::shared_ptr<app_state> &a
         request.info = *app;
         request.config = pc;
         request.type = config_type::CT_DOWNGRADE_TO_INACTIVE;
-        SET_IP_AND_HOST_PORT_BY_DNS(request, node1, node);
+        SET_IP_AND_HOST_PORT_BY_DNS(request, node, node);
         send_proposal(primary, request);
     } else {
         LOG_INFO("gpid({}.{}) is syncing with remote storage, ignore the remove secondary({})",
@@ -1915,8 +1915,8 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
     auto req = std::make_shared<configuration_update_request>();
     req->info = *app;
     req->type = config_type::CT_REMOVE;
-    req->host_node1 = dsn::dns_resolver::instance().resolve_address(node);
-    RESET_IP_AND_HOST_PORT(*req, node1);
+    req->host_node = dsn::dns_resolver::instance().resolve_address(node);
+    RESET_IP_AND_HOST_PORT(*req, node);
     req->config = app->pcs[pidx];
 
     config_context &cc = app->helpers->contexts[pidx];
@@ -1927,12 +1927,12 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
     GET_HOST_PORTS(pc, secondaries, secondaries);
     for (; i < secondaries.size(); ++i) {
         if (secondaries[i] == node) {
-            SET_OBJ_IP_AND_HOST_PORT(*req, node1, pc, last_drops[i]);
+            SET_OBJ_IP_AND_HOST_PORT(*req, node, pc, last_drops[i]);
             break;
         }
     }
     host_port req_node;
-    GET_HOST_PORT(*req, node1, req_node);
+    GET_HOST_PORT(*req, node, req_node);
     CHECK(req_node, "invalid node: {}", req_node);
     // remove host_node & node from secondaries/last_drops, as it will be sync to remote
     // storage
@@ -1952,7 +1952,7 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
         LOG_WARNING("gpid({}) is syncing another request with remote, cancel it due to meta is "
                     "removing host({}) worker({})",
                     pc.pid,
-                    req->host_node1,
+                    req->host_node,
                     req_node);
         cc.cancel_sync();
     }
@@ -2013,8 +2013,8 @@ void server_state::on_update_configuration(
         msg->release_ref();
         return;
     } else {
-        maintain_drops(cfg_request->config.hp_last_drops, cfg_request->hp_node1, cfg_request->type);
-        maintain_drops(cfg_request->config.last_drops, cfg_request->node1, cfg_request->type);
+        maintain_drops(cfg_request->config.hp_last_drops, cfg_request->hp_node, cfg_request->type);
+        maintain_drops(cfg_request->config.last_drops, cfg_request->node, cfg_request->type);
     }
 
     if (response.err != ERR_IO_PENDING) {
@@ -2321,7 +2321,7 @@ server_state::sync_apps_from_replica_nodes(const std::vector<dsn::host_port> &re
 
         auto app_query_req = std::make_unique<query_app_info_request>();
         SET_IP_AND_HOST_PORT(
-            *app_query_req, meta_server1, dsn_primary_address(), dsn_primary_host_port());
+            *app_query_req, meta_server, dsn_primary_address(), dsn_primary_host_port());
         query_app_info_rpc app_rpc(std::move(app_query_req), RPC_QUERY_APP_INFO);
         const auto addr = dsn::dns_resolver::instance().resolve_address(replica_nodes[i]);
         app_rpc.call(addr,
@@ -2431,7 +2431,7 @@ void server_state::on_start_recovery(const configuration_recovery_request &req,
                                      configuration_recovery_response &resp)
 {
     std::vector<host_port> recovery_nodes;
-    GET_HOST_PORTS(req, recovery_nodes1, recovery_nodes);
+    GET_HOST_PORTS(req, recovery_nodes, recovery_nodes);
 
     LOG_INFO("start recovery, node_count = {}, skip_bad_nodes = {}, skip_lost_partitions = {}",
              recovery_nodes.size(),
@@ -2595,7 +2595,7 @@ bool server_state::check_all_partitions()
         if (!add_secondary_proposed[i] && secondaries.empty()) {
             const auto &action = add_secondary_actions[i];
             dsn::host_port node;
-            GET_HOST_PORT(action, node1, node);
+            GET_HOST_PORT(action, node, node);
             CHECK(node, "");
             if (_add_secondary_enable_flow_control &&
                 add_secondary_running_nodes[node] >= _add_secondary_max_count_for_one_node) {
@@ -2615,7 +2615,7 @@ bool server_state::check_all_partitions()
         if (!add_secondary_proposed[i]) {
             const auto &action = add_secondary_actions[i];
             dsn::host_port node;
-            GET_HOST_PORT(action, node1, node);
+            GET_HOST_PORT(action, node, node);
             CHECK(node, "");
             gpid pid = add_secondary_gpids[i];
             const auto *pc = get_config(_all_apps, pid);
@@ -2625,8 +2625,8 @@ bool server_state::check_all_partitions()
                          "{}, node = {}",
                          ::dsn::enum_to_string(action.type),
                          pc->pid,
-                         FMT_HOST_PORT_AND_IP(action, target1),
-                         FMT_HOST_PORT_AND_IP(action, node1));
+                         FMT_HOST_PORT_AND_IP(action, target),
+                         FMT_HOST_PORT_AND_IP(action, node));
                 continue;
             }
             std::shared_ptr<app_state> app = get_app(pid.get_app_id());

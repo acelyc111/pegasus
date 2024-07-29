@@ -104,7 +104,7 @@ void replica::on_config_proposal(configuration_update_request &proposal)
 
     LOG_INFO_PREFIX("process config proposal {} for {}",
                     enum_to_string(proposal.type),
-                    FMT_HOST_PORT_AND_IP(proposal, node1));
+                    FMT_HOST_PORT_AND_IP(proposal, node));
 
     if (proposal.config.ballot < get_ballot()) {
         LOG_WARNING_PREFIX(
@@ -151,7 +151,7 @@ void replica::on_config_proposal(configuration_update_request &proposal)
 void replica::assign_primary(configuration_update_request &proposal)
 {
     host_port node;
-    GET_HOST_PORT(proposal, node1, node);
+    GET_HOST_PORT(proposal, node, node);
     CHECK_EQ(node, _stub->primary_host_port());
 
     if (status() == partition_status::PS_PRIMARY) {
@@ -204,7 +204,7 @@ void replica::add_potential_secondary(const configuration_update_request &propos
     CHECK(_primary_states.pc.__isset.hp_secondaries, "");
     CHECK(secondaries == _primary_states.pc.hp_secondaries, "");
     host_port node;
-    GET_HOST_PORT(proposal, node1, node);
+    GET_HOST_PORT(proposal, node, node);
     CHECK(!_primary_states.check_exist(node, partition_status::PS_PRIMARY), "node = {}", node);
     CHECK(!_primary_states.check_exist(node, partition_status::PS_SECONDARY), "node = {}", node);
 
@@ -246,13 +246,13 @@ void replica::add_potential_secondary(const configuration_update_request &propos
 
     group_check_request request;
     request.app = _app_info;
-    SET_OBJ_IP_AND_HOST_PORT(request, node, proposal, node1);
+    SET_OBJ_IP_AND_HOST_PORT(request, node, proposal, node);
     _primary_states.get_replica_config(
         partition_status::PS_POTENTIAL_SECONDARY, request.config, state.signature);
     request.last_committed_decree = last_committed_decree();
 
     LOG_INFO_PREFIX("call one way {} to start learning with signature [{:#018x}]",
-                    FMT_HOST_PORT_AND_IP(proposal, node1),
+                    FMT_HOST_PORT_AND_IP(proposal, node),
                     state.signature);
 
     rpc::call_one_way_typed(dsn::dns_resolver::instance().resolve_address(node),
@@ -291,12 +291,12 @@ void replica::downgrade_to_secondary_on_primary(configuration_update_request &pr
     CHECK(_primary_states.pc.__isset.hp_secondaries, "");
     CHECK(secondaries == _primary_states.pc.hp_secondaries, "");
     dsn::host_port node;
-    GET_HOST_PORT(proposal, node1, node);
+    GET_HOST_PORT(proposal, node, node);
     CHECK_EQ(node, primary);
-    CHECK_EQ(proposal.node1, proposal.config.primary);
+    CHECK_EQ(proposal.node, proposal.config.primary);
 
     RESET_IP_AND_HOST_PORT(proposal.config, primary);
-    ADD_OBJ_IP_AND_HOST_PORT(proposal.config, secondaries, proposal, node1);
+    ADD_OBJ_IP_AND_HOST_PORT(proposal.config, secondaries, proposal, node);
     update_configuration_on_meta_server(
         config_type::CT_DOWNGRADE_TO_SECONDARY, node, proposal.config);
 }
@@ -319,15 +319,15 @@ void replica::downgrade_to_inactive_on_primary(configuration_update_request &pro
     CHECK(secondaries == _primary_states.pc.hp_secondaries, "");
 
     host_port node;
-    GET_HOST_PORT(proposal, node1, node);
+    GET_HOST_PORT(proposal, node, node);
     if (node == primary) {
-        CHECK_EQ(proposal.node1, proposal.config.primary);
+        CHECK_EQ(proposal.node, proposal.config.primary);
         RESET_IP_AND_HOST_PORT(proposal.config, primary);
     } else {
-        CHECK_NE(proposal.node1, proposal.config.primary);
-        CHECK(replica_helper::remove_node(proposal.node1, proposal.config.secondaries),
+        CHECK_NE(proposal.node, proposal.config.primary);
+        CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
               "remove node failed, node = {}",
-              proposal.node1);
+              proposal.node);
         CHECK(proposal.config.__isset.hp_secondaries,
               "The proposal's partition_configuration is not normalized");
         CHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
@@ -359,19 +359,19 @@ void replica::remove(configuration_update_request &proposal)
     CHECK(secondaries == _primary_states.pc.hp_secondaries, "");
 
     host_port node;
-    GET_HOST_PORT(proposal, node1, node);
+    GET_HOST_PORT(proposal, node, node);
     auto st = _primary_states.get_node_status(node);
 
     switch (st) {
     case partition_status::PS_PRIMARY:
         CHECK_EQ(primary, node);
-        CHECK_EQ(proposal.config.primary, proposal.node1);
+        CHECK_EQ(proposal.config.primary, proposal.node);
         RESET_IP_AND_HOST_PORT(proposal.config, primary);
         break;
     case partition_status::PS_SECONDARY: {
-        CHECK(replica_helper::remove_node(proposal.node1, proposal.config.secondaries),
+        CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
               "remove node failed, node = {}",
-              proposal.node1);
+              proposal.node);
         CHECK(proposal.config.__isset.hp_secondaries,
               "The proposal's partition_configuration is not normalized");
         CHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
@@ -453,7 +453,7 @@ void replica::update_configuration_on_meta_server(config_type::type type,
     request->config = new_pc;
     request->config.ballot++;
     request->type = type;
-    SET_IP_AND_HOST_PORT_BY_DNS(*request, node1, node);
+    SET_IP_AND_HOST_PORT_BY_DNS(*request, node, node);
 
     ::dsn::marshall(msg, *request);
 
@@ -465,7 +465,7 @@ void replica::update_configuration_on_meta_server(config_type::type type,
         "send update configuration request to meta server, ballot = {}, type = {}, node = {}",
         request->config.ballot,
         enum_to_string(request->type),
-        FMT_HOST_PORT_AND_IP(*request, node1));
+        FMT_HOST_PORT_AND_IP(*request, node));
 
     rpc_address target(
         dsn::dns_resolver::instance().resolve_address(_stub->_failure_detector->get_servers()));
@@ -572,9 +572,9 @@ void replica::on_update_configuration_on_meta_server_reply(
             break;
         case config_type::CT_REMOVE: {
             host_port node;
-            GET_HOST_PORT(*req, node1, node);
+            GET_HOST_PORT(*req, node, node);
             if (node != _stub->primary_host_port()) {
-                CHECK_NE(req->node1, _stub->primary_address());
+                CHECK_NE(req->node, _stub->primary_address());
                 replica_configuration rconfig;
                 replica_helper::get_replica_config(resp.config, node, rconfig);
                 rpc::call_one_way_typed(dsn::dns_resolver::instance().resolve_address(node),

@@ -176,7 +176,7 @@ void server_load_balancer::register_proposals(meta_view view,
         // for these proposals, they should keep the target empty and
         // the meta-server will fill primary as target.
         host_port target;
-        GET_HOST_PORT(act, target1, target);
+        GET_HOST_PORT(act, target, target);
         if (target) {
             continue;
         }
@@ -188,7 +188,7 @@ void server_load_balancer::register_proposals(meta_view view,
             return;
         }
 
-        SET_OBJ_IP_AND_HOST_PORT(act, target1, pc, primary);
+        SET_OBJ_IP_AND_HOST_PORT(act, target, pc, primary);
     }
 
     resp.err = ERR_OK;

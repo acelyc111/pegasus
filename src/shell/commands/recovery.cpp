@@ -177,7 +177,7 @@ dsn::host_port diagnose_recommend(const ddd_partition_info &pinfo)
         auto it = std::find_if(
             pinfo.dropped.begin(), pinfo.dropped.end(), [&node](const ddd_node_info &r) {
                 dsn::host_port drop_node;
-                GET_HOST_PORT(r, node1, drop_node);
+                GET_HOST_PORT(r, node, drop_node);
                 return drop_node == node;
             });
         if (it->is_alive && it->is_collected)
@@ -188,7 +188,7 @@ dsn::host_port diagnose_recommend(const ddd_partition_info &pinfo)
         const ddd_node_info &latest = last_dropped.back();
         if (latest.last_committed_decree >= pinfo.config.last_committed_decree) {
             dsn::host_port node;
-            GET_HOST_PORT(latest, node1, node);
+            GET_HOST_PORT(latest, node, node);
             return node;
         }
     } else if (last_dropped.size() == 2) {
@@ -200,9 +200,9 @@ dsn::host_port diagnose_recommend(const ddd_partition_info &pinfo)
         //  - if last committed decree is the same, choose node with the largest ballot
 
         dsn::host_port latest_node;
-        GET_HOST_PORT(latest, node1, latest_node);
+        GET_HOST_PORT(latest, node, latest_node);
         dsn::host_port secondary_node;
-        GET_HOST_PORT(secondary, node1, secondary_node);
+        GET_HOST_PORT(secondary, node, secondary_node);
         if (latest.last_committed_decree == secondary.last_committed_decree &&
             latest.last_committed_decree >= pinfo.config.last_committed_decree) {
             return latest.ballot >= secondary.ballot ? latest_node : secondary_node;
@@ -312,7 +312,7 @@ bool ddd_diagnose(command_executor *e, shell_context *sc, arguments args)
         int j = 0;
         for (const ddd_node_info &n : pinfo.dropped) {
             dsn::host_port hp_node;
-            GET_HOST_PORT(n, node1, hp_node);
+            GET_HOST_PORT(n, node, hp_node);
             char time_buf[30] = {0};
             ::dsn::utils::time_ms_to_string(n.drop_time_ms, time_buf);
             out << "    dropped[" << j++ << "]: "

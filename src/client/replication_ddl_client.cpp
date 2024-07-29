@@ -521,7 +521,7 @@ dsn::error_code replication_ddl_client::list_nodes(
 
     for (const auto &ni : resp.infos) {
         host_port node;
-        GET_HOST_PORT(ni, node1, node);
+        GET_HOST_PORT(ni, node, node);
         nodes[node] = ni.status;
     }
 
@@ -928,25 +928,25 @@ dsn::error_code replication_ddl_client::do_recovery(const std::vector<host_port>
     std::ostream out(buf);
 
     auto req = std::make_shared<configuration_recovery_request>();
-    CLEAR_IP_AND_HOST_PORT(*req, recovery_nodes1);
+    CLEAR_IP_AND_HOST_PORT(*req, recovery_nodes);
     for (const auto &node : replica_nodes) {
-        if (utils::contains(req->hp_recovery_nodes1, node)) {
-            DCHECK(utils::contains(req->recovery_nodes1,
+        if (utils::contains(req->hp_recovery_nodes, node)) {
+            DCHECK(utils::contains(req->recovery_nodes,
                                    dsn::dns_resolver::instance().resolve_address(node)),
                    "");
             out << "duplicate replica node " << node << ", just ignore it" << std::endl;
         } else {
-            ADD_IP_AND_HOST_PORT_BY_DNS(*req, recovery_nodes1, node);
+            ADD_IP_AND_HOST_PORT_BY_DNS(*req, recovery_nodes, node);
         }
     }
-    if (req->hp_recovery_nodes1.empty()) {
-        DCHECK(req->recovery_nodes1.empty(),
+    if (req->hp_recovery_nodes.empty()) {
+        DCHECK(req->recovery_nodes.empty(),
                "recovery_nodes should be set together with hp_recovery_nodes");
         out << "node set for recovery it empty" << std::endl;
         return ERR_INVALID_PARAMETERS;
     }
-    DCHECK(!req->hp_recovery_nodes1.empty(), "");
-    DCHECK(!req->recovery_nodes1.empty(),
+    DCHECK(!req->hp_recovery_nodes.empty(), "");
+    DCHECK(!req->recovery_nodes.empty(),
            "recovery_nodes should be set together with hp_recovery_nodes");
     req->skip_bad_nodes = skip_bad_nodes;
     req->skip_lost_partitions = skip_lost_partitions;
@@ -956,7 +956,7 @@ dsn::error_code replication_ddl_client::do_recovery(const std::vector<host_port>
     out << "Skip lost partitions: " << (skip_lost_partitions ? "true" : "false") << std::endl;
     out << "Node list:" << std::endl;
     out << "=============================" << std::endl;
-    for (auto &node : req->hp_recovery_nodes1) {
+    for (auto &node : req->hp_recovery_nodes) {
         out << node << std::endl;
     }
     out << "=============================" << std::endl;

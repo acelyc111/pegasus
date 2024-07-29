@@ -197,7 +197,7 @@ void proposal_actions::track_current_learner(const dsn::host_port &learner,
     }
     const auto &act = acts.front();
     host_port first_act_node;
-    GET_HOST_PORT(act, node1, first_act_node);
+    GET_HOST_PORT(act, node, first_act_node);
     if (first_act_node != learner) {
         return;
     }
