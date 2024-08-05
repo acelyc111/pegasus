@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include <assert.h>
-#include <inttypes.h>
+#include <cassert>
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <iosfwd>

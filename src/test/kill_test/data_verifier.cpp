@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <sys/time.h>
 #include <unistd.h>
 #include <algorithm>

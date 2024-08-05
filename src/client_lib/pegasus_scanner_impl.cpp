@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <stdint.h>
+#include <cstdint>
 #include <chrono>
 #include <functional>
 #include <list>
@@ -30,8 +30,8 @@
 #include "common/gpid.h"
 #include "pegasus/client.h"
 #include "pegasus/error.h"
-#include "pegasus_client_impl.h"
-#include "pegasus_key_schema.h"
+#include "client_lib/pegasus_client_impl.h"
+#include "base/pegasus_key_schema.h"
 #include "rrdb/rrdb.client.h"
 #include "rrdb/rrdb_types.h"
 #include "runtime/rpc/serialization.h"

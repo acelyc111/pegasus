@@ -21,7 +21,7 @@
 #include <boost/asio/detail/impl/epoll_reactor.hpp>
 #include <boost/asio/detail/impl/timer_queue_ptime.ipp>
 #include <rapidjson/ostreamwrapper.h>
-#include <stddef.h>
+#include <cstddef>
 #include <algorithm>
 #include <atomic>
 #include <bitset>

@@ -25,7 +25,7 @@
  */
 
 #include <fmt/core.h>
-#include <stdint.h>
+#include <cstdint>
 #include <atomic>
 #include <chrono>
 #include <functional>

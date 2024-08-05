@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#include <base/pegasus_key_schema.h>
-#include <math.h>
-#include <pegasus/error.h>
+#include "base/pegasus_key_schema.h"
+#include <cmath>
+#include "pegasus/error.h"
 #include <s2/s1angle.h>
 #include <s2/s2cap.h>
 #include <s2/s2cell.h>
@@ -27,7 +27,7 @@
 #include <s2/s2earth.h>
 #include <s2/s2latlng.h>
 #include <s2/s2testing.h>
-#include <stdint.h>
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <string>

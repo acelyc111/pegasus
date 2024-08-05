@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <stdint.h>
+#include <cstdint>
 #include <utility>
 
 #include "failure_detector/failure_detector_multimaster.h"

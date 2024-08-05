@@ -17,11 +17,11 @@
  * under the License.
  */
 
-#include <ctype.h>
-#include <pegasus/version.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
+#include <cctype>
+#include "pegasus/version.h"
+#include <csignal>
+#include <cstdio>
+#include <cstring>
 #include <algorithm>
 #include <iostream>
 #include <map>

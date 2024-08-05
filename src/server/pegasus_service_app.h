@@ -21,8 +21,8 @@
 
 #include "meta/meta_service_app.h"
 #include "replica/replication_service_app.h"
-#include <pegasus/version.h>
-#include <pegasus/git_commit.h>
+#include "pegasus/version.h"
+#include "pegasus/git_commit.h"
 #include "utils/builtin_metrics.h"
 
 namespace pegasus {

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <pegasus/client.h>
+#include "pegasus/client.h"
 #include <memory>
 #include <string>
 #include <utility>

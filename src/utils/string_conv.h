@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <ctype.h>
-#include <errno.h>
-#include <stdint.h>
+#include <cctype>
+#include <cerrno>
+#include <cstdint>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>

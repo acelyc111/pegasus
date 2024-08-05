@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <string.h>
+#include <cstring>
 #include <functional>
 #include <list>
 #include <memory>

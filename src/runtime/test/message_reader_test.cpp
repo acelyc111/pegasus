@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <string.h>
+#include <cstring>
 #include <string>
 
 #include "gtest/gtest.h"

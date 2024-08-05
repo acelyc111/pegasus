@@ -23,7 +23,7 @@
 // IWYU pragma: no_include <ext/alloc_traits.h>
 #include <fmt/core.h>
 #include <getopt.h>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <cstdint>
 #include <iostream>

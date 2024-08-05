@@ -19,7 +19,7 @@
 
 #include <boost/asio/impl/io_context.hpp>
 #include <boost/asio/impl/io_context.ipp>
-#include <stdint.h>
+#include <cstdint>
 
 #include "utils/flags.h"
 #include "utils/fmt_logging.h"

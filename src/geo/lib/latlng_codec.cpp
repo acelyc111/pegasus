@@ -21,7 +21,7 @@
 
 #include <s2/s1angle.h>
 #include <s2/s2latlng.h>
-#include <stddef.h>
+#include <cstddef>
 
 #include "utils/error_code.h"
 #include "utils/errors.h"

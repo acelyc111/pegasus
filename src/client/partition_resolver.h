@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <chrono>
 #include <functional>
 #include <string>

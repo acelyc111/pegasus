@@ -19,10 +19,10 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
-#include <pegasus/client.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <time.h>
+#include "pegasus/client.h"
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #include <unistd.h>
 #include <algorithm>
 #include <unordered_set>

@@ -20,8 +20,8 @@
 #pragma once
 
 #include <rocksdb/slice.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -33,7 +33,7 @@
 #include "utils/endians.h"
 #include "utils/fmt_logging.h"
 #include <string_view>
-#include "value_field.h"
+#include "base/value_field.h"
 
 namespace pegasus {
 

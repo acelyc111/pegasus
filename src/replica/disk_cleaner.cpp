@@ -21,7 +21,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <fmt/core.h>
-#include <stdint.h>
+#include <cstdint>
 #include <sys/types.h>
 #include <algorithm>
 #include <atomic>

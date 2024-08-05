@@ -26,7 +26,7 @@
 
 #include "network.h"
 
-#include <errno.h>
+#include <cerrno>
 #include <unistd.h>
 #include <chrono>
 #include <list>

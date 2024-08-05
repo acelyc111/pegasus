@@ -26,7 +26,7 @@
 
 #include "utils/simple_logger.h"
 
-#include <errno.h>
+#include <cerrno>
 // IWYU pragma: no_include <ext/alloc_traits.h>
 #include <fmt/core.h>
 #include <fmt/printf.h>

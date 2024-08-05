@@ -27,7 +27,7 @@
 #include "replication_ddl_client.h"
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #include <cctype>
 #include <cstdint>

@@ -18,11 +18,12 @@
  */
 
 #include <rocksdb/slice.h>
-#include <stdint.h>
+#include <cstdint>
 #include <array>
 #include <limits>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -30,15 +31,14 @@
 #include "base/value_schema_manager.h"
 #include "gtest/gtest.h"
 #include "utils/blob.h"
-#include <string_view>
-#include "value_field.h"
+#include "base/test/base_test_utils.h"
+#include "base/value_field.h"
 
-using namespace pegasus;
-
-uint32_t extract_expire_ts(value_schema *schema, const std::string &raw_value)
+namespace pegasus {
+auto extract_expire_ts(value_schema *schema, const std::string &raw_value)
 {
     auto field = schema->extract_field(raw_value, pegasus::value_field_type::EXPIRE_TIMESTAMP);
-    auto expire_ts_field = static_cast<expire_timestamp_field *>(field.get());
+    auto *expire_ts_field = dynamic_cast<expire_timestamp_field *>(field.get());
     return expire_ts_field->expire_ts;
 }
 
@@ -47,27 +47,6 @@ uint64_t extract_time_tag(value_schema *schema, const std::string &raw_value)
     auto field = schema->extract_field(raw_value, pegasus::value_field_type::TIME_TAG);
     auto time_field = static_cast<time_tag_field *>(field.get());
     return time_field->time_tag;
-}
-
-std::string generate_value(value_schema *schema,
-                           uint32_t expire_ts,
-                           uint64_t time_tag,
-                           std::string_view user_data)
-{
-    std::string write_buf;
-    std::vector<rocksdb::Slice> write_slices;
-    value_params params{write_buf, write_slices};
-    params.fields[value_field_type::EXPIRE_TIMESTAMP] =
-        std::make_unique<expire_timestamp_field>(expire_ts);
-    params.fields[value_field_type::TIME_TAG] = std::make_unique<time_tag_field>(time_tag);
-    params.fields[value_field_type::USER_DATA] = std::make_unique<user_data_field>(user_data);
-
-    rocksdb::SliceParts sparts = schema->generate_value(params);
-    std::string raw_value;
-    for (int i = 0; i < sparts.num_parts; i++) {
-        raw_value += sparts.parts[i].ToString();
-    }
-    return raw_value;
 }
 
 TEST(value_schema, generate_and_extract)
@@ -134,3 +113,4 @@ TEST(value_schema, update_expire_ts)
         ASSERT_EQ(t.update_expire_ts, extract_expire_ts(schema, raw_value));
     }
 }
+} // namespace pegasus

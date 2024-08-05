@@ -25,7 +25,7 @@
 #include <rocksdb/slice.h>
 #include <rocksdb/table.h>
 #include <rrdb/rrdb_types.h>
-#include <stdint.h>
+#include <cstdint>
 #include <atomic>
 #include <chrono>
 #include <deque>
@@ -42,8 +42,8 @@
 #include "pegasus_manual_compact_service.h"
 #include "pegasus_read_service.h"
 #include "pegasus_scan_context.h"
-#include "pegasus_utils.h"
-#include "pegasus_value_schema.h"
+#include "base/pegasus_utils.h"
+#include "base/pegasus_value_schema.h"
 #include "range_read_limiter.h"
 #include "replica/replication_app_base.h"
 #include "runtime/task/task.h"

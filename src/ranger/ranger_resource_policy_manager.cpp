@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <ctype.h>
+#include <cctype>
 #include <algorithm>
 #include <chrono>
 #include <iosfwd>

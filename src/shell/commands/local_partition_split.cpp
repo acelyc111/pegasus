@@ -28,7 +28,7 @@
 #include <rocksdb/sst_file_writer.h>
 #include <rocksdb/table_properties.h>
 #include <rocksdb/threadpool.h>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -48,7 +48,7 @@
 #include "common/gpid.h"
 #include "common/replication_common.h"
 #include "dsn.layer2_types.h"
-#include "pegasus_value_schema.h"
+#include "base/pegasus_value_schema.h"
 #include "replica/replica_stub.h"
 #include "replica/replication_app_base.h"
 #include "shell/argh.h"

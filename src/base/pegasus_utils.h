@@ -20,8 +20,8 @@
 #pragma once
 
 #include <rocksdb/slice.h>
-#include <stdint.h>
-#include <time.h>
+#include <cstdint>
+#include <ctime>
 #include <functional>
 #include <list>
 #include <queue>

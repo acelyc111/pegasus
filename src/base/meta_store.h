@@ -21,7 +21,7 @@
 
 #include <gtest/gtest_prod.h>
 #include <rocksdb/options.h>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 #include "utils/error_code.h"

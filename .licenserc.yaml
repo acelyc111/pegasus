@@ -110,8 +110,9 @@ header:
     - 'cmake_modules/FindRT.cmake'
     - 'cmake_modules/FindDL.cmake'
     # Copyright (c) 2017 Guillaume Papin
-    - 'scripts/run-clang-format.py'
+    - 'build-support/run-clang-format.py'
     # The MIT License (MIT), Copyright (c) 2015 Microsoft Corporation
+    - 'build-support/compile_thrift.py'
     - 'cmake_modules/BaseFunctions.cmake'
     - 'docs/rdsn-README.md'
     - 'idl/command.thrift'
@@ -120,7 +121,6 @@ header:
     - 'idl/metadata.thrift'
     - 'idl/meta_admin.thrift'
     - 'idl/replica_admin.thrift'
-    - 'scripts/compile_thrift.py'
     - 'scripts/learn_stat.py'
     - 'src/runtime/api_layer1.h'
     - 'src/runtime/api_task.h'

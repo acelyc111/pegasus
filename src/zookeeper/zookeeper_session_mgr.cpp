@@ -26,7 +26,7 @@
 
 #include "zookeeper_session_mgr.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <zookeeper/zookeeper.h>
 #include <functional>
 

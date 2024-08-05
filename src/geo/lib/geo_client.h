@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <pegasus/client.h>
+#include "pegasus/client.h"
 #include <functional>
 #include <list>
 #include <memory>

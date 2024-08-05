@@ -28,7 +28,7 @@
 
 #include <fmt/format.h>
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <algorithm>
 #include <chrono>
 #include <limits>

@@ -20,7 +20,7 @@
 #pragma once
 
 #include <fmt/core.h>
-#include <stdio.h>
+#include <cstdio>
 #include <map>
 #include <set>
 #include <string>

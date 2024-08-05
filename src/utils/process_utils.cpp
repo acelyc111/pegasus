@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <stdio.h>
+#include <cstdio>
 #if defined(__linux__)
 #include <syscall.h>
 #else

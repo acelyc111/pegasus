@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include "boost/asio/ip/tcp.hpp"

@@ -35,8 +35,8 @@
 #include <rocksdb/sst_dump_tool.h>
 #include <rocksdb/status.h>
 #include <rocksdb/utilities/ldb_cmd.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 #include <ctime>
 // IWYU pragma: no_include <fmt/core.h>
 // IWYU pragma: no_include <fmt/format.h>
@@ -49,9 +49,9 @@
 #include "base/idl_utils.h"
 #include "common/gpid.h"
 #include "common/replication.codes.h"
-#include "pegasus_key_schema.h"
-#include "pegasus_utils.h"
-#include "pegasus_value_schema.h"
+#include "base/pegasus_key_schema.h"
+#include "base/pegasus_utils.h"
+#include "base/pegasus_value_schema.h"
 #include "rrdb/rrdb.code.definition.h"
 #include "rrdb/rrdb_types.h"
 #include "runtime/rpc/rpc_message.h"

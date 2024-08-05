@@ -18,7 +18,7 @@
 #include "duplication_pipeline.h"
 
 #include <string_view>
-#include <stddef.h>
+#include <cstddef>
 #include <algorithm>
 #include <functional>
 #include <string>

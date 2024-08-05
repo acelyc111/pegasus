@@ -24,9 +24,9 @@
  * THE SOFTWARE.
  */
 
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
+#include <cctype>
+#include <cstdio>
+#include <cstring>
 #include <algorithm>
 #include <cstdint>
 #include <string>

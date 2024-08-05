@@ -17,7 +17,7 @@
 #include "TokenBucketTest.h"
 
 #include <boost/optional/optional.hpp>
-#include <stddef.h>
+#include <cstddef>
 #include <algorithm>
 #include <string>
 #include <vector>

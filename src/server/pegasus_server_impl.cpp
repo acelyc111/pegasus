@@ -17,11 +17,11 @@
  * under the License.
  */
 
-#include "pegasus_server_impl.h"
+#include "server/pegasus_server_impl.h"
 
 #include <fmt/core.h>
-#include <inttypes.h>
-#include <limits.h>
+#include <cinttypes>
+#include <climits>
 #include <rocksdb/advanced_cache.h>
 #include <rocksdb/convenience.h>
 #include <rocksdb/db.h>
@@ -31,9 +31,9 @@
 #include <rocksdb/status.h>
 #include <rocksdb/utilities/checkpoint.h>
 #include <rocksdb/utilities/options_util.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <unistd.h> // IWYU pragma: keep
 #include <algorithm>
 #include <cstdint>

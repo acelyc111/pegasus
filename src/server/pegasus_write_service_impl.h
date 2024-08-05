@@ -25,7 +25,7 @@
 #include "base/meta_store.h"
 #include "base/pegasus_key_schema.h"
 #include "logging_utils.h"
-#include "pegasus_server_impl.h"
+#include "server/pegasus_server_impl.h"
 #include "pegasus_write_service.h"
 #include "rocksdb_wrapper.h"
 #include "utils/defer.h"

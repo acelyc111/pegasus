@@ -26,9 +26,9 @@
 
 #include "http_message_parser.h"
 
-#include <stdint.h>
+#include <cstdint>
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <string.h>
+#include <cstring>
 #include <utility>
 #include <vector>
 

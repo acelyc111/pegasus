@@ -16,7 +16,7 @@
 // under the License.
 
 #include <fmt/core.h>
-#include <stdint.h>
+#include <cstdint>
 #include <iostream>
 #include <string>
 
