@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <array>
 #include <memory>
 
-#include "pegasus_value_schema.h"
+#include "base/pegasus_value_schema.h"
 #include "utils/singleton.h"
 #include <string_view>
 

@@ -27,8 +27,8 @@
 #pragma once
 
 #include <fmt/core.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <atomic>
 #include <map>
 #include <memory>

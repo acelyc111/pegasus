@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <pegasus/client.h>
+#include "pegasus/client.h"
 #include "pegasus_client_factory_impl.h"
 
 namespace pegasus {

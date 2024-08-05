@@ -19,13 +19,13 @@
 
 #include <fmt/core.h>
 #include <rocksdb/status.h>
-#include <stdint.h>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <string>
 
 #include "gtest/gtest.h"
-#include "pegasus_key_schema.h"
+#include "base/pegasus_key_schema.h"
 #include "pegasus_server_test_base.h"
 #include "rrdb/rrdb_types.h"
 #include "server/pegasus_server_write.h"

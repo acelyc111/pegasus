@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <string.h>
+#include <cstring>
 #include <zookeeper/proto.h>
 #include <zookeeper/zookeeper.h>
 #include <zookeeper/zookeeper.jute.h>

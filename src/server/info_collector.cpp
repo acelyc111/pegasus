@@ -20,7 +20,7 @@
 #include "info_collector.h"
 
 #include <fmt/core.h>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <chrono>
 #include <utility>

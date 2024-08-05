@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "kinit_context.h"
 #include "negotiation_manager.h"

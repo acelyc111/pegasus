@@ -32,8 +32,7 @@
 #define LOG(level, ...)                                                                            \
     do {                                                                                           \
         if (level >= log_start_level)                                                              \
-            global_log(                                                                            \
-                __FILENAME__, __FUNCTION__, __LINE__, level, fmt::format(__VA_ARGS__).c_str());    \
+            global_log(__FILE__, __FUNCTION__, __LINE__, level, fmt::format(__VA_ARGS__).c_str()); \
     } while (false)
 
 #define LOG_DEBUG(...) LOG(LOG_LEVEL_DEBUG, __VA_ARGS__)

@@ -20,8 +20,8 @@
 #include "test_util.h"
 
 #include <nlohmann/json.hpp>
-#include <pegasus/error.h>
-#include <stdio.h>
+#include "pegasus/error.h"
+#include <cstdio>
 #include <unistd.h>
 #include <chrono>
 #include <fstream>

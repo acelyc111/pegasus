@@ -20,7 +20,7 @@
 #pragma once
 
 #include <gtest/gtest_prod.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>

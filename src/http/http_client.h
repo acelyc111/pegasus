@@ -18,8 +18,8 @@
 #pragma once
 
 #include <curl/curl.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <iosfwd>
 #include <memory>

@@ -26,7 +26,7 @@
 
 #include "common/replication_common.h"
 
-#include <string.h>
+#include <cstring>
 #include <fstream>
 #include <memory>
 

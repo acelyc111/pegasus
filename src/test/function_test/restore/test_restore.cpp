@@ -20,7 +20,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fmt/core.h>
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 #include <algorithm>
 #include <chrono>

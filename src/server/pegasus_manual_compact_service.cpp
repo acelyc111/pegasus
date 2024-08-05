@@ -20,7 +20,7 @@
 #include "pegasus_manual_compact_service.h"
 
 #include <string_view>
-#include <limits.h>
+#include <climits>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <rocksdb/options.h>
@@ -30,7 +30,7 @@
 
 #include "common/replica_envs.h"
 #include "common/replication.codes.h"
-#include "pegasus_server_impl.h"
+#include "server/pegasus_server_impl.h"
 #include "runtime/api_layer1.h"
 #include "runtime/task/async_calls.h"
 #include "runtime/task/task_code.h"

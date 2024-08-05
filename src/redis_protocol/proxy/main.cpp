@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#include <pegasus/version.h>
-#include <signal.h>
-#include <stdio.h>
+#include "pegasus/version.h"
+#include <csignal>
+#include <cstdio>
 #include <unistd.h>
 #include <memory>
 #include <string>

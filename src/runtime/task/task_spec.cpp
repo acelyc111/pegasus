@@ -26,7 +26,7 @@
 
 #include "task_spec.h"
 
-#include <string.h>
+#include <cstring>
 #include <array>
 #include <memory>
 #include <thread>

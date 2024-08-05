@@ -19,7 +19,7 @@
 
 #include <boost/asio/deadline_timer.hpp>
 #include <krb5/krb5.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <new>

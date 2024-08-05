@@ -25,9 +25,9 @@
  */
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <time.h>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #include <algorithm>
 #include <atomic>
 #include <chrono>

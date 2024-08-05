@@ -18,7 +18,7 @@
  */
 
 #include <rocksdb/slice.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

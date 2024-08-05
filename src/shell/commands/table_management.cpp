@@ -21,8 +21,8 @@
 // IWYU pragma: no_include <bits/std_abs.h>
 #include <fmt/core.h>
 #include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <algorithm>
 #include <cstdint>
 #include <fstream>
@@ -37,7 +37,7 @@
 #include "common/gpid.h"
 #include "dsn.layer2_types.h"
 #include "meta_admin_types.h"
-#include "pegasus_utils.h"
+#include "base/pegasus_utils.h"
 #include "runtime/rpc/rpc_host_port.h"
 #include "shell/command_executor.h"
 #include "shell/command_helper.h"

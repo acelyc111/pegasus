@@ -28,10 +28,10 @@
 #include <sys/prctl.h>
 #endif // defined(__linux__)
 
-#include <errno.h>
+#include <cerrno>
 #include <pthread.h>
 #include <sched.h>
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 #include <algorithm>
 #include <chrono>

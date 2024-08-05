@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 #include <gtest/gtest_prod.h>
-#include <stdint.h>
+#include <cstdint>
 #include <cstring>
 #include <string>
 

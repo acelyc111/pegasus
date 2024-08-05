@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <stdint.h>
+#include <cstdlib>
+#include <cstdint>
 
 namespace dsn {
 
@@ -62,28 +62,9 @@ public:
     // Cast field to specific type, and write the value into `pv'.
     // Returns 0 on success, -1 otherwise.
     // NOTE: If separator is a digit, casting functions always return -1.
-    inline int to_int8(int8_t *pv) const;
-
-    inline int to_uint8(uint8_t *pv) const;
-
-    inline int to_int(int *pv) const;
-
-    inline int to_uint(unsigned int *pv) const;
-
-    inline int to_long(long *pv) const;
-
-    inline int to_ulong(unsigned long *pv) const;
-
-    inline int to_longlong(long long *pv) const;
-
-    inline int to_ulonglong(unsigned long long *pv) const;
-
-    inline int to_float(float *pv) const;
-
-    inline int to_double(double *pv) const;
 
 private:
-    inline bool not_end(const char *p) const;
+    inline bool not_end(const char *cur_ch) const;
 
     inline void init();
 
@@ -157,91 +138,9 @@ const char *string_splitter::field() const { return _head; }
 
 size_t string_splitter::length() const { return static_cast<size_t>(_tail - _head); }
 
-bool string_splitter::not_end(const char *p) const
+bool string_splitter::not_end(const char *cur_ch) const
 {
-    return (_str_tail == NULL) ? *p : (p != _str_tail);
-}
-
-int string_splitter::to_int8(int8_t *pv) const
-{
-    long v = 0;
-    if (to_long(&v) == 0 && v >= -128 && v <= 127) {
-        *pv = (int8_t)v;
-        return 0;
-    }
-    return -1;
-}
-
-int string_splitter::to_uint8(uint8_t *pv) const
-{
-    unsigned long v = 0;
-    if (to_ulong(&v) == 0 && v <= 255) {
-        *pv = (uint8_t)v;
-        return 0;
-    }
-    return -1;
-}
-
-int string_splitter::to_int(int *pv) const
-{
-    long v = 0;
-    if (to_long(&v) == 0 && v >= INT_MIN && v <= INT_MAX) {
-        *pv = (int)v;
-        return 0;
-    }
-    return -1;
-}
-
-int string_splitter::to_uint(unsigned int *pv) const
-{
-    unsigned long v = 0;
-    if (to_ulong(&v) == 0 && v <= UINT_MAX) {
-        *pv = (unsigned int)v;
-        return 0;
-    }
-    return -1;
-}
-
-int string_splitter::to_long(long *pv) const
-{
-    char *endptr = NULL;
-    *pv = strtol(field(), &endptr, 10);
-    return (endptr == field() + length()) ? 0 : -1;
-}
-
-int string_splitter::to_ulong(unsigned long *pv) const
-{
-    char *endptr = NULL;
-    *pv = strtoul(field(), &endptr, 10);
-    return (endptr == field() + length()) ? 0 : -1;
-}
-
-int string_splitter::to_longlong(long long *pv) const
-{
-    char *endptr = NULL;
-    *pv = strtoll(field(), &endptr, 10);
-    return (endptr == field() + length()) ? 0 : -1;
-}
-
-int string_splitter::to_ulonglong(unsigned long long *pv) const
-{
-    char *endptr = NULL;
-    *pv = strtoull(field(), &endptr, 10);
-    return (endptr == field() + length()) ? 0 : -1;
-}
-
-int string_splitter::to_float(float *pv) const
-{
-    char *endptr = NULL;
-    *pv = strtof(field(), &endptr);
-    return (endptr == field() + length()) ? 0 : -1;
-}
-
-int string_splitter::to_double(double *pv) const
-{
-    char *endptr = NULL;
-    *pv = strtod(field(), &endptr);
-    return (endptr == field() + length()) ? 0 : -1;
+    return (_str_tail == nullptr) ? static_cast<bool>(*cur_ch) : (cur_ch != _str_tail);
 }
 
 } // namespace dsn

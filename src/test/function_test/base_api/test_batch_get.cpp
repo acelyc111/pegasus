@@ -21,7 +21,7 @@
 #include <fmt/core.h>
 #include <rocksdb/status.h>
 #include <rrdb/rrdb_types.h>
-#include <stdint.h>
+#include <cstdint>
 #include <chrono>
 #include <memory>
 #include <string>

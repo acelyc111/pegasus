@@ -21,11 +21,11 @@
 #include <string>
 
 #include "common/replication_common.h"
-#include "compaction_operation.h"
-#include "info_collector_app.h"
+#include "server/compaction_operation.h"
+#include "server/info_collector_app.h"
 #include "meta/meta_service_app.h"
-#include "pegasus_server_impl.h"
-#include "pegasus_service_app.h"
+#include "server/pegasus_server_impl.h"
+#include "server/pegasus_service_app.h"
 #include "runtime/app_model.h"
 #include "runtime/service_app.h"
 #include "server/server_utils.h"

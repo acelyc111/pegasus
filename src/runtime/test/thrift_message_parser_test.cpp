@@ -16,7 +16,7 @@
 // under the License.
 
 #include <boost/smart_ptr/shared_ptr.hpp>
-#include <string.h>
+#include <cstring>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TBinaryProtocol.tcc>
 #include <thrift/protocol/TProtocol.h>

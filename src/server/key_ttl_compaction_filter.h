@@ -27,7 +27,7 @@
 #include "base/pegasus_utils.h"
 #include "base/pegasus_key_schema.h"
 #include "base/pegasus_value_schema.h"
-#include "compaction_operation.h"
+#include "server/compaction_operation.h"
 
 namespace pegasus {
 namespace server {

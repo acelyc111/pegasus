@@ -25,7 +25,7 @@
  */
 
 #include <sasl/sasl.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <zookeeper/zookeeper.h>
 #include <algorithm>
 #include <utility>

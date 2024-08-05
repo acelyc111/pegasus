@@ -21,7 +21,7 @@
 
 #include <string_view>
 #include <fmt/core.h>
-#include <pegasus/error.h>
+#include "pegasus/error.h"
 #include <sys/types.h>
 #include <chrono>
 #include <cstdint>
@@ -36,7 +36,7 @@
 #include "common/duplication_common.h"
 #include "duplication_internal_types.h"
 #include "pegasus/client.h"
-#include "pegasus_key_schema.h"
+#include "base/pegasus_key_schema.h"
 #include "rrdb/rrdb.code.definition.h"
 #include "rrdb/rrdb_types.h"
 #include "runtime/message_utils.h"

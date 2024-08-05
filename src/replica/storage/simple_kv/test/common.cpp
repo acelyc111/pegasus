@@ -29,7 +29,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <stddef.h>
+#include <cstddef>
 #include <sstream>
 
 #include "checker.h"

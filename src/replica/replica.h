@@ -27,8 +27,8 @@
 #pragma once
 
 #include <gtest/gtest_prod.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <atomic>
 #include <functional>
 #include <map>

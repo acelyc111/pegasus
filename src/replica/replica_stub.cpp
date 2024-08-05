@@ -30,8 +30,8 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <rapidjson/ostreamwrapper.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <algorithm>
 #include <chrono>
 #include <cstdint>

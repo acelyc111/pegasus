@@ -17,8 +17,8 @@
 
 #include "cluster_balance_policy.h"
 
-#include <limits.h>
-#include <stdlib.h>
+#include <climits>
+#include <cstdlib>
 #include <cstdint>
 #include <functional>
 #include <iterator>

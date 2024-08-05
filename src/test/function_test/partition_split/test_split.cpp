@@ -16,9 +16,9 @@
 // under the License.
 
 #include <fmt/core.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <chrono>
 #include <iostream>
 #include <map>

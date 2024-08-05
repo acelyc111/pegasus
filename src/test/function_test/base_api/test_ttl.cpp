@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include <stdint.h>
-#include <time.h>
+#include <cstdint>
+#include <ctime>
 #include <chrono>
 #include <map>
 #include <memory>

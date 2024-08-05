@@ -26,8 +26,8 @@
 
 #include "mutation.h"
 
-#include <inttypes.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstring>
 #include <string>
 #include <unordered_map>
 #include <utility>

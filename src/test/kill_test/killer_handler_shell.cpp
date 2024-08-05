@@ -19,7 +19,7 @@
 
 #include "killer_handler_shell.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <cerrno>
 #include <cstdlib>
 #include <sstream> // IWYU pragma: keep

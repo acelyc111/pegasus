@@ -21,7 +21,7 @@
 
 #include <rocksdb/slice.h>
 #include <rocksdb/slice_transform.h>
-#include <stdint.h>
+#include <cstdint>
 
 #include "utils/endians.h"
 #include "utils/fmt_logging.h"

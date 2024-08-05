@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "common/gpid.h"
 #include "utils/fixed_size_buffer_pool.h"

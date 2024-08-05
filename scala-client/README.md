@@ -68,8 +68,8 @@ NOTE: It requires the Pegasus [onebox](https://pegasus.apache.org/overview/onebo
 
 Build Java dependency at first, then build and test Scala client.
 ```
-cd ${PROJECT_ROOT}/java-client/scripts
-./recompile_thrift.sh
+cd ${PROJECT_ROOT}/build-support
+bash recompile_thrift.sh
 
 cd ${PROJECT_ROOT}/java-client
 mvn clean package -DskipTests -Dcheckstyle.skip=true

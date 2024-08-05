@@ -18,8 +18,8 @@
 #pragma once
 
 #include <gtest/gtest_prod.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <chrono>
 
 #include "common/replication_other_types.h"

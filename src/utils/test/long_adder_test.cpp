@@ -16,8 +16,8 @@
 // under the License.
 
 #include <fmt/core.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 #include <chrono>
 #include <functional>
 #include <ratio>

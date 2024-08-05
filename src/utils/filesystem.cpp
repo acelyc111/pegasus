@@ -27,17 +27,17 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/system/error_code.hpp>
-#include <errno.h>
+#include <cerrno>
 #include <fmt/core.h>
 #include <ftw.h>
 #include <glob.h>
-#include <limits.h>
+#include <climits>
 #include <openssl/md5.h>
 #include <rocksdb/env.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/status.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <sys/stat.h>
 // IWYU pragma: no_include <bits/struct_stat.h>
 #include <unistd.h>

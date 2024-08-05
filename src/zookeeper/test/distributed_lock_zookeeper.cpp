@@ -24,8 +24,8 @@
  * THE SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 #include <chrono>
 #include <cstdint>
 #include <string>

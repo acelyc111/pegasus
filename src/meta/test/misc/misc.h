@@ -27,8 +27,8 @@
 #pragma once
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <algorithm>
 #include <functional>
 #include <map>

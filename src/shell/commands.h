@@ -35,9 +35,9 @@
 
 #include <rrdb/rrdb.code.definition.h>
 #include <rrdb/rrdb_types.h>
-#include <pegasus/version.h>
-#include <pegasus/git_commit.h>
-#include <pegasus/error.h>
+#include "pegasus/version.h"
+#include "pegasus/git_commit.h"
+#include "pegasus/error.h"
 
 #include "command_executor.h"
 #include "command_helper.h"

@@ -25,7 +25,7 @@
  */
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #include <list>
 #include <memory>

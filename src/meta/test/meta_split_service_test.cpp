@@ -26,7 +26,7 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #include <atomic>
 #include <chrono>

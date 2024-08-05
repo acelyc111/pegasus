@@ -21,7 +21,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
-#include <stdint.h>
+#include <cstdint>
 #include <set>
 #include <utility>
 #include <vector>

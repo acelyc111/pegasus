@@ -17,7 +17,7 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <chrono>
 #include <cstdint>

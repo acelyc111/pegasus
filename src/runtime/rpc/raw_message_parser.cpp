@@ -26,7 +26,7 @@
 
 #include "raw_message_parser.h"
 
-#include <string.h>
+#include <cstring>
 #include <atomic>
 #include <vector>
 

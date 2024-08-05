@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <pegasus/client.h>
-#include <rrdb/rrdb.client.h>
-#include <stdint.h>
+#include "pegasus/client.h"
+#include "rrdb/rrdb.client.h"
+#include <cstdint>
 #include <functional>
 #include <list>
 #include <map>

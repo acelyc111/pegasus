@@ -16,7 +16,7 @@
 // under the License.
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <chrono>
 #include <memory>
 #include <string>

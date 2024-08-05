@@ -18,7 +18,7 @@
  */
 
 #include <fmt/core.h>
-#include <pegasus/error.h>
+#include "pegasus/error.h"
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -31,9 +31,9 @@
 #include "common/replication_other_types.h"
 #include "common/serialization_helper/dsn.layer2_types.h"
 #include "pegasus/client.h"
-#include "pegasus_client_impl.h"
-#include "pegasus_key_schema.h"
-#include "pegasus_utils.h"
+#include "client_lib/pegasus_client_impl.h"
+#include "base/pegasus_key_schema.h"
+#include "base/pegasus_utils.h"
 #include "rrdb/rrdb.client.h"
 #include "runtime/rpc/dns_resolver.h"
 #include "runtime/rpc/group_host_port.h"

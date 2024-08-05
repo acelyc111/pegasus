@@ -16,7 +16,7 @@
 // under the License.
 
 #include <gtest/gtest.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

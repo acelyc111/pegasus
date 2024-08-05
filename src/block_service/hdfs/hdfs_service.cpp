@@ -15,10 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <errno.h>
+#include <cerrno>
 #include <fcntl.h>
 #include <rocksdb/env.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <algorithm>
 #include <type_traits>
 #include <unordered_set>
