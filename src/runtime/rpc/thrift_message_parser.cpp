@@ -26,7 +26,7 @@
 
 #include "thrift_message_parser.h"
 
-#include <string.h>
+#include <cstring>
 #include <string>
 #include <utility>
 #include <vector>

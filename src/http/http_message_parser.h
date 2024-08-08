@@ -27,7 +27,7 @@
 #pragma once
 
 #include <nodejs/http_parser.h>
-#include <stddef.h>
+#include <cstddef>
 #include <memory>
 #include <queue>
 #include <string>

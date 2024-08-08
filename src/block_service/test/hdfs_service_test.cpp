@@ -19,8 +19,8 @@
 #include <rocksdb/env.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/status.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <unistd.h>
 #include <cstdint>
 #include <memory>

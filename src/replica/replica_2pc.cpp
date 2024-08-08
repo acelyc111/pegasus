@@ -25,8 +25,8 @@
  */
 
 #include <fmt/core.h>
-#include <inttypes.h>
-#include <stddef.h>
+#include <cinttypes>
+#include <cstddef>
 #include <atomic>
 #include <chrono>
 #include <functional>

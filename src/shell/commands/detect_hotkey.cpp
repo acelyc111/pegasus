@@ -16,7 +16,7 @@
 // under the License.
 
 #include <fmt/core.h>
-#include <stdio.h>
+#include <cstdio>
 #include <memory>
 #include <set>
 #include <string>

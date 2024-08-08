@@ -22,9 +22,9 @@
 #include <boost/lexical_cast.hpp>
 // IWYU pragma: no_include <ext/alloc_traits.h>
 #include <getopt.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
 #include <algorithm>
 #include <cstdint>
 #include <iostream>

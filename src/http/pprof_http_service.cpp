@@ -19,14 +19,14 @@
 
 #include "pprof_http_service.h"
 
-#include <ctype.h>
-#include <errno.h>
+#include <cctype>
+#include <cerrno>
 #include <fcntl.h>
 #include <gperftools/heap-profiler.h>
 #include <gperftools/malloc_extension.h>
 #include <gperftools/profiler.h>
 #include <pthread.h>
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 #include <cstdint>
 #include <cstdlib>

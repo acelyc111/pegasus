@@ -19,7 +19,7 @@
 
 #include "replica_follower.h"
 
-#include <stddef.h>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <memory>

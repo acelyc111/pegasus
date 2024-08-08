@@ -26,7 +26,7 @@
 
 #include "injector.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "case.h"
 #include "checker.h"

@@ -27,7 +27,7 @@
 #pragma once
 
 #include <gtest/gtest_prod.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 
 #include "request_meta_types.h"

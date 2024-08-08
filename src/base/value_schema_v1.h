@@ -23,10 +23,10 @@
 #include <memory>
 #include <string>
 
-#include "pegasus_value_schema.h"
+#include "base/pegasus_value_schema.h"
 #include "utils/blob.h"
 #include <string_view>
-#include "value_field.h"
+#include "base/value_field.h"
 
 namespace pegasus {
 /**

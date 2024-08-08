@@ -22,12 +22,12 @@
 #include <gtest/gtest_prod.h>
 #include <rocksdb/options.h>
 #include <rocksdb/write_batch.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "pegasus_value_schema.h"
+#include "base/pegasus_value_schema.h"
 #include "replica/replica_base.h"
 #include <string_view>
 #include "utils/metrics.h"

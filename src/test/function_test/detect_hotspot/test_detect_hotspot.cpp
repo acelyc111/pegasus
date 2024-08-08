@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <stdint.h>
+#include <cstdint>
 #include <unistd.h>
 #include <iostream>
 #include <memory>

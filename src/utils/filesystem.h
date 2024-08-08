@@ -39,10 +39,10 @@
 #define _XOPEN_SOURCE 500
 #endif
 
-#include <assert.h>
+#include <cassert>
 // IWYU pragma: no_include <features.h>
 #include <ftw.h>
-#include <stdint.h>
+#include <cstdint>
 
 #ifndef FTW_CONTINUE
 #define FTW_CONTINUE 0

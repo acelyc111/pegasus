@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <ctype.h>
+#include <cctype>
 #include <chrono>
 #include <functional>
 #include <memory>

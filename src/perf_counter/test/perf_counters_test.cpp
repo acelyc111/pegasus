@@ -26,7 +26,7 @@
 
 #include "perf_counter/perf_counters.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <map>
 
 #include "common/json_helper.h"

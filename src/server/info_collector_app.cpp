@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "info_collector_app.h"
+#include "server/info_collector_app.h"
 
 #include "http/http_server.h"
 #include "runtime/service_app.h"

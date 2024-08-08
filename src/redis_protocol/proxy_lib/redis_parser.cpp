@@ -19,15 +19,15 @@
 
 #include "redis_parser.h"
 
-#include <ctype.h>
+#include <cctype>
 // IWYU pragma: no_include <ext/alloc_traits.h>
 #include <fmt/core.h>
-#include <pegasus/error.h>
-#include <pegasus_key_schema.h>
-#include <pegasus_utils.h>
+#include "pegasus/error.h"
+#include "base/pegasus_key_schema.h"
+#include "base/pegasus_utils.h"
 #include <rocksdb/status.h>
-#include <rrdb/rrdb.client.h>
-#include <string.h>
+#include "rrdb/rrdb.client.h"
+#include <cstring>
 #include <algorithm>
 #include <chrono>
 #include <cstdint>

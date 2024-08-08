@@ -27,7 +27,7 @@
 // IWYU pragma: no_include <boost/detail/basic_pointerbuf.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fmt/format.h>
-#include <stdint.h>
+#include <cstdint>
 #include <algorithm>
 #include <atomic>
 #include <chrono>

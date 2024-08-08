@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "meta/meta_service_app.h"
-#include "pegasus_service_app.h"
+#include "server/pegasus_service_app.h"
 #include "runtime/app_model.h"
 #include "runtime/service_app.h"
 #include "server/server_utils.h"

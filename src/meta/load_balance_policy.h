@@ -18,8 +18,8 @@
 #pragma once
 
 #include <gtest/gtest_prod.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <list>
 #include <map>

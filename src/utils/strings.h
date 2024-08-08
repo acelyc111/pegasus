@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 #include <iostream>
 #include <list>
 #include <map>

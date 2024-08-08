@@ -26,7 +26,7 @@
 
 #include "runtime/message_utils.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "runtime/rpc/rpc_message.h"
 

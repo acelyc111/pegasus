@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#include "pegasus_utils.h"
+#include "base/pegasus_utils.h"
 
-#include <stdio.h>
 #include <cctype>
+#include <cstdio>
 
 #include "utils/fmt_logging.h"
 

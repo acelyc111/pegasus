@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <absl/utility/utility.h>
 #include <atomic>
 #include <chrono>

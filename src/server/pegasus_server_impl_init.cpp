@@ -25,7 +25,7 @@
 #include <rocksdb/statistics.h>
 #include <rocksdb/table.h>
 #include <rocksdb/write_buffer_manager.h>
-#include <stdio.h>
+#include <cstdio>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -41,8 +41,8 @@
 #include "hashkey_transform.h"
 #include "hotkey_collector.h"
 #include "pegasus_event_listener.h"
-#include "pegasus_server_impl.h"
-#include "pegasus_value_schema.h"
+#include "server/pegasus_server_impl.h"
+#include "base/pegasus_value_schema.h"
 #include "replica_admin_types.h"
 #include "runtime/api_layer1.h"
 #include "runtime/rpc/rpc_host_port.h"

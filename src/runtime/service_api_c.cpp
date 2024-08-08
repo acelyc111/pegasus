@@ -24,10 +24,10 @@
  * THE SOFTWARE.
  */
 
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include <chrono>
 #include <fstream> // IWYU pragma: keep

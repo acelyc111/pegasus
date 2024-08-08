@@ -22,8 +22,8 @@
 #include <getopt.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 #include <algorithm>
 // IWYU pragma: no_include <bits/getopt_core.h>
 #include <chrono>

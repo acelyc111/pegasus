@@ -18,7 +18,7 @@
  */
 
 #include <rocksdb/options.h>
-#include <stdint.h>
+#include <cstdint>
 #include <atomic>
 #include <map>
 #include <memory>

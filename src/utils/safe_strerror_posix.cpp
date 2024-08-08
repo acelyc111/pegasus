@@ -4,10 +4,10 @@
 
 #include "utils/safe_strerror_posix.h"
 
-#include <errno.h>
+#include <cerrno>
 // IWYU pragma: no_include <features.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 namespace dsn {
 namespace utils {

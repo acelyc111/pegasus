@@ -21,10 +21,10 @@
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
 #include <fmt/core.h>
-#include <pegasus/error.h>
+#include "pegasus/error.h"
 #include <rocksdb/env.h>
 #include <rocksdb/statistics.h>
-#include <stdio.h>
+#include <cstdio>
 #include <map>
 #include <set>
 #include <sstream>

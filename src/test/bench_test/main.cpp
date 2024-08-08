@@ -18,8 +18,8 @@
  */
 
 #include <fmt/core.h>
-#include <pegasus/client.h>
-#include <stdio.h>
+#include "pegasus/client.h"
+#include <cstdio>
 #include <unistd.h>
 
 #include "benchmark.h"

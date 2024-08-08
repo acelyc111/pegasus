@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstdio>
+#include <cstring>
 #include <atomic>
 #include <functional>
 #include <map>

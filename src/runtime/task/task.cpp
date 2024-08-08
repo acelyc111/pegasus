@@ -26,7 +26,7 @@
 
 #include "task.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "runtime/api_task.h"
 #include "runtime/app_model.h"

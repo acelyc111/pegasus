@@ -20,7 +20,7 @@
 #include <fmt/core.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <stdint.h>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <unordered_map>

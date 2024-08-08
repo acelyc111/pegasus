@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <stdint.h>
+#include <cstdint>
 #include <chrono>
 #include <iostream>
 #include <memory>

@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <set>
 #include <string>
 #include <vector>

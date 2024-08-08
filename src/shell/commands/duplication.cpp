@@ -18,7 +18,7 @@
  */
 
 #include <fmt/core.h>
-#include <stdint.h>
+#include <cstdint>
 #include <initializer_list>
 #include <iostream>
 #include <memory>

@@ -26,7 +26,7 @@
 
 #include <fmt/core.h>
 #include <rocksdb/status.h>
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #include <cstdint>
 #include <list>

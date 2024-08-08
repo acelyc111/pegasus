@@ -27,7 +27,7 @@
 #include "rpc_engine.h"
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <string.h>
+#include <cstring>
 #include <limits>
 #include <list>
 #include <set>

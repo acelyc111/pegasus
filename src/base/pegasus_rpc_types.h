@@ -26,7 +26,7 @@
 #include "consensus_types.h"
 #include "replica_admin_types.h"
 #include <rrdb/rrdb_types.h>
-#include <rrdb/rrdb.client.h>
+#include "rrdb/rrdb.client.h"
 
 namespace pegasus {
 

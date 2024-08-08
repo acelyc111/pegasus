@@ -26,7 +26,7 @@
 
 #include "client.h"
 
-#include <stdint.h>
+#include <cstdint>
 #include <chrono>
 #include <functional>
 #include <utility>

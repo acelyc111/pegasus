@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <assert.h>
+#include <cassert>
 #include <cstdio>
 #include <string>
 

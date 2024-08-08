@@ -20,8 +20,8 @@
 #include "value_schema_v0.h"
 
 #include <string_view>
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include <algorithm>
 #include <array>
 #include <utility>

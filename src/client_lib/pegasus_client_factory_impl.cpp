@@ -19,7 +19,7 @@
 
 #include "pegasus_client_factory_impl.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <utility>
 
 #include "client_lib/pegasus_client_impl.h"

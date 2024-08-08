@@ -37,9 +37,9 @@
 #include <rocksdb/statistics.h>
 
 #include <geo/lib/geo_client.h>
-#include <pegasus/error.h>
-#include <pegasus/git_commit.h>
-#include <pegasus/version.h>
+#include "pegasus/error.h"
+#include "pegasus/git_commit.h"
+#include "pegasus/version.h"
 #include <rrdb/rrdb.code.definition.h>
 #include <rrdb/rrdb_types.h>
 

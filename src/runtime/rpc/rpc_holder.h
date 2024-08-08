@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <algorithm>
 #include <chrono>
 #include <memory>

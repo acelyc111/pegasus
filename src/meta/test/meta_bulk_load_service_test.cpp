@@ -16,7 +16,7 @@
 // under the License.
 
 #include <boost/lexical_cast.hpp>
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #include <atomic>
 #include <cstdint>

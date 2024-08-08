@@ -17,8 +17,8 @@
 
 #include "http/http_server.h"
 
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include <memory>
 #include <ostream>
 #include <vector>

@@ -131,6 +131,7 @@ function run_build()
     C_COMPILER="gcc"
     CXX_COMPILER="g++"
     BUILD_TYPE="release"
+    # TODO(yingchun): some boolean variables are using YES/NO, some are using ON/OFF, should be unified.
     CLEAR=NO
     CLEAR_THIRDPARTY=NO
     JOB_NUM=8
@@ -145,6 +146,7 @@ function run_build()
     BUILD_TEST=OFF
     IWYU=""
     BUILD_MODULES=""
+    CMAKE_ONLY=NO
     while [[ $# > 0 ]]; do
         key="$1"
         case $key in
@@ -219,6 +221,9 @@ function run_build()
             --iwyu)
                 IWYU="$2"
                 shift
+                ;;
+            --cmake_only)
+                CMAKE_ONLY=YES
                 ;;
             *)
                 echo "ERROR: unknown option \"$key\""
@@ -318,8 +323,8 @@ function run_build()
     if [ ! -f "${ROOT}/src/common/serialization_helper/dsn.layer2_types.h" ]; then
         echo "Gen thrift"
         # TODO(yingchun): should be optimized
-        python3 $ROOT/scripts/compile_thrift.py
-        sh ${ROOT}/scripts/recompile_thrift.sh
+        python3 $ROOT/build-support/compile_thrift.py
+        sh ${ROOT}/build-support/recompile_thrift.sh
     fi
 
     if [ ! -d "$BUILD_DIR" ]; then
@@ -352,6 +357,11 @@ function run_build()
     # rebuild link
     rm -f ${BUILD_LATEST_DIR}
     ln -s ${BUILD_DIR} ${BUILD_LATEST_DIR}
+
+    if [ "$CMAKE_ONLY" == "YES" ]; then
+        echo "CMake only, exit"
+        return
+    fi
 
     echo "[$(date)] Building Pegasus ..."
     pushd $BUILD_DIR
@@ -2094,19 +2104,19 @@ case $cmd in
         ;;
     pack_server)
         shift
-        PEGASUS_ROOT=$ROOT ./scripts/pack_server.sh $*
+        PEGASUS_ROOT=$ROOT ./build-support/pack_server.sh $*
         ;;
     pack_client)
         shift
-        PEGASUS_ROOT=$ROOT ./scripts/pack_client.sh $*
+        PEGASUS_ROOT=$ROOT ./build-support/pack_client.sh $*
         ;;
     pack_tools)
         shift
-        PEGASUS_ROOT=$ROOT ./scripts/pack_tools.sh $*
+        PEGASUS_ROOT=$ROOT ./build-support/pack_tools.sh $*
         ;;
     bump_version)
         shift
-        ./scripts/bump_version.sh $*
+        ./build-support/bump_version.sh $*
         ;;
     *)
         echo "ERROR: unknown command $cmd"
