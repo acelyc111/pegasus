@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 
 #include "shell/command_executor.h"

@@ -98,7 +98,7 @@ public:
 //---------------------------------------------------------
 
 #include <semaphore.h>
-#include <time.h>
+#include <ctime>
 
 class Semaphore
 {

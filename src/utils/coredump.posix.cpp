@@ -24,8 +24,8 @@
  * THE SOFTWARE.
  */
 
-#include <signal.h>
-#include <stdio.h>
+#include <csignal>
+#include <cstdio>
 #include <list>
 
 #include "coredump.h"

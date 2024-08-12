@@ -16,9 +16,9 @@
 // under the License.
 
 #include <gtest/gtest.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <time.h>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #include <chrono>
 #include <memory>
 #include <string>

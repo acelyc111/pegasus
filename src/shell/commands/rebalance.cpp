@@ -19,7 +19,7 @@
 
 // IWYU pragma: no_include <bits/getopt_core.h>
 #include <getopt.h>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <iostream>
 #include <map>

@@ -324,8 +324,8 @@ function run_build()
     if [ ! -f "${ROOT}/src/common/serialization_helper/dsn.layer2_types.h" ]; then
         echo "Gen thrift"
         # TODO(yingchun): should be optimized
-        python3 $ROOT/scripts/compile_thrift.py
-        sh ${ROOT}/scripts/recompile_thrift.sh
+        python3 $ROOT/build-support/compile_thrift.py
+        sh ${ROOT}/build-support/recompile_thrift.sh
     fi
 
     if [ ! -d "$BUILD_DIR" ]; then
@@ -2105,19 +2105,19 @@ case $cmd in
         ;;
     pack_server)
         shift
-        PEGASUS_ROOT=$ROOT ./scripts/pack_server.sh $*
+        PEGASUS_ROOT=$ROOT ./build-support/pack_server.sh $*
         ;;
     pack_client)
         shift
-        PEGASUS_ROOT=$ROOT ./scripts/pack_client.sh $*
+        PEGASUS_ROOT=$ROOT ./build-support/pack_client.sh $*
         ;;
     pack_tools)
         shift
-        PEGASUS_ROOT=$ROOT ./scripts/pack_tools.sh $*
+        PEGASUS_ROOT=$ROOT ./build-support/pack_tools.sh $*
         ;;
     bump_version)
         shift
-        ./scripts/bump_version.sh $*
+        ./build-support/bump_version.sh $*
         ;;
     *)
         echo "ERROR: unknown command $cmd"

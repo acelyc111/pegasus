@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <stdint.h>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>

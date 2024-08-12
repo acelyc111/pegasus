@@ -27,11 +27,11 @@
 #include "simple_kv.server.impl.h"
 
 #include <fmt/core.h>
-#include <inttypes.h>
+#include <cinttypes>
 #include <rocksdb/slice.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <atomic>
 #include <memory>
 #include <utility>

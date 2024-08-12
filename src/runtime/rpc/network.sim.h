@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "runtime/rpc/message_parser.h"
 #include "runtime/rpc/network.h"

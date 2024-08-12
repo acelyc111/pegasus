@@ -18,7 +18,7 @@
  */
 
 #include <fmt/core.h>
-#include <stdint.h>
+#include <cstdint>
 #include <atomic>
 #include <map>
 #include <memory>

@@ -25,7 +25,7 @@
  */
 
 #include <rocksdb/status.h>
-#include <stddef.h>
+#include <cstddef>
 #include <algorithm>
 #include <cstdint>
 #include <memory>

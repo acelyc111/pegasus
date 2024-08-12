@@ -26,7 +26,7 @@
 
 #include <absl/strings/ascii.h>
 #include <openssl/md5.h>
-#include <stdio.h>
+#include <cstdio>
 #include <strings.h>
 #include <algorithm>
 #include <cstring>

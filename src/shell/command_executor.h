@@ -22,7 +22,7 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <pegasus/client.h>
+#include "pegasus/client.h"
 
 #include "client/replication_ddl_client.h"
 

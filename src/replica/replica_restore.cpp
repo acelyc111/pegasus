@@ -17,7 +17,7 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
-#include <stdint.h>
+#include <cstdint>
 #include <atomic>
 #include <fstream>
 #include <map>

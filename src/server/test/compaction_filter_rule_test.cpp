@@ -18,7 +18,7 @@
  */
 
 #include <rocksdb/slice.h>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 #include "base/pegasus_utils.h"

@@ -27,7 +27,7 @@
 #include "runtime/task/task_engine.h"
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <limits.h>
+#include <climits>
 #include <mutex>
 
 #include "fmt/core.h"

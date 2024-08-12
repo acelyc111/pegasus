@@ -27,8 +27,8 @@
 #include <fmt/core.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include <sys/socket.h>
 #include <set>
 #include <string>

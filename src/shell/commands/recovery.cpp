@@ -20,7 +20,7 @@
 // IWYU pragma: no_include <bits/getopt_core.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <getopt.h>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <fstream>
 #include <iostream>

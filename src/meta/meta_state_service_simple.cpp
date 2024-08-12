@@ -26,7 +26,7 @@
 
 #include "meta_state_service_simple.h"
 
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 #include <set>
 #include <stack>

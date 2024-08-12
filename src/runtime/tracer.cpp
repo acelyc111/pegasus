@@ -27,8 +27,8 @@
 #include "runtime/tracer.h"
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <inttypes.h>
-#include <stdio.h>
+#include <cinttypes>
+#include <cstdio>
 #include <mutex>
 #include <string>
 #include <vector>

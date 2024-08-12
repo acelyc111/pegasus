@@ -18,7 +18,7 @@
  */
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <stdint.h>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>

@@ -38,7 +38,7 @@ Component providers define the interface for the local components (e.g., network
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 #include <string>
 #include <vector>
 

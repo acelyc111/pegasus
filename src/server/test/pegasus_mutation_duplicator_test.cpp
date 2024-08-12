@@ -20,7 +20,7 @@
 #include "server/pegasus_mutation_duplicator.h"
 
 #include <fmt/core.h>
-#include <pegasus/error.h>
+#include "pegasus/error.h"
 #include <sys/types.h>
 #include <memory>
 #include <string_view>
@@ -35,7 +35,7 @@
 #include "common/replication.codes.h"
 #include "duplication_internal_types.h"
 #include "gtest/gtest.h"
-#include "pegasus_key_schema.h"
+#include "base/pegasus_key_schema.h"
 #include "pegasus_server_test_base.h"
 #include "replica/replica_base.h"
 #include "rrdb/rrdb.code.definition.h"

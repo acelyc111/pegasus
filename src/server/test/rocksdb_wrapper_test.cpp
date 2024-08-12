@@ -18,7 +18,7 @@
  */
 
 #include <fmt/core.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -26,10 +26,10 @@
 #include "common/fs_manager.h"
 #include "dsn.layer2_types.h"
 #include "gtest/gtest.h"
-#include "pegasus_key_schema.h"
+#include "base/pegasus_key_schema.h"
 #include "pegasus_server_test_base.h"
-#include "pegasus_utils.h"
-#include "pegasus_value_schema.h"
+#include "base/pegasus_utils.h"
+#include "base/pegasus_value_schema.h"
 #include "replica/replica.h"
 #include "replica/replica_stub.h"
 #include "server/pegasus_server_write.h"

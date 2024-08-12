@@ -27,7 +27,7 @@
 #include "simple_task_queue.h"
 
 #include <boost/asio/io_service.hpp>
-#include <stdio.h>
+#include <cstdio>
 #include <memory>
 #include <new>
 

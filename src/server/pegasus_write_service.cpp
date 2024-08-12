@@ -20,7 +20,7 @@
 #include <string_view>
 #include <fmt/core.h>
 #include <rocksdb/status.h>
-#include <stddef.h>
+#include <cstddef>
 #include <functional>
 #include <set>
 #include <vector>
@@ -31,7 +31,7 @@
 #include "common/duplication_common.h"
 #include "common/replication.codes.h"
 #include "duplication_internal_types.h"
-#include "pegasus_value_schema.h"
+#include "base/pegasus_value_schema.h"
 #include "pegasus_write_service.h"
 #include "pegasus_write_service_impl.h"
 #include "rrdb/rrdb.code.definition.h"

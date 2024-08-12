@@ -17,14 +17,14 @@
  * under the License.
  */
 
-#include <pegasus/error.h>
+#include "pegasus/error.h"
 #include <rocksdb/env.h>
 #include <rocksdb/statistics.h>
 #include <s2/s1angle.h>
 #include <s2/s2latlng.h>
 #include <s2/s2latlng_rect.h>
 #include <s2/s2testing.h>
-#include <stdint.h>
+#include <cstdint>
 #include <atomic>
 #include <iostream>
 #include <list>

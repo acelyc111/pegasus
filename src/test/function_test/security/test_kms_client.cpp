@@ -16,7 +16,7 @@
 // under the License.
 
 #include <absl/strings/str_split.h>
-#include <string.h>
+#include <cstring>
 #include <memory>
 #include <string>
 

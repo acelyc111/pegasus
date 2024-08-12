@@ -46,9 +46,9 @@
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>
 #include <boost/system/error_code.hpp>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <cstddef>
 #include <limits>
 #include <memory>

@@ -20,7 +20,7 @@
 #include <fmt/core.h>
 #include <rocksdb/env.h>
 #include <rocksdb/statistics.h>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <unordered_map>
 

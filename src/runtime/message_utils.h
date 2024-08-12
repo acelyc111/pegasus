@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "runtime/rpc/rpc_stream.h"
 #include "runtime/task/task_code.h"

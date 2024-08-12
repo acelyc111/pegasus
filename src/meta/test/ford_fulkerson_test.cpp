@@ -16,7 +16,7 @@
 // under the License.
 
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>

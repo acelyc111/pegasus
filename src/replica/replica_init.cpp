@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <chrono>
 #include <map>
 #include <memory>

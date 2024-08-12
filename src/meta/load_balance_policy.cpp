@@ -20,7 +20,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <limits.h>
+#include <climits>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <algorithm>

@@ -19,7 +19,7 @@
 
 #include "result_writer.h"
 
-#include <pegasus/error.h>
+#include "pegasus/error.h"
 #include <chrono>
 #include <utility>
 

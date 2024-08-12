@@ -19,7 +19,7 @@
 #include <absl/hash/hash.h>
 #include <string_view>
 #include <fmt/core.h>
-#include <stdint.h>
+#include <cstdint>
 #include <algorithm>
 #include <deque>
 #include <list>

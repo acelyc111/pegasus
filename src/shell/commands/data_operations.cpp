@@ -24,11 +24,11 @@
 #include <fmt/format.h>
 #include <fmt/printf.h>
 #include <getopt.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <pegasus/error.h>
+#include <cinttypes>
+#include <climits>
+#include "pegasus/error.h"
 #include <rocksdb/statistics.h>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -48,8 +48,8 @@
 #include "geo/lib/geo_client.h"
 #include "idl_utils.h"
 #include "pegasus/client.h"
-#include "pegasus_key_schema.h"
-#include "pegasus_utils.h"
+#include "base/pegasus_key_schema.h"
+#include "base/pegasus_utils.h"
 #include "rrdb/rrdb_types.h"
 #include "runtime/rpc/rpc_host_port.h"
 #include "runtime/task/async_calls.h"

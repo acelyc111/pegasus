@@ -24,7 +24,7 @@
 #include <rocksdb/env.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/status.h>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 #include "block_service/local/local_service.h"

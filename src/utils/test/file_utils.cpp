@@ -27,8 +27,8 @@
 #include <rocksdb/env.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/status.h>
-#include <stdint.h>
-#include <time.h>
+#include <cstdint>
+#include <ctime>
 #include <string>
 #include <vector>
 

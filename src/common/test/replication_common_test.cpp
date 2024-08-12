@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <stdint.h>
+#include <cstdint>
 #include <fstream>
 #include <string>
 #include <vector>

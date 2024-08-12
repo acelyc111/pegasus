@@ -34,7 +34,7 @@
 #include <boost/lexical_cast.hpp>
 #include <fmt/core.h>
 #include <fmt/printf.h>
-#include <inttypes.h>
+#include <cinttypes>
 #include <algorithm>
 #include <cstdio>
 #include <iostream>

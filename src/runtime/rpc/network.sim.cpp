@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <string.h>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <string>

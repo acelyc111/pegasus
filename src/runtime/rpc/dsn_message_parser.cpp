@@ -26,8 +26,8 @@
 
 #include "dsn_message_parser.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
 

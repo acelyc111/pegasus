@@ -25,8 +25,8 @@
  */
 
 #include <fmt/std.h> // IWYU pragma: keep
-#include <inttypes.h>
-#include <stdio.h>
+#include <cinttypes>
+#include <cstdio>
 #include <algorithm>
 #include <atomic>
 #include <chrono>

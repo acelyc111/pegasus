@@ -19,7 +19,7 @@
 
 #include <fmt/core.h>
 #include <rocksdb/status.h>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -27,7 +27,7 @@
 
 #include "common/replication.codes.h"
 #include "gtest/gtest.h"
-#include "pegasus_key_schema.h"
+#include "base/pegasus_key_schema.h"
 #include "pegasus_server_test_base.h"
 #include "replica_admin_types.h"
 #include "rrdb/rrdb_types.h"

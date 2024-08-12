@@ -29,7 +29,7 @@
 #include <fmt/core.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <stdio.h>
+#include <cstdio>
 
 #include "gtest/gtest.h"
 #include "runtime/global_config.h"

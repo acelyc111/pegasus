@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#include <limits.h>
-#include <string.h>
-#include <time.h>
+#include <climits>
+#include <cstring>
+#include <ctime>
 #include <atomic>
 #include <cstdlib>
 #include <functional>

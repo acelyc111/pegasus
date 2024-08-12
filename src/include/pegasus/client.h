@@ -23,8 +23,8 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <stdint.h>
-#include <pegasus/error.h>
+#include <cstdint>
+#include "pegasus/error.h"
 #include <functional>
 #include <memory>
 

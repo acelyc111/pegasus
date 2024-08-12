@@ -21,7 +21,7 @@
 #include <fmt/core.h>
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
-#include <stdint.h>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>

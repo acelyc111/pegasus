@@ -20,8 +20,8 @@
 #include "geo_client.h"
 
 #include <fmt/core.h>
-#include <math.h>
-#include <pegasus/error.h>
+#include <cmath>
+#include "pegasus/error.h"
 #include <s2/s1angle.h>
 #include <s2/s2cap.h>
 #include <s2/s2cell.h>
@@ -31,7 +31,7 @@
 #include <s2/s2latlng.h>
 #include <s2/s2region_coverer.h>
 #include <s2/util/units/length-units.h>
-#include <stddef.h>
+#include <cstddef>
 #include <atomic>
 #include <cstdint>
 #include <limits>

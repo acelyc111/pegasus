@@ -20,10 +20,10 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 // IWYU pragma: no_include <ext/alloc_traits.h>
-#include <inttypes.h>
+#include <cinttypes>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <cstdint>
 #include <ostream>

@@ -18,7 +18,7 @@
 // IWYU pragma: no_include <ext/alloc_traits.h>
 #include <fmt/core.h>
 #include <rocksdb/status.h>
-#include <stdint.h>
+#include <cstdint>
 #include <sys/types.h>
 
 #include "aio/aio_task.h"

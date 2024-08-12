@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include <stddef.h>
+#include <cstddef>
 #include <algorithm>
 #include <chrono>
 #include <random>
