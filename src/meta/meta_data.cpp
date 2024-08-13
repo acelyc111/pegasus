@@ -27,6 +27,7 @@
 #include <boost/lexical_cast.hpp>
 #include <cstdint>
 
+#include <absl/algorithm/container.h>
 #include "common/gpid.h"
 #include "common/replication_enums.h"
 #include "meta_data.h"
@@ -421,7 +422,7 @@ std::vector<serving_replica>::iterator config_context::find_from_serving(const h
 std::vector<serving_replica>::const_iterator
 config_context::find_from_serving(const host_port &node) const
 {
-    return std::find_if(serving.begin(), serving.end(), [&node](const serving_replica &r) {
+    return absl::c_find_if(serving, [&node](const serving_replica &r) {
         return r.node == node;
     });
 }
@@ -620,41 +621,43 @@ void node_state::remove_partition(const gpid &pid, bool only_primary)
     }
 }
 
-bool node_state::for_each_primary(app_id id, const std::function<bool(const gpid &)> &f) const
+bool node_state::for_each_primary(app_id id, const std::function<bool(const gpid &)> &func) const
 {
-    const partition_set *pri = partitions(id, true);
-    if (pri == nullptr) {
+    const auto *pri_gpids = partitions(id, true);
+    if (pri_gpids == nullptr) {
         return true;
     }
-    for (const gpid &pid : *pri) {
-        CHECK_EQ_MSG(id, pid.get_app_id(), "invalid gpid({}), app_id must be {}", pid, id);
-        if (!f(pid))
+    for (const auto &pri_gpid : *pri_gpids) {
+        CHECK_EQ_MSG(id, pri_gpid.get_app_id(), "invalid gpid({}), app_id must be {}", pri_gpid, id);
+        if (!func(pri_gpid)) {
             return false;
+        }
     }
     return true;
 }
 
-bool node_state::for_each_partition(app_id id, const std::function<bool(const gpid &)> &f) const
+bool node_state::for_each_partition(app_id id, const std::function<bool(const gpid &)> &func) const
 {
-    const partition_set *par = partitions(id, false);
-    if (par == nullptr) {
+    const auto *pri_gpids = partitions(id, false);
+    if (pri_gpids == nullptr) {
         return true;
     }
-    for (const gpid &pid : *par) {
-        CHECK_EQ_MSG(id, pid.get_app_id(), "invalid gpid({}), app_id must be {}", pid, id);
-        if (!f(pid))
+    for (const auto &pri_gpid : *pri_gpids) {
+        CHECK_EQ_MSG(id, pri_gpid.get_app_id(), "invalid gpid({}), app_id must be {}", pri_gpid, id);
+        if (!func(pri_gpid)) {
             return false;
+        }
     }
     return true;
 }
 
-bool node_state::for_each_partition(const std::function<bool(const gpid &)> &f) const
+bool node_state::for_each_partition(const std::function<bool(const gpid &)> &func) const
 {
-    for (const auto &pair : app_partitions) {
-        const partition_set &ps = pair.second;
-        for (const auto &gpid : ps) {
-            if (!f(gpid))
+    for (const auto &[_, pri_gpids] : app_partitions) {
+        for (const auto &pri_gpid : pri_gpids) {
+            if (!func(pri_gpid)) {
                 return false;
+            }
         }
     }
     return true;

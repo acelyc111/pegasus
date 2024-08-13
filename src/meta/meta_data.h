@@ -56,6 +56,7 @@
 #include "utils/extensible_object.h"
 #include "utils/fmt_logging.h"
 #include "utils/utils.h"
+#include "gutil/map_util.h"
 
 namespace dsn {
 class message_ex;
@@ -377,8 +378,9 @@ typedef std::map<app_id, std::shared_ptr<app_state>> app_mapper;
 class node_state : public extensible_object<node_state, 4>
 {
 private:
-    // partitions
+    // App id -> gpid set for primary partitions.
     std::map<int32_t, partition_set> app_primaries;
+    // App id -> gpid set for primary and secondary partitions.
     std::map<int32_t, partition_set> app_partitions;
     unsigned total_primaries;
     unsigned total_partitions;
@@ -416,9 +418,9 @@ public:
     void put_partition(const dsn::gpid &pid, bool is_primary);
     void remove_partition(const dsn::gpid &pid, bool only_primary);
 
-    bool for_each_partition(const std::function<bool(const dsn::gpid &pid)> &f) const;
-    bool for_each_partition(app_id id, const std::function<bool(const dsn::gpid &)> &f) const;
-    bool for_each_primary(app_id id, const std::function<bool(const dsn::gpid &pid)> &f) const;
+    bool for_each_partition(const std::function<bool(const dsn::gpid &pid)> &func) const;
+    bool for_each_partition(app_id id, const std::function<bool(const dsn::gpid &)> &func) const;
+    bool for_each_primary(app_id id, const std::function<bool(const dsn::gpid &pid)> &func) const;
 };
 
 typedef std::unordered_map<host_port, node_state> node_mapper;
@@ -426,61 +428,79 @@ typedef std::map<dsn::gpid, std::shared_ptr<configuration_balancer_request>> mig
 
 struct meta_view
 {
-    app_mapper *apps;
-    node_mapper *nodes;
+    app_mapper *apps = nullptr;
+    node_mapper *nodes = nullptr;
 };
 
 inline node_state *get_node_state(node_mapper &nodes, const host_port &hp, bool create_new)
 {
-    node_state *ns;
-    if (nodes.find(hp) == nodes.end()) {
-        if (!create_new)
+    auto *ns = gutil::FindOrNull(nodes, hp);
+    if (ns == nullptr) {
+        if (!create_new) {
             return nullptr;
-        ns = &nodes[hp];
+        }
+        ns = &gutil::InsertKeyOrDie(&nodes, hp);
         ns->set_hp(hp);
     }
-    ns = &nodes[hp];
     return ns;
 }
 
 inline bool is_node_alive(const node_mapper &nodes, const host_port &hp)
 {
-    auto iter = nodes.find(hp);
-    if (iter == nodes.end())
+    const auto *ns = gutil::FindOrNull(nodes, hp);
+    if (ns == nullptr) {
         return false;
-    return iter->second.alive();
+    }
+    return ns->alive();
 }
 
 inline const partition_configuration *get_config(const app_mapper &apps, const dsn::gpid &gpid)
 {
-    auto iter = apps.find(gpid.get_app_id());
-    if (iter == apps.end() || iter->second->status == app_status::AS_DROPPED)
+    auto as = gutil::FindPtrOrNull(apps, gpid.get_app_id());
+    if (!as) {
         return nullptr;
-    return &(iter->second->pcs[gpid.get_partition_index()]);
+    }
+    if (as->status == app_status::AS_DROPPED) {
+        return nullptr;
+    }
+    return &(as->pcs[gpid.get_partition_index()]);
 }
 
 inline partition_configuration *get_config(app_mapper &apps, const dsn::gpid &gpid)
 {
-    auto iter = apps.find(gpid.get_app_id());
-    if (iter == apps.end() || iter->second->status == app_status::AS_DROPPED)
+    auto as = gutil::FindPtrOrNull(apps, gpid.get_app_id());
+    if (!as) {
         return nullptr;
-    return &(iter->second->pcs[gpid.get_partition_index()]);
+    }
+    if (as->status == app_status::AS_DROPPED) {
+        return nullptr;
+    }
+    return &(as->pcs[gpid.get_partition_index()]);
 }
 
 inline const config_context *get_config_context(const app_mapper &apps, const dsn::gpid &gpid)
 {
-    auto iter = apps.find(gpid.get_app_id());
-    if (iter == apps.end() || iter->second->status == app_status::AS_DROPPED)
+    auto as = gutil::FindPtrOrNull(apps, gpid.get_app_id());
+    if (!as) {
         return nullptr;
-    return &(iter->second->helpers->contexts[gpid.get_partition_index()]);
+    }
+    if (as->status == app_status::AS_DROPPED) {
+        return nullptr;
+    }
+    return &(as->helpers->contexts[gpid.get_partition_index()]);
 }
 
 inline config_context *get_config_context(app_mapper &apps, const dsn::gpid &gpid)
 {
-    auto iter = apps.find(gpid.get_app_id());
-    if (iter == apps.end() || iter->second->status == app_status::AS_DROPPED)
+    auto as = gutil::FindPtrOrNull(apps, gpid.get_app_id());
+    if (!as) {
         return nullptr;
-    return &(iter->second->helpers->contexts[gpid.get_partition_index()]);
+    }
+    if (as->status == app_status::AS_DROPPED) {
+        return nullptr;
+    }
+
+    return &(as->helpers->contexts[gpid.get_partition_index()]);
 }
 
 inline int replica_count(const partition_configuration &pc)
