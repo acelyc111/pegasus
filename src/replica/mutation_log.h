@@ -275,7 +275,7 @@ public:
     //   #1:[20, 30], #2:[30, 50], #3:[10, 50]
     // The third file is learned from primary of new epoch. Since it contains mutations smaller
     // than the others, the max_gced_decree = 9.
-    // Returns `invalid_decree` when plog directory is empty.
+    // Returns `kInvalidDecree` when plog directory is empty.
     //
     // Thread safe & private log only.
     decree max_gced_decree(gpid gpid) const;

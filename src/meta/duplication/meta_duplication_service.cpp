@@ -673,7 +673,7 @@ meta_duplication_service::new_dup_from_init(const std::string &remote_cluster_na
                                                  std::move(remote_cluster_metas),
                                                  std::move(dup_path));
         for (int32_t i = 0; i < app->partition_count; i++) {
-            dup->init_progress(i, invalid_decree);
+            dup->init_progress(i, kInvalidDecree);
         }
 
         app->duplications.emplace(dup->id, dup);
@@ -735,11 +735,11 @@ void meta_duplication_service::do_restore_duplication_progress(
 
                 if (value.size() == 0) {
                     // not found
-                    dup->init_progress(partition_idx, invalid_decree);
+                    dup->init_progress(partition_idx, kInvalidDecree);
                     return;
                 }
 
-                int64_t confirmed_decree = invalid_decree;
+                int64_t confirmed_decree = kInvalidDecree;
                 if (!buf2int64(value.to_string_view(), confirmed_decree)) {
                     LOG_ERROR("[{}] invalid confirmed_decree {} on partition_idx {}",
                               dup->log_prefix(),

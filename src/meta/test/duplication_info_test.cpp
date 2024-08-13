@@ -64,7 +64,7 @@ public:
         duplication_confirm_entry entry;
         ASSERT_FALSE(dup.alter_progress(0, entry));
 
-        dup.init_progress(0, invalid_decree);
+        dup.init_progress(0, kInvalidDecree);
         entry.confirmed_decree = 5;
         entry.checkpoint_prepared = true;
         ASSERT_TRUE(dup.alter_progress(0, entry));
@@ -86,7 +86,7 @@ public:
         ASSERT_TRUE(dup._progress[0].checkpoint_prepared);
 
         // too frequent to update
-        dup.init_progress(1, invalid_decree);
+        dup.init_progress(1, kInvalidDecree);
         ASSERT_TRUE(dup.alter_progress(1, entry));
         ASSERT_TRUE(dup._progress[1].is_altering);
         dup.persist_progress(1);
@@ -126,10 +126,10 @@ public:
         ASSERT_EQ(kTestRemoteReplicaCount, dup_ent.remote_replica_count);
 
         for (int i = 0; i < 4; i++) {
-            dup.init_progress(i, invalid_decree);
+            dup.init_progress(i, kInvalidDecree);
         }
         for (auto kv : dup_ent.progress) {
-            ASSERT_EQ(kv.second, invalid_decree);
+            ASSERT_EQ(kv.second, kInvalidDecree);
         }
 
         dup.start();

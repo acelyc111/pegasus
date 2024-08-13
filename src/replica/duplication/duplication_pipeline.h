@@ -88,7 +88,7 @@ private:
     replica *_replica;
     replica_stub *_stub;
 
-    decree _last_decree{invalid_decree};
+    decree _last_decree{kInvalidDecree};
 
     METRIC_VAR_DECLARE_counter(dup_shipped_bytes);
 };

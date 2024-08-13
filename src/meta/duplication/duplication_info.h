@@ -220,8 +220,8 @@ private:
 
     struct partition_progress
     {
-        int64_t volatile_decree{invalid_decree};
-        int64_t stored_decree{invalid_decree};
+        int64_t volatile_decree{kInvalidDecree};
+        int64_t stored_decree{kInvalidDecree};
         bool is_altering{false};
         uint64_t last_progress_update_ms{0};
         bool is_inited{false};

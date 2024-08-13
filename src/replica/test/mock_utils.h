@@ -165,7 +165,7 @@ public:
 
     decree max_gced_decree_no_lock() const override
     {
-        if (_max_gced_decree == (invalid_decree - 1)) {
+        if (_max_gced_decree == (kInvalidDecree - 1)) {
             // if the value is not fake, return the real value from replica.
             return replica::max_gced_decree_no_lock();
         }
@@ -237,7 +237,7 @@ public:
     }
 
 private:
-    decree _max_gced_decree{invalid_decree - 1};
+    decree _max_gced_decree{kInvalidDecree - 1};
 };
 typedef dsn::ref_ptr<mock_replica> mock_replica_ptr;
 
@@ -423,7 +423,7 @@ public:
                                  std::vector<mutation_ptr> &mutation_list) const override
     {
         for (auto &mu : _mu_list) {
-            ballot current_ballot = (start_ballot == invalid_ballot) ? invalid_ballot
+            ballot current_ballot = (start_ballot == kInvalidBallot) ? kInvalidBallot
                                                                      : mu->get_ballot();
             if ((mu->get_decree() >= start_decree && start_ballot == current_ballot) ||
                 current_ballot > start_ballot) {

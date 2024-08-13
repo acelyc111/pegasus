@@ -126,7 +126,7 @@ void meta_split_service::do_start_partition_split(std::shared_ptr<app_state> app
         for (int i = 0; i < app->partition_count; ++i) {
             app->helpers->contexts[i].pc = &app->pcs[i];
             if (i >= app->partition_count / 2) { // child partitions
-                app->pcs[i].ballot = invalid_ballot;
+                app->pcs[i].ballot = kInvalidBallot;
                 app->pcs[i].pid = gpid(app->app_id, i);
             } else { // parent partitions
                 app->helpers->split_states.status[i] = split_status::SPLITTING;
@@ -598,7 +598,7 @@ void meta_split_service::query_child_state(query_child_state_rpc rpc)
                  app_name);
 
     auto child_pidx = parent_pid.get_partition_index() + request.partition_count;
-    if (app->pcs[child_pidx].ballot == invalid_ballot) {
+    if (app->pcs[child_pidx].ballot == kInvalidBallot) {
         response.err = ERR_INVALID_STATE;
         LOG_ERROR("app({}) parent partition({}) split has been canceled", app_name, parent_pid);
         return;

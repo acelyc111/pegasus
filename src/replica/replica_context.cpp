@@ -122,7 +122,7 @@ void primary_context::reset_membership(const partition_configuration &new_pc, bo
 
 void primary_context::get_replica_config(partition_status::type st,
                                          /*out*/ replica_configuration &config,
-                                         uint64_t learner_signature /*= invalid_signature*/)
+                                         uint64_t learner_signature /*= kInvalidSignature*/)
 {
     config.pid = pc.pid;
     SET_OBJ_IP_AND_HOST_PORT(config, primary, pc, primary);
@@ -240,8 +240,8 @@ bool potential_secondary_context::cleanup(bool force)
         --owner_replica->get_replica_stub()->_learn_app_concurrent_count;
         learn_app_concurrent_count_increased = false;
     }
-    learning_start_prepare_decree = invalid_decree;
-    first_learn_start_decree = invalid_decree;
+    learning_start_prepare_decree = kInvalidDecree;
+    first_learn_start_decree = kInvalidDecree;
     learning_status = learner_status::LearningInvalid;
     return true;
 }

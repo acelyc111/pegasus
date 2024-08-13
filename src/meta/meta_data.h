@@ -91,9 +91,8 @@ ENUM_REG(pc_status::ill)
 ENUM_REG(pc_status::dead)
 ENUM_END(pc_status)
 
-class pc_flags
+struct pc_flags
 {
-public:
     static const int dropped = 1;
 };
 
@@ -102,13 +101,13 @@ class proposal_actions
 private:
     bool from_balancer;
 
-    // used for track the learing process and check if abnormal situation happens
+    // used for track the learning process and check if an abnormal situation happens
     bool learning_progress_abnormal_detected;
     replica_info current_learner;
 
     // NOTICE:
-    // meta servic use configuration_proposal_action::period_ts
-    // to store a expire timestamp, but a rpc_sender use this field
+    // meta service use configuration_proposal_action::period_ts
+    // to store an expire timestamp, but a rpc_sender use this field
     // to suggest a ttl period
     std::vector<configuration_proposal_action> acts;
 
@@ -133,9 +132,9 @@ public:
 //
 // structure "dropped_replica" represents a replica which was downgraded to inactive.
 // there are 2 sources to get the dropped replica:
-//   1. by record the meta's update-cfg action
-//   2. by collect the inactive replicas reported from the replica servers
-// generally, we give a partitial order for the dropped_replica, in which a higher order
+//   1. by recording the meta's update-cfg action
+//   2. by collecting the inactive replicas reported from the replica servers
+// generally, we give a partial order for the dropped_replica, in which a higher order
 // roughly means that the replica has MORE data.
 //
 // a load balancer may record a list of dropped_replica to track the drop history and use
@@ -295,30 +294,24 @@ struct restore_state
 // in `status`.
 struct split_state
 {
-    int32_t splitting_count;
+    int32_t splitting_count{0};
     // partition_index -> split_status
     std::map<int32_t, split_status::type> status;
-    split_state() : splitting_count(0) {}
 };
 
 class app_state;
 
-class app_state_helper
+struct app_state_helper
 {
 public:
-    app_state *owner;
-    std::atomic_int partitions_in_progress;
+    app_state *owner{nullptr};
+    std::atomic_int partitions_in_progress{0};
     std::vector<config_context> contexts;
-    dsn::message_ex *pending_response;
+    dsn::message_ex *pending_response{nullptr};
     std::vector<restore_state> restore_states;
     split_state split_states;
 
 public:
-    app_state_helper() : owner(nullptr), partitions_in_progress(0)
-    {
-        contexts.clear();
-        pending_response = nullptr;
-    }
     void on_init_partitions();
     void clear_proposals()
     {
@@ -399,11 +392,9 @@ public:
     partition_set *partitions(app_id id, bool only_primary);
 
     unsigned primary_count(app_id id) const;
-    unsigned secondary_count(app_id id) const { return partition_count(id) - primary_count(id); }
     unsigned partition_count(app_id id) const;
 
     unsigned primary_count() const { return total_primaries; }
-    unsigned secondary_count() const { return total_partitions - total_primaries; }
     unsigned partition_count() const { return total_partitions; }
 
     partition_status::type served_as(const gpid &pid) const;
@@ -550,15 +541,6 @@ for_each_available_app(const app_mapper &apps,
             break;
         }
     }
-}
-
-inline int count_partitions(const app_mapper &apps)
-{
-    int result = 0;
-    for (auto iter : apps)
-        if (iter.second->status == app_status::AS_AVAILABLE)
-            result += iter.second->partition_count;
-    return result;
 }
 
 void when_update_replicas(config_type::type t, const std::function<void(bool)> &func);

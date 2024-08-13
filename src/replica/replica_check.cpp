@@ -170,7 +170,7 @@ void replica::broadcast_group_check()
     // send empty prepare when necessary
     if (!FLAGS_empty_write_disabled &&
         dsn_now_ms() >= _primary_states.last_prepare_ts_ms + FLAGS_group_check_interval_ms) {
-        mutation_ptr mu = new_mutation(invalid_decree);
+        mutation_ptr mu = new_mutation(kInvalidDecree);
         mu->add_client_request(RPC_REPLICATION_WRITE_EMPTY, nullptr);
         init_prepare(mu, false);
     }
@@ -187,7 +187,7 @@ void replica::on_group_check(const group_check_request &request,
                     request.config.ballot,
                     enum_to_string(request.config.status),
                     request.last_committed_decree,
-                    request.__isset.confirmed_decree ? request.confirmed_decree : invalid_decree);
+                    request.__isset.confirmed_decree ? request.confirmed_decree : kInvalidDecree);
 
     if (request.config.ballot < get_ballot()) {
         response.err = ERR_VERSION_OUTDATED;

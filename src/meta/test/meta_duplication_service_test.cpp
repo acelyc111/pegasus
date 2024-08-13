@@ -227,7 +227,7 @@ public:
 
             auto ent = dup->to_duplication_entry();
             for (int j = 0; j < app->partition_count; j++) {
-                ASSERT_EQ(invalid_decree, ent.progress[j]);
+                ASSERT_EQ(kInvalidDecree, ent.progress[j]);
             }
 
             if (last_dup != 0) {
@@ -686,7 +686,7 @@ TEST_F(meta_duplication_service_test, duplication_sync)
     const dupid_t dupid = create_dup(test_app).dupid;
     auto dup = app->duplications[dupid];
     for (int i = 0; i < app->partition_count; i++) {
-        dup->init_progress(i, invalid_decree);
+        dup->init_progress(i, kInvalidDecree);
     }
     {
         std::map<gpid, std::vector<duplication_confirm_entry>> confirm_list;
@@ -721,9 +721,9 @@ TEST_F(meta_duplication_service_test, duplication_sync)
 
         // ensure no updated progresses will also be included in response
         for (int p = 4; p < 8; p++) {
-            ASSERT_EQ(progress_map[p], invalid_decree);
+            ASSERT_EQ(progress_map[p], kInvalidDecree);
         }
-        ASSERT_EQ(progress_map[0], invalid_decree);
+        ASSERT_EQ(progress_map[0], kInvalidDecree);
     }
 
     { // duplication not existed will be ignored

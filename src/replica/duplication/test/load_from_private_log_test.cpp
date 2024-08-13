@@ -381,7 +381,7 @@ TEST_P(load_from_private_log_test, ignore_useless)
     result = load_and_wait_all_entries_loaded(1, 100, _replica->get_gpid(), 100, 0);
     ASSERT_EQ(result.size(), 1);
 
-    // a new duplication's confirmed_decree is invalid_decree,
+    // a new duplication's confirmed_decree is kInvalidDecree,
     // so start_decree is 0.
     // In this case duplication will starts from last_commit(100) + 1,
     // no mutation will be loaded.

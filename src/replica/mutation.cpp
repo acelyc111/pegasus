@@ -366,7 +366,7 @@ mutation_ptr mutation_queue::add_work(task_code code, dsn::message_ex *request, 
 
     // add to work queue
     if (!_pending_mutation) {
-        _pending_mutation = r->new_mutation(invalid_decree);
+        _pending_mutation = r->new_mutation(kInvalidDecree);
     }
 
     LOG_DEBUG("add request with trace_id = {:#018x} into mutation with mutation_tid = {}",

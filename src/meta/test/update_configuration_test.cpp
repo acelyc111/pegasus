@@ -335,7 +335,7 @@ void meta_service_test_app::adjust_dropped_size()
     config_context &cc = *get_config_context(ss->_all_apps, pc.pid);
     cc.dropped = {
         dropped_replica{nodes[3], dropped_replica::INVALID_TIMESTAMP, 7, 11, 14},
-        dropped_replica{nodes[4], 20, invalid_ballot, invalid_decree, invalid_decree},
+        dropped_replica{nodes[4], 20, kInvalidBallot, kInvalidDecree, kInvalidDecree},
     };
 
     ss->sync_apps_to_remote_storage();

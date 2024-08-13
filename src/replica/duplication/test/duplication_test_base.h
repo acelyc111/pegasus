@@ -55,7 +55,7 @@ public:
     }
 
     std::unique_ptr<replica_duplicator>
-    create_test_duplicator(decree confirmed_decree = invalid_decree)
+    create_test_duplicator(decree confirmed_decree = kInvalidDecree)
     {
         duplication_entry dup_ent;
         dup_ent.dupid = 1;

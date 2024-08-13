@@ -167,7 +167,7 @@ void mutation_log_private::get_in_memory_mutations(decree start_decree,
         for (auto &mu : issued_write->mutations()) {
             // if start_ballot is invalid or equal to mu.ballot, check decree
             // otherwise check ballot
-            ballot current_ballot = (start_ballot == invalid_ballot) ? invalid_ballot
+            ballot current_ballot = (start_ballot == kInvalidBallot) ? kInvalidBallot
                                                                      : mu->get_ballot();
             if ((mu->get_decree() >= start_decree && start_ballot == current_ballot) ||
                 current_ballot > start_ballot) {
@@ -179,7 +179,7 @@ void mutation_log_private::get_in_memory_mutations(decree start_decree,
     for (auto &mu : pending_mutations) {
         // if start_ballot is invalid or equal to mu.ballot, check decree
         // otherwise check ballot
-        ballot current_ballot = (start_ballot == invalid_ballot) ? invalid_ballot
+        ballot current_ballot = (start_ballot == kInvalidBallot) ? kInvalidBallot
                                                                  : mu->get_ballot();
         if ((mu->get_decree() >= start_decree && start_ballot == current_ballot) ||
             current_ballot > start_ballot) {
@@ -732,11 +732,11 @@ decree mutation_log::max_gced_decree_no_lock(gpid gpid) const
 {
     CHECK(_is_private, "");
 
-    decree result = invalid_decree;
+    decree result = kInvalidDecree;
     for (auto &log : _log_files) {
         auto it = log.second->previous_log_max_decrees().find(gpid);
         if (it != log.second->previous_log_max_decrees().end()) {
-            if (result == invalid_decree) {
+            if (result == kInvalidDecree) {
                 result = it->second.max_decree;
             } else {
                 result = std::min(result, it->second.max_decree);
@@ -1101,7 +1101,7 @@ int mutation_log::garbage_collection(gpid gpid,
     CHECK(_is_private, "this method is only valid for private log");
 
     log_file_map_by_index files;
-    decree max_decree = invalid_decree;
+    decree max_decree = kInvalidDecree;
     int current_file_index = -1;
 
     {

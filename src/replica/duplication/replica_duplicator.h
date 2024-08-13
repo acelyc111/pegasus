@@ -43,10 +43,10 @@ public:
     bool checkpoint_has_prepared{false};
 
     // The max decree that has been persisted in the meta server.
-    decree confirmed_decree{invalid_decree};
+    decree confirmed_decree{kInvalidDecree};
 
     // The max decree that has been duplicated to the remote cluster.
-    decree last_decree{invalid_decree};
+    decree last_decree{kInvalidDecree};
 
     duplication_progress &set_last_decree(decree d)
     {
@@ -187,7 +187,7 @@ private:
 
     // The min decree that should be covered by the checkpoint which is triggered by the
     // newly added duplication.
-    decree _min_checkpoint_decree{invalid_decree};
+    decree _min_checkpoint_decree{kInvalidDecree};
 
     duplication_status::type _status{duplication_status::DS_INIT};
     std::atomic<duplication_fail_mode::type> _fail_mode{duplication_fail_mode::FAIL_SLOW};

@@ -377,7 +377,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
                     LOG_WARNING("{}: don't select primary: {}", gpid_name, reason);
                 } else {
                     const auto &it = cc.find_from_dropped(nodes[i]);
-                    if (it == cc.dropped.end() || it->ballot == invalid_ballot) {
+                    if (it == cc.dropped.end() || it->ballot == kInvalidBallot) {
                         if (ns->has_collected()) {
                             LOG_INFO("{}: ignore {}'s replica info as it doesn't exist on "
                                      "replica server",
@@ -481,9 +481,9 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
                 ddd_node_info ninfo;
                 SET_IP_AND_HOST_PORT_BY_DNS(ninfo, node, dr.node);
                 ninfo.drop_time_ms = dr.time;
-                ninfo.ballot = invalid_ballot;
-                ninfo.last_committed_decree = invalid_decree;
-                ninfo.last_prepared_decree = invalid_decree;
+                ninfo.ballot = kInvalidBallot;
+                ninfo.last_committed_decree = kInvalidDecree;
+                ninfo.last_prepared_decree = kInvalidDecree;
                 node_state *ns = get_node_state(*view.nodes, dr.node, false);
                 if (ns != nullptr && ns->alive()) {
                     ninfo.is_alive = true;

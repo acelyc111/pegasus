@@ -172,7 +172,7 @@ int32_t replication_options::app_mutation_2pc_min_replica_count(int32_t app_max_
 {
     rc.pid = pc.pid;
     rc.ballot = pc.ballot;
-    rc.learner_signature = invalid_signature;
+    rc.learner_signature = kInvalidSignature;
     SET_OBJ_IP_AND_HOST_PORT(rc, primary, pc, primary);
 
     if (node == pc.hp_primary) {

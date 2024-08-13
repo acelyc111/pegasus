@@ -112,8 +112,8 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
     // treat last server in drop_list as the primary
     const dropped_replica &server = drop_list.back();
     CHECK_NE_MSG(server.ballot,
-                 invalid_ballot,
-                 "the ballot of server must not be invalid_ballot, node = {}",
+                 kInvalidBallot,
+                 "the ballot of server must not be kInvalidBallot, node = {}",
                  server.node);
     SET_IP_AND_HOST_PORT_BY_DNS(pc, primary, server.node);
     pc.ballot = server.ballot;
@@ -157,7 +157,7 @@ bool collect_replica(meta_view view, const host_port &node, const replica_info &
 {
     partition_configuration &pc = *get_config(*view.apps, info.pid);
     // current partition is during partition split
-    if (pc.ballot == invalid_ballot)
+    if (pc.ballot == kInvalidBallot)
         return false;
     config_context &cc = *get_config_context(*view.apps, info.pid);
     if (is_member(pc, node)) {
@@ -181,10 +181,10 @@ proposal_actions::proposal_actions() : from_balancer(false) { reset_tracked_curr
 void proposal_actions::reset_tracked_current_learner()
 {
     learning_progress_abnormal_detected = false;
-    current_learner.ballot = invalid_ballot;
-    current_learner.last_durable_decree = invalid_decree;
-    current_learner.last_committed_decree = invalid_decree;
-    current_learner.last_prepared_decree = invalid_decree;
+    current_learner.ballot = kInvalidBallot;
+    current_learner.last_durable_decree = kInvalidDecree;
+    current_learner.last_committed_decree = kInvalidDecree;
+    current_learner.last_prepared_decree = kInvalidDecree;
 }
 
 void proposal_actions::track_current_learner(const dsn::host_port &node, const replica_info &info)
@@ -207,7 +207,7 @@ void proposal_actions::track_current_learner(const dsn::host_port &node, const r
             info.status == partition_status::PS_INACTIVE) {
             // if we've collected inforamtions for the learner, then it claims it's down
             // we will treat the learning process failed
-            if (current_learner.ballot != invalid_ballot) {
+            if (current_learner.ballot != kInvalidBallot) {
                 LOG_INFO("{}: a learner's is down to status({}), perhaps learn failed",
                          info.pid,
                          dsn::enum_to_string(info.status));
@@ -345,7 +345,7 @@ bool config_context::record_drop_history(const host_port &node)
     if (iter != dropped.end())
         return false;
     dropped.emplace_back(
-        dropped_replica{node, dsn_now_ms(), invalid_ballot, invalid_decree, invalid_decree});
+        dropped_replica{node, dsn_now_ms(), kInvalidBallot, kInvalidDecree, kInvalidDecree});
     prefered_dropped = (int)dropped.size() - 1;
     check_size();
     return true;

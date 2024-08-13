@@ -86,7 +86,7 @@ private:
 
     std::unique_ptr<prepare_list> _mutation_buffer;
     mutation_tuple_set _loaded_mutations;
-    decree _start_decree{invalid_decree};
+    decree _start_decree{kInvalidDecree};
     uint64_t _total_bytes{0};
 };
 

@@ -625,7 +625,7 @@ dsn::error_code server_state::sync_apps_from_remote_storage()
                         app->helpers->split_states.status[partition_id - app->partition_count / 2] =
                             split_status::SPLITTING;
                         app->helpers->split_states.splitting_count++;
-                        app->pcs[partition_id].ballot = invalid_ballot;
+                        app->pcs[partition_id].ballot = kInvalidBallot;
                         app->pcs[partition_id].pid = gpid(app->app_id, partition_id);
                         process_one_partition(app);
                     }
@@ -1543,7 +1543,7 @@ void server_state::update_configuration_locally(
     GET_HOST_PORT(*config_request, node, node);
 
     if (app.is_stateful) {
-        CHECK(old_pc.ballot == invalid_ballot || old_pc.ballot + 1 == new_pc.ballot,
+        CHECK(old_pc.ballot == kInvalidBallot || old_pc.ballot + 1 == new_pc.ballot,
               "invalid configuration update request, old ballot {}, new ballot {}",
               old_pc.ballot,
               new_pc.ballot);
@@ -2569,7 +2569,7 @@ bool server_state::check_all_partitions()
             const auto &pc = app->pcs[i];
             const auto &cc = app->helpers->contexts[i];
             // partition is under re-configuration or is child partition
-            if (cc.stage != config_status::pending_remote_sync && pc.ballot != invalid_ballot) {
+            if (cc.stage != config_status::pending_remote_sync && pc.ballot != kInvalidBallot) {
                 configuration_proposal_action action;
                 pc_status s = _meta_svc->get_partition_guardian()->cure(
                     {&_all_apps, &_nodes}, pc.pid, action);

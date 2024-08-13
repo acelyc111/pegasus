@@ -98,7 +98,7 @@ void replica::init_learn(uint64_t signature)
         return;
     }
 
-    if (signature == invalid_signature) {
+    if (signature == kInvalidSignature) {
         LOG_WARNING_PREFIX("invalid learning signature, skip");
         return;
     }
@@ -274,7 +274,7 @@ decree replica::get_max_gced_decree_for_learn() const // on learner
 
     decree plog_max_gced_decree = max_gced_decree_no_lock();
     decree first_learn_start = _potential_secondary_states.first_learn_start_decree;
-    if (first_learn_start == invalid_decree) {
+    if (first_learn_start == kInvalidDecree) {
         // this is the first round of learn
         max_gced_decree_for_learn = plog_max_gced_decree;
     } else {
@@ -331,7 +331,7 @@ decree replica::get_learn_start_decree(const learn_request &request) // on prima
         // if the confirmed_decree is unsure, copy all the logs
         // TODO(wutao1): can we reduce the copy size?
         decree local_gced = max_gced_decree_no_lock();
-        if (local_gced == invalid_decree) {
+        if (local_gced == kInvalidDecree) {
             // abnormal case
             LOG_WARNING_PREFIX("no plog to be learned for duplication, continue as normal");
         } else {
@@ -341,8 +341,8 @@ decree replica::get_learn_start_decree(const learn_request &request) // on prima
 
     decree learn_start_decree = learn_start_decree_no_dup;
     if (learn_start_decree_for_dup <= request.max_gced_decree ||
-        request.max_gced_decree == invalid_decree) {
-        // `request.max_gced_decree == invalid_decree` indicates the learner has no log,
+        request.max_gced_decree == kInvalidDecree) {
+        // `request.max_gced_decree == kInvalidDecree` indicates the learner has no log,
         // see replica::get_max_gced_decree_for_learn for details.
         if (learn_start_decree_for_dup < learn_start_decree_no_dup) {
             learn_start_decree = learn_start_decree_for_dup;
@@ -354,7 +354,7 @@ decree replica::get_learn_start_decree(const learn_request &request) // on prima
         }
     }
     CHECK_LE_PREFIX(learn_start_decree, local_committed_decree + 1);
-    CHECK_GT_PREFIX(learn_start_decree, 0); // learn_start_decree can never be invalid_decree
+    CHECK_GT_PREFIX(learn_start_decree, 0); // learn_start_decree can never be kInvalidDecree
     return learn_start_decree;
 }
 
@@ -460,7 +460,7 @@ void replica::on_learn(dsn::message_ex *msg, const learn_request &request)
                     _prepare_list->count(),
                     learn_start_decree);
     SET_IP_AND_HOST_PORT(response, learnee, _stub->primary_address(), _stub->primary_host_port());
-    response.prepare_start_decree = invalid_decree;
+    response.prepare_start_decree = kInvalidDecree;
     response.last_committed_decree = local_committed_decree;
     response.err = ERR_OK;
 
@@ -753,7 +753,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
         break;
     }
 
-    if (resp.prepare_start_decree != invalid_decree) {
+    if (resp.prepare_start_decree != kInvalidDecree) {
         CHECK_EQ(resp.type, learn_type::LT_CACHE);
         CHECK(resp.state.files.empty(), "");
         CHECK_EQ(_potential_secondary_states.learning_status,
@@ -949,7 +949,7 @@ bool replica::prepare_cached_learn_state(const learn_request &request,
     // note min_decree can be NOT present in prepare list when list.count == 0
     if (learn_start_decree > _prepare_list->min_decree() ||
         (learn_start_decree == _prepare_list->min_decree() && _prepare_list->count() > 0)) {
-        if (learner_state.prepare_start_decree == invalid_decree) {
+        if (learner_state.prepare_start_decree == kInvalidDecree) {
             // start from (last_committed_decree + 1)
             learner_state.prepare_start_decree = local_committed_decree + 1;
 
@@ -968,12 +968,12 @@ bool replica::prepare_cached_learn_state(const learn_request &request,
 
         response.prepare_start_decree = learner_state.prepare_start_decree;
     } else {
-        learner_state.prepare_start_decree = invalid_decree;
+        learner_state.prepare_start_decree = kInvalidDecree;
     }
 
     // only learn mutation cache in range of [learn_start_decree, prepare_start_decree),
     // in this case, the state on the PS should be contiguous (+ to-be-sent prepare list)
-    if (response.prepare_start_decree != invalid_decree) {
+    if (response.prepare_start_decree != kInvalidDecree) {
         binary_writer writer;
         int count = 0;
         for (decree d = learn_start_decree; d < response.prepare_start_decree; d++) {
@@ -1148,7 +1148,7 @@ void replica::on_copy_remote_state_completed(error_code err,
     }
 
     // if catch-up done, do flush to enable all learned state is durable
-    if (err == ERR_OK && resp.prepare_start_decree != invalid_decree &&
+    if (err == ERR_OK && resp.prepare_start_decree != kInvalidDecree &&
         _app->last_committed_decree() + 1 >=
             _potential_secondary_states.learning_start_prepare_decree &&
         _app->last_committed_decree() > _app->last_durable_decree()) {

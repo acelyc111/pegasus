@@ -62,7 +62,7 @@ replica_duplicator::replica_duplicator(const duplication_entry &ent, replica *r)
     _status = ent.status;
 
     auto it = ent.progress.find(get_gpid().get_partition_index());
-    if (it->second == invalid_decree) {
+    if (it->second == kInvalidDecree) {
         // Ensure that the checkpoint decree is at least 1. Otherwise, the checkpoint could not be
         // created in time for empty replica; in consequence, the remote cluster would inevitably
         // fail to pull the checkpoint files.

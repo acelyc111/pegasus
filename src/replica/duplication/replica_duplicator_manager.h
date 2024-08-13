@@ -54,7 +54,7 @@ public:
     std::vector<duplication_confirm_entry> get_duplication_confirms_to_update() const;
 
     /// mutations <= min_confirmed_decree are assumed to be cleanable.
-    /// If there's no duplication,　invalid_decree is returned, mean that all logs are cleanable.
+    /// If there's no duplication,　kInvalidDecree is returned, mean that all logs are cleanable.
     /// THREAD_POOL_REPLICATION
     /// \see replica::on_checkpoint_timer()
     decree min_confirmed_decree() const;
@@ -71,8 +71,8 @@ public:
     {
         dupid_t dupid{0};
         bool duplicating{false};
-        decree last_decree{invalid_decree};
-        decree confirmed_decree{invalid_decree};
+        decree last_decree{kInvalidDecree};
+        decree confirmed_decree{kInvalidDecree};
         duplication_fail_mode::type fail_mode{duplication_fail_mode::FAIL_SLOW};
         std::string remote_app_name;
     };
@@ -112,7 +112,7 @@ private:
 
     std::map<dupid_t, replica_duplicator_u_ptr> _duplications;
 
-    decree _primary_confirmed_decree{invalid_decree};
+    decree _primary_confirmed_decree{kInvalidDecree};
 
     // avoid thread conflict between replica::on_checkpoint_timer and
     // duplication_sync_timer.

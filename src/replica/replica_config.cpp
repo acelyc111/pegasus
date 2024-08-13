@@ -223,7 +223,7 @@ void replica::add_potential_secondary(const configuration_update_request &propos
     }
 
     remote_learner_state state;
-    state.prepare_start_decree = invalid_decree;
+    state.prepare_start_decree = kInvalidDecree;
     state.timeout_task = nullptr; // TODO: add timer for learner task
 
     const auto *rls = gutil::FindOrNull(_primary_states.learners, node);

@@ -103,7 +103,7 @@ public:
     void reset_membership(const partition_configuration &new_pc, bool clear_learners);
     void get_replica_config(partition_status::type status,
                             /*out*/ replica_configuration &config,
-                            uint64_t learner_signature = invalid_signature);
+                            uint64_t learner_signature = kInvalidSignature);
     bool check_exist(const ::dsn::host_port &node, partition_status::type status);
     partition_status::type get_node_status(const ::dsn::host_port &hp) const;
 
@@ -219,7 +219,7 @@ public:
           learning_status(learner_status::LearningInvalid),
           learning_round_is_running(false),
           learn_app_concurrent_count_increased(false),
-          learning_start_prepare_decree(invalid_decree)
+          learning_start_prepare_decree(kInvalidDecree)
     {
     }
 
@@ -244,7 +244,7 @@ public:
 
     // The start decree in the first round of learn.
     // It indicates the minimum decree under `learn/` dir.
-    decree first_learn_start_decree{invalid_decree};
+    decree first_learn_start_decree{kInvalidDecree};
 
     ::dsn::task_ptr delay_learning_task;
     ::dsn::task_ptr learning_task;

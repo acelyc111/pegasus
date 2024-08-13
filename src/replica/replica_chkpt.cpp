@@ -226,7 +226,7 @@ void replica::async_trigger_manual_emergency_checkpoint(decree min_checkpoint_de
                 // For the empty replica, here we commit an empty write would be to increase
                 // the decree to at least 1, to ensure that the checkpoint would inevitably
                 // be created even if the replica is empty.
-                mutation_ptr mu = new_mutation(invalid_decree);
+                mutation_ptr mu = new_mutation(kInvalidDecree);
                 mu->add_client_request(RPC_REPLICATION_WRITE_EMPTY, nullptr);
                 init_prepare(mu, false);
 

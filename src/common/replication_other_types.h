@@ -46,10 +46,10 @@ typedef int32_t app_id;
 typedef int64_t ballot;
 typedef int64_t decree;
 
-#define invalid_ballot ((::dsn::replication::ballot)-1LL)
-#define invalid_decree ((::dsn::replication::decree)-1LL)
-#define invalid_offset (-1LL)
-#define invalid_signature 0
+#define kInvalidBallot ((::dsn::replication::ballot)-1LL)
+#define kInvalidDecree ((::dsn::replication::decree)-1LL)
+#define kInvalidOffset (-1LL)
+#define kInvalidSignature 0
 
 inline bool is_primary(const partition_configuration &pc, const host_port &node)
 {

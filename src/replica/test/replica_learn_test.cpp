@@ -81,8 +81,8 @@ public:
         } tests[] = {
             // min_confirmed_decree(3) >= 0
             // learn_start_decree_for_dup(4) < learn_start_decree_no_dup(6)
-            // request.max_gced_decree == invalid_decree
-            {5, invalid_decree, 5, 0, 3, 4},
+            // request.max_gced_decree == kInvalidDecree
+            {5, kInvalidDecree, 5, 0, 3, 4},
 
             // min_confirmed_decree(3) >= 0
             // learn_start_decree_for_dup(4) < learn_start_decree_no_dup(6)
@@ -98,39 +98,39 @@ public:
             // learn_start_decree_for_dup(4) > learn_start_decree_no_dup(1)
             {0, 4, 5, 0, 3, 1},
 
-            // min_confirmed_decree == invalid_decree
-            // local_gced == invalid_decree
+            // min_confirmed_decree == kInvalidDecree
+            // local_gced == kInvalidDecree
             // abnormal case
-            {5, invalid_decree, 5, invalid_decree, invalid_decree, 6},
+            {5, kInvalidDecree, 5, kInvalidDecree, kInvalidDecree, 6},
 
-            // min_confirmed_decree == invalid_decree
-            // local_gced(2) != invalid_decree
+            // min_confirmed_decree == kInvalidDecree
+            // local_gced(2) != kInvalidDecree
             // learn_start_decree_for_dup(3) < learn_start_decree_no_dup(6)
-            // request.max_gced_decree == invalid_decree
-            {5, invalid_decree, 5, 2, invalid_decree, 3},
+            // request.max_gced_decree == kInvalidDecree
+            {5, kInvalidDecree, 5, 2, kInvalidDecree, 3},
 
-            // min_confirmed_decree == invalid_decree
-            // local_gced(2) != invalid_decree
+            // min_confirmed_decree == kInvalidDecree
+            // local_gced(2) != kInvalidDecree
             // learn_start_decree_for_dup(3) < learn_start_decree_no_dup(6)
             // learn_start_decree_for_dup(3) <= request.max_gced_decree(3)
-            {5, 3, 5, 2, invalid_decree, 3},
-            // local_gced(0) != invalid_decree
+            {5, 3, 5, 2, kInvalidDecree, 3},
+            // local_gced(0) != kInvalidDecree
             // learn_start_decree_for_dup(1) < learn_start_decree_no_dup(6)
             // learn_start_decree_for_dup(1) <= request.max_gced_decree(3)
-            {5, 3, 5, 0, invalid_decree, 1},
+            {5, 3, 5, 0, kInvalidDecree, 1},
 
-            // min_confirmed_decree == invalid_decree
-            // local_gced(2) != invalid_decree
+            // min_confirmed_decree == kInvalidDecree
+            // local_gced(2) != kInvalidDecree
             // learn_start_decree_for_dup(3) < learn_start_decree_no_dup(6)
             // learn_start_decree_for_dup(3) > request.max_gced_decree(0)
-            {5, 0, 5, 2, invalid_decree, 6},
+            {5, 0, 5, 2, kInvalidDecree, 6},
 
-            // min_confirmed_decree == invalid_decree
-            // local_gced(2) != invalid_decree
+            // min_confirmed_decree == kInvalidDecree
+            // local_gced(2) != kInvalidDecree
             // learn_start_decree_for_dup(3) > learn_start_decree_no_dup(1)
-            {0, invalid_decree, 5, 2, invalid_decree, 1},
+            {0, kInvalidDecree, 5, 2, kInvalidDecree, 1},
             // learn_start_decree_for_dup(3) > learn_start_decree_no_dup(2)
-            {1, invalid_decree, 5, 2, invalid_decree, 2},
+            {1, kInvalidDecree, 5, 2, kInvalidDecree, 2},
         };
 
         int id = 1;
@@ -162,10 +162,10 @@ public:
             decree plog_max_gced_decree;
 
             decree want;
-        } tests[] = {{invalid_decree, 10, 10},
-                     {invalid_decree, invalid_decree, invalid_decree},
+        } tests[] = {{kInvalidDecree, 10, 10},
+                     {kInvalidDecree, kInvalidDecree, kInvalidDecree},
                      {10, 20, 9},
-                     {10, invalid_decree, 9},
+                     {10, kInvalidDecree, 9},
                      {10, 5, 5}};
         for (auto tt : tests) {
             _replica = create_duplicating_replica();

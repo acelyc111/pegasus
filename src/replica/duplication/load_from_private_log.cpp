@@ -101,15 +101,15 @@ bool load_from_private_log::switch_to_next_log_file()
 
 void load_from_private_log::run()
 {
-    CHECK_NE_PREFIX(_start_decree, invalid_decree);
+    CHECK_NE_PREFIX(_start_decree, kInvalidDecree);
     _duplicator->verify_start_decree(_start_decree);
 
-    // last_decree() == invalid_decree is the init status of mutation_buffer when create
+    // last_decree() == kInvalidDecree is the init status of mutation_buffer when create
     // _mutation_batch, which means the duplication sync hasn't been completed, so need wait sync
-    // complete and the  confirmed_decree  != invalid_decree, and then reset mutation_buffer to
+    // complete and the  confirmed_decree  != kInvalidDecree, and then reset mutation_buffer to
     // valid status
-    if (_mutation_batch.last_decree() == invalid_decree) {
-        if (_duplicator->progress().confirmed_decree == invalid_decree) {
+    if (_mutation_batch.last_decree() == kInvalidDecree) {
+        if (_duplicator->progress().confirmed_decree == kInvalidDecree) {
             LOG_WARNING_PREFIX(
                 "duplication status hasn't been sync completed, try next for delay 1s, "
                 "last_commit_decree={}, "
@@ -120,7 +120,7 @@ void load_from_private_log::run()
 
             FAIL_POINT_INJECT_NOT_RETURN_F(
                 "duplication_sync_complete", [&](std::string_view s) -> void {
-                    if (_duplicator->progress().confirmed_decree == invalid_decree) {
+                    if (_duplicator->progress().confirmed_decree == kInvalidDecree) {
                         // set_confirmed_decree(9), the value must be equal (decree_start of
                         // `test_start_duplication` in `load_from_private_log_test.cpp`) -1
                         _duplicator->update_progress(

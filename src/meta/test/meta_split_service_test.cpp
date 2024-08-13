@@ -215,7 +215,7 @@ public:
             app->helpers->contexts[i].pc = &app->pcs[i];
             app->pcs[i].pid = gpid(app->app_id, i);
             if (i >= app->partition_count / 2) {
-                app->pcs[i].ballot = invalid_ballot;
+                app->pcs[i].ballot = kInvalidBallot;
             } else {
                 app->pcs[i].ballot = PARENT_BALLOT;
                 app->helpers->contexts[i].stage = config_status::not_pending;
@@ -244,7 +244,7 @@ public:
             app->helpers->contexts[i].pc = &app->pcs[i];
             app->pcs[i].pid = dsn::gpid(app->app_id, i);
             if (i >= app->partition_count / 2) {
-                app->pcs[i].ballot = invalid_ballot;
+                app->pcs[i].ballot = kInvalidBallot;
             } else {
                 app->pcs[i].ballot = PARENT_BALLOT;
                 app->helpers->contexts[i].stage = config_status::not_pending;

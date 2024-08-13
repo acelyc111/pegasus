@@ -239,7 +239,7 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
     mu->data.header.last_committed_decree = last_committed_decree();
 
     log_level_t level = LOG_LEVEL_DEBUG;
-    if (mu->data.header.decree == invalid_decree) {
+    if (mu->data.header.decree == kInvalidDecree) {
         mu->set_id(get_ballot(), _prepare_list->max_decree() + 1);
         // print a debug log if necessary
         if (FLAGS_prepare_decree_gap_for_debug_logging > 0 &&
@@ -311,7 +311,7 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
 
     count = 0;
     for (auto it = _primary_states.learners.begin(); it != _primary_states.learners.end(); ++it) {
-        if (it->second.prepare_start_decree != invalid_decree &&
+        if (it->second.prepare_start_decree != kInvalidDecree &&
             mu->data.header.decree >= it->second.prepare_start_decree) {
             send_prepare_message(it->first,
                                  partition_status::PS_POTENTIAL_SECONDARY,
@@ -331,7 +331,7 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
     if (mu->is_logged()) {
         do_possible_commit_on_primary(mu);
     } else {
-        CHECK_EQ(mu->data.header.log_offset, invalid_offset);
+        CHECK_EQ(mu->data.header.log_offset, kInvalidOffset);
         CHECK(mu->log_task() == nullptr, "");
         int64_t pending_size;
         mu->log_task() = _private_log->append(mu,
@@ -706,7 +706,7 @@ void replica::on_prepare_reply(std::pair<mutation_ptr, partition_status::type> p
             } else {
                 LOG_INFO_PREFIX(
                     "mutation {} retry prepare to {} after {} ms", mu->name(), node, delay_time_ms);
-                int64_t learn_signature = invalid_signature;
+                int64_t learn_signature = kInvalidSignature;
                 if (target_status == partition_status::PS_POTENTIAL_SECONDARY) {
                     auto it = _primary_states.learners.find(node);
                     if (it != _primary_states.learners.end()) {

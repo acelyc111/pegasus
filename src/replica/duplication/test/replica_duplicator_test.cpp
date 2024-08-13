@@ -161,12 +161,12 @@ TEST_P(replica_duplicator_test, duplication_progress)
     // Start duplication from empty replica.
     ASSERT_EQ(1, min_checkpoint_decree(duplicator));
     ASSERT_EQ(0, duplicator->progress().last_decree);
-    ASSERT_EQ(invalid_decree, duplicator->progress().confirmed_decree);
+    ASSERT_EQ(kInvalidDecree, duplicator->progress().confirmed_decree);
 
     // Update the max decree that has been duplicated to the remote cluster.
     duplicator->update_progress(duplicator->progress().set_last_decree(10));
     ASSERT_EQ(10, duplicator->progress().last_decree);
-    ASSERT_EQ(invalid_decree, duplicator->progress().confirmed_decree);
+    ASSERT_EQ(kInvalidDecree, duplicator->progress().confirmed_decree);
 
     // Update the max decree that has been persisted in the meta server.
     duplicator->update_progress(duplicator->progress().set_confirmed_decree(10));

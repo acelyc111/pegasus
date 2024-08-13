@@ -136,11 +136,11 @@ decree replica_duplicator_manager::min_confirmed_decree() const
 {
     zauto_lock l(_lock);
 
-    decree min_decree = invalid_decree;
+    decree min_decree = kInvalidDecree;
     if (_replica->status() == partition_status::PS_PRIMARY) {
         for (auto &kv : _duplications) {
             const duplication_progress &p = kv.second->progress();
-            if (min_decree == invalid_decree) {
+            if (min_decree == kInvalidDecree) {
                 min_decree = p.confirmed_decree;
             } else {
                 min_decree = std::min(min_decree, p.confirmed_decree);

@@ -76,7 +76,7 @@ public:
         ent.progress[r->get_gpid().get_partition_index()] = 100;
         d.sync_duplication(ent);
         ASSERT_EQ(d._duplications.size(), 1);
-        ASSERT_EQ(d._primary_confirmed_decree, invalid_decree);
+        ASSERT_EQ(d._primary_confirmed_decree, kInvalidDecree);
 
         // replica failover
         r->as_secondary();
@@ -164,7 +164,7 @@ public:
 
         {
             // non-primary
-            test_case tt{{1, 2, 3}, invalid_decree};
+            test_case tt{{1, 2, 3}, kInvalidDecree};
             assert_test(tt);
         }
 
@@ -176,7 +176,7 @@ public:
             tt = {{1000}, 1000};
             assert_test(tt);
 
-            tt = {{}, invalid_decree};
+            tt = {{}, kInvalidDecree};
             assert_test(tt);
         }
     }

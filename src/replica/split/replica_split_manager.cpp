@@ -300,7 +300,7 @@ void replica_split_manager::parent_prepare_states(const std::string &dir) // on 
     uint64_t total_file_size = 0;
     // get mutation and private log
     _replica->_private_log->get_parent_mutations_and_logs(
-        get_gpid(), checkpoint_decree + 1, invalid_ballot, mutation_list, files, total_file_size);
+        get_gpid(), checkpoint_decree + 1, kInvalidBallot, mutation_list, files, total_file_size);
 
     // get prepare list
     std::shared_ptr<prepare_list> plist =
@@ -718,7 +718,7 @@ void replica_split_manager::parent_handle_child_catch_up(
     decree sync_point = _replica->_prepare_list->max_decree() + 1;
     if (!FLAGS_empty_write_disabled) {
         // empty wirte here to commit sync_point
-        mutation_ptr mu = _replica->new_mutation(invalid_decree);
+        mutation_ptr mu = _replica->new_mutation(kInvalidDecree);
         mu->add_client_request(RPC_REPLICATION_WRITE_EMPTY, nullptr);
         _replica->init_prepare(mu, false);
         CHECK_EQ_PREFIX_MSG(
@@ -1264,7 +1264,7 @@ void replica_split_manager::trigger_primary_parent_split(
     //   partition_count is not updated
     //   in this case, child has been registered on meta server
     // - case2. when this parent partition is canceled, but other partitions is still canceling.
-    //   in this case, child partition ballot is invalid_ballot
+    //   in this case, child partition ballot is kInvalidBallot
     // As a result, primary should send query_child_state rpc to meta server
     query_child_state();
 }

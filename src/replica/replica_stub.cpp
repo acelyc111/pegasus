@@ -568,8 +568,8 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
 
         it->second->reset_prepare_list_after_replay();
 
-        decree pmax = invalid_decree;
-        decree pmax_commit = invalid_decree;
+        decree pmax = kInvalidDecree;
+        decree pmax_commit = kInvalidDecree;
         if (it->second->private_log()) {
             pmax = it->second->private_log()->max_decree(it->first);
             pmax_commit = it->second->private_log()->max_commit_on_disk();
@@ -1124,7 +1124,7 @@ void replica_stub::on_group_check(group_check_rpc rpc)
 
             begin_open_replica(request.app, request.config.pid, req, nullptr);
             response.err = ERR_OK;
-            response.learner_signature = invalid_signature;
+            response.learner_signature = kInvalidSignature;
         } else {
             response.err = ERR_OBJECT_NOT_FOUND;
         }
