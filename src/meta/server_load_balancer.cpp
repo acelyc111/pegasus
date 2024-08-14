@@ -167,7 +167,7 @@ void server_load_balancer::register_proposals(meta_view view,
         return;
     }
 
-    std::vector<configuration_proposal_action> acts = req.action_list;
+    std::list<configuration_proposal_action> acts(req.action_list.begin(), req.action_list.end());
     for (configuration_proposal_action &act : acts) {
         // for some client generated proposals, the sender may not know the primary address.
         // e.g: "copy_secondary from a to b".

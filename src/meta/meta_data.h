@@ -99,17 +99,12 @@ struct pc_flags
 class proposal_actions
 {
 private:
+    // Whether the proposal actions are from the load balancer. Otherwise, it's from curer.
     bool from_balancer;
-
-    // used for track the learning process and check if an abnormal situation happens
+    // Used for tracking the learning process and check if an abnormal situation happens.
     bool learning_progress_abnormal_detected;
     replica_info current_learner;
-
-    // NOTICE:
-    // meta service use configuration_proposal_action::period_ts
-    // to store an expire timestamp, but a rpc_sender use this field
-    // to suggest a ttl period
-    std::vector<configuration_proposal_action> acts;
+    std::list<configuration_proposal_action> acts;
 
 public:
     proposal_actions();
@@ -117,13 +112,12 @@ public:
     void track_current_learner(const host_port &node, const replica_info &info);
     void clear();
 
-    // return the action in acts & whether the action is from balancer
     bool is_from_balancer() const { return from_balancer; }
     bool is_abnormal_learning_proposal() const;
 
     void pop_front();
     void assign_cure_proposal(const configuration_proposal_action &act);
-    void assign_balancer_proposals(const std::vector<configuration_proposal_action> &cpa_list);
+    void assign_balancer_proposals(const std::list<configuration_proposal_action> &cpa_list);
 
     const configuration_proposal_action *front() const;
     bool empty() const;
@@ -255,11 +249,6 @@ public:
     void adjust_proposal(const dsn::host_port &node, const replica_info &info);
 
     bool get_disk_tag(const host_port &node, /*out*/ std::string &disk_tag) const;
-
-public:
-    // intialize to 4 statically.
-    // and will be set by load-balancer module
-    static int MAX_REPLICA_COUNT_IN_GRROUP;
 };
 
 struct partition_configuration_stateless

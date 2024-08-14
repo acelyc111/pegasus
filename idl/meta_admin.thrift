@@ -351,8 +351,7 @@ struct configuration_proposal_action
     2:dsn.rpc_address        node;
     3:config_type            type;
 
-    // depricated now
-    // new fields of this struct should start with 5
+    // Deprecated, but should leave it here for compatibility
     // 4:i64 period_ts;
     5:optional dsn.host_port hp_target;
     6:optional dsn.host_port hp_node;

@@ -42,14 +42,14 @@
 namespace dsn {
 namespace replication {
 
-typedef int32_t app_id;
-typedef int64_t ballot;
-typedef int64_t decree;
+using app_id = int32_t;
+using ballot = int64_t;
+using decree = int64_t;
 
-#define kInvalidBallot ((::dsn::replication::ballot)-1LL)
-#define kInvalidDecree ((::dsn::replication::decree)-1LL)
-#define kInvalidOffset (-1LL)
-#define kInvalidSignature 0
+static const ballot kInvalidBallot{-1LL};
+const decree kInvalidDecree{-1LL};
+const int64_t kInvalidOffset{-1LL};
+const int64_t kInvalidSignature{0};
 
 inline bool is_primary(const partition_configuration &pc, const host_port &node)
 {

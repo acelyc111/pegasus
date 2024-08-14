@@ -47,12 +47,7 @@
 // is set to 4 means 3 alive replicas plus a dropped replica.
 //
 // FLAGS_max_replicas_in_group can also be loaded from configuration file, which means its default
-// value will be overridden. The value of FLAGS_max_replicas_in_group will be assigned to another
-// static variable `MAX_REPLICA_COUNT_IN_GRROUP`, whose default value is also 4.
-//
-// For unit tests, `MAX_REPLICA_COUNT_IN_GRROUP` is set to the default value 4; for production
-// environments, `MAX_REPLICA_COUNT_IN_GRROUP` is set to 3 since FLAGS_max_replicas_in_group is
-// configured as 3 in `.ini` file.
+// value will be overridden.
 //
 // Since the cluster-level option FLAGS_max_replicas_in_group contains the alive and dropped
 // replicas, we can use the replication factor of each table as the number of alive replicas, and
@@ -198,52 +193,60 @@ void proposal_actions::track_current_learner(const dsn::host_port &node, const r
         return;
     }
 
-    // currently we only handle add secondary
+    // Currently we only handle add secondary.
     // TODO: adjust other proposals according to replica info collected
-    if (act.type == config_type::CT_ADD_SECONDARY ||
-        act.type == config_type::CT_ADD_SECONDARY_FOR_LB) {
-
-        if (info.status == partition_status::PS_ERROR ||
-            info.status == partition_status::PS_INACTIVE) {
-            // if we've collected inforamtions for the learner, then it claims it's down
-            // we will treat the learning process failed
-            if (current_learner.ballot != kInvalidBallot) {
-                LOG_INFO("{}: a learner's is down to status({}), perhaps learn failed",
-                         info.pid,
-                         dsn::enum_to_string(info.status));
-                learning_progress_abnormal_detected = true;
-            } else {
-                LOG_DEBUG(
-                    "{}: ignore abnormal status of {}, perhaps learn not start", info.pid, node);
-            }
-        } else if (info.status == partition_status::PS_POTENTIAL_SECONDARY) {
-            if (current_learner.ballot > info.ballot ||
-                current_learner.last_committed_decree > info.last_committed_decree ||
-                current_learner.last_prepared_decree > info.last_prepared_decree) {
-
-                // TODO: need to add a metric here.
-                LOG_WARNING("{}: learner({})'s progress step back, please trace this carefully",
-                            info.pid,
-                            node);
-            }
-
-            // NOTICE: the flag may be abormal currently. it's balancer's duty to make use of the
-            // abnormal flag and decide whether to cancel the proposal.
-            // if the balancer try to give the proposal another chance, or another learning round
-            // starts before the balancer notice it, let's just treat it normal again.
-            learning_progress_abnormal_detected = false;
-            current_learner = info;
-        }
+    if (act.type != config_type::CT_ADD_SECONDARY &&
+        act.type != config_type::CT_ADD_SECONDARY_FOR_LB) {
+        return;
     }
+
+    if (info.status == partition_status::PS_ERROR ||
+        info.status == partition_status::PS_INACTIVE) {
+        if (current_learner.ballot == kInvalidBallot) {
+            LOG_DEBUG("{}: ignore abnormal status of {}, perhaps learn not start", info.pid, node);
+            return;
+        }
+        // If we've collected informations for the learner, then it claims it's down.
+        // We will treat the learning process failed.
+        DCHECK_NE(current_learner.ballot, kInvalidBallot);
+        LOG_INFO("{}: a learner's is down to status({}), perhaps learn failed",
+                 info.pid,
+                 dsn::enum_to_string(info.status));
+        learning_progress_abnormal_detected = true;
+        return;
+    }
+
+    if (info.status != partition_status::PS_POTENTIAL_SECONDARY) {
+        return;
+    }
+
+    if (current_learner.ballot > info.ballot ||
+        current_learner.last_committed_decree > info.last_committed_decree ||
+        current_learner.last_prepared_decree > info.last_prepared_decree) {
+
+        // TODO: need to add a metric here.
+        LOG_WARNING("{}: learner({})'s progress step back, please trace this carefully",
+                    info.pid,
+                    node);
+    }
+
+    // NOTICE: the flag may be abnormal currently. It's balancer's duty to make use of the
+    // abnormal flag and decide whether to cancel the proposal.
+    // If the balancer tries to give the proposal another chance, or another learning round
+    // starts before the balancer notices it, let's just treat it normal again.
+    learning_progress_abnormal_detected = false;
+    current_learner = info;
 }
 
 bool proposal_actions::is_abnormal_learning_proposal() const
 {
-    if (empty())
+    if (empty()) {
         return false;
+    }
     if (front()->type != config_type::CT_ADD_SECONDARY &&
-        front()->type != config_type::CT_ADD_SECONDARY_FOR_LB)
+        front()->type != config_type::CT_ADD_SECONDARY_FOR_LB) {
         return false;
+    }
     return learning_progress_abnormal_detected;
 }
 
@@ -257,15 +260,16 @@ void proposal_actions::clear()
 void proposal_actions::pop_front()
 {
     if (!acts.empty()) {
-        acts.erase(acts.begin());
+        acts.pop_front();
         reset_tracked_current_learner();
     }
 }
 
 const configuration_proposal_action *proposal_actions::front() const
 {
-    if (acts.empty())
+    if (acts.empty()) {
         return nullptr;
+    }
     return &acts.front();
 }
 
@@ -277,7 +281,7 @@ void proposal_actions::assign_cure_proposal(const configuration_proposal_action 
 }
 
 void proposal_actions::assign_balancer_proposals(
-    const std::vector<configuration_proposal_action> &cpa_list)
+    const std::list<configuration_proposal_action> &cpa_list)
 {
     from_balancer = true;
     acts = cpa_list;
@@ -286,7 +290,6 @@ void proposal_actions::assign_balancer_proposals(
 
 bool proposal_actions::empty() const { return acts.empty(); }
 
-int config_context::MAX_REPLICA_COUNT_IN_GRROUP = 4;
 void config_context::cancel_sync()
 {
     if (config_status::pending_remote_sync == stage) {
@@ -303,8 +306,8 @@ void config_context::cancel_sync()
 
 void config_context::check_size()
 {
-    // when add learner, it is possible that replica_count > max_replica_count, so we
-    // need to remove things from dropped only when it's not empty.
+    // When add learner, it is possible that replica_count > max_replica_count, so we
+    // need to remove some from dropped only when it's not empty.
     while (replica_count(*pc) + dropped.size() >
                pc->max_replica_count + FLAGS_max_reserved_dropped_replicas &&
            !dropped.empty()) {

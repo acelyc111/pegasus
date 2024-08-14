@@ -65,7 +65,6 @@ partition_guardian::partition_guardian(meta_service *svc) : _svc(svc)
 {
     if (svc != nullptr) {
         _replica_assign_delay_ms_for_dropouts = FLAGS_replica_assign_delay_ms_for_dropouts;
-        config_context::MAX_REPLICA_COUNT_IN_GRROUP = FLAGS_max_replicas_in_group;
     } else {
         _replica_assign_delay_ms_for_dropouts = 0;
     }
