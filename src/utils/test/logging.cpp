@@ -31,8 +31,14 @@
 #include "gtest/gtest.h"
 #include "utils/api_utilities.h"
 #include "utils/fail_point.h"
+#include "utils/flags.h"
 #include "utils/fmt_logging.h"
 #include "utils/timer.h"
+
+DSN_DEFINE_int32(test,
+                 logging_test_simple_benchmark_loops,
+                 10,
+                 "The loop times for LoggingTest.SimpleBenchmark test case");
 
 TEST(LoggingTest, GlobalLog)
 {
@@ -94,4 +100,18 @@ TEST(LoggingTest, TestLogTiming)
     }
 
     ASSERT_EQ("hello", s2);
+}
+
+TEST(LoggingTest, SimpleBenchmark)
+{
+    set_log_start_level(LOG_LEVEL_FATAL);
+    SCOPED_LOG_TIMING(INFO,
+                      "LoggingTest.SimpleBenchmark loop {} times",
+                      FLAGS_logging_test_simple_benchmark_loops);
+    for (int i = 0; i < FLAGS_logging_test_simple_benchmark_loops; i++) {
+        LOG_DEBUG("abc {}, {}, {}", i, 1.0, "hello 1");
+        LOG_INFO("abc {}, {}, {}", i + 1, 2.0, "hello 2");
+        LOG_WARNING("abc {}, {}, {}", i + 2, 3.0, "hello 3");
+        LOG_ERROR("abc {}, {}, {}", i + 3, 4.0, "hello 4");
+    }
 }
