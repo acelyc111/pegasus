@@ -63,11 +63,11 @@ protected:
                                void (*handler)(T *svc, const TReq &req, rpc_replier<TResp> &resp))
     {
         // Only allowed to register simple.kv rpc handler.
-        CHECK(dsn::replication::application::RPC_SIMPLE_KV_SIMPLE_KV_READ == rpc_code ||
-                  dsn::replication::application::RPC_SIMPLE_KV_SIMPLE_KV_WRITE == rpc_code ||
-                  dsn::replication::application::RPC_SIMPLE_KV_SIMPLE_KV_APPEND == rpc_code,
-              "Not allowed to register with rpc_code {}",
-              rpc_code);
+        PGSCHECK(dsn::replication::application::RPC_SIMPLE_KV_SIMPLE_KV_READ == rpc_code ||
+                     dsn::replication::application::RPC_SIMPLE_KV_SIMPLE_KV_WRITE == rpc_code ||
+                     dsn::replication::application::RPC_SIMPLE_KV_SIMPLE_KV_APPEND == rpc_code,
+                 "Not allowed to register with rpc_code {}",
+                 rpc_code);
         rpc_handler h = [handler](T *p, dsn::message_ex *r) {
             TReq req;
             ::dsn::unmarshall(r, req);
@@ -117,16 +117,17 @@ protected:
 
     static bool register_async_rpc_handler(dsn::task_code rpc_code, const char *name, rpc_handler h)
     {
-        CHECK(s_handlers.emplace(rpc_code.to_string(), h).second,
-              "handler {} has already been registered",
-              rpc_code);
-        CHECK(s_handlers.emplace(name, h).second, "handler {} has already been registered", name);
+        PGSCHECK(s_handlers.emplace(rpc_code.to_string(), h).second,
+                 "handler {} has already been registered",
+                 rpc_code);
+        PGSCHECK(
+            s_handlers.emplace(name, h).second, "handler {} has already been registered", name);
 
         s_vhandlers.resize(rpc_code + 1);
-        CHECK(s_vhandlers[rpc_code] == nullptr,
-              "handler {}({}) has already been registered",
-              rpc_code,
-              rpc_code.code());
+        PGSCHECK(s_vhandlers[rpc_code] == nullptr,
+                 "handler {}({}) has already been registered",
+                 rpc_code,
+                 rpc_code.code());
         s_vhandlers[rpc_code] = h;
         return true;
     }

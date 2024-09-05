@@ -323,7 +323,7 @@ bool failure_detector::remove_from_allow_list(const ::dsn::host_port &node)
 
 void failure_detector::set_allow_list(const std::vector<std::string> &replica_hps)
 {
-    CHECK(!_is_started, "FD is already started, the allow list should really not be modified");
+    PGSCHECK(!_is_started, "FD is already started, the allow list should really not be modified");
 
     std::vector<host_port> nodes;
     for (const auto &hp : replica_hps) {

@@ -217,16 +217,16 @@ int zookeeper_session::attach(void *callback_owner, const state_callback &cb)
                      sasl_errstring(err, nullptr, nullptr));
 
         if (!utils::is_empty(FLAGS_sasl_password_file)) {
-            CHECK(utils::filesystem::file_exists(FLAGS_sasl_password_file),
-                  "sasl_password_file {} not exist!",
-                  FLAGS_sasl_password_file);
+            PGSCHECK(utils::filesystem::file_exists(FLAGS_sasl_password_file),
+                     "sasl_password_file {} not exist!",
+                     FLAGS_sasl_password_file);
         }
 
         auto param_host = "";
         if (!utils::is_empty(FLAGS_sasl_service_fqdn)) {
-            CHECK(dsn::rpc_address::from_host_port(FLAGS_sasl_service_fqdn),
-                  "sasl_service_fqdn '{}' is invalid",
-                  FLAGS_sasl_service_fqdn);
+            PGSCHECK(dsn::rpc_address::from_host_port(FLAGS_sasl_service_fqdn),
+                     "sasl_service_fqdn '{}' is invalid",
+                     FLAGS_sasl_service_fqdn);
             param_host = FLAGS_sasl_service_fqdn;
         }
         // DIGEST-MD5 requires '--server-fqdn zk-sasl-md5' for historical reasons on zk c client
@@ -251,7 +251,7 @@ int zookeeper_session::attach(void *callback_owner, const state_callback &cb)
                                       &sasl_params);
     } while (false);
 
-    CHECK_NOTNULL(_handle, "zookeeper session init failed");
+    PGSCHECK_NOTNULL(_handle, "zookeeper session init failed");
 
     _watchers.push_back(watcher_object());
     _watchers.back().watcher_path = "";
@@ -398,7 +398,7 @@ void zookeeper_session::global_watcher(
     if (type != ZOO_SESSION_EVENT && path != nullptr)
         LOG_INFO("watcher path: {}", path);
 
-    CHECK(zoo_session->_handle == handle, "");
+    PGSCHECK(zoo_session->_handle == handle, "");
     zoo_session->dispatch_event(type, state, type == ZOO_SESSION_EVENT ? "" : path);
 }
 

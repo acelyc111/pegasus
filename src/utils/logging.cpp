@@ -40,6 +40,15 @@
 #include "utils/logging_provider.h"
 #include "utils/sys_exit_hook.h"
 
+// glog: minloglevel (int, default=0, which is INFO)
+// Log messages at or above this level. Again, the numbers of severity levels INFO, WARNING, ERROR,
+// and FATAL are 0, 1, 2, and 3, respectively. glog: v (int, default=0) Show all VLOG(m) messages
+// for m less or equal the value of this flag. Overridable by --vmodule. Refer to verbose logging
+// for more detail. glog: vmodule (string, default="") Per-module verbose level. The argument has to
+// contain a comma-separated list of <module name>=<log level>. <module name> is a glob pattern
+// (e.g., gfs* for all modules whose name starts with "gfs"), matched against the filename base
+// (that is, name ignoring .cc/.h./-inl.h). <log level> overrides any value given by --v. See also
+// verbose logging for more details.
 DSN_DEFINE_string(core,
                   logging_start_level,
                   "LOG_LEVEL_INFO",

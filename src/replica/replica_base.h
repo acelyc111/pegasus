@@ -56,11 +56,11 @@ struct replica_base
 
     const metric_entity_ptr &replica_metric_entity() const
     {
-        CHECK_NOTNULL(_replica_metric_entity,
-                      "replica metric entity (table_id={}, partition_id={}) should has been "
-                      "instantiated: uninitialized entity cannot be used to instantiate metric",
-                      _gpid.get_app_id(),
-                      _gpid.get_partition_index());
+        PGSCHECK_NOTNULL(_replica_metric_entity,
+                         "replica metric entity (table_id={}, partition_id={}) should has been "
+                         "instantiated: uninitialized entity cannot be used to instantiate metric",
+                         _gpid.get_app_id(),
+                         _gpid.get_partition_index());
         return _replica_metric_entity;
     }
 

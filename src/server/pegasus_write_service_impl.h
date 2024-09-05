@@ -673,7 +673,7 @@ private:
             }
         }
         default:
-            CHECK(false, "unsupported check type: {}", check_type);
+            PGSCHECK(false, "unsupported check type: {}", check_type);
         }
         return false;
     }

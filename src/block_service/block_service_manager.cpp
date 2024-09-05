@@ -39,13 +39,13 @@ namespace block_service {
 
 block_service_registry::block_service_registry()
 {
-    CHECK(utils::factory_store<block_filesystem>::register_factory(
-              "hdfs_service", block_filesystem::create<hdfs_service>, PROVIDER_TYPE_MAIN),
-          "register hdfs_service failed");
+    PGSCHECK(utils::factory_store<block_filesystem>::register_factory(
+                 "hdfs_service", block_filesystem::create<hdfs_service>, PROVIDER_TYPE_MAIN),
+             "register hdfs_service failed");
 
-    CHECK(utils::factory_store<block_filesystem>::register_factory(
-              "local_service", block_filesystem::create<local_service>, PROVIDER_TYPE_MAIN),
-          "register local_service failed");
+    PGSCHECK(utils::factory_store<block_filesystem>::register_factory(
+                 "local_service", block_filesystem::create<local_service>, PROVIDER_TYPE_MAIN),
+             "register local_service failed");
 }
 
 block_service_manager::block_service_manager()

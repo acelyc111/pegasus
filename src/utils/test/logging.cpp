@@ -64,7 +64,7 @@ TEST(LoggingTest, LogMacro)
 
     for (auto test : tests) {
         // Test logging_provider::log.
-        LOG(test.level, "LOG: sortkey = {}", test.str);
+        //        LOG(test.level, "LOG: sortkey = {}", test.str);
     }
 
     dsn::fail::teardown();

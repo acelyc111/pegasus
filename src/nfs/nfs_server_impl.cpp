@@ -113,12 +113,12 @@ void nfs_service_impl::on_copy(const ::dsn::service::copy_request &request,
         } else {
             dfile = fh->file_handle;
         }
-        DCHECK(fh, "");
+        DCHECK(fh);
         fh->file_access_count++;
         fh->last_access_time = dsn_now_ms();
     } while (false);
 
-    CHECK_NOTNULL(dfile, "");
+    CHECK_NOTNULL(dfile);
     LOG_DEBUG("nfs: copy from file {} [{}, {}]",
               file_path,
               request.offset,

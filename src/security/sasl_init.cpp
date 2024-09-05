@@ -17,6 +17,7 @@
 
 #include "sasl_init.h"
 
+#include <glog/logging.h>
 #include <sasl/sasl.h>
 #include <sasl/saslplug.h>
 #include <string>
@@ -33,18 +34,18 @@ DSN_DEFINE_string(security, sasl_plugin_path, "/usr/lib/sasl2", "path to search 
 namespace dsn {
 namespace security {
 
-log_level_t get_log_level(int level)
+google::LogSeverity get_log_level(int level)
 {
     switch (level) {
     case SASL_LOG_ERR:
-        return LOG_LEVEL_ERROR;
+        return google::ERROR;
     case SASL_LOG_FAIL:
     case SASL_LOG_WARN:
-        return LOG_LEVEL_WARNING;
+        return google::WARNING;
     case SASL_LOG_NOTE:
-        return LOG_LEVEL_INFO;
+        return google::INFO;
     default:
-        return LOG_LEVEL_DEBUG;
+        return google::INFO;
     }
 }
 
@@ -54,7 +55,7 @@ int sasl_simple_logger(void *context, int level, const char *msg)
         return SASL_OK;
     }
 
-    LOG(get_log_level(level), "sasl log info: {}", msg);
+    //    LOG(get_log_level(level)) << "sasl log info: " << msg;
     return SASL_OK;
 }
 
@@ -82,7 +83,7 @@ int sasl_get_username(void *context, int id, const char **result, unsigned *len)
         }
         return SASL_OK;
     default:
-        CHECK(false, "unexpected SASL callback type: {}", id);
+        PGSCHECK(false, "unexpected SASL callback type: {}", id);
         return SASL_BADPARAM;
     }
 }

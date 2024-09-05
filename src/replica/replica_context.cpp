@@ -141,7 +141,7 @@ bool primary_context::check_exist(const ::dsn::host_port &node, partition_status
     case partition_status::PS_POTENTIAL_SECONDARY:
         return learners.find(node) != learners.end();
     default:
-        CHECK(false, "invalid partition_status, status = {}", enum_to_string(st));
+        PGSCHECK(false, "invalid partition_status, status = {}", enum_to_string(st));
         return false;
     }
 }

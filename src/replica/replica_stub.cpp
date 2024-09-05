@@ -428,11 +428,11 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
 
     // clear dirs if need
     if (clear) {
-        CHECK(dsn::utils::filesystem::remove_path(_options.slog_dir),
-              "Fail to remove {}.",
-              _options.slog_dir);
+        PGSCHECK(dsn::utils::filesystem::remove_path(_options.slog_dir),
+                 "Fail to remove {}.",
+                 _options.slog_dir);
         for (auto &dir : _options.data_dirs) {
-            CHECK(dsn::utils::filesystem::remove_path(dir), "Fail to remove {}.", dir);
+            PGSCHECK(dsn::utils::filesystem::remove_path(dir), "Fail to remove {}.", dir);
         }
     }
 
@@ -486,11 +486,11 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
     auto full_slog_path = fmt::format("{}/replica/slog/", _options.slog_dir);
     if (utils::filesystem::directory_exists(full_slog_path)) {
         std::vector<std::string> slog_files;
-        CHECK(utils::filesystem::get_subfiles(full_slog_path, slog_files, false),
-              "check slog files failed");
-        CHECK(slog_files.empty(),
-              "slog({}) files are not empty. Make sure you are upgrading from 2.5.0",
-              full_slog_path);
+        PGSCHECK(utils::filesystem::get_subfiles(full_slog_path, slog_files, false),
+                 "check slog files failed");
+        PGSCHECK(slog_files.empty(),
+                 "slog({}) files are not empty. Make sure you are upgrading from 2.5.0",
+                 full_slog_path);
     }
 
     // Start to load replicas in available data directories.
@@ -502,9 +502,9 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
             continue;
         }
         std::vector<std::string> sub_directories;
-        CHECK(dsn::utils::filesystem::get_subdirectories(dn->full_dir, sub_directories, false),
-              "fail to get sub_directories in {}",
-              dn->full_dir);
+        PGSCHECK(dsn::utils::filesystem::get_subdirectories(dn->full_dir, sub_directories, false),
+                 "fail to get sub_directories in {}",
+                 dn->full_dir);
         dirs_by_dn.emplace(dn.get(), sub_directories);
     }
 
@@ -540,10 +540,10 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
                              r->last_prepared_decree());
 
                     utils::auto_lock<utils::ex_lock> l(rps_lock);
-                    CHECK(rps.find(r->get_gpid()) == rps.end(),
-                          "conflict replica dir: {} <--> {}",
-                          r->dir(),
-                          rps[r->get_gpid()]->dir());
+                    PGSCHECK(rps.find(r->get_gpid()) == rps.end(),
+                             "conflict replica dir: {} <--> {}",
+                             r->dir(),
+                             rps[r->get_gpid()]->dir());
 
                     rps[r->get_gpid()] = r;
                 },
@@ -1580,7 +1580,7 @@ void replica_stub::on_gc_replica(replica_stub_ptr this_, gpid id)
     }
 
     const auto replica_path = dn->replica_dir(closed_info.first.app_type, id);
-    CHECK(
+    PGSCHECK(
         dsn::utils::filesystem::directory_exists(replica_path), "dir({}) not exist", replica_path);
     LOG_INFO("start to move replica({}) as garbage, path: {}", id, replica_path);
     const auto rename_path = fmt::format("{}.{}{}", replica_path, dsn_now_us(), kFolderSuffixGar);
@@ -1774,7 +1774,7 @@ void replica_stub::open_replica(
     auto dn = _fs_manager.find_replica_dir(app.app_type, id);
     if (dn != nullptr) {
         dir = dn->replica_dir(app.app_type, id);
-        CHECK(dsn::utils::filesystem::directory_exists(dir), "dir({}) not exist", dir);
+        PGSCHECK(dsn::utils::filesystem::directory_exists(dir), "dir({}) not exist", dir);
         // NOTICE: if partition is DDD, and meta select one replica as primary, it will execute the
         // load-process because of a.b.pegasus is exist, so it will never execute the restore
         // process below
@@ -1793,9 +1793,9 @@ void replica_stub::open_replica(
             const auto origin_dn = _fs_manager.find_replica_dir(origin_dir_type, id);
             if (origin_dn != nullptr) {
                 const auto origin_tmp_dir = origin_dn->replica_dir(origin_dir_type, id);
-                CHECK(dsn::utils::filesystem::directory_exists(origin_tmp_dir),
-                      "dir({}) not exist",
-                      origin_tmp_dir);
+                PGSCHECK(dsn::utils::filesystem::directory_exists(origin_tmp_dir),
+                         "dir({}) not exist",
+                         origin_tmp_dir);
                 LOG_INFO("mark the dir {} as garbage, start revert and load disk migration origin "
                          "replica data({})",
                          dir,
@@ -1819,16 +1819,16 @@ void replica_stub::open_replica(
         // NOTICE: if dir a.b.pegasus does not exist, or .app-info does not exist, but the ballot >
         // 0, or the last_committed_decree > 0, start replica will fail
         if ((configuration_update != nullptr) && (configuration_update->info.is_stateful)) {
-            CHECK(configuration_update->config.ballot == 0 &&
-                      configuration_update->config.last_committed_decree == 0,
-                  "{}@{}: cannot load replica({}.{}), ballot = {}, "
-                  "last_committed_decree = {}, but it does not existed!",
-                  id,
-                  _primary_host_port_cache,
-                  id,
-                  app.app_type.c_str(),
-                  configuration_update->config.ballot,
-                  configuration_update->config.last_committed_decree);
+            PGSCHECK(configuration_update->config.ballot == 0 &&
+                         configuration_update->config.last_committed_decree == 0,
+                     "{}@{}: cannot load replica({}.{}), ballot = {}, "
+                     "last_committed_decree = {}, but it does not existed!",
+                     id,
+                     _primary_host_port_cache,
+                     id,
+                     app.app_type.c_str(),
+                     configuration_update->config.ballot,
+                     configuration_update->config.last_committed_decree);
         }
 
         // NOTICE: only new_replica_group's assign_primary will execute this; if server restart when
@@ -1854,9 +1854,9 @@ void replica_stub::open_replica(
         // replica(if contain valid data, it will execute load-process)
 
         if (!restore_if_necessary && ::dsn::utils::filesystem::directory_exists(dir)) {
-            CHECK(::dsn::utils::filesystem::remove_path(dir),
-                  "remove useless directory({}) failed",
-                  dir);
+            PGSCHECK(::dsn::utils::filesystem::remove_path(dir),
+                     "remove useless directory({}) failed",
+                     dir);
         }
         rep = new_replica(id, app, restore_if_necessary, is_duplication_follower);
     }
@@ -1876,7 +1876,7 @@ void replica_stub::open_replica(
         CHECK_GT_MSG(_opening_replicas.erase(id), 0, "replica {} is not in _opening_replicas", id);
         METRIC_VAR_DECREMENT(opening_replicas);
 
-        CHECK(_replicas.find(id) == _replicas.end(), "replica {} is already in _replicas", id);
+        PGSCHECK(_replicas.find(id) == _replicas.end(), "replica {} is already in _replicas", id);
         _replicas.insert(replicas::value_type(rep->get_gpid(), rep));
         METRIC_VAR_INCREMENT(total_replicas);
 
@@ -1913,7 +1913,7 @@ replica *replica_stub::new_replica(gpid gpid,
         return nullptr;
     }
     const auto &dir = dn->replica_dir(app.app_type, gpid);
-    CHECK(dsn::utils::filesystem::directory_exists(dir), "dir({}) not exist", dir);
+    PGSCHECK(dsn::utils::filesystem::directory_exists(dir), "dir({}) not exist", dir);
     auto *rep = new replica(this, gpid, app, dn, restore_if_necessary, is_duplication_follower);
     error_code err;
     if (restore_if_necessary && (err = rep->restore_checkpoint()) != dsn::ERR_OK) {
@@ -2049,14 +2049,14 @@ void replica_stub::clear_on_failure(replica *rep)
 
 task_ptr replica_stub::begin_close_replica(replica_ptr r)
 {
-    CHECK(r->status() == partition_status::PS_ERROR ||
-              r->status() == partition_status::PS_INACTIVE ||
-              r->disk_migrator()->status() >= disk_migration_status::MOVED,
-          "invalid state(partition_status={}, migration_status={}) when calling "
-          "replica({}) close",
-          enum_to_string(r->status()),
-          enum_to_string(r->disk_migrator()->status()),
-          r->name());
+    PGSCHECK(r->status() == partition_status::PS_ERROR ||
+                 r->status() == partition_status::PS_INACTIVE ||
+                 r->disk_migrator()->status() >= disk_migration_status::MOVED,
+             "invalid state(partition_status={}, migration_status={}) when calling "
+             "replica({}) close",
+             enum_to_string(r->status()),
+             enum_to_string(r->disk_migrator()->status()),
+             r->name());
 
     gpid id = r->get_gpid();
 
@@ -2101,7 +2101,7 @@ void replica_stub::close_replica(replica_ptr r)
     {
         zauto_write_lock l(_replicas_lock);
         auto find = _closing_replicas.find(id);
-        CHECK(find != _closing_replicas.end(), "replica {} is not in _closing_replicas", name);
+        PGSCHECK(find != _closing_replicas.end(), "replica {} is not in _closing_replicas", name);
         _closed_replicas.emplace(
             id, std::make_pair(std::get<2>(find->second), std::get<3>(find->second)));
         _closing_replicas.erase(find);
@@ -2139,7 +2139,7 @@ void replica_stub::trigger_checkpoint(replica_ptr r, bool is_emergency)
 void replica_stub::handle_log_failure(error_code err)
 {
     LOG_ERROR("handle log failure: {}", err);
-    CHECK(s_not_exit_on_log_failure, "");
+    PGSCHECK(s_not_exit_on_log_failure, "");
 }
 
 void replica_stub::open_service()
@@ -2674,7 +2674,7 @@ replica_ptr replica_stub::create_child_replica_if_not_found(gpid child_pid,
         "replica_stub_create_child_replica_if_not_found", [=](std::string_view) -> replica_ptr {
             const auto dn =
                 _fs_manager.create_child_replica_dir(app->app_type, child_pid, parent_dir);
-            CHECK_NOTNULL(dn, "");
+            PGSCHECK_NOTNULL(dn, "");
             auto *rep = new replica(this, child_pid, *app, dn, false);
             rep->_config.status = partition_status::PS_INACTIVE;
             _replicas.insert(replicas::value_type(child_pid, rep));
@@ -2697,7 +2697,7 @@ replica_ptr replica_stub::create_child_replica_if_not_found(gpid child_pid,
             replica *rep = new_replica(child_pid, *app, false, false, parent_dir);
             if (rep != nullptr) {
                 auto pr = _replicas.insert(replicas::value_type(child_pid, rep));
-                CHECK(pr.second, "child replica {} has been existed", rep->name());
+                PGSCHECK(pr.second, "child replica {} has been existed", rep->name());
                 METRIC_VAR_INCREMENT(total_replicas);
                 _closed_replicas.erase(child_pid);
             }

@@ -210,7 +210,7 @@ void lock_struct::owner_change(lock_struct_ptr _this, int zoo_event)
     } else if (ZOO_NOTWATCHING_EVENT == zoo_event)
         _this->get_lock_owner(false);
     else
-        CHECK(false, "unexpected event");
+        PGSCHECK(false, "unexpected event");
 }
 /*static*/
 void lock_struct::after_remove_duplicated_locknode(lock_struct_ptr _this,

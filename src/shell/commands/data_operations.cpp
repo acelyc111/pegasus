@@ -115,7 +115,7 @@ bool data_operations(command_executor *e, shell_context *sc, arguments args)
     }
 
     auto iter = data_operations_map.find(args.argv[0]);
-    CHECK(iter != data_operations_map.end(), "filter should done earlier");
+    PGSCHECK(iter != data_operations_map.end(), "filter should done earlier");
     executor func = iter->second;
 
     if (sc->current_app_name.empty()) {
@@ -2444,7 +2444,7 @@ bool count_data(command_executor *e, shell_context *sc, arguments args)
 
         std::vector<row_data> rows;
         const std::string table_name(sc->pg_client->get_app_name());
-        CHECK(!table_name.empty(), "table_name must be non-empty, see data_operations()");
+        PGSCHECK(!table_name.empty(), "table_name must be non-empty, see data_operations()");
 
         if (!get_rdb_estimated_keys_stats(sc, table_name, rows)) {
             fprintf(stderr, "ERROR: get rdb_estimated_keys stats failed");

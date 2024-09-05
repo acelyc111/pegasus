@@ -79,8 +79,8 @@ typedef std::unordered_map<::dsn::host_port, remote_learner_state> learner_map;
         if (t != nullptr) {                                                                        \
             bool finished;                                                                         \
             t->cancel(false, &finished);                                                           \
-            CHECK(finished || dsn_task_is_running_inside(task_.get()),                             \
-                  "task must be finished at this point");                                          \
+            PGSCHECK(finished || dsn_task_is_running_inside(task_.get()),                          \
+                     "task must be finished at this point");                                       \
             task_ = nullptr;                                                                       \
         }                                                                                          \
     }

@@ -58,7 +58,7 @@ namespace file {
         return new disk_file(std::move(wf));
     }
     default:
-        CHECK(false, "");
+        CHECK(false);
     }
     return nullptr;
 }

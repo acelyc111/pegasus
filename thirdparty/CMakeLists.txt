@@ -324,6 +324,8 @@ ExternalProject_Add(s2geometry
         -DBUILD_SHARED_LIBS=OFF
         -DGTEST_ROOT=${googletest_SRC}/googletest
         -DWITH_PYTHON=OFF
+        -DWITH_GFLAGS=OFF
+        -DWITH_GLOG=OFF
         -DBUILD_EXAMPLES=OFF
         DEPENDS googletest abseil
         DOWNLOAD_EXTRACT_TIMESTAMP true
@@ -486,6 +488,39 @@ ExternalProject_Add(spdlog
         BUILD_COMMAND make -j${PARALLEL}
         INSTALL_COMMAND make install
         DEPENDS fmt
+        DOWNLOAD_EXTRACT_TIMESTAMP true
+        DOWNLOAD_NO_PROGRESS true
+)
+
+ExternalProject_Add(gflags
+        URL https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.tar.gz
+        URL_MD5 1a865b93bacfa963201af3f75b7bd64c
+        PATCH_COMMAND ""
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TP_OUTPUT}
+        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_STATIC_LIBS=ON
+        -DBUILD_TESTING=OFF
+        -DINSTALL_HEADERS=ON
+        -DINSTALL_SHARED_LIBS=OFF
+        -DINSTALL_STATIC_LIBS=ON
+        BUILD_COMMAND make -j${PARALLEL}
+        INSTALL_COMMAND make install
+        DOWNLOAD_EXTRACT_TIMESTAMP true
+        DOWNLOAD_NO_PROGRESS true
+)
+
+ExternalProject_Add(glog
+        URL https://github.com/google/glog/archive/refs/tags/v0.7.1.tar.gz
+        URL_MD5 128e2995cc33d794ff24f785a3060346
+        PATCH_COMMAND ""
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${TP_OUTPUT}
+        -DBUILD_SHARED_LIBS=ON
+        -DBUILD_EXAMPLES=OFF
+        -DWITH_GFLAGS=ON
+        -DWITH_GTEST=OFF
+        BUILD_COMMAND make -j${PARALLEL}
+        INSTALL_COMMAND make install
+        DEPENDS gflags
         DOWNLOAD_EXTRACT_TIMESTAMP true
         DOWNLOAD_NO_PROGRESS true
 )

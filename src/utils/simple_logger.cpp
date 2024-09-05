@@ -56,6 +56,9 @@
 #include "utils/strings.h"
 #include "utils/time_utils.h"
 
+// GLOG_DEFINE_uint32(max_log_size, 1800,
+// "approx. maximum log file size (in MB). A value of 0 will "
+// "be silently overridden to 1.");
 DSN_DEFINE_uint64(tools.simple_logger,
                   max_log_file_bytes,
                   64 * 1024 * 1024,
@@ -88,6 +91,9 @@ DSN_DEFINE_validator(stderr_start_level_on_stdout, [](const char *value) -> bool
     return LOG_LEVEL_DEBUG <= level && level <= LOG_LEVEL_FATAL;
 });
 
+// glog: stderrthreshold (int, default=2, which is ERROR)
+// Copy log messages at or above this level to stderr in addition to logfiles. The numbers of
+// severity levels INFO, WARNING, ERROR, and FATAL are 0, 1, 2, and 3, respectively.
 DSN_DEFINE_string(
     tools.simple_logger,
     stderr_start_level,
@@ -107,26 +113,19 @@ namespace tools {
 namespace {
 int print_header(FILE *fp, log_level_t stderr_start_level, log_level_t log_level)
 {
-    // The leading character of each log line, corresponding to the log level
-    // D: Debug
-    // I: Info
-    // W: Warning
-    // E: Error
-    // F: Fatal
-    static char s_level_char[] = "DIWEF";
+    const auto header = fmt::format("{}", log_prefixed_message_func());
 
-    uint64_t ts = dsn_now_ns();
-    std::string time_str;
-    dsn::utils::time_ms_to_string(ts / 1000000, time_str);
-
-    int tid = dsn::utils::get_current_tid();
-    const auto header = fmt::format(
-        "{}{} ({} {}) {}", s_level_char[log_level], time_str, ts, tid, log_prefixed_message_func());
-    const int written_size = fmt::fprintf(fp, "%s", header.c_str());
-    if (log_level >= stderr_start_level) {
-        fmt::fprintf(stderr, "%s", header.c_str());
+    void LogPrefixFormatter(std::ostream & s, const google::LogMessage &m, void * /*data*/)
+    {
+        s << google::GetLogSeverityName(m.severity())[0] // 'I', 'W', 'E' or 'F'.
+          << setw(4) << 1900 + m.time().year() << '-' << setw(2) << 1 + m.time().month() << '-'
+          << setw(2) << m.time().day() << ' ' << setw(2) << m.time().hour() << ':' << setw(2)
+          << m.time().min() << ':' << setw(2) << m.time().sec() << '.' << setw(3) << m.time().usec()
+          << ' ' << setfill(' ') << setw(5) << m.thread_id() << setfill('0') << ' ' << m.basename()
+          << ':' << m.line() << ']';
     }
-    return written_size;
+
+    return 0;
 }
 
 int print_long_header(FILE *fp,
@@ -166,9 +165,9 @@ inline void process_fatal_log(log_level_t log_level)
 
     bool coredump = true;
     FAIL_POINT_INJECT_NOT_RETURN_F("coredump_for_fatal_log", [&coredump](std::string_view str) {
-        CHECK(buf2bool(str, coredump),
-              "invalid coredump toggle for fatal log, should be true or false: {}",
-              str);
+        PGSCHECK(buf2bool(str, coredump),
+                 "invalid coredump toggle for fatal log, should be true or false: {}",
+                 str);
     });
 
     if (dsn_likely(coredump)) {
@@ -226,6 +225,11 @@ simple_logger::simple_logger(const char *log_dir, const char *role_name)
       _log(nullptr),
       _file_bytes(0)
 {
+    //    glog: log_dir (string, default="")
+    //    If specified, logfiles are written into this directory instead of the default logging
+    //    directory. GLOG_DEFINE_bool(timestamp_in_logfile_name,
+    //                     BoolFromEnv("GOOGLE_TIMESTAMP_IN_LOGFILE_NAME", true),
+    //                     "put a timestamp at the end of the log file name");
     // Use 'role_name' if it is specified, otherwise use 'base_name'.
     const std::string symlink_name(
         fmt::format("{}.log", utils::is_empty(role_name) ? FLAGS_base_name : role_name));
@@ -287,7 +291,7 @@ void simple_logger::create_log_file()
     const std::string file_name(fmt::format("{}{}", _file_name_prefix, time_str));
     const std::string path(utils::filesystem::path_combine(_log_dir, file_name));
     _log = ::fopen(path.c_str(), "w+");
-    CHECK_NOTNULL(_log, "Failed to fopen {}: {}", path, dsn::utils::safe_strerror(errno));
+    PGSCHECK_NOTNULL(_log, "Failed to fopen {}: {}", path, dsn::utils::safe_strerror(errno));
 
     // Unlink the latest log file.
     if (::unlink(_symlink_path.c_str()) != 0) {
@@ -408,7 +412,7 @@ void simple_logger::log(
 {
     utils::auto_lock<::dsn::utils::ex_lock> l(_lock);
 
-    CHECK_NOTNULL(_log, "Log file hasn't been initialized yet");
+    PGSCHECK_NOTNULL(_log, "Log file hasn't been initialized yet");
     print_header(log_level);
     print_long_header(file, function, line, log_level);
     print_body(str, log_level);

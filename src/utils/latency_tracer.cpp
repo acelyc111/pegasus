@@ -107,13 +107,14 @@ latency_tracer_metrics::latency_tracer_metrics(const std::string &description,
 
 const dsn::metric_entity_ptr &latency_tracer_metrics::latency_tracer_metric_entity() const
 {
-    CHECK_NOTNULL(_latency_tracer_metric_entity,
-                  "latency_tracer metric entity (description={}, starting_point={}, end_point={}) "
-                  "should has been instantiated: uninitialized entity cannot be used to "
-                  "instantiate metric",
-                  _description,
-                  _starting_point,
-                  _end_point);
+    PGSCHECK_NOTNULL(
+        _latency_tracer_metric_entity,
+        "latency_tracer metric entity (description={}, starting_point={}, end_point={}) "
+        "should has been instantiated: uninitialized entity cannot be used to "
+        "instantiate metric",
+        _description,
+        _starting_point,
+        _end_point);
     return _latency_tracer_metric_entity;
 }
 

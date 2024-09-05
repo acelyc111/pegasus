@@ -25,7 +25,9 @@ set(MY_PROJ_LIBS
         dsn_replication_common
         dsn_runtime
         hashtable
-        gtest)
+        gtest
+        glog
+        gflags)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         config-test.ini

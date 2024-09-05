@@ -1417,9 +1417,9 @@ protected:
           _nth_element_finder(),
           _timer()
     {
-        CHECK(_sample_size > 0 && (_sample_size & (_sample_size - 1)) == 0,
-              "sample_sizes should be > 0 and power of 2");
-        CHECK(_samples, "");
+        PGSCHECK(_sample_size > 0 && (_sample_size & (_sample_size - 1)) == 0,
+                 "sample_sizes should be > 0 and power of 2");
+        CHECK(_samples);
 
         for (const auto &kth : kth_percentiles) {
             _kth_percentile_bitset.set(static_cast<size_t>(kth));

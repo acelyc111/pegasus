@@ -51,7 +51,7 @@ class TProtocol;
         const auto &_obj = (obj);                                                                  \
         auto &_target = (target);                                                                  \
         if (_obj.__isset.hp_##field) {                                                             \
-            DCHECK(_obj.field, "invalid address: {}", _obj.field);                                 \
+            DPGSCHECK(_obj.field, "invalid address: {}", _obj.field);                              \
             DCHECK_EQ(_obj.field, dsn::dns_resolver::instance().resolve_address(_obj.hp_##field)); \
             _target = _obj.hp_##field;                                                             \
         } else {                                                                                   \
@@ -66,7 +66,7 @@ class TProtocol;
     do {                                                                                           \
         const auto &_obj = (obj);                                                                  \
         auto &_target = (target);                                                                  \
-        CHECK(_target.empty(), "");                                                                \
+        CHECK(_target.empty());                                                                    \
         if (_obj.__isset.hp_##field) {                                                             \
             DCHECK_EQ(_obj.field.size(), _obj.hp_##field.size());                                  \
             _target = _obj.hp_##field;                                                             \
@@ -292,7 +292,7 @@ public:
 
     std::shared_ptr<rpc_group_host_port> group_host_port() const
     {
-        CHECK_NOTNULL(_group_host_port, "group_host_port cannot be null!");
+        PGSCHECK_NOTNULL(_group_host_port, "group_host_port cannot be null!");
         return _group_host_port;
     }
     void assign_group(const char *name);

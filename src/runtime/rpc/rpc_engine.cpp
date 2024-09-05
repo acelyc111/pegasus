@@ -104,8 +104,8 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
         }
     }
 
-    DCHECK_NOTNULL(call, "rpc response task cannot be nullptr");
-    DCHECK_NOTNULL(timeout_task, "rpc timeout task cannot be nullptr");
+    DPGSCHECK_NOTNULL(call, "rpc response task cannot be nullptr");
+    DPGSCHECK_NOTNULL(timeout_task, "rpc timeout task cannot be nullptr");
 
     if (timeout_task != task::get_current_task()) {
         timeout_task->cancel(false); // no need to wait
@@ -151,7 +151,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
                 if (req->server_address.group_address()->is_update_leader_automatically()) {
                     req->server_address.group_address()->set_leader(addr);
                     const auto hp = host_port::from_address(addr);
-                    CHECK(hp, "'{}' can not be reverse resolved", addr);
+                    PGSCHECK(hp, "'{}' can not be reverse resolved", addr);
                     req->server_host_port.group_host_port()->set_leader(hp);
                 }
                 break;
@@ -160,7 +160,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
             }
             break;
         default:
-            CHECK(false, "not implemented");
+            PGSCHECK(false, "not implemented");
             break;
         }
 
@@ -182,7 +182,8 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
                         req->server_address.group_address()->set_leader(
                             reply->header->from_address);
                         const auto hp = host_port::from_address(reply->header->from_address);
-                        CHECK(hp, "'{}' can not be reverse resolved", reply->header->from_address);
+                        PGSCHECK(
+                            hp, "'{}' can not be reverse resolved", reply->header->from_address);
                         req->server_host_port.group_host_port()->set_leader(hp);
                     }
                     break;
@@ -191,7 +192,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
                 }
                 break;
             default:
-                CHECK(false, "not implemented");
+                PGSCHECK(false, "not implemented");
                 break;
             }
         }
@@ -240,7 +241,7 @@ void rpc_client_matcher::on_rpc_timeout(uint64_t key)
         }
     }
 
-    DCHECK_NOTNULL(call, "rpc response task is missing for rpc request {}", key);
+    DPGSCHECK_NOTNULL(call, "rpc response task is missing for rpc request {}", key);
 
     // if timeout
     if (!resend) {
@@ -313,14 +314,14 @@ void rpc_client_matcher::on_call(message_ex *request, const rpc_response_task_pt
         timeout_ms = sp->rpc_request_resend_timeout_milliseconds;
     }
 
-    DCHECK_NOTNULL(call, "rpc response task cannot be nullptr");
+    DPGSCHECK_NOTNULL(call, "rpc response task cannot be nullptr");
     task *timeout_task(new rpc_timeout_task(this, hdr.id, call->node()));
 
     {
         utils::auto_lock<::dsn::utils::ex_lock_nr_spin> l(_requests_lock[bucket_index]);
         auto pr =
             _requests[bucket_index].emplace(hdr.id, match_entry{call, timeout_task, timeout_ts_ms});
-        CHECK(pr.second, "the message is already on the fly!!!");
+        PGSCHECK(pr.second, "the message is already on the fly!!!");
     }
 
     timeout_task->set_delay(timeout_ms);
@@ -357,10 +358,10 @@ bool rpc_server_dispatcher::register_rpc_handler(dsn::task_code code,
     utils::auto_write_lock l(_handlers_lock);
     auto it = _handlers.find(code.to_string());
     auto it2 = _handlers.find(extra_name);
-    CHECK(it == _handlers.end() && it2 == _handlers.end(),
-          "rpc registration confliction for '{}' '{}'",
-          code,
-          extra_name);
+    PGSCHECK(it == _handlers.end() && it2 == _handlers.end(),
+             "rpc registration confliction for '{}' '{}'",
+             code,
+             extra_name);
     _handlers[code.to_string()] = ctx.get();
     _handlers[ctx->extra_name] = ctx.get();
 
@@ -423,7 +424,7 @@ rpc_request_task *rpc_server_dispatcher::on_request(message_ex *msg, service_nod
 //----------------------------------------------------------------------------------------------
 rpc_engine::rpc_engine(service_node *node) : _node(node), _rpc_matcher(this)
 {
-    CHECK_NOTNULL(_node, "");
+    CHECK_NOTNULL(_node);
     _is_running = false;
     _is_serving = false;
 }
@@ -525,7 +526,7 @@ error_code rpc_engine::start(const service_app_spec &aspec)
     _local_primary_address = _client_nets[NET_HDR_DSN][0]->address();
     _local_primary_address.set_port(aspec.ports.size() > 0 ? *aspec.ports.begin() : aspec.id);
     _local_primary_host_port = host_port::from_address(_local_primary_address);
-    CHECK(_local_primary_host_port, "'{}' can not be reverse resolved", _local_primary_address);
+    PGSCHECK(_local_primary_host_port, "'{}' can not be reverse resolved", _local_primary_address);
 
     LOG_INFO("=== service_node=[{}], primary_address=[{}({})] ===",
              _node->full_name(),
@@ -649,10 +650,10 @@ void rpc_engine::call_group(rpc_address addr,
         call_ip(request->server_address.group_address()->random_member(), request, call);
         break;
     case GRPC_TO_ALL:
-        CHECK(false, "to be implemented");
+        PGSCHECK(false, "to be implemented");
         break;
     default:
-        CHECK(false, "invalid group rpc mode {}", sp->grpc_mode);
+        PGSCHECK(false, "invalid group rpc mode {}", sp->grpc_mode);
     }
 }
 
@@ -664,7 +665,7 @@ void rpc_engine::call_ip(rpc_address addr,
 {
     DCHECK_EQ_MSG(addr.type(), HOST_TYPE_IPV4, "only IPV4 is now supported");
     DCHECK_GT_MSG(addr.port(), MAX_CLIENT_PORT, "only server address can be called");
-    CHECK(request->header->from_address, "from address must be set before call call_ip");
+    PGSCHECK(request->header->from_address, "from address must be set before call call_ip");
 
     while (!request->dl.is_alone()) {
         LOG_WARNING("msg request {} (trace_id = {:#018x}) is in sending queue, try to pick out ...",
@@ -683,11 +684,11 @@ void rpc_engine::call_ip(rpc_address addr,
     auto &hdr = *request->header;
 
     network *net = _client_nets[request->hdr_format][sp->rpc_call_channel].get();
-    CHECK_NOTNULL(net,
-                  "network not present for rpc channel '{}' with format '{}' used by rpc {}",
-                  sp->rpc_call_channel,
-                  sp->rpc_call_header_format,
-                  hdr.rpc_name);
+    PGSCHECK_NOTNULL(net,
+                     "network not present for rpc channel '{}' with format '{}' used by rpc {}",
+                     sp->rpc_call_channel,
+                     sp->rpc_call_header_format,
+                     hdr.rpc_name);
 
     LOG_DEBUG("rpc_name = {}, remote_addr = {}, header_format = {}, channel = {}, seq_id = {}, "
               "trace_id = {:#018x}",
@@ -790,7 +791,7 @@ void rpc_engine::reply(message_ex *response, error_code err)
             // use the header format recorded in the message
             auto rpc_channel = sp ? sp->rpc_call_channel : RPC_CHANNEL_TCP;
             network *net = _client_nets[response->hdr_format][rpc_channel].get();
-            CHECK_NOTNULL(
+            PGSCHECK_NOTNULL(
                 net,
                 "client network not present for rpc channel '{}' with format '{}' used by rpc {}",
                 RPC_CHANNEL_TCP,
@@ -814,11 +815,12 @@ void rpc_engine::reply(message_ex *response, error_code err)
         auto rpc_channel = sp ? sp->rpc_call_channel : RPC_CHANNEL_TCP;
         network *net = _server_nets[response->header->from_address.port()][rpc_channel].get();
 
-        CHECK_NOTNULL(net,
-                      "server network not present for rpc channel '{}' on port {} used by rpc {}",
-                      RPC_CHANNEL_UDP,
-                      response->header->from_address.port(),
-                      response->header->rpc_name);
+        PGSCHECK_NOTNULL(
+            net,
+            "server network not present for rpc channel '{}' on port {} used by rpc {}",
+            RPC_CHANNEL_UDP,
+            response->header->from_address.port(),
+            response->header->rpc_name);
 
         if (no_fail) {
             net->send_message(response);
@@ -837,11 +839,11 @@ void rpc_engine::reply(message_ex *response, error_code err)
 
 void rpc_engine::forward(message_ex *request, rpc_address address)
 {
-    CHECK(request->header->context.u.is_request, "only rpc request can be forwarded");
-    CHECK(request->header->context.u.is_forward_supported,
-          "rpc msg {} (trace_id = {:#018x}) does not support being forwared",
-          task_spec::get(request->local_rpc_code)->name,
-          request->header->trace_id);
+    PGSCHECK(request->header->context.u.is_request, "only rpc request can be forwarded");
+    PGSCHECK(request->header->context.u.is_forward_supported,
+             "rpc msg {} (trace_id = {:#018x}) does not support being forwared",
+             task_spec::get(request->local_rpc_code)->name,
+             request->header->trace_id);
     CHECK_NE_MSG(address,
                  _local_primary_address,
                  "cannot forward msg {} (trace_id = {:#018x}) to the local node",

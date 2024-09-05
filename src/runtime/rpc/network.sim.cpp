@@ -115,12 +115,12 @@ void sim_client_session::send(uint64_t sig)
             {
                 node_scoper ns(rnet->node());
 
-                CHECK(server_session->on_recv_message(recv_msg,
-                                                      recv_msg->to_address ==
-                                                              recv_msg->header->from_address
-                                                          ? 0
-                                                          : rnet->net_delay_milliseconds()),
-                      "");
+                PGSCHECK(server_session->on_recv_message(recv_msg,
+                                                         recv_msg->to_address ==
+                                                                 recv_msg->header->from_address
+                                                             ? 0
+                                                             : rnet->net_delay_milliseconds()),
+                         "");
             }
         }
     }
@@ -145,12 +145,13 @@ void sim_server_session::send(uint64_t sig)
         {
             node_scoper ns(_client->net().node());
 
-            CHECK(_client->on_recv_message(
-                      recv_msg,
-                      recv_msg->to_address == recv_msg->header->from_address
-                          ? 0
-                          : (static_cast<sim_network_provider *>(&_net))->net_delay_milliseconds()),
-                  "");
+            PGSCHECK(
+                _client->on_recv_message(
+                    recv_msg,
+                    recv_msg->to_address == recv_msg->header->from_address
+                        ? 0
+                        : (static_cast<sim_network_provider *>(&_net))->net_delay_milliseconds()),
+                "");
         }
     }
 
@@ -167,9 +168,9 @@ sim_network_provider::sim_network_provider(rpc_engine *rpc, network *inner_provi
 
 error_code sim_network_provider::start(rpc_channel channel, int port, bool client_only)
 {
-    CHECK(channel == RPC_CHANNEL_TCP || channel == RPC_CHANNEL_UDP,
-          "invalid given channel {}",
-          channel);
+    PGSCHECK(channel == RPC_CHANNEL_TCP || channel == RPC_CHANNEL_UDP,
+             "invalid given channel {}",
+             channel);
 
     _address = dsn::rpc_address::from_host_port("localhost", port);
     _hp = ::dsn::host_port::from_address(_address);

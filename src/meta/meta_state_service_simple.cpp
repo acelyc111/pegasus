@@ -90,7 +90,7 @@ void meta_state_service_simple::write_log(blob &&log_blob,
     uint64_t log_offset = _offset;
     _offset += log_blob.length();
     auto continuation_task = std::unique_ptr<operation>(new operation(false, [=](bool log_succeed) {
-        CHECK(log_succeed, "we cannot handle logging failure now");
+        PGSCHECK(log_succeed, "we cannot handle logging failure now");
         __err_cb_bind_and_enqueue(task, internal_operation(), 0);
     }));
     auto continuation_task_ptr = continuation_task.get();
@@ -104,8 +104,8 @@ void meta_state_service_simple::write_log(blob &&log_blob,
                 LPC_META_STATE_SERVICE_SIMPLE_INTERNAL,
                 &_tracker,
                 [=](error_code err, size_t bytes) {
-                    CHECK(err == ERR_OK && bytes == log_blob.length(),
-                          "we cannot handle logging failure now");
+                    PGSCHECK(err == ERR_OK && bytes == log_blob.length(),
+                             "we cannot handle logging failure now");
                     _log_lock.lock();
                     continuation_task_ptr->done = true;
                     while (!_task_queue.empty()) {
@@ -187,7 +187,7 @@ error_code meta_state_service_simple::delete_node_internal(const std::string &no
     }
 
     auto parent_it = _quick_map.find(parent);
-    CHECK(parent_it != _quick_map.end(), "unable to find parent node");
+    PGSCHECK(parent_it != _quick_map.end(), "unable to find parent node");
     // XXX we cannot delete root, right?
 
     auto erase_num = parent_it->second->children.erase(name);
@@ -212,7 +212,7 @@ error_code meta_state_service_simple::apply_transaction(
     LOG_DEBUG("internal operation after logged");
     simple_transaction_entries *entries =
         dynamic_cast<simple_transaction_entries *>(t_entries.get());
-    CHECK_NOTNULL(entries, "invalid input parameter");
+    PGSCHECK_NOTNULL(entries, "invalid input parameter");
     error_code ec;
     for (int i = 0; i != entries->_offset; ++i) {
         operation_entry &e = entries->_ops[i];
@@ -227,7 +227,7 @@ error_code meta_state_service_simple::apply_transaction(
             ec = set_data_internal(e._node, e._value);
             break;
         default:
-            CHECK(false, "unsupported operation");
+            PGSCHECK(false, "unsupported operation");
         }
         CHECK_EQ_MSG(ERR_OK, ec, "unexpected error when applying");
     }
@@ -246,7 +246,7 @@ error_code meta_state_service_simple::initialize(const std::vector<std::string> 
         std::unique_ptr<rocksdb::SequentialFile> log_file;
         auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
                      ->NewSequentialFile(log_path, &log_file, rocksdb::EnvOptions());
-        CHECK(s.ok(), "open log file '{}' failed, err = {}", log_path, s.ToString());
+        PGSCHECK(s.ok(), "open log file '{}' failed, err = {}", log_path, s.ToString());
 
         while (true) {
             static const int kLogHeaderSize = sizeof(log_header);
@@ -256,7 +256,7 @@ error_code meta_state_service_simple::initialize(const std::vector<std::string> 
             // Read header.
             char scratch[kLogHeaderSize] = {0};
             s = log_file->PositionedRead(_offset, kLogHeaderSize, &result, scratch);
-            CHECK(s.ok(), "read log file '{}' header failed, err = {}", log_path, s.ToString());
+            PGSCHECK(s.ok(), "read log file '{}' header failed, err = {}", log_path, s.ToString());
             if (result.empty()) {
                 LOG_INFO("read EOF of log file '{}'", log_path);
                 break;
@@ -273,10 +273,10 @@ error_code meta_state_service_simple::initialize(const std::vector<std::string> 
             // Read body.
             std::shared_ptr<char> buffer(dsn::utils::make_shared_array<char>(header->size));
             s = log_file->PositionedRead(_offset, header->size, &result, buffer.get());
-            CHECK(s.ok(),
-                  "read log file '{}' header with bad body, err = {}",
-                  log_path,
-                  s.ToString());
+            PGSCHECK(s.ok(),
+                     "read log file '{}' header with bad body, err = {}",
+                     log_path,
+                     s.ToString());
             _offset += header->size;
 
             binary_reader reader(blob(buffer, header->size));
@@ -308,7 +308,7 @@ error_code meta_state_service_simple::initialize(const std::vector<std::string> 
             default:
                 // The log is complete but its content is modified by cosmic ray. This is
                 // unacceptable
-                CHECK(false, "meta state server log corrupted");
+                PGSCHECK(false, "meta state server log corrupted");
             }
         }
     }
@@ -402,7 +402,7 @@ task_ptr meta_state_service_simple::submit_transaction(
             }
         } break;
         default:
-            CHECK(false, "not supported operation");
+            PGSCHECK(false, "not supported operation");
             break;
         }
 

@@ -131,10 +131,10 @@ void task_queue::enqueue_internal(task *task)
 
 const metric_entity_ptr &task_queue::queue_metric_entity() const
 {
-    CHECK_NOTNULL(_queue_metric_entity,
-                  "queue metric entity (queue_name={}) should has been instantiated: "
-                  "uninitialized entity cannot be used to instantiate metric",
-                  _name);
+    PGSCHECK_NOTNULL(_queue_metric_entity,
+                     "queue metric entity (queue_name={}) should has been instantiated: "
+                     "uninitialized entity cannot be used to instantiate metric",
+                     _name);
     return _queue_metric_entity;
 }
 

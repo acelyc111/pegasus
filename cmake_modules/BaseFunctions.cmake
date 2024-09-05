@@ -333,6 +333,9 @@ function(dsn_setup_thirdparty_libs)
   set(Boost_NO_SYSTEM_PATHS ON)
   set(Boost_NO_BOOST_CMAKE ON)
 
+  add_definitions(-DGLOG_USE_GLOG_EXPORT)
+  add_definitions(-DS2_USE_GLOG=0)
+
   set(CMAKE_PREFIX_PATH ${THIRDPARTY_INSTALL_DIR};${CMAKE_PREFIX_PATH})
   message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
   find_package(Boost COMPONENTS system filesystem REQUIRED)

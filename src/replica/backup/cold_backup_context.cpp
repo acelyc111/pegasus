@@ -60,7 +60,7 @@ const char *cold_backup_status_to_string(cold_backup_status status)
     case ColdBackupFailed:
         return "ColdBackupFailed";
     default:
-        CHECK(false, "");
+        PGSCHECK(false, "");
     }
     return "ColdBackupXXX";
 }
@@ -205,7 +205,7 @@ void cold_backup_context::check_backup_on_remote()
                 ignore_check();
             } else if (resp.err == ERR_OK) {
                 const dist::block_service::block_file_ptr &file_handle = resp.file_handle;
-                CHECK_NOTNULL(file_handle, "");
+                PGSCHECK_NOTNULL(file_handle, "");
                 if (file_handle->get_md5sum().empty() && file_handle->get_size() <= 0) {
                     LOG_INFO("{}: check backup on remote, current_checkpoint file {} is not exist",
                              name,
@@ -434,7 +434,7 @@ void cold_backup_context::upload_checkpoint_to_remote()
         LPC_BACKGROUND_COLD_BACKUP,
         [this, metadata](const dist::block_service::create_file_response &resp) {
             if (resp.err == ERR_OK) {
-                CHECK_NOTNULL(resp.file_handle, "");
+                PGSCHECK_NOTNULL(resp.file_handle, "");
                 if (resp.file_handle->get_md5sum().empty() && resp.file_handle->get_size() <= 0) {
                     _upload_status.store(UploadUncomplete);
                     LOG_INFO("{}: check upload_status complete, cold_backup_metadata isn't exist, "
@@ -661,7 +661,7 @@ void cold_backup_context::upload_file(const std::string &local_filename)
         [this, local_filename](const dist::block_service::create_file_response &resp) {
             if (resp.err == ERR_OK) {
                 const dist::block_service::block_file_ptr &file_handle = resp.file_handle;
-                CHECK_NOTNULL(file_handle, "");
+                PGSCHECK_NOTNULL(file_handle, "");
                 int64_t local_file_size = _file_infos.at(local_filename).first;
                 std::string md5 = _file_infos.at(local_filename).second;
                 std::string full_path_local_file =
@@ -810,7 +810,7 @@ void cold_backup_context::write_backup_metadata()
         LPC_BACKGROUND_COLD_BACKUP,
         [this, metadata](const dist::block_service::create_file_response &resp) {
             if (resp.err == ERR_OK) {
-                CHECK_NOTNULL(resp.file_handle, "");
+                PGSCHECK_NOTNULL(resp.file_handle, "");
                 blob buffer = json::json_forwarder<cold_backup_metadata>::encode(_metadata);
                 // hold itself until callback is executed
                 add_ref();
@@ -894,7 +894,7 @@ void cold_backup_context::write_current_chkpt_file(const std::string &value)
         LPC_BACKGROUND_COLD_BACKUP,
         [this, value, current_chkpt_file](const dist::block_service::create_file_response &resp) {
             if (resp.err == ERR_OK) {
-                CHECK_NOTNULL(resp.file_handle, "");
+                PGSCHECK_NOTNULL(resp.file_handle, "");
                 auto len = value.length();
                 std::shared_ptr<char> buf = utils::make_shared_array<char>(len);
                 ::memcpy(buf.get(), value.c_str(), len);
@@ -948,7 +948,7 @@ void cold_backup_context::on_write(const dist::block_service::block_file_ptr &fi
                                    const blob &value,
                                    const std::function<void(bool)> &callback)
 {
-    CHECK_NOTNULL(file_handle, "");
+    PGSCHECK_NOTNULL(file_handle, "");
     dist::block_service::write_request req;
     req.buffer = value;
 

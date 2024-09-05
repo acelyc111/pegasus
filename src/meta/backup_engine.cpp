@@ -133,7 +133,7 @@ error_code backup_engine::write_backup_file(const std::string &file_name,
         LOG_INFO("create file {} failed", file_name);
         return err;
     }
-    CHECK_NOTNULL(
+    PGSCHECK_NOTNULL(
         remote_file, "create file {} succeed, but can't get handle", create_file_req.file_name);
     remote_file
         ->write(dist::block_service::write_request{write_buffer},

@@ -149,7 +149,7 @@ bool mlog_dump(command_executor *e, shell_context *sc, arguments args)
                              int count) mutable {
             for (int i = 0; i < count; ++i) {
                 dsn::message_ex *request = requests[i];
-                CHECK_NOTNULL(request, "");
+                PGSCHECK_NOTNULL(request, "");
                 ::dsn::message_ex *msg = (::dsn::message_ex *)request;
                 if (msg->local_rpc_code == RPC_REPLICATION_WRITE_EMPTY) {
                     os << INDENT << "[EMPTY]" << std::endl;

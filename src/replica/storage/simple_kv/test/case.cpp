@@ -325,7 +325,7 @@ struct event_type_helper
     const char *get(event_type type)
     {
         auto it = type_to_name.find(type);
-        CHECK(it != type_to_name.end(), "");
+        PGSCHECK(it != type_to_name.end(), "");
         return it->second.c_str();
     }
     bool get(const std::string &name, event_type &type)
@@ -417,7 +417,7 @@ event *event::parse(int line_no, const std::string &params)
         e = new event_on_rpc_response_enqueue();
         break;
     default:
-        CHECK(false, "");
+        PGSCHECK(false, "");
     }
     if (!e->internal_parse(kv_map)) {
         std::cerr << "bad line: line_no=" << line_no
@@ -535,7 +535,7 @@ void event_on_rpc::init(message_ex *msg, task *tsk)
         _trace_id = fmt::sprintf("%016llx", msg->header->trace_id);
         _rpc_name = msg->header->rpc_name;
         const auto hp = host_port::from_address(msg->header->from_address);
-        CHECK(hp, "'{}' can not be reverse resolved", msg->header->from_address);
+        PGSCHECK(hp, "'{}' can not be reverse resolved", msg->header->from_address);
         _from = address_to_node(hp);
         _to = address_to_node(msg->to_host_port);
     }
@@ -711,9 +711,9 @@ bool modify_case_line::parse(const std::string &params)
     if (!event_case_line::parse(params))
         return false;
     size_t pos = params.find(':');
-    CHECK(pos != std::string::npos, "");
+    PGSCHECK(pos != std::string::npos, "");
     std::map<std::string, std::string> kv_map;
-    CHECK(parse_kv_map(line_no(), params.substr(pos + 1), kv_map), "");
+    PGSCHECK(parse_kv_map(line_no(), params.substr(pos + 1), kv_map), "");
     std::map<std::string, std::string>::const_iterator it;
     if ((it = kv_map.find("modify_delay")) != kv_map.end())
         _modify_delay = it->second;
@@ -724,8 +724,8 @@ void modify_case_line::modify(const event *ev)
 {
     if (!_modify_delay.empty()) {
         const event_on_task *e = dynamic_cast<const event_on_task *>(ev);
-        CHECK_NOTNULL(e, "");
-        CHECK_NOTNULL(e->_task, "");
+        PGSCHECK_NOTNULL(e, "");
+        PGSCHECK_NOTNULL(e->_task, "");
         e->_task->set_delay(boost::lexical_cast<int>(_modify_delay));
     }
 }
@@ -758,7 +758,7 @@ std::string client_case_line::to_string() const
         break;
     }
     default:
-        CHECK(false, "");
+        PGSCHECK(false, "");
     }
     return oss.str();
 }
@@ -822,7 +822,7 @@ bool client_case_line::parse(const std::string &params)
         break;
     }
     default:
-        CHECK(false, "");
+        PGSCHECK(false, "");
     }
     if (!parse_ok) {
         std::cerr << "bad line: line_no=" << line_no() << ": unknown error: " << kv_map["err"]
@@ -846,7 +846,7 @@ std::string client_case_line::type_name() const
     case replica_config:
         return "replica_config";
     default:
-        CHECK(false, "");
+        PGSCHECK(false, "");
     }
     return "";
 }
@@ -1094,14 +1094,14 @@ void test_case::output(const std::string &line)
 void test_case::print(case_line *cl, const std::string &other, bool is_skip)
 {
     if (is_skip) {
-        CHECK(cl == nullptr, "");
-        CHECK(!other.empty(), "");
+        PGSCHECK(cl == nullptr, "");
+        PGSCHECK(!other.empty(), "");
         std::cout << "    s  " << other << std::endl;
         return;
     }
 
     if (cl == nullptr) {
-        CHECK(!other.empty(), "");
+        PGSCHECK(!other.empty(), "");
         std::cout << "    +  " << other << std::endl;
     } else // cl != nullptr
     {
@@ -1392,7 +1392,7 @@ void test_case::on_state_change(const state_snapshot &last, const state_snapshot
 
 void test_case::internal_register_creator(const std::string &name, case_line_creator creator)
 {
-    CHECK(_creators.find(name) == _creators.end(), "");
+    PGSCHECK(_creators.find(name) == _creators.end(), "");
     _creators[name] = creator;
 }
 } // namespace test

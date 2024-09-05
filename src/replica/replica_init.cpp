@@ -114,12 +114,12 @@ decree replica::get_replay_start_decree()
 
 error_code replica::init_app_and_prepare_list(bool create_new)
 {
-    CHECK(nullptr == _app, "");
+    PGSCHECK(nullptr == _app, "");
     error_code err;
     std::string log_dir = utils::filesystem::path_combine(dir(), "plog");
 
     _app.reset(replication_app_base::new_storage_instance(_app_info.app_type, this));
-    CHECK(nullptr == _private_log, "");
+    PGSCHECK(nullptr == _private_log, "");
 
     if (create_new) {
         err = _app->open_new_internal(this, /* private_log_start */ 0);
@@ -216,12 +216,12 @@ error_code replica::init_app_and_prepare_list(bool create_new)
 
         if (nullptr == _private_log) {
             LOG_INFO_PREFIX("clear private log, dir = {}", log_dir);
-            CHECK(dsn::utils::filesystem::remove_path(log_dir),
-                  "Fail to delete directory {}",
-                  log_dir);
-            CHECK(dsn::utils::filesystem::create_directory(log_dir),
-                  "Fail to create directory {}",
-                  log_dir);
+            PGSCHECK(dsn::utils::filesystem::remove_path(log_dir),
+                     "Fail to delete directory {}",
+                     log_dir);
+            PGSCHECK(dsn::utils::filesystem::create_directory(log_dir),
+                     "Fail to create directory {}",
+                     log_dir);
 
             _private_log =
                 new mutation_log_private(log_dir, FLAGS_log_private_file_size_mb, get_gpid(), this);
@@ -264,7 +264,7 @@ bool replica::replay_mutation(mutation_ptr &mu, bool is_private)
     // for example, the recovery need it to select a proper primary
     if (mu->data.header.ballot > get_ballot()) {
         _config.ballot = mu->data.header.ballot;
-        CHECK(update_local_configuration(_config, true), "");
+        PGSCHECK(update_local_configuration(_config, true), "");
     }
 
     if (is_private && offset < _app->init_info().init_offset_in_private_log) {

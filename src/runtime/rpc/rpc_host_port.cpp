@@ -162,7 +162,7 @@ void host_port::assign_group(const char *name)
 
 error_s host_port::resolve_addresses(std::vector<rpc_address> &addresses) const
 {
-    CHECK(addresses.empty(), "");
+    CHECK(addresses.empty());
 
     switch (type()) {
     case HOST_TYPE_INVALID:
@@ -172,7 +172,7 @@ error_s host_port::resolve_addresses(std::vector<rpc_address> &addresses) const
     case HOST_TYPE_IPV4:
         break;
     default:
-        CHECK(false, "");
+        CHECK(false);
         __builtin_unreachable();
     }
 

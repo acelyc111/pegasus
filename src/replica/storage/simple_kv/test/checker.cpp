@@ -287,7 +287,7 @@ void test_checker::on_replica_state_change(const host_port &from,
 void test_checker::on_config_change(const app_mapper &new_config)
 {
     const partition_configuration *pc = get_config(new_config, g_default_gpid);
-    CHECK_NOTNULL(pc, "drop table is not allowed in test");
+    PGSCHECK_NOTNULL(pc, "drop table is not allowed in test");
 
     parti_config cur_config;
     cur_config.convert_from(*pc);

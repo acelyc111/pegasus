@@ -190,8 +190,8 @@ inline uint32_t rpc_address::read(apache::thrift::protocol::TProtocol *iprot)
     if (binary_proto != nullptr) {
         // the protocol is binary protocol
         auto r = iprot->readI64(reinterpret_cast<int64_t &>(_addr.value));
-        CHECK(_addr.v4.type == HOST_TYPE_INVALID || _addr.v4.type == HOST_TYPE_IPV4,
-              "only invalid or ipv4 can be deserialized from binary");
+        PGSCHECK(_addr.v4.type == HOST_TYPE_INVALID || _addr.v4.type == HOST_TYPE_IPV4,
+                 "only invalid or ipv4 can be deserialized from binary");
         return r;
     } else {
         // the protocol is json protocol
@@ -249,8 +249,8 @@ inline uint32_t rpc_address::write(apache::thrift::protocol::TProtocol *oprot) c
         dynamic_cast<apache::thrift::protocol::TBinaryProtocol *>(oprot);
     if (binary_proto != nullptr) {
         // the protocol is binary protocol
-        CHECK(_addr.v4.type == HOST_TYPE_INVALID || _addr.v4.type == HOST_TYPE_IPV4,
-              "only invalid or ipv4 can be serialized to binary");
+        PGSCHECK(_addr.v4.type == HOST_TYPE_INVALID || _addr.v4.type == HOST_TYPE_IPV4,
+                 "only invalid or ipv4 can be serialized to binary");
         return oprot->writeI64((int64_t)_addr.value);
     } else {
         // the protocol is json protocol
@@ -339,16 +339,16 @@ inline uint32_t host_port::read(apache::thrift::protocol::TProtocol *iprot)
     _host = host;
     _port = static_cast<uint16_t>(port);
     _type = static_cast<dsn_host_type_t>(type_enum_number);
-    CHECK(_type == HOST_TYPE_INVALID || _type == HOST_TYPE_IPV4,
-          "only invalid or ipv4 can be deserialized.");
+    PGSCHECK(_type == HOST_TYPE_INVALID || _type == HOST_TYPE_IPV4,
+             "only invalid or ipv4 can be deserialized.");
 
     return xfer;
 }
 
 inline uint32_t host_port::write(apache::thrift::protocol::TProtocol *oprot) const
 {
-    CHECK(_type == HOST_TYPE_INVALID || _type == HOST_TYPE_IPV4,
-          "only invalid or ipv4 can be serialized.");
+    PGSCHECK(_type == HOST_TYPE_INVALID || _type == HOST_TYPE_IPV4,
+             "only invalid or ipv4 can be serialized.");
     uint32_t xfer = 0;
     auto binary_proto = dynamic_cast<apache::thrift::protocol::TBinaryProtocol *>(oprot);
     if (binary_proto != nullptr) {

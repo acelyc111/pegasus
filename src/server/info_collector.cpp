@@ -78,7 +78,7 @@ info_collector::info_collector()
 
     _meta_servers.assign_group("meta-servers");
     for (auto &ms : meta_servers) {
-        CHECK(_meta_servers.group_host_port()->add(ms), "");
+        PGSCHECK(_meta_servers.group_host_port()->add(ms), "");
     }
 
     _cluster_name = dsn::get_current_cluster_name();
@@ -89,9 +89,9 @@ info_collector::info_collector()
     _shell_context->ddl_client.reset(new replication_ddl_client(meta_servers));
 
     // initialize the _client.
-    CHECK(pegasus_client_factory::initialize(nullptr), "Initialize the pegasus client failed");
+    PGSCHECK(pegasus_client_factory::initialize(nullptr), "Initialize the pegasus client failed");
     _client = pegasus_client_factory::get_client(_cluster_name.c_str(), FLAGS_usage_stat_app);
-    CHECK_NOTNULL(_client, "Initialize the client failed");
+    PGSCHECK_NOTNULL(_client, "Initialize the client failed");
     _result_writer = std::make_unique<result_writer>(_client);
 
     // _capacity_unit_retry_wait_seconds is in range of [1, 10]

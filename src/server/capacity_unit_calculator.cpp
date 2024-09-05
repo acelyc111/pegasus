@@ -127,9 +127,9 @@ capacity_unit_calculator::capacity_unit_calculator(
       _write_hotkey_collector(write_hotkey_collector),
       _read_size_throttling_controller(read_size_throttling_controller)
 {
-    CHECK(_read_hotkey_collector, "read hotkey collector is a nullptr");
-    CHECK(_write_hotkey_collector, "write hotkey collector is a nullptr");
-    CHECK(_read_size_throttling_controller, "_read_size_throttling_controller is a nullptr");
+    PGSCHECK(_read_hotkey_collector, "read hotkey collector is a nullptr");
+    PGSCHECK(_write_hotkey_collector, "write hotkey collector is a nullptr");
+    PGSCHECK(_read_size_throttling_controller, "_read_size_throttling_controller is a nullptr");
 
     _log_read_cu_size = log(FLAGS_perf_counter_read_capacity_unit_size) / log(2);
     _log_write_cu_size = log(FLAGS_perf_counter_write_capacity_unit_size) / log(2);

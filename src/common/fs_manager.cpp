@@ -108,11 +108,11 @@ disk_capacity_metrics::disk_capacity_metrics(const std::string &tag, const std::
 
 const metric_entity_ptr &disk_capacity_metrics::disk_metric_entity() const
 {
-    CHECK_NOTNULL(_disk_metric_entity,
-                  "disk metric entity (tag={}, data_dir={}) should has been instantiated: "
-                  "uninitialized entity cannot be used to instantiate metric",
-                  _tag,
-                  _data_dir);
+    PGSCHECK_NOTNULL(_disk_metric_entity,
+                     "disk metric entity (tag={}, data_dir={}) should has been instantiated: "
+                     "uninitialized entity cannot be used to instantiate metric",
+                     _tag,
+                     _data_dir);
     return _disk_metric_entity;
 }
 
@@ -234,7 +234,7 @@ void fs_manager::initialize(const std::vector<std::string> &data_dirs,
             if (FLAGS_ignore_broken_disk) {
                 LOG_ERROR("data dir({}) is broken, ignore it, error: {}", dir, err_msg);
             } else {
-                CHECK(false, err_msg);
+                PGSCHECK(false, err_msg);
             }
             status = disk_status::IO_ERROR;
         }
@@ -301,7 +301,7 @@ dir_node *fs_manager::find_best_dir_for_new_replica(const gpid &pid) const
                 LOG_INFO("skip the {} state dir_node({})", enum_to_string(dn->status), dn->tag);
                 continue;
             }
-            CHECK(!dn->has(pid), "gpid({}) already exists in dir_node({})", pid, dn->tag);
+            PGSCHECK(!dn->has(pid), "gpid({}) already exists in dir_node({})", pid, dn->tag);
             uint64_t app_replicas_count = dn->replicas_count(pid.get_app_id());
             uint64_t total_replicas_count = dn->replicas_count();
 
@@ -335,12 +335,12 @@ void fs_manager::specify_dir_for_new_replica_for_test(dir_node *specified_dn,
     bool dn_found = false;
     zauto_write_lock l(_lock);
     for (const auto &dn : _dir_nodes) {
-        CHECK(!dn->has(pid), "gpid({}) already exists in dir_node({})", pid, dn->tag);
+        PGSCHECK(!dn->has(pid), "gpid({}) already exists in dir_node({})", pid, dn->tag);
         if (dn.get() == specified_dn) {
             dn_found = true;
         }
     }
-    CHECK(dn_found, "dir_node({}) is not exist", specified_dn->tag);
+    PGSCHECK(dn_found, "dir_node({}) is not exist", specified_dn->tag);
     CHECK_EQ(disk_status::NORMAL, specified_dn->status);
     const auto dir = specified_dn->replica_dir(app_type, pid);
     CHECK_TRUE(dsn::utils::filesystem::create_directory(dir));
@@ -447,7 +447,7 @@ dir_node *fs_manager::find_replica_dir(std::string_view app_type, gpid pid)
             const auto dir = dn->replica_dir(app_type, pid);
             if (utils::filesystem::directory_exists(dir)) {
                 // Check if there are duplicate replica instance directories.
-                CHECK(replica_dir.empty(), "replica dir conflict: {} <--> {}", dir, replica_dir);
+                PGSCHECK(replica_dir.empty(), "replica dir conflict: {} <--> {}", dir, replica_dir);
                 replica_dir = dir;
                 replica_dn = dn.get();
             }
@@ -463,7 +463,7 @@ dir_node *fs_manager::create_replica_dir_if_necessary(std::string_view app_type,
     auto replica_dn = find_replica_dir(app_type, pid);
     if (replica_dn != nullptr) {
         // TODO(yingchun): enable this check after unit tests are refactored and fixed.
-        // CHECK(replica_dn->has(pid),
+        // PGSCHECK(replica_dn->has(pid),
         //       "replica({})'s directory({}) exists but not in management",
         //       pid,
         //       replica_dn->tag);
@@ -471,7 +471,7 @@ dir_node *fs_manager::create_replica_dir_if_necessary(std::string_view app_type,
     }
 
     // TODO(yingchun): enable this check after unit tests are refactored and fixed.
-    // CHECK(0 == replica_dn->holding_replicas.count(pid.get_app_id()) ||
+    // PGSCHECK(0 == replica_dn->holding_replicas.count(pid.get_app_id()) ||
     //       0 == replica_dn->holding_replicas[pid.get_app_id()].count(pid), "");
     // Find a dir_node for the new replica.
     replica_dn = find_best_dir_for_new_replica(pid);
@@ -513,7 +513,7 @@ dir_node *fs_manager::create_child_replica_dir(std::string_view app_type,
             }
         }
     }
-    CHECK_NOTNULL(child_dn, "can not find parent_dir {} in data_dirs", parent_dir);
+    PGSCHECK_NOTNULL(child_dn, "can not find parent_dir {} in data_dirs", parent_dir);
     if (!dsn::utils::filesystem::create_directory(child_dir)) {
         LOG_ERROR("create child replica directory({}) failed", child_dir);
         return nullptr;

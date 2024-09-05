@@ -91,7 +91,7 @@ void replica::init_group_check()
     if (partition_status::PS_PRIMARY != status() || FLAGS_group_check_disabled)
         return;
 
-    CHECK(nullptr == _primary_states.group_check_task, "");
+    PGSCHECK(nullptr == _primary_states.group_check_task, "");
     _primary_states.group_check_task = tasking::enqueue_timer(
         LPC_GROUP_CHECK,
         &_tracker,
@@ -104,7 +104,7 @@ void replica::broadcast_group_check()
 {
     FAIL_POINT_INJECT_F("replica_broadcast_group_check", [](std::string_view) {});
 
-    CHECK_NOTNULL(_primary_states.group_check_task, "");
+    PGSCHECK_NOTNULL(_primary_states.group_check_task, "");
 
     LOG_INFO_PREFIX("start to broadcast group check");
 
@@ -146,7 +146,7 @@ void replica::broadcast_group_check()
 
         if (request->config.status == partition_status::PS_POTENTIAL_SECONDARY) {
             auto it = _primary_states.learners.find(hp);
-            CHECK(it != _primary_states.learners.end(), "learner {} is missing", hp);
+            PGSCHECK(it != _primary_states.learners.end(), "learner {} is missing", hp);
             request->config.learner_signature = it->second.signature;
         }
 
@@ -222,7 +222,7 @@ void replica::on_group_check(const group_check_request &request,
     case partition_status::PS_ERROR:
         break;
     default:
-        CHECK(false, "invalid partition_status, status = {}", enum_to_string(status()));
+        PGSCHECK(false, "invalid partition_status, status = {}", enum_to_string(status()));
     }
 
     response.pid = get_gpid();

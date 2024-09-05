@@ -66,7 +66,7 @@ rocksdb::Env *NewEncryptedEnv()
         "id=AES;hex_instance_key={};method={}", FLAGS_server_key, FLAGS_encryption_method);
     const auto &s = rocksdb::EncryptionProvider::CreateFromString(
         rocksdb::ConfigOptions(), provider_id, &provider);
-    CHECK(s.ok(), "Failed to create encryption provider: {}", s.ToString());
+    PGSCHECK(s.ok(), "Failed to create encryption provider: {}", s.ToString());
 
     // Create an encrypted env.
     return NewEncryptedEnv(rocksdb::Env::Default(), provider);
@@ -134,11 +134,11 @@ rocksdb::Status do_copy_file(const std::string &src_fname,
                                   src_file->Read(bytes_per_copy, &result, buffer.get()),
                                   "failed to read file {}",
                                   src_fname);
-        CHECK(!result.empty(),
-              "read file {} at offset {} with size {} failed",
-              src_fname,
-              offset,
-              bytes_per_copy);
+        PGSCHECK(!result.empty(),
+                 "read file {} at offset {} with size {} failed",
+                 src_fname,
+                 offset,
+                 bytes_per_copy);
         LOG_AND_RETURN_NOT_RDB_OK(
             WARNING, dst_file->Append(result), "failed to write file {}", dst_fname);
 

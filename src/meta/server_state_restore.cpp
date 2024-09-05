@@ -102,7 +102,7 @@ void server_state::sync_app_from_backup_media(
         callback_tsk->enqueue_with(err, dsn::blob());
         return;
     }
-    CHECK_NOTNULL(file_handle, "create file from backup media ecounter error");
+    PGSCHECK_NOTNULL(file_handle, "create file from backup media ecounter error");
     file_handle->read(
         read_request{0, -1}, TASK_CODE_EXEC_INLINED, [callback_tsk](const read_response &resp) {
             callback_tsk->enqueue_with(resp.err, resp.buffer);
@@ -184,7 +184,7 @@ void server_state::restore_app(dsn::message_ex *msg)
                 if (pair.first != ERR_OK) {
                     ec = pair.first;
                 } else {
-                    CHECK_NOTNULL(pair.second, "app info shouldn't be empty");
+                    PGSCHECK_NOTNULL(pair.second, "app info shouldn't be empty");
                     // the same with create_app
                     do_app_create(pair.second);
                     return;
@@ -241,7 +241,7 @@ void server_state::on_query_restore_status(configuration_query_restore_rpc rpc)
     response.err = ERR_OK;
 
     std::shared_ptr<app_state> app = get_app(request.restore_app_id);
-    CHECK(app, "app must be valid");
+    PGSCHECK(app, "app must be valid");
     if (app->status == app_status::AS_DROPPED) {
         response.err = ERR_APP_DROPPED;
         return;

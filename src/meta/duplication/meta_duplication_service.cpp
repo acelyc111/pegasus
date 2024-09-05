@@ -159,11 +159,11 @@ void meta_duplication_service::do_modify_duplication(std::shared_ptr<app_state> 
         });
 }
 
+//    LOG(level, _msg);
 #define LOG_DUP_HINT_AND_RETURN(resp, level, ...)                                                  \
     do {                                                                                           \
         const std::string _msg(fmt::format(__VA_ARGS__));                                          \
         (resp).__set_hint(_msg);                                                                   \
-        LOG(level, _msg);                                                                          \
         return;                                                                                    \
     } while (0)
 

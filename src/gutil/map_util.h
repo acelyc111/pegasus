@@ -162,7 +162,7 @@ template <typename M, typename KeyType = MapUtilKeyT<M>>
 const MapUtilMappedT<M> &FindOrDie(const M &m, const KeyType &key)
 {
     auto it = m.find(key);
-    CHECK(it != m.end(), "Map key not found: {}", key);
+    CHECK(it != m.end()) << "Map key not found: {}" << key;
     return gutil::subtle::GetMapped(*it);
 }
 
@@ -172,7 +172,7 @@ MapUtilMappedT<M> &FindOrDie(M &m, // NOLINT
                              const KeyType &key)
 {
     auto it = m.find(key);
-    CHECK(it != m.end(), "Map key not found: {}", key);
+    CHECK(it != m.end()) << "Map key not found: {}" << key;
     return gutil::subtle::GetMapped(*it);
 }
 
@@ -181,7 +181,7 @@ template <typename M, typename KeyType = MapUtilKeyT<M>>
 const MapUtilMappedT<M> &FindOrDieNoPrint(const M &m, const KeyType &key)
 {
     auto it = m.find(key);
-    CHECK(it != m.end(), "Map key not found");
+    CHECK(it != m.end()) << "Map key not found";
     return gutil::subtle::GetMapped(*it);
 }
 
@@ -191,7 +191,7 @@ MapUtilMappedT<M> &FindOrDieNoPrint(M &m, // NOLINT
                                     const KeyType &key)
 {
     auto it = m.find(key);
-    CHECK(it != m.end(), "Map key not found");
+    CHECK(it != m.end()) << "Map key not found";
     return gutil::subtle::GetMapped(*it);
 }
 
@@ -391,14 +391,14 @@ bool InsertIfNotPresent(M *m, const MapUtilKeyT<M> &key, const MapUtilMappedT<M>
 template <typename M>
 void InsertOrDie(M *m, const MapUtilInitT<M> &value)
 {
-    CHECK(InsertIfNotPresent(m, value), "duplicate value: {}", value);
+    CHECK(InsertIfNotPresent(m, value)) << "duplicate value: " << value;
 }
 
 // Same as above except doesn't log the value on error.
 template <typename M>
 void InsertOrDieNoPrint(M *m, const MapUtilInitT<M> &value)
 {
-    CHECK(InsertIfNotPresent(m, value), "duplicate value.");
+    CHECK(InsertIfNotPresent(m, value)) << "duplicate value.";
 }
 
 // Inserts the key-value pair into the m. Dies if key was already
@@ -406,14 +406,14 @@ void InsertOrDieNoPrint(M *m, const MapUtilInitT<M> &value)
 template <typename M>
 void InsertOrDie(M *m, const MapUtilKeyT<M> &key, const MapUtilMappedT<M> &data)
 {
-    CHECK(InsertIfNotPresent(m, key, data), "duplicate key: {}", key);
+    CHECK(InsertIfNotPresent(m, key, data)) << "duplicate key: " << key;
 }
 
 // Same as above except doesn't log the key on error.
 template <typename M>
 void InsertOrDieNoPrint(M *m, const MapUtilKeyT<M> &key, const MapUtilMappedT<M> &data)
 {
-    CHECK(InsertIfNotPresent(m, key, data), "duplicate key.");
+    CHECK(InsertIfNotPresent(m, key, data)) << "duplicate key.";
 }
 
 // Inserts a new key and default-initialized value. Dies if the key was already
@@ -427,7 +427,7 @@ auto InsertKeyOrDie(M *m, const MapUtilKeyT<M> &key) ->
     typename std::enable_if<internal_map_util::HasTryEmplace<M>::value, MapUtilMappedT<M> &>::type
 {
     auto res = m->try_emplace(key);
-    CHECK(res.second, "duplicate key: {}", key);
+    CHECK(res.second) << "duplicate key: " << key;
     return gutil::subtle::GetMapped(*res.first);
 }
 
@@ -437,7 +437,7 @@ auto InsertKeyOrDie(M *m, const MapUtilKeyT<M> &key) ->
     typename std::enable_if<!internal_map_util::HasTryEmplace<M>::value, MapUtilMappedT<M> &>::type
 {
     auto res = m->insert(MapUtilValueT<M>(key, MapUtilMappedT<M>()));
-    CHECK(res.second, "duplicate key: {}", key);
+    CHECK(res.second) << "duplicate key: " << key;
     return res.first->second;
 }
 
@@ -545,7 +545,7 @@ InsertOrReturnExisting(M *m, const MapUtilKeyT<M> &key, const MapUtilMappedT<M> 
 template <typename M, typename ReverseM>
 bool ReverseMap(const M &m, ReverseM *reverse)
 {
-    CHECK_NOTNULL(reverse, "");
+    PGSCHECK_NOTNULL(reverse, "");
     bool all_unique = true;
     for (const auto &kv : m) {
         if (!InsertOrUpdate(reverse, kv.second, kv.first)) {
@@ -601,7 +601,7 @@ MapUtilMappedT<M> EraseKeyReturnValuePtr(M *m, const MapUtilKeyT<M> &key)
 template <typename M, typename KeyContainer>
 void InsertKeysFromMap(const M &m, KeyContainer *key_container)
 {
-    CHECK_NOTNULL(key_container, "");
+    PGSCHECK_NOTNULL(key_container, "");
     for (const auto &kv : m) {
         key_container->insert(kv.first);
     }
@@ -614,7 +614,7 @@ void InsertKeysFromMap(const M &m, KeyContainer *key_container)
 template <typename M, typename KeyContainer>
 void AppendKeysFromMap(const M &m, KeyContainer *key_container)
 {
-    CHECK_NOTNULL(key_container, "");
+    PGSCHECK_NOTNULL(key_container, "");
     for (const auto &kv : m) {
         key_container->push_back(kv.first);
     }
@@ -630,7 +630,7 @@ void AppendKeysFromMap(const M &m, KeyContainer *key_container)
 template <typename M, typename KeyType>
 void AppendKeysFromMap(const M &m, std::vector<KeyType> *key_container)
 {
-    CHECK_NOTNULL(key_container, "");
+    PGSCHECK_NOTNULL(key_container, "");
     // We now have the opportunity to call reserve(). Calling reserve() every
     // time is a bad idea for some use cases: libstdc++'s implementation of
     // std::vector<>::reserve() resizes the vector's backing store to exactly the
@@ -655,7 +655,7 @@ void AppendKeysFromMap(const M &m, std::vector<KeyType> *key_container)
 template <typename M, typename ValueContainer>
 void AppendValuesFromMap(const M &m, ValueContainer *value_container)
 {
-    CHECK_NOTNULL(value_container, "");
+    PGSCHECK_NOTNULL(value_container, "");
     for (const auto &kv : m) {
         value_container->push_back(kv.second);
     }
@@ -671,7 +671,7 @@ void AppendValuesFromMap(const M &m, ValueContainer *value_container)
 template <typename M, typename ValueType>
 void AppendValuesFromMap(const M &m, std::vector<ValueType> *value_container)
 {
-    CHECK_NOTNULL(value_container, "");
+    PGSCHECK_NOTNULL(value_container, "");
     // See AppendKeysFromMap for why this is done.
     if (value_container->empty()) {
         value_container->reserve(m.size());
@@ -690,7 +690,7 @@ template <typename M, typename Predicate>
 auto AssociativeEraseIf(M *m, Predicate predicate) ->
     typename std::enable_if<std::is_same<void, decltype(m->erase(m->begin()))>::value>::type
 {
-    CHECK_NOTNULL(m, "");
+    PGSCHECK_NOTNULL(m, "");
     for (auto it = m->begin(); it != m->end();) {
         if (predicate(*it)) {
             m->erase(it++);
@@ -704,7 +704,7 @@ template <typename M, typename Predicate>
 auto AssociativeEraseIf(M *m, Predicate predicate) -> typename std::enable_if<
     std::is_same<decltype(m->begin()), decltype(m->erase(m->begin()))>::value>::type
 {
-    CHECK_NOTNULL(m, "");
+    PGSCHECK_NOTNULL(m, "");
     for (auto it = m->begin(); it != m->end();) {
         if (predicate(*it)) {
             it = m->erase(it);

@@ -76,7 +76,7 @@ bool dns_resolver::get_cached_addresses(const host_port &hp, std::vector<rpc_add
 
 error_s dns_resolver::resolve_addresses(const host_port &hp, std::vector<rpc_address> &addresses)
 {
-    CHECK(addresses.empty(), "invalid addresses, not empty");
+    PGSCHECK(addresses.empty(), "invalid addresses, not empty");
     if (get_cached_addresses(hp, addresses)) {
         return error_s::ok();
     }
@@ -128,7 +128,7 @@ rpc_address dns_resolver::resolve_address(const host_port &hp)
     case HOST_TYPE_IPV4: {
         std::vector<rpc_address> addresses;
         CHECK_OK(resolve_addresses(hp, addresses), "host_port '{}' can not be resolved", hp);
-        CHECK(!addresses.empty(), "host_port '{}' can not be resolved to any address", hp);
+        PGSCHECK(!addresses.empty(), "host_port '{}' can not be resolved to any address", hp);
 
         if (addresses.size() > 1) {
             LOG_WARNING("host_port '{}' resolves to {} different addresses, using the first one {}",

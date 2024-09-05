@@ -36,7 +36,9 @@ set(MY_PROJ_LIBS
         snappy
         sasl2
         gssapi_krb5
-        krb5)
+        krb5
+        glog
+        gflags)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

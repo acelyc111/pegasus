@@ -56,7 +56,7 @@ command_manager::register_command(const std::vector<std::string> &commands,
 
     utils::auto_write_lock l(_lock);
     for (const auto &cmd : commands) {
-        CHECK(!cmd.empty(), "should not register empty command");
+        PGSCHECK(!cmd.empty(), "should not register empty command");
         gutil::InsertOrDie(&_handler_by_cmd, cmd, ch);
     }
 
@@ -101,7 +101,7 @@ command_manager::register_multiple_commands(const std::vector<std::string> &comm
 void command_manager::deregister_command(uintptr_t cmd_id)
 {
     const auto ch = reinterpret_cast<commands_handler *>(cmd_id);
-    CHECK_NOTNULL(ch, "cannot deregister a null command id");
+    PGSCHECK_NOTNULL(ch, "cannot deregister a null command id");
     utils::auto_write_lock l(_lock);
     for (const auto &cmd : ch->commands) {
         _handler_by_cmd.erase(cmd);
@@ -247,10 +247,11 @@ command_manager::command_manager()
 command_manager::~command_manager()
 {
     _cmds.clear();
-    CHECK(_handler_by_cmd.empty(),
-          "All commands must be deregistered before command_manager is destroyed, however '{}' is "
-          "still registered",
-          _handler_by_cmd.begin()->first);
+    PGSCHECK(
+        _handler_by_cmd.empty(),
+        "All commands must be deregistered before command_manager is destroyed, however '{}' is "
+        "still registered",
+        _handler_by_cmd.begin()->first);
 }
 
 } // namespace dsn

@@ -24,7 +24,9 @@ set(MY_PROJ_LIBS
         rocksdb
         lz4
         zstd
-        snappy)
+        snappy
+        glog
+        gflags)
 
 set(MY_BOOST_LIBS Boost::filesystem Boost::system)
 

@@ -206,7 +206,7 @@ bool task_spec::init()
         std::string section_name =
             std::string("task.") + std::string(dsn::task_code(code).to_string());
         task_spec *spec = task_spec::get(code);
-        CHECK_NOTNULL(spec, "");
+        PGSCHECK_NOTNULL(spec, "");
 
         if (!read_config(section_name.c_str(), *spec, &default_spec))
             return false;
@@ -215,9 +215,9 @@ bool task_spec::init()
             spec->allow_inline = true;
         }
 
-        CHECK(spec->rpc_request_delays_milliseconds.size() == 0 ||
-                  spec->rpc_request_delays_milliseconds.size() == 6,
-              "invalid length of rpc_request_delays_milliseconds, must be of length 6");
+        PGSCHECK(spec->rpc_request_delays_milliseconds.size() == 0 ||
+                     spec->rpc_request_delays_milliseconds.size() == 6,
+                 "invalid length of rpc_request_delays_milliseconds, must be of length 6");
         if (spec->rpc_request_delays_milliseconds.size() > 0) {
             spec->rpc_request_delayer.initialize(spec->rpc_request_delays_milliseconds);
         }

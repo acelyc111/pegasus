@@ -304,8 +304,8 @@ bool open_rocksdb(const rocksdb::DBOptions &db_opts,
                   std::vector<rocksdb::ColumnFamilyHandle *> *cf_hdls,
                   rocksdb::DB **db)
 {
-    CHECK_NOTNULL(cf_hdls, "");
-    CHECK_NOTNULL(db, "");
+    PGSCHECK_NOTNULL(cf_hdls, "");
+    PGSCHECK_NOTNULL(db, "");
     if (read_only) {
         RETURN_FALSE_IF_NON_RDB_OK(
             rocksdb::DB::OpenForReadOnly(db_opts, rdb_dir, cf_dscs, cf_hdls, db),
@@ -325,8 +325,8 @@ bool open_rocksdb(const rocksdb::DBOptions &db_opts,
 
 void release_db(std::vector<rocksdb::ColumnFamilyHandle *> *cf_hdls, rocksdb::DB **db)
 {
-    CHECK_NOTNULL(cf_hdls, "");
-    CHECK_NOTNULL(db, "");
+    PGSCHECK_NOTNULL(cf_hdls, "");
+    PGSCHECK_NOTNULL(db, "");
     for (auto cf_hdl : *cf_hdls) {
         delete cf_hdl;
     }

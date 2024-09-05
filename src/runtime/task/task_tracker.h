@@ -176,7 +176,7 @@ private:
 // ------- inlined implementation ----------
 inline void trackable_task::set_tracker(task_tracker *owner, task *tsk)
 {
-    CHECK(_owner == nullptr, "task tracker is already set");
+    PGSCHECK(_owner == nullptr, "task tracker is already set");
     _owner = owner;
     _task = tsk;
     _deleting_owner.store(OWNER_DELETE_NOT_LOCKED, std::memory_order_release);

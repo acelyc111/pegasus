@@ -65,13 +65,13 @@ public:
         app_info.app_type = "pegasus";
 
         auto *dn = _replica_stub->get_fs_manager()->find_best_dir_for_new_replica(_gpid);
-        CHECK_NOTNULL(dn, "");
+        PGSCHECK_NOTNULL(dn, "");
         _replica = new dsn::replication::replica(_replica_stub, _gpid, app_info, dn, false, false);
         const auto dir_data = dsn::utils::filesystem::path_combine(
             _replica->dir(), dsn::replication::replication_app_base::kDataDir);
-        CHECK(dsn::utils::filesystem::create_directory(dir_data),
-              "create data dir {} failed",
-              dir_data);
+        PGSCHECK(dsn::utils::filesystem::create_directory(dir_data),
+                 "create data dir {} failed",
+                 dir_data);
 
         _server = std::make_unique<mock_pegasus_server_impl>(_replica);
     }

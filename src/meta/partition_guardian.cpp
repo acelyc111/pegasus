@@ -82,8 +82,8 @@ pc_status partition_guardian::cure(meta_view view,
     const partition_configuration &pc = *get_config(*(view.apps), gpid);
     const proposal_actions &acts = get_config_context(*view.apps, gpid)->lb_actions;
 
-    CHECK(app->is_stateful, "");
-    CHECK(acts.empty(), "");
+    CHECK(app->is_stateful);
+    CHECK(acts.empty());
 
     pc_status status;
     if (!pc.hp_primary) {
@@ -112,9 +112,9 @@ void partition_guardian::reconfig(meta_view view, const configuration_update_req
     config_context *cc = get_config_context(*(view.apps), gpid);
     if (!cc->lb_actions.empty()) {
         const configuration_proposal_action *current = cc->lb_actions.front();
-        CHECK(current != nullptr && current->type != config_type::CT_INVALID,
-              "invalid proposal for gpid({})",
-              gpid);
+        PGSCHECK(current != nullptr && current->type != config_type::CT_INVALID,
+                 "invalid proposal for gpid({})",
+                 gpid);
         // if the valid proposal is from cure
         if (!cc->lb_actions.is_from_balancer()) {
             finish_cure_proposal(view, gpid, *current);
@@ -141,7 +141,7 @@ void partition_guardian::reconfig(meta_view view, const configuration_update_req
                 cc->check_size();
             } else {
                 cc->remove_from_serving(hp);
-                CHECK(cc->record_drop_history(hp), "node({}) has been in the dropped", hp);
+                PGSCHECK(cc->record_drop_history(hp), "node({}) has been in the dropped", hp);
             }
         });
     }
@@ -251,7 +251,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
         RESET_IP_AND_HOST_PORT(action, node);
         for (const auto &secondary : pc.hp_secondaries) {
             const auto ns = get_node_state(*(view.nodes), secondary, false);
-            CHECK_NOTNULL(ns, "invalid secondary: {}", secondary);
+            PGSCHECK_NOTNULL(ns, "invalid secondary: {}", secondary);
             if (dsn_unlikely(!ns->alive())) {
                 continue;
             }
@@ -461,7 +461,7 @@ pc_status partition_guardian::on_missing_primary(meta_view &view, const dsn::gpi
 
         // Use the action.hp_node after being updated.
         if (action.hp_node) {
-            CHECK(action.node, "");
+            CHECK(action.node);
             SET_OBJ_IP_AND_HOST_PORT(action, target, action, node);
             action.type = config_type::CT_ASSIGN_PRIMARY;
 
@@ -630,7 +630,7 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
         // if not emergency, only try to recover last dropped server
         const dropped_replica &server = cc.dropped.back();
         if (is_node_alive(*view.nodes, server.node)) {
-            CHECK(server.node, "invalid server address, address = {}", server.node);
+            PGSCHECK(server.node, "invalid server address, address = {}", server.node);
             SET_IP_AND_HOST_PORT_BY_DNS(action, node, server.node);
         }
 
@@ -654,7 +654,7 @@ pc_status partition_guardian::on_missing_secondary(meta_view &view, const dsn::g
         SET_OBJ_IP_AND_HOST_PORT(action, target, pc, primary);
 
         newly_partitions *np = get_newly_partitions(*(view.nodes), action.hp_node);
-        CHECK_NOTNULL(np, "");
+        CHECK_NOTNULL(np);
         np->newly_add_partition(gpid.get_app_id());
 
         cc.lb_actions.assign_cure_proposal(action);

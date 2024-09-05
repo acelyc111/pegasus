@@ -51,7 +51,7 @@ namespace dsn {
 
 #define CHECK_IF_CURL_URL_OK(url, expr, ...)                                                       \
     do {                                                                                           \
-        CHECK_NOTNULL(url, "CURLU object has not been allocated");                                 \
+        PGSCHECK_NOTNULL(url, "CURLU object has not been allocated");                              \
         CHECK_IF_CURL_OK(expr, CURLUE_OK, __VA_ARGS__);                                            \
     } while (0)
 
@@ -92,7 +92,7 @@ inline std::string to_error_msg(CURLUcode code)
 CURLU *new_curlu()
 {
     CURLU *url = curl_url();
-    CHECK_NOTNULL(url, "fail to allocate a CURLU object due to out of memory");
+    PGSCHECK_NOTNULL(url, "fail to allocate a CURLU object due to out of memory");
 
     SET_DEFAULT_HTTP_SCHEME(url);
 
@@ -102,7 +102,7 @@ CURLU *new_curlu()
 CURLU *dup_curlu(const CURLU *url)
 {
     CURLU *new_url = curl_url_dup(url);
-    CHECK_NOTNULL(new_url, "fail to duplicate a CURLU object due to out of memory");
+    PGSCHECK_NOTNULL(new_url, "fail to duplicate a CURLU object due to out of memory");
 
     return new_url;
 }
@@ -198,7 +198,7 @@ DEF_HTTP_URL_SET_FUNC(query, QUERY)
 
 dsn::error_s http_url::to_string(std::string &url) const
 {
-    CHECK_NOTNULL(_url, "CURLU object has not been allocated");
+    PGSCHECK_NOTNULL(_url, "CURLU object has not been allocated");
 
     char *content;
     RETURN_IF_CURL_URL_GET_NOT_OK(CURLUPART_URL, &content, 0);
@@ -257,7 +257,7 @@ inline dsn::error_code to_error_code(CURLcode code)
 
 #define RETURN_IF_CURL_EASY_NOT_OK(expr, ...)                                                      \
     do {                                                                                           \
-        CHECK_NOTNULL(_curl, "CURL object has not been allocated");                                \
+        PGSCHECK_NOTNULL(_curl, "CURL object has not been allocated");                             \
         RETURN_IF_CURL_NOT_OK(expr, CURLE_OK, __VA_ARGS__);                                        \
     } while (0)
 
@@ -277,7 +277,7 @@ inline dsn::error_code to_error_code(CURLcode code)
 
 #define CHECK_IF_CURL_EASY_OK(expr, ...)                                                           \
     do {                                                                                           \
-        CHECK_NOTNULL(_curl, "CURL object has not been allocated");                                \
+        PGSCHECK_NOTNULL(_curl, "CURL object has not been allocated");                             \
         CHECK_IF_CURL_OK(expr, CURLE_OK, __VA_ARGS__);                                             \
     } while (0)
 

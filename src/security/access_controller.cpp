@@ -45,8 +45,8 @@ access_controller::access_controller()
 {
     // when FLAGS_enable_ranger_acl is true, FLAGS_enable_acl must be true.
     // TODO(wanghao): check with DSN_DEFINE_group_validator().
-    CHECK(!FLAGS_enable_ranger_acl || FLAGS_enable_acl,
-          "when FLAGS_enable_ranger_acl is true, FLAGS_enable_acl must be true too");
+    PGSCHECK(!FLAGS_enable_ranger_acl || FLAGS_enable_acl,
+             "when FLAGS_enable_ranger_acl is true, FLAGS_enable_acl must be true too");
     utils::split_args(FLAGS_super_users, _super_users, ',');
 }
 

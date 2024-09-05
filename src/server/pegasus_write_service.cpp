@@ -316,7 +316,7 @@ int pegasus_write_service::batch_commit(int64_t decree)
 void pegasus_write_service::batch_abort(int64_t decree, int err)
 {
     CHECK_GT_MSG(_batch_start_time, 0, "batch_abort must be called after batch_prepare");
-    CHECK(err, "must abort on non-zero err");
+    PGSCHECK(err, "must abort on non-zero err");
 
     _impl->batch_abort(decree, err);
     clear_up_batch_states();

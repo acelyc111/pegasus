@@ -99,7 +99,7 @@ rpc_session::~rpc_session()
 
 bool rpc_session::set_connecting()
 {
-    CHECK(is_client(), "must be client session");
+    PGSCHECK(is_client(), "must be client session");
 
     utils::auto_lock<utils::ex_lock_nr> l(_lock);
     if (_connect_state == SS_DISCONNECTED) {
@@ -112,7 +112,7 @@ bool rpc_session::set_connecting()
 
 void rpc_session::set_connected()
 {
-    CHECK(is_client(), "must be client session");
+    PGSCHECK(is_client(), "must be client session");
 
     {
         utils::auto_lock<utils::ex_lock_nr> l(_lock);
@@ -298,7 +298,7 @@ void rpc_session::send_message(message_ex *msg)
         return;
     }
 
-    CHECK_NOTNULL(_parser, "parser should not be null when send");
+    PGSCHECK_NOTNULL(_parser, "parser should not be null when send");
     _parser->prepare_on_send(msg);
 
     uint64_t sig;
@@ -345,7 +345,8 @@ void rpc_session::on_send_completed(uint64_t signature)
     {
         utils::auto_lock<utils::ex_lock_nr> l(_lock);
         if (signature != 0) {
-            CHECK(_is_sending_next && signature == _message_sent + 1, "sent msg must be sending");
+            PGSCHECK(_is_sending_next && signature == _message_sent + 1,
+                     "sent msg must be sending");
             _is_sending_next = false;
 
             // the _sending_msgs may have been cleared when reading of the rpc_session is failed.
@@ -471,7 +472,7 @@ bool rpc_session::on_recv_message(message_ex *msg, int delay_ms)
             return false;
         }
 
-        DCHECK(!is_client(), "only rpc server session can recv rpc requests");
+        DCHECK(!is_client()) << "only rpc server session can recv rpc requests";
         _net.on_recv_request(msg, delay_ms);
     }
 
@@ -579,7 +580,7 @@ void network::on_recv_reply(uint64_t id, message_ex *msg, int delay_ms)
 message_parser *network::new_message_parser(network_header_format hdr_format)
 {
     message_parser *parser = message_parser_manager::instance().create_parser(hdr_format);
-    CHECK_NOTNULL(parser, "message parser '{}' not registerd or invalid!", hdr_format);
+    PGSCHECK_NOTNULL(parser, "message parser '{}' not registerd or invalid!", hdr_format);
     return parser;
 }
 
@@ -622,7 +623,7 @@ void connection_oriented_network::inject_drop_message(message_ex *msg, bool is_s
         // - but if is_send == true, there may be is_session != nullptr, when it is a
         //   normal (not forwarding) reply message from server to client, in which case
         //   the io_session has also been set.
-        CHECK(is_send, "received message should always has io_session set");
+        PGSCHECK(is_send, "received message should always has io_session set");
         utils::auto_read_lock l(_clients_lock);
         auto it = _clients.find(msg->to_address);
         if (it != _clients.end()) {

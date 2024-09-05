@@ -913,13 +913,13 @@ dsn::error_code replication_ddl_client::do_recovery(const std::vector<host_port>
         }
     }
     if (req->hp_recovery_nodes.empty()) {
-        CHECK(req->recovery_nodes.empty(),
-              "recovery_nodes should be set together with hp_recovery_nodes");
+        PGSCHECK(req->recovery_nodes.empty(),
+                 "recovery_nodes should be set together with hp_recovery_nodes");
         out << "node set for recovery it empty" << std::endl;
         return ERR_INVALID_PARAMETERS;
     }
-    CHECK(!req->recovery_nodes.empty(),
-          "recovery_nodes should be set together with hp_recovery_nodes");
+    PGSCHECK(!req->recovery_nodes.empty(),
+             "recovery_nodes should be set together with hp_recovery_nodes");
     req->skip_bad_nodes = skip_bad_nodes;
     req->skip_lost_partitions = skip_lost_partitions;
 
@@ -1534,7 +1534,7 @@ replication_ddl_client::set_app_envs(const std::string &app_name,
     if (clear_all) {
         req->__set_clear_prefix("");
     } else {
-        CHECK(!prefix.empty(), "prefix can not be empty");
+        PGSCHECK(!prefix.empty(), "prefix can not be empty");
         req->__set_clear_prefix(prefix);
     }
 

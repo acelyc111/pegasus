@@ -1647,9 +1647,9 @@ inline std::unique_ptr<aggregate_stats_calcs> create_table_aggregate_stats_calcs
         }
 
         const auto &iter = pcs_by_appid.find(row.app_id);
-        CHECK(iter != pcs_by_appid.end(),
-              "table could not be found in pcs_by_appid: table_id={}",
-              row.app_id);
+        PGSCHECK(iter != pcs_by_appid.end(),
+                 "table could not be found in pcs_by_appid: table_id={}",
+                 row.app_id);
 
         for (const auto &pc : iter->second) {
             if (pc.hp_primary != node) {
@@ -2121,7 +2121,7 @@ inline bool get_capacity_unit_stat(shell_context *sc,
             int32_t app_id, pidx;
             std::string counter_name;
             bool r = parse_app_pegasus_perf_counter_name(m.name, app_id, pidx, counter_name);
-            CHECK(r, "name = {}", m.name);
+            PGSCHECK(r, "name = {}", m.name);
             if (counter_name == "recent.read.cu") {
                 nodes_stat[i].cu_value_by_app[app_id].first += (int64_t)m.value;
             } else if (counter_name == "recent.write.cu") {
@@ -2185,7 +2185,7 @@ inline bool get_storage_size_stat(shell_context *sc, app_storage_size_stat &st_s
             std::string counter_name;
             bool parse_ret = parse_app_pegasus_perf_counter_name(
                 m.name, app_id_x, partition_index_x, counter_name);
-            CHECK(parse_ret, "name = {}", m.name);
+            PGSCHECK(parse_ret, "name = {}", m.name);
             if (counter_name != "disk.storage.sst(MB)")
                 continue;
             auto find = pcs_by_appid.find(app_id_x);

@@ -51,7 +51,7 @@ void global_env::get_dirs()
     std::cout << "Pegasus project root: " << _pegasus_root << std::endl;
 
     char task_target[512] = {0};
-    CHECK(getcwd(task_target, sizeof(task_target)), "");
+    PGSCHECK(getcwd(task_target, sizeof(task_target)), "");
     _working_dir = task_target;
     std::cout << "working dir: " << _working_dir << std::endl;
 }

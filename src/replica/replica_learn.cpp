@@ -160,7 +160,7 @@ void replica::init_learn(uint64_t signature)
                     if (_prepare_list->count() > 0 && ac + 1 >= _prepare_list->min_decree()) {
                         for (auto d = ac + 1; d <= pc; d++) {
                             auto mu = _prepare_list->get_mutation_by_decree(d);
-                            CHECK_NOTNULL(mu, "mutation must not be nullptr, decree = {}", d);
+                            PGSCHECK_NOTNULL(mu, "mutation must not be nullptr, decree = {}", d);
                             auto err = _app->apply_mutation(mu);
                             if (ERR_OK != err) {
                                 handle_learning_error(err, true);
@@ -206,9 +206,9 @@ void replica::init_learn(uint64_t signature)
         case learner_status::LearningWithoutPrepare:
             break;
         default:
-            CHECK(false,
-                  "invalid learner_status, status = {}",
-                  enum_to_string(_potential_secondary_states.learning_status));
+            PGSCHECK(false,
+                     "invalid learner_status, status = {}",
+                     enum_to_string(_potential_secondary_states.learning_status));
         }
     }
 
@@ -628,7 +628,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
                         "ballot have changed",
                         req.signature,
                         FMT_HOST_PORT_AND_IP(resp.config, primary));
-        CHECK(update_local_configuration(resp.config), "");
+        PGSCHECK(update_local_configuration(resp.config), "");
     }
 
     if (status() != partition_status::PS_POTENTIAL_SECONDARY) {
@@ -668,11 +668,11 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
             if (dsn::utils::filesystem::directory_exists(old_dir)) {
                 char rename_dir[1024];
                 sprintf(rename_dir, "%s.%" PRIu64 ".discarded", old_dir.c_str(), dsn_now_us());
-                CHECK(dsn::utils::filesystem::rename_path(old_dir, rename_dir),
-                      "{}: failed to move directory from '{}' to '{}'",
-                      name(),
-                      old_dir,
-                      rename_dir);
+                PGSCHECK(dsn::utils::filesystem::rename_path(old_dir, rename_dir),
+                         "{}: failed to move directory from '{}' to '{}'",
+                         name(),
+                         old_dir,
+                         rename_dir);
                 LOG_WARNING_PREFIX("replica_dir_op succeed to move directory from '{}' to '{}'",
                                    old_dir,
                                    rename_dir);
@@ -755,7 +755,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
 
     if (resp.prepare_start_decree != invalid_decree) {
         CHECK_EQ(resp.type, learn_type::LT_CACHE);
-        CHECK(resp.state.files.empty(), "");
+        PGSCHECK(resp.state.files.empty(), "");
         CHECK_EQ(_potential_secondary_states.learning_status,
                  learner_status::LearningWithoutPrepare);
         _potential_secondary_states.learning_status = learner_status::LearningWithPrepareTransient;
@@ -841,7 +841,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
         // thinks they should
         _prepare_list->commit(resp.prepare_start_decree - 1, COMMIT_TO_DECREE_HARD);
         CHECK_EQ(_prepare_list->last_committed_decree(), _app->last_committed_decree());
-        CHECK(resp.state.files.empty(), "");
+        PGSCHECK(resp.state.files.empty(), "");
 
         // all state is complete
         CHECK_GE_MSG(_app->last_committed_decree() + 1,
@@ -978,7 +978,7 @@ bool replica::prepare_cached_learn_state(const learn_request &request,
         int count = 0;
         for (decree d = learn_start_decree; d < response.prepare_start_decree; d++) {
             auto mu = _prepare_list->get_mutation_by_decree(d);
-            CHECK_NOTNULL(mu, "mutation must not be nullptr, decree = {}", d);
+            PGSCHECK_NOTNULL(mu, "mutation must not be nullptr, decree = {}", d);
             mu->write_to(writer, nullptr);
             count++;
         }
@@ -1049,9 +1049,9 @@ void replica::on_copy_remote_state_completed(error_code err,
     } else if (_potential_secondary_states.learning_status == learner_status::LearningWithPrepare) {
         CHECK_EQ(resp.type, learn_type::LT_CACHE);
     } else {
-        CHECK(resp.type == learn_type::LT_APP || resp.type == learn_type::LT_LOG,
-              "invalid learn_type, type = {}",
-              enum_to_string(resp.type));
+        PGSCHECK(resp.type == learn_type::LT_APP || resp.type == learn_type::LT_LOG,
+                 "invalid learn_type, type = {}",
+                 enum_to_string(resp.type));
 
         learn_state lstate;
         lstate.from_decree_excluded = resp.state.from_decree_excluded;

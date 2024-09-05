@@ -67,8 +67,8 @@ void negotiation_manager::open_service()
 
 void negotiation_manager::on_negotiation_request(negotiation_rpc rpc)
 {
-    CHECK(!rpc.dsn_request()->io_session->is_client(),
-          "only server session receives negotiation request");
+    PGSCHECK(!rpc.dsn_request()->io_session->is_client(),
+             "only server session receives negotiation request");
 
     // reply SASL_AUTH_DISABLE if auth is not enable
     if (!FLAGS_enable_auth) {
@@ -85,8 +85,8 @@ void negotiation_manager::on_negotiation_request(negotiation_rpc rpc)
 
 void negotiation_manager::on_negotiation_response(error_code err, negotiation_rpc rpc)
 {
-    CHECK(rpc.dsn_request()->io_session->is_client(),
-          "only client session receives negotiation response");
+    PGSCHECK(rpc.dsn_request()->io_session->is_client(),
+             "only client session receives negotiation response");
 
     std::shared_ptr<negotiation> nego = get_negotiation(rpc);
     if (nullptr != nego) {

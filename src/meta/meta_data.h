@@ -554,7 +554,7 @@ void maintain_drops(/*inout*/ std::vector<T> &drops, const T &node, config_type:
                 drops.erase(it);
             }
         } else {
-            CHECK(
+            PGSCHECK(
                 it == drops.end(), "the node({}) cannot be in drops set before this update", node);
             drops.push_back(node);
             if (drops.size() > 3) {

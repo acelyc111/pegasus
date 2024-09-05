@@ -323,10 +323,10 @@ replica::replica(replica_stub *stub,
 {
     init_plog_gc_enabled();
 
-    CHECK(!_app_info.app_type.empty(), "");
-    CHECK_NOTNULL(stub, "");
+    PGSCHECK(!_app_info.app_type.empty(), "");
+    PGSCHECK_NOTNULL(stub, "");
     _stub = stub;
-    CHECK_NOTNULL(dn, "");
+    PGSCHECK_NOTNULL(dn, "");
     _dir_node = dn;
     _dir = dn->replica_dir(_app_info.app_type, gpid);
     _options = &stub->options();
@@ -438,7 +438,7 @@ void replica::on_client_read(dsn::message_ex *request, bool ignore_throttling)
         METRIC_VAR_INCREMENT(backup_requests);
     }
 
-    CHECK(_app, "");
+    PGSCHECK(_app, "");
     auto storage_error = _app->on_request(request);
     // kNotFound is normal, it indicates that the key is not found (including expired)
     // in the storage engine, so just ignore it.
@@ -516,7 +516,7 @@ void replica::execute_mutation(mutation_ptr &mu)
 
             // make sure private log saves the state
             // catch-up will be done later after checkpoint task is fininished
-            CHECK_NOTNULL(_private_log, "");
+            PGSCHECK_NOTNULL(_private_log, "");
         }
         break;
     case partition_status::PS_POTENTIAL_SECONDARY:
@@ -534,7 +534,7 @@ void replica::execute_mutation(mutation_ptr &mu)
             // prepare also happens with learner_status::LearningWithPrepare, in this case
             // make sure private log saves the state,
             // catch-up will be done later after the checkpoint task is finished
-            CHECK_NOTNULL(_private_log, "");
+            PGSCHECK_NOTNULL(_private_log, "");
         }
         break;
     case partition_status::PS_PARTITION_SPLIT:
@@ -546,7 +546,7 @@ void replica::execute_mutation(mutation_ptr &mu)
     case partition_status::PS_ERROR:
         break;
     default:
-        CHECK(false, "invalid partition_status, status = {}", enum_to_string(status()));
+        PGSCHECK(false, "invalid partition_status, status = {}", enum_to_string(status()));
     }
 
     LOG_DEBUG_PREFIX("TwoPhaseCommit, mutation {} committed, err = {}", mu->name(), err);
@@ -622,13 +622,13 @@ void replica::close()
     _tracker.cancel_outstanding_tasks();
 
     cleanup_preparing_mutations(true);
-    CHECK(_primary_states.is_cleaned(), "primary context is not cleared");
+    PGSCHECK(_primary_states.is_cleaned(), "primary context is not cleared");
 
     if (partition_status::PS_INACTIVE == status()) {
-        CHECK(_secondary_states.is_cleaned(), "secondary context is not cleared");
-        CHECK(_potential_secondary_states.is_cleaned(),
-              "potential secondary context is not cleared");
-        CHECK(_split_states.is_cleaned(), "partition split context is not cleared");
+        PGSCHECK(_secondary_states.is_cleaned(), "secondary context is not cleared");
+        PGSCHECK(_potential_secondary_states.is_cleaned(),
+                 "potential secondary context is not cleared");
+        PGSCHECK(_split_states.is_cleaned(), "partition split context is not cleared");
     }
 
     // for partition_status::PS_ERROR, context cleanup is done here as they may block

@@ -42,7 +42,7 @@ bool pegasus_client_factory_impl::initialize(const char *config_file)
 {
     bool is_initialized = ::dsn::tools::is_engine_ready();
     if (config_file == nullptr) {
-        CHECK(is_initialized, "rdsn engine not started, please specify a valid config file");
+        PGSCHECK(is_initialized, "rdsn engine not started, please specify a valid config file");
     } else {
         if (is_initialized) {
             LOG_WARNING("rdsn engine already started, ignore the config file '{}'", config_file);

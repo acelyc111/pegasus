@@ -86,7 +86,7 @@ public:
         app_info.duplicating = true;
 
         auto *dn = _replica_stub->get_fs_manager()->find_best_dir_for_new_replica(_gpid);
-        CHECK_NOTNULL(dn, "");
+        PGSCHECK_NOTNULL(dn, "");
         _replica = new dsn::replication::replica(_replica_stub, _gpid, app_info, dn, false, false);
         _server = std::make_unique<mock_pegasus_server_impl>(_replica);
 

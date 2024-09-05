@@ -240,7 +240,7 @@ bool dsn_run_config(const char *config, bool is_server)
 bool dsn_mimic_app(const char *app_role, int index)
 {
     auto worker = ::dsn::task::get_current_worker2();
-    CHECK(worker == nullptr, "cannot call dsn_mimic_app in rDSN threads");
+    PGSCHECK(worker == nullptr, "cannot call dsn_mimic_app in rDSN threads");
 
     auto cnode = ::dsn::task::get_current_node2();
     if (cnode != nullptr) {
@@ -418,14 +418,14 @@ bool run(const char *config_file,
 
     // setup data dir
     auto &data_dir = spec.data_dir;
-    CHECK(!dsn::utils::filesystem::file_exists(data_dir), "{} should not be a file.", data_dir);
+    PGSCHECK(!dsn::utils::filesystem::file_exists(data_dir), "{} should not be a file.", data_dir);
     if (!dsn::utils::filesystem::directory_exists(data_dir)) {
-        CHECK(dsn::utils::filesystem::create_directory(data_dir), "Fail to create {}", data_dir);
+        PGSCHECK(dsn::utils::filesystem::create_directory(data_dir), "Fail to create {}", data_dir);
     }
     std::string cdir;
-    CHECK(dsn::utils::filesystem::get_absolute_path(data_dir, cdir),
-          "Fail to get absolute path from {}",
-          data_dir);
+    PGSCHECK(dsn::utils::filesystem::get_absolute_path(data_dir, cdir),
+             "Fail to get absolute path from {}",
+             data_dir);
     spec.data_dir = cdir;
 
     ::dsn::utils::coredump::init();
@@ -490,7 +490,7 @@ bool run(const char *config_file,
     for (const auto &toollet_name : spec.toollets) {
         auto tlet = dsn::tools::internal_use_only::get_toollet(toollet_name.c_str(),
                                                                ::dsn::PROVIDER_TYPE_MAIN);
-        CHECK_NOTNULL(tlet, "toolet not found");
+        PGSCHECK_NOTNULL(tlet, "toolet not found");
         tlet->install(spec);
     }
 
@@ -534,18 +534,18 @@ bool run(const char *config_file,
             for (const auto &app_name_and_index : app_names_and_indexes) {
                 std::vector<std::string> name_and_index;
                 ::dsn::utils::split_args(app_name_and_index.c_str(), name_and_index, '@');
-                CHECK(!name_and_index.empty(),
-                      "app_name should be specified in '{}'",
-                      app_name_and_index);
+                PGSCHECK(!name_and_index.empty(),
+                         "app_name should be specified in '{}'",
+                         app_name_and_index);
                 if (std::string("apps.") + name_and_index.front() == sp.config_section) {
                     if (name_and_index.size() < 2) {
                         create_it = true;
                     } else {
                         int32_t index = 0;
                         const auto index_str = name_and_index.back();
-                        CHECK(dsn::buf2int32(index_str, index),
-                              "'{}' is not a valid index",
-                              index_str);
+                        PGSCHECK(dsn::buf2int32(index_str, index),
+                                 "'{}' is not a valid index",
+                                 index_str);
                         create_it = (index == sp.index);
                     }
                     break;

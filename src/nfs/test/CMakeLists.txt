@@ -43,7 +43,9 @@ set(MY_PROJ_LIBS
         lz4
         zstd
         snappy
-        test_utils)
+        test_utils
+        glog
+        gflags)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

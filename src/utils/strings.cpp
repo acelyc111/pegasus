@@ -159,7 +159,7 @@ inline bool is_trailing_space(char ch)
 // Skip trailing spaces and find the end of token.
 const char *find_token_end(const char *token_begin, const char *end)
 {
-    CHECK(token_begin < end, "");
+    PGSCHECK(token_begin < end, "");
 
     for (; end > token_begin && is_trailing_space(*(end - 1)); --end) {
     }
@@ -205,7 +205,7 @@ void split(const char *input,
            const Inserter &inserter,
            Container &output)
 {
-    CHECK_NOTNULL(input, "");
+    PGSCHECK_NOTNULL(input, "");
 
     output.clear();
 
@@ -224,7 +224,7 @@ void split(const char *input,
                 break;
             case split_args_state::kSplitToken: {
                 auto token_end = find_token_end(token_begin, p);
-                CHECK(token_begin <= token_end, "");
+                PGSCHECK(token_begin <= token_end, "");
                 if (token_begin == token_end && !keep_place_holder) {
                     // Current token is empty, and place holder is not needed.
                     break;

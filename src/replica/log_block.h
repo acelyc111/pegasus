@@ -69,7 +69,7 @@ public:
     // ```
     blob &front()
     {
-        CHECK(!_data.empty(), "trying to get first blob out of an empty log block");
+        PGSCHECK(!_data.empty(), "trying to get first blob out of an empty log block");
         return _data.front();
     }
 

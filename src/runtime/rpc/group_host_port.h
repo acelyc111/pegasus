@@ -128,13 +128,13 @@ inline rpc_group_host_port::rpc_group_host_port(const rpc_group_address *g_addr)
     _name = g_addr->name();
     for (const auto &addr : g_addr->members()) {
         const auto hp = host_port::from_address(addr);
-        CHECK(hp, "'{}' can not be reverse resolved", addr);
+        PGSCHECK(hp, "'{}' can not be reverse resolved", addr);
         CHECK_TRUE(add(hp));
     }
     _update_leader_automatically = g_addr->is_update_leader_automatically();
     if (g_addr->leader()) {
         const auto hp = host_port::from_address(g_addr->leader());
-        CHECK(hp, "'{}' can not be reverse resolved", g_addr->leader());
+        PGSCHECK(hp, "'{}' can not be reverse resolved", g_addr->leader());
         set_leader(hp);
     }
 }
@@ -194,7 +194,7 @@ inline void rpc_group_host_port::set_leader(const host_port &hp)
 
 inline uint32_t rpc_group_host_port::random_index_unlocked() const
 {
-    CHECK(!_members.empty(), "invaild group member size");
+    PGSCHECK(!_members.empty(), "invaild group member size");
     return rand::next_u32(0, static_cast<uint32_t>(_members.size() - 1));
 }
 

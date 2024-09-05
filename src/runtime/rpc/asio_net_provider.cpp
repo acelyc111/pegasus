@@ -135,15 +135,15 @@ error_code asio_network_provider::start(rpc_channel channel, int port, bool clie
             boost::asio::io_service::work work(*_io_services[i]);
             boost::system::error_code ec;
             _io_services[i]->run(ec);
-            CHECK(!ec, "boost::asio::io_service run failed: err({})", ec.message());
+            PGSCHECK(!ec, "boost::asio::io_service run failed: err({})", ec.message());
         }));
     }
 
     _acceptor = nullptr;
 
-    CHECK(channel == RPC_CHANNEL_TCP || channel == RPC_CHANNEL_UDP,
-          "invalid given channel {}",
-          channel);
+    PGSCHECK(channel == RPC_CHANNEL_TCP || channel == RPC_CHANNEL_UDP,
+             "invalid given channel {}",
+             channel);
 
     _address = rpc_address(get_local_ipv4(), port);
     _hp = ::dsn::host_port::from_address(_address);
@@ -471,7 +471,7 @@ error_code asio_udp_provider::start(rpc_channel channel, int port, bool client_o
             boost::asio::io_service::work work(_io_service);
             boost::system::error_code ec;
             _io_service.run(ec);
-            CHECK(!ec, "boost::asio::io_service run failed: err({})", ec.message());
+            PGSCHECK(!ec, "boost::asio::io_service run failed: err({})", ec.message());
         }));
     }
 

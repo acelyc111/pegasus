@@ -68,7 +68,7 @@ log_file::~log_file() { close(); }
     }
 
     auto pos = name.find_first_of('.');
-    CHECK(pos != std::string::npos, "invalid log_file, name = {}", name);
+    PGSCHECK(pos != std::string::npos, "invalid log_file, name = {}", name);
     auto pos2 = name.find_first_of('.', pos + 1);
     if (pos2 == std::string::npos) {
         err = ERR_INVALID_PARAMETERS;
@@ -179,9 +179,9 @@ log_file::log_file(
 
     if (is_read) {
         int64_t sz;
-        CHECK(dsn::utils::filesystem::file_size(_path, dsn::utils::FileDataType::kSensitive, sz),
-              "fail to get file size of {}.",
-              _path);
+        PGSCHECK(dsn::utils::filesystem::file_size(_path, dsn::utils::FileDataType::kSensitive, sz),
+                 "fail to get file size of {}.",
+                 _path);
         _end_offset += sz;
     }
 }
@@ -203,7 +203,7 @@ void log_file::close()
 
 void log_file::flush() const
 {
-    CHECK(!_is_read, "log file must be of write mode");
+    PGSCHECK(!_is_read, "log file must be of write mode");
     zauto_lock lock(_write_lock);
 
     if (_handle) {
@@ -214,7 +214,7 @@ void log_file::flush() const
 
 error_code log_file::read_next_log_block(/*out*/ ::dsn::blob &bb)
 {
-    CHECK(_is_read, "log file must be of read mode");
+    PGSCHECK(_is_read, "log file must be of read mode");
     auto err = _stream->read_next(sizeof(log_block_header), bb);
     if (err != ERR_OK || bb.length() != sizeof(log_block_header)) {
         if (err == ERR_OK || err == ERR_HANDLE_EOF) {
@@ -277,7 +277,7 @@ aio_task_ptr log_file::commit_log_blocks(log_appender &pending,
                                          aio_handler &&callback,
                                          int hash)
 {
-    CHECK(!_is_read, "log file must be of write mode");
+    PGSCHECK(!_is_read, "log file must be of write mode");
     CHECK_GT(pending.size(), 0);
 
     zauto_lock lock(_write_lock);

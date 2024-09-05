@@ -37,7 +37,7 @@ namespace dsn {
 
 /*extern*/ const char *get_current_cluster_name()
 {
-    CHECK(!utils::is_empty(FLAGS_cluster_name), "cluster_name is not set");
+    PGSCHECK(!utils::is_empty(FLAGS_cluster_name), "cluster_name is not set");
     return FLAGS_cluster_name;
 }
 

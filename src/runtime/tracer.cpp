@@ -303,7 +303,7 @@ void tracer::install(service_spec &spec)
 
         std::string section_name = fmt::format("task.{}", dsn::task_code(i));
         task_spec *spec = task_spec::get(i);
-        CHECK_NOTNULL(spec, "");
+        PGSCHECK_NOTNULL(spec, "");
 
         if (!dsn_config_get_value_bool(section_name.c_str(),
                                        "is_trace",

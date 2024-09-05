@@ -68,14 +68,14 @@ static void check_cure(app_mapper &apps, node_mapper &nodes, ::dsn::partition_co
             break;
         switch (act.type) {
         case config_type::CT_ASSIGN_PRIMARY: {
-            CHECK(!pc.primary, "");
-            CHECK(!pc.hp_primary, "");
-            CHECK(pc.secondaries.empty(), "");
-            CHECK(pc.hp_secondaries.empty(), "");
+            PGSCHECK(!pc.primary, "");
+            PGSCHECK(!pc.hp_primary, "");
+            PGSCHECK(pc.secondaries.empty(), "");
+            PGSCHECK(pc.hp_secondaries.empty(), "");
             CHECK_EQ(act.node, act.target);
             CHECK_EQ(act.hp_node, act.hp_target);
             const auto node = nodes.find(act.hp_node);
-            CHECK(node != nodes.end(), "");
+            PGSCHECK(node != nodes.end(), "");
             ns = &node->second;
             CHECK_EQ(ns->served_as(pc.pid), partition_status::PS_INACTIVE);
             ns->put_partition(pc.pid, true);
@@ -83,12 +83,12 @@ static void check_cure(app_mapper &apps, node_mapper &nodes, ::dsn::partition_co
             break;
         }
         case config_type::CT_ADD_SECONDARY: {
-            CHECK(!is_member(pc, act.node), "");
-            CHECK(!is_member(pc, act.hp_node), "");
+            PGSCHECK(!is_member(pc, act.node), "");
+            PGSCHECK(!is_member(pc, act.hp_node), "");
             CHECK_EQ(pc.primary, act.target);
             CHECK_EQ(pc.hp_primary, act.hp_target);
             const auto node = nodes.find(act.hp_node);
-            CHECK(node != nodes.end(), "");
+            PGSCHECK(node != nodes.end(), "");
             ADD_IP_AND_HOST_PORT(pc, secondaries, act.node, act.hp_node);
             ns = &node->second;
             CHECK_EQ(ns->served_as(pc.pid), partition_status::PS_INACTIVE);
@@ -96,7 +96,7 @@ static void check_cure(app_mapper &apps, node_mapper &nodes, ::dsn::partition_co
             break;
         }
         default:
-            CHECK(false, "");
+            PGSCHECK(false, "");
             break;
         }
     }
@@ -108,14 +108,14 @@ static void check_cure(app_mapper &apps, node_mapper &nodes, ::dsn::partition_co
 
     ps = guardian.cure({&apps, &nodes}, pc.pid, act);
     CHECK_EQ(act.type, config_type::CT_UPGRADE_TO_PRIMARY);
-    CHECK(!pc.primary, "");
-    CHECK(!pc.hp_primary, "");
+    PGSCHECK(!pc.primary, "");
+    PGSCHECK(!pc.hp_primary, "");
     CHECK_EQ(act.node, act.target);
     CHECK_EQ(act.hp_node, act.hp_target);
-    CHECK(is_secondary(pc, act.node), "");
-    CHECK(is_secondary(pc, act.hp_node), "");
+    PGSCHECK(is_secondary(pc, act.node), "");
+    PGSCHECK(is_secondary(pc, act.hp_node), "");
     const auto node = nodes.find(act.hp_node);
-    CHECK(node != nodes.end(), "");
+    PGSCHECK(node != nodes.end(), "");
     ns = &node->second;
     SET_OBJ_IP_AND_HOST_PORT(pc, primary, act, node);
     std::remove(pc.secondaries.begin(), pc.secondaries.end(), pc.primary);
@@ -167,7 +167,7 @@ void meta_service_test_app::balancer_validator()
 
     const auto &app = apps[1];
     for (const auto &pc : app->pcs) {
-        CHECK(pc.hp_primary, "");
+        PGSCHECK(pc.hp_primary, "");
         CHECK_GE(pc.secondaries.size(), pc.max_replica_count - 1);
     }
 

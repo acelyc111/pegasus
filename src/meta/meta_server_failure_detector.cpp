@@ -113,13 +113,13 @@ bool meta_server_failure_detector::get_leader(host_port *leader)
         // get leader host_port
         auto addr_part = str.substr(pos + 1, str.length() - pos - 1);
         *leader = host_port::from_string(addr_part.data());
-        CHECK(*leader, "parse {} to rpc_address failed", addr_part);
+        PGSCHECK(*leader, "parse {} to rpc_address failed", addr_part);
 
         // get the return value which implies whether the current node is primary or not
         bool is_leader = true;
         auto is_leader_part = str.substr(0, pos);
         if (!dsn::buf2bool(is_leader_part, is_leader)) {
-            CHECK(false, "parse {} to bool failed", is_leader_part);
+            PGSCHECK(false, "parse {} to bool failed", is_leader_part);
         }
         return is_leader;
     });
@@ -226,7 +226,7 @@ void meta_server_failure_detector::reset_stability_stat(const host_port &node)
 void meta_server_failure_detector::leader_initialize(const std::string &lock_service_owner)
 {
     const auto hp = dsn::host_port::from_string(lock_service_owner);
-    CHECK(hp, "parse {} to host_port failed", lock_service_owner);
+    PGSCHECK(hp, "parse {} to host_port failed", lock_service_owner);
     CHECK_EQ_MSG(hp, dsn_primary_host_port(), "acquire leader return success, but owner not match");
     _is_leader.store(true);
     _election_moment.store(dsn_now_ms());

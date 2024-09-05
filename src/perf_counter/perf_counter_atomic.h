@@ -101,7 +101,7 @@ public:
     }
     virtual double get_percentile(dsn_perf_counter_percentile_type_t type)
     {
-        CHECK(false, "invalid execution flow");
+        PGSCHECK(false, "invalid execution flow");
         return 0.0;
     }
 
@@ -176,7 +176,7 @@ public:
         uint64_t task_id = static_cast<int>(utils::get_current_tid());
         _val[task_id % DIVIDE_CONTAINER].fetch_add(val, std::memory_order_relaxed);
     }
-    virtual void set(int64_t val) { CHECK(false, "invalid execution flow"); }
+    virtual void set(int64_t val) { PGSCHECK(false, "invalid execution flow"); }
     virtual double get_value()
     {
         uint64_t now = utils::get_current_physical_time_ns();
@@ -196,7 +196,7 @@ public:
     virtual int64_t get_integer_value() { return (int64_t)get_value(); }
     virtual double get_percentile(dsn_perf_counter_percentile_type_t type)
     {
-        CHECK(false, "invalid execution flow");
+        PGSCHECK(false, "invalid execution flow");
         return 0.0;
     }
 
@@ -231,9 +231,9 @@ public:
         }
     }
 
-    virtual void increment() { CHECK(false, "invalid execution flow"); }
-    virtual void decrement() { CHECK(false, "invalid execution flow"); }
-    virtual void add(int64_t val) { CHECK(false, "invalid execution flow"); }
+    virtual void increment() { PGSCHECK(false, "invalid execution flow"); }
+    virtual void decrement() { PGSCHECK(false, "invalid execution flow"); }
+    virtual void add(int64_t val) { PGSCHECK(false, "invalid execution flow"); }
     virtual void set(int64_t val)
     {
         uint64_t idx = _tail.fetch_add(1, std::memory_order_relaxed);
@@ -242,7 +242,7 @@ public:
 
     virtual double get_value()
     {
-        CHECK(false, "invalid execution flow");
+        PGSCHECK(false, "invalid execution flow");
         return 0.0;
     }
     virtual int64_t get_integer_value() { return (int64_t)get_value(); }
@@ -250,7 +250,7 @@ public:
     virtual double get_percentile(dsn_perf_counter_percentile_type_t type)
     {
         if ((type < 0) || (type >= COUNTER_PERCENTILE_COUNT)) {
-            CHECK(false, "send a wrong counter percentile type");
+            PGSCHECK(false, "send a wrong counter percentile type");
             return 0.0;
         }
         return (double)_results[type];
@@ -350,7 +350,7 @@ private:
                 if (ctx->ask[i] == 1) {
                     _results[i] = ctx->tmp[left];
                 } else
-                    CHECK(false, "select percentail wrong!!!");
+                    PGSCHECK(false, "select percentail wrong!!!");
             return;
         }
 

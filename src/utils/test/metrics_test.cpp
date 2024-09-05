@@ -747,11 +747,11 @@ void run_percentile(const metric_entity_ptr &my_entity,
                     Checker checker)
 {
     CHECK_GT(num_threads, 0);
-    CHECK(data.size() <= sample_size && data.size() % num_threads == 0,
-          "Invalid arguments, data_size={}, sample_size={}, num_threads={}",
-          data.size(),
-          sample_size,
-          num_threads);
+    PGSCHECK(data.size() <= sample_size && data.size() % num_threads == 0,
+             "Invalid arguments, data_size={}, sample_size={}, num_threads={}",
+             data.size(),
+             sample_size,
+             num_threads);
 
     auto my_metric = prototype.instantiate(my_entity, interval_ms, kth_percentiles, sample_size);
 

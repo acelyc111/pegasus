@@ -81,7 +81,7 @@ process_kill_testor::process_kill_testor(const char *config_file) : kill_testor(
 
     kill_round = 0;
     _killer_handler.reset(killer_handler::new_handler(FLAGS_killer_handler));
-    CHECK(_killer_handler, "invalid FLAGS_killer_handler({})", FLAGS_killer_handler);
+    PGSCHECK(_killer_handler, "invalid FLAGS_killer_handler({})", FLAGS_killer_handler);
 
     _job_types = {META, REPLICA, ZOOKEEPER};
     _job_index_to_kill.resize(JOB_LENGTH);
@@ -230,7 +230,7 @@ void process_kill_testor::stop_verifier_and_exit(const char *msg)
     std::stringstream ss;
     int ret = dsn::utils::pipe_execute(
         "ps aux | grep pegasus | grep verifier | awk '{print $2}' | xargs kill -9", ss);
-    CHECK(ret == 0 || ret == 256, "");
+    PGSCHECK(ret == 0 || ret == 256, "");
     LOG_FATAL(msg);
 }
 

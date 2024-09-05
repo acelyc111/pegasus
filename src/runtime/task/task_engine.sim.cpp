@@ -147,7 +147,7 @@ void sim_lock_provider::lock()
 
     _sema.wait(TIME_MS_MAX);
 
-    CHECK(-1 == _current_holder && _lock_depth == 0, "must be unlocked state");
+    PGSCHECK(-1 == _current_holder && _lock_depth == 0, "must be unlocked state");
     _current_holder = ctid;
     ++_lock_depth;
 }
@@ -166,7 +166,7 @@ bool sim_lock_provider::try_lock()
 
     bool r = _sema.wait(0);
     if (r) {
-        CHECK(-1 == _current_holder && _lock_depth == 0, "must be unlocked state");
+        PGSCHECK(-1 == _current_holder && _lock_depth == 0, "must be unlocked state");
         _current_holder = ctid;
         ++_lock_depth;
     }
@@ -210,7 +210,7 @@ void sim_lock_nr_provider::lock()
 
     _sema.wait(TIME_MS_MAX);
 
-    CHECK(-1 == _current_holder && _lock_depth == 0, "must be unlocked state");
+    PGSCHECK(-1 == _current_holder && _lock_depth == 0, "must be unlocked state");
     _current_holder = ctid;
     ++_lock_depth;
 }
@@ -226,7 +226,7 @@ bool sim_lock_nr_provider::try_lock()
 
     bool r = _sema.wait(0);
     if (r) {
-        CHECK(-1 == _current_holder && _lock_depth == 0, "must be unlocked state");
+        PGSCHECK(-1 == _current_holder && _lock_depth == 0, "must be unlocked state");
         _current_holder = ctid;
         ++_lock_depth;
     }

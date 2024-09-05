@@ -29,7 +29,9 @@ set(MY_PROJ_LIBS
         zstd
         snappy
         gmock
-        gtest)
+        gtest
+        glog
+        gflags)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         run.sh)

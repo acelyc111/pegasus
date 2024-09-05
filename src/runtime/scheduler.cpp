@@ -282,7 +282,7 @@ void scheduler::schedule()
 
                     t->release_ref(); // added by previous t->enqueue from app
                 } else {
-                    CHECK(e.system_task, "app and system tasks cannot be both empty");
+                    PGSCHECK(e.system_task, "app and system tasks cannot be both empty");
                     e.system_task();
                 }
             }

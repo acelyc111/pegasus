@@ -325,7 +325,7 @@ void fault_injector::install(service_spec &spec)
 
         std::string section_name = fmt::format("task.{}", dsn::task_code(i));
         task_spec *spec = task_spec::get(i);
-        CHECK_NOTNULL(spec, "");
+        PGSCHECK_NOTNULL(spec, "");
 
         fj_opt &lopt = s_fj_opts[i];
         read_config(section_name.c_str(), lopt, &default_opt);

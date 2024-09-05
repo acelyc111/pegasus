@@ -80,10 +80,10 @@ void replica::handle_remote_failure(partition_status::type st,
 
     switch (st) {
     case partition_status::PS_SECONDARY:
-        CHECK(_primary_states.check_exist(node, partition_status::PS_SECONDARY),
-              "invalid node address, address = {}, status = {}",
-              node,
-              enum_to_string(st));
+        PGSCHECK(_primary_states.check_exist(node, partition_status::PS_SECONDARY),
+                 "invalid node address, address = {}, status = {}",
+                 node,
+                 enum_to_string(st));
         {
             configuration_update_request request;
             SET_IP_AND_HOST_PORT_BY_DNS(request, node, node);
@@ -103,7 +103,7 @@ void replica::handle_remote_failure(partition_status::type st,
     case partition_status::PS_ERROR:
         break;
     default:
-        CHECK(false, "invalid partition_status, status = {}", enum_to_string(st));
+        PGSCHECK(false, "invalid partition_status, status = {}", enum_to_string(st));
         break;
     }
 }

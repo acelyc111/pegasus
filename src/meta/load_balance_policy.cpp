@@ -85,7 +85,7 @@ bool calc_disk_load(node_mapper &nodes,
 {
     load.clear();
     const node_state *ns = get_node_state(nodes, node, false);
-    CHECK_NOTNULL(ns, "can't find node({}) from node_state", node);
+    PGSCHECK_NOTNULL(ns, "can't find node({}) from node_state", node);
 
     auto add_one_replica_to_disk_load = [&](const gpid &pid) {
         LOG_DEBUG("add gpid({}) to node({}) disk load", pid, node);
@@ -135,7 +135,7 @@ const std::string &get_disk_tag(const app_mapper &apps, const host_port &node, c
 {
     const config_context &cc = *get_config_context(apps, pid);
     auto iter = cc.find_from_serving(node);
-    CHECK(iter != cc.serving.end(), "can't find disk tag of gpid({}) for {}", pid, node);
+    PGSCHECK(iter != cc.serving.end(), "can't find disk tag of gpid({}) for {}", pid, node);
     return iter->disk_tag;
 }
 
@@ -181,7 +181,7 @@ generate_balancer_request(const app_mapper &apps,
             new_proposal_action(pc.hp_primary, from, config_type::CT_REMOVE));
         break;
     default:
-        CHECK(false, "");
+        CHECK(false);
     }
     LOG_INFO("generate balancer: {} {} from {} of disk_tag({}) to {}",
              pc.pid,
@@ -324,7 +324,7 @@ void load_balance_policy::start_moving_primary(const std::shared_ptr<app_state> 
             selected,
             generate_balancer_request(
                 *_global_view->apps, pc, balance_type::MOVE_PRIMARY, from, to));
-        CHECK(balancer_result.second, "gpid({}) already inserted as an action", selected);
+        PGSCHECK(balancer_result.second, "gpid({}) already inserted as an action", selected);
 
         --(*prev_load)[get_disk_tag(*_global_view->apps, from, selected)];
         ++(*current_load)[get_disk_tag(*_global_view->apps, to, selected)];
@@ -364,7 +364,8 @@ dsn::gpid load_balance_policy::select_moving(std::list<dsn::gpid> &potential_mov
         }
     }
 
-    CHECK(selected != potential_moving.end(), "can't find gpid to move from({}) to({})", from, to);
+    PGSCHECK(
+        selected != potential_moving.end(), "can't find gpid to move from({}) to({})", from, to);
     auto res = *selected;
     potential_moving.erase(selected);
     return res;
@@ -493,8 +494,8 @@ void load_balance_policy::number_nodes(const node_mapper &nodes)
     host_port_id.clear();
     host_port_vec.resize(_alive_nodes + 2);
     for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
-        CHECK(iter->first && iter->second.host_port(), "invalid address");
-        CHECK(iter->second.alive(), "dead node");
+        PGSCHECK(iter->first && iter->second.host_port(), "invalid address");
+        PGSCHECK(iter->second.alive(), "dead node");
 
         host_port_id[iter->first] = current_id;
         host_port_vec[current_id] = iter->first;
@@ -568,7 +569,7 @@ void ford_fulkerson::update_decree(int node_id, const node_state &ns)
         const auto &pc = _app->pcs[pid.get_partition_index()];
         for (const auto &secondary : pc.hp_secondaries) {
             auto i = _host_port_id.find(secondary);
-            CHECK(i != _host_port_id.end(), "invalid secondary: {}", secondary);
+            PGSCHECK(i != _host_port_id.end(), "invalid secondary: {}", secondary);
             _network[node_id][i->second]++;
         }
         return true;
@@ -754,9 +755,9 @@ gpid copy_replica_operation::select_partition(migration_list *result)
 
     int id_max = *_ordered_host_port_ids.rbegin();
     const node_state &ns = _nodes.find(_host_port_vec[id_max])->second;
-    CHECK(partitions != nullptr && !partitions->empty(),
-          "max load({}) shouldn't empty",
-          ns.host_port());
+    PGSCHECK(partitions != nullptr && !partitions->empty(),
+             "max load({}) shouldn't empty",
+             ns.host_port());
 
     return select_max_load_gpid(partitions, result);
 }

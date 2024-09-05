@@ -25,6 +25,7 @@ set(MY_PROJ_LIBS
         dsn.replication.zookeeper_provider
         dsn_replication_common
         dsn.failure_detector
+        dsn_nfs
         dsn_utils
         zookeeper
         hashtable
@@ -33,7 +34,9 @@ set(MY_PROJ_LIBS
         rocksdb
         lz4
         zstd
-        snappy)
+        snappy
+        glog
+        gflags)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         config-test.ini

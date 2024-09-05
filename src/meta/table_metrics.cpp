@@ -143,11 +143,11 @@ partition_metrics::partition_metrics(int32_t table_id, int32_t partition_id)
 
 const metric_entity_ptr &partition_metrics::partition_metric_entity() const
 {
-    CHECK_NOTNULL(_partition_metric_entity,
-                  "partition metric entity (table_id={}, partition_id={}) should has been "
-                  "instantiated: uninitialized entity cannot be used to instantiate metric",
-                  _table_id,
-                  _partition_id);
+    PGSCHECK_NOTNULL(_partition_metric_entity,
+                     "partition metric entity (table_id={}, partition_id={}) should has been "
+                     "instantiated: uninitialized entity cannot be used to instantiate metric",
+                     _table_id,
+                     _partition_id);
     return _partition_metric_entity;
 }
 
@@ -189,10 +189,10 @@ table_metrics::table_metrics(int32_t table_id, int32_t partition_count)
 
 const metric_entity_ptr &table_metrics::table_metric_entity() const
 {
-    CHECK_NOTNULL(_table_metric_entity,
-                  "table metric entity (table_id={}) should has been instantiated: "
-                  "uninitialized entity cannot be used to instantiate metric",
-                  _table_id);
+    PGSCHECK_NOTNULL(_table_metric_entity,
+                     "table metric entity (table_id={}) should has been instantiated: "
+                     "uninitialized entity cannot be used to instantiate metric",
+                     _table_id);
     return _table_metric_entity;
 }
 

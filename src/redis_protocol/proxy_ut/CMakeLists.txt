@@ -41,7 +41,9 @@ set(MY_PROJ_LIBS
         lz4
         zstd
         snappy
-        gtest)
+        gtest
+        glog
+        gflags)
 
 set(MY_BINPLACES "config.ini" "run.sh")
 

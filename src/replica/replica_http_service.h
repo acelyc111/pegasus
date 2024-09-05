@@ -80,7 +80,7 @@ public:
         case manual_compaction_status::FINISHED:
             return "finished";
         default:
-            CHECK(false, "invalid status({})", status);
+            PGSCHECK(false, "invalid status({})", status);
             __builtin_unreachable();
         }
     }

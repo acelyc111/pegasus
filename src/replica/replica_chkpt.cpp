@@ -495,7 +495,7 @@ void replica::on_checkpoint_completed(error_code err)
         if (_app->last_committed_decree() > _prepare_list->min_decree()) {
             for (auto d = _app->last_committed_decree() + 1; d <= c; d++) {
                 auto mu = _prepare_list->get_mutation_by_decree(d);
-                CHECK_NOTNULL(mu, "invalid mutation, decree = {}", d);
+                PGSCHECK_NOTNULL(mu, "invalid mutation, decree = {}", d);
                 err = _app->apply_mutation(mu);
                 if (ERR_OK != err) {
                     _secondary_states.checkpoint_is_running = false;
