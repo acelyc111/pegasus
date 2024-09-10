@@ -111,6 +111,7 @@ DSN_DECLARE_string(logging_start_level);
 namespace dsn {
 namespace tools {
 namespace {
+
 int print_header(FILE *fp, log_level_t stderr_start_level, log_level_t log_level)
 {
     const auto header = fmt::format("{}", log_prefixed_message_func());
@@ -157,24 +158,6 @@ int print_body(FILE *fp, const char *body, log_level_t stderr_start_level, log_l
     return written_size;
 }
 
-inline void process_fatal_log(log_level_t log_level)
-{
-    if (dsn_likely(log_level < LOG_LEVEL_FATAL)) {
-        return;
-    }
-
-    bool coredump = true;
-    FAIL_POINT_INJECT_NOT_RETURN_F("coredump_for_fatal_log", [&coredump](std::string_view str) {
-        PGSCHECK(buf2bool(str, coredump),
-                 "invalid coredump toggle for fatal log, should be true or false: {}",
-                 str);
-    });
-
-    if (dsn_likely(coredump)) {
-        dsn_coredump();
-    }
-}
-
 } // anonymous namespace
 
 screen_logger::screen_logger(const char *, const char *)
@@ -213,8 +196,6 @@ void screen_logger::log(
     if (log_level >= LOG_LEVEL_ERROR) {
         ::fflush(stdout);
     }
-
-    process_fatal_log(log_level);
 }
 
 void screen_logger::flush() { ::fflush(stdout); }
@@ -222,8 +203,7 @@ void screen_logger::flush() { ::fflush(stdout); }
 simple_logger::simple_logger(const char *log_dir, const char *role_name)
     : logging_provider(enum_from_string(FLAGS_stderr_start_level, LOG_LEVEL_INVALID)),
       _log_dir(std::string(log_dir)),
-      _log(nullptr),
-      _file_bytes(0)
+      _log(nullptr)
 {
     //    glog: log_dir (string, default="")
     //    If specified, logfiles are written into this directory instead of the default logging
@@ -280,9 +260,6 @@ void simple_logger::create_log_file()
         ::fclose(_log);
         _log = nullptr;
     }
-
-    // Reset the file size.
-    _file_bytes = 0;
 
     // Open the new log file.
     uint64_t ts = dsn::utils::get_current_physical_time_ns();
@@ -390,7 +367,7 @@ void simple_logger::flush()
 
 void simple_logger::print_header(log_level_t log_level)
 {
-    add_bytes_if_valid(::dsn::tools::print_header(_log, _stderr_start_level, log_level));
+    ::dsn::tools::print_header(_log, _stderr_start_level, log_level);
 }
 
 void simple_logger::print_long_header(const char *file,
@@ -398,13 +375,13 @@ void simple_logger::print_long_header(const char *file,
                                       const int line,
                                       log_level_t log_level)
 {
-    add_bytes_if_valid(::dsn::tools::print_long_header(
-        _log, file, function, line, FLAGS_short_header, _stderr_start_level, log_level));
+    ::dsn::tools::print_long_header(
+        _log, file, function, line, FLAGS_short_header, _stderr_start_level, log_level);
 }
 
 void simple_logger::print_body(const char *body, log_level_t log_level)
 {
-    add_bytes_if_valid(::dsn::tools::print_body(_log, body, _stderr_start_level, log_level));
+    ::dsn::tools::print_body(_log, body, _stderr_start_level, log_level);
 }
 
 void simple_logger::log(
@@ -412,19 +389,13 @@ void simple_logger::log(
 {
     utils::auto_lock<::dsn::utils::ex_lock> l(_lock);
 
-    PGSCHECK_NOTNULL(_log, "Log file hasn't been initialized yet");
     print_header(log_level);
     print_long_header(file, function, line, log_level);
     print_body(str, log_level);
     if (FLAGS_fast_flush || log_level >= LOG_LEVEL_ERROR) {
         ::fflush(_log);
     }
-
-    process_fatal_log(log_level);
-
-    if (_file_bytes >= FLAGS_max_log_file_bytes) {
-        create_log_file();
-    }
+    create_log_file();
 }
 
 } // namespace tools

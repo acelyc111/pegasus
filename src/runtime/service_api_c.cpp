@@ -127,11 +127,12 @@ volatile int *dsn_task_queue_virtual_length_ptr(dsn::task_code code, int hash)
 
 bool dsn_task_is_running_inside(dsn::task *t) { return ::dsn::task::get_current_task() == t; }
 
-void dsn_coredump()
-{
-    ::dsn::utils::coredump::write();
-    ::abort();
-}
+// TODO(yingchun): does it make sense when using ::dsn::utils::coredump::write() ?
+//void dsn_coredump()
+//{
+//    ::dsn::utils::coredump::write();
+//    ::abort();
+//}
 
 //------------------------------------------------------------------------------
 //

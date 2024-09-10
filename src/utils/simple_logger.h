@@ -95,13 +95,6 @@ private:
                            log_level_t log_level);
     void print_body(const char *body, log_level_t log_level);
 
-    inline void add_bytes_if_valid(int bytes)
-    {
-        if (dsn_likely(bytes > 0)) {
-            _file_bytes += static_cast<uint64_t>(bytes);
-        }
-    }
-
     void create_log_file();
     void remove_redundant_files();
 
@@ -117,8 +110,6 @@ private:
     std::string _file_name_prefix;
     // The current log file descriptor.
     FILE *_log;
-    // The byte size of the current log file.
-    uint64_t _file_bytes;
 };
 } // namespace tools
 } // namespace dsn

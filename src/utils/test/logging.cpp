@@ -59,15 +59,11 @@ TEST(LoggingTest, LogMacro)
                  {LOG_LEVEL_ERROR, "\\x00%d\\x00\\x01%n/nm"},
                  {LOG_LEVEL_FATAL, "\\x00%d\\x00\\x01%n/nm"}};
 
-    dsn::fail::setup();
-    dsn::fail::cfg("coredump_for_fatal_log", "void(false)");
-
+    // TODO(yingchun): ASSERT_DEATH when in LOG_LEVEL_FATAL
     for (auto test : tests) {
         // Test logging_provider::log.
         //        LOG(test.level, "LOG: sortkey = {}", test.str);
     }
-
-    dsn::fail::teardown();
 }
 
 TEST(LoggingTest, TestLogTiming)

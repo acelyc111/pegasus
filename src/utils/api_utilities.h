@@ -71,7 +71,6 @@ extern log_level_t get_log_start_level();
 extern void set_log_start_level(log_level_t level);
 extern void global_log(
     const char *file, const char *function, const int line, log_level_t log_level, const char *str);
-extern void dsn_coredump();
 
 #define dreturn_not_ok_logged(err, ...)                                                            \
     do {                                                                                           \
