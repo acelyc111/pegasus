@@ -37,13 +37,13 @@
 TEST(LoggingTest, GlobalLog)
 {
     std::cout << "logging start level = " << enum_to_string(get_log_start_level()) << std::endl;
-    global_log(__FILENAME__, __FUNCTION__, __LINE__, LOG_LEVEL_INFO, "in TEST(core, logging)");
+    LOG_INFO("in TEST(LoggingTest, GlobalLog)");
 }
 
 TEST(LoggingTest, GlobalLogBig)
 {
-    std::string big_str(128000, 'x');
-    global_log(__FILENAME__, __FUNCTION__, __LINE__, LOG_LEVEL_INFO, big_str.c_str());
+    static const std::string big_str(128000, 'x');
+    LOG_INFO(big_str.c_str());
 }
 
 TEST(LoggingTest, LogMacro)
@@ -61,7 +61,6 @@ TEST(LoggingTest, LogMacro)
 
     // TODO(yingchun): ASSERT_DEATH when in LOG_LEVEL_FATAL
     for (auto test : tests) {
-        // Test logging_provider::log.
         //        LOG(test.level, "LOG: sortkey = {}", test.str);
     }
 }

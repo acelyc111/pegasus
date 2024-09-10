@@ -128,7 +128,7 @@ volatile int *dsn_task_queue_virtual_length_ptr(dsn::task_code code, int hash)
 bool dsn_task_is_running_inside(dsn::task *t) { return ::dsn::task::get_current_task() == t; }
 
 // TODO(yingchun): does it make sense when using ::dsn::utils::coredump::write() ?
-//void dsn_coredump()
+// void dsn_coredump()
 //{
 //    ::dsn::utils::coredump::write();
 //    ::abort();
@@ -474,10 +474,8 @@ bool run(const char *config_file,
     }
 
     // Initialize logging.
-    dsn_log_init(spec.logging_factory_name,
-                 spec.log_dir,
-                 fmt::format("{}", fmt::join(app_names, ".")),
-                 dsn_log_prefixed_message_func);
+    dsn_log_init(
+        spec.log_dir, fmt::format("{}", fmt::join(app_names, ".")), dsn_log_prefixed_message_func);
 
     // Prepare the minimum necessary.
     ::dsn::service_engine::instance().init_before_toollets(spec);

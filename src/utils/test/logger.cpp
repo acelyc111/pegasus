@@ -128,19 +128,6 @@ public:
     std::string test_dir;
 };
 
-#define LOG_PRINT(logger, ...)                                                                     \
-    (logger)->log(                                                                                 \
-        __FILE__, __FUNCTION__, __LINE__, LOG_LEVEL_DEBUG, fmt::format(__VA_ARGS__).c_str())
-
-TEST_F(logger_test, screen_logger_test)
-{
-    auto logger = std::make_unique<screen_logger>(nullptr, nullptr);
-    LOG_PRINT(logger.get(), "{}", "test_print");
-    std::thread t([](screen_logger *lg) { LOG_PRINT(lg, "{}", "test_print"); }, logger.get());
-    t.join();
-    logger->flush();
-}
-
 TEST_F(logger_test, redundant_log_test)
 {
     // Create redundant log files to test if their number could be restricted.
@@ -148,11 +135,9 @@ TEST_F(logger_test, redundant_log_test)
         std::set<std::string> before_files;
         NO_FATALS(get_log_files(before_files));
 
-        auto logger = std::make_unique<simple_logger>(test_dir.c_str(), "SimpleLogger");
         for (unsigned int i = 0; i != 1000; ++i) {
-            LOG_PRINT(logger.get(), "{}", "test_print");
+            LOG_DEBUG("test_print");
         }
-        logger->flush();
 
         std::set<std::string> after_files;
         NO_FATALS(get_log_files(after_files));
