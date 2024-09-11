@@ -32,7 +32,6 @@
 #include <utility>
 
 #include "runtime/tool_api.h"
-#include "simple_logger.h"
 #include "utils/api_utilities.h"
 #include "utils/factory_store.h"
 #include "utils/flags.h"
@@ -68,6 +67,23 @@ DSN_DEFINE_validator(logging_start_level, [](const char *value) -> bool {
     return LOG_LEVEL_DEBUG <= level && level <= LOG_LEVEL_FATAL;
 });
 
+DSN_DEFINE_string(
+    tools.simple_logger,
+    stderr_start_level,
+    "LOG_LEVEL_WARNING",
+    "The lowest level of log messages to be copied to stderr in addition to log files");
+DSN_DEFINE_validator(stderr_start_level, [](const char *value) -> bool {
+    const auto level = enum_from_string(value, LOG_LEVEL_INVALID);
+    return LOG_LEVEL_DEBUG <= level && level <= LOG_LEVEL_FATAL;
+});
+
+DSN_DEFINE_bool(tools.simple_logger,
+                short_header,
+                false,
+                "Whether to use short header (excluding "
+                "file, file number and function name "
+                "fields in each line)");
+
 static std::map<log_level_t, google::LogSeverity> to_google_levels = {
     {LOG_LEVEL_DEBUG, google::INFO},
     {LOG_LEVEL_INFO, google::INFO},
@@ -75,6 +91,20 @@ static std::map<log_level_t, google::LogSeverity> to_google_levels = {
     {LOG_LEVEL_ERROR, google::ERROR},
     {LOG_LEVEL_FATAL, google::FATAL}};
 
+DSN_DEFINE_bool(tools.simple_logger, fast_flush, false, "Whether to flush logs immediately");
+DSN_DEFINE_uint64(tools.simple_logger,
+                  max_log_file_bytes,
+                  64 * 1024 * 1024,
+                  "The maximum bytes of a log file. A new log file will be created if the current "
+                  "log file exceeds this size.");
+// max_number_of_log_files_on_disk is removed.
+DSN_DEFINE_uint64(tools.simple_logger,
+                  log_file_duration_minutes,
+                  1440,
+                  "The duration of log files will be kept on disk, in minutes. The overdue log "
+                  "files will be removed.");
+DSN_DEFINE_validator(max_log_file_bytes,
+                     [](uint64_t value) -> bool { return value > (1UL << 20UL); });
 DSN_DEFINE_bool(core,
                 logging_flush_on_exit,
                 true,
@@ -121,6 +151,15 @@ void LogPrefixFormatter(std::ostream &s, const google::LogMessage &m, void * /*d
       << m.basename() << ':' << m.line() << "]";
 }
 
+void ShortLogPrefixFormatter(std::ostream &s, const google::LogMessage &m, void * /*data*/)
+{
+    s << google::GetLogSeverityName(m.severity())[0] // 'I', 'W', 'E' or 'F'.
+      << std::setw(4) << 1900 + m.time().year() << '-' << std::setw(2) << 1 + m.time().month()
+      << '-' << std::setw(2) << m.time().day() << ' ' << std::setw(2) << m.time().hour() << ':'
+      << std::setw(2) << m.time().min() << ':' << std::setw(2) << m.time().sec() << '.'
+      << std::setw(6) << m.time().usec() << ' ' << log_prefixed_message_func() << "]";
+}
+
 void dsn_log_init(const std::string &log_dir, const std::string &role_name)
 {
     ::dsn::command_manager::instance().add_global_cmd(
@@ -154,12 +193,16 @@ void dsn_log_init(const std::string &log_dir, const std::string &role_name)
             }));
 
     FLAGS_minloglevel =
-        to_google_levels[dsn::utils::enum_from_string<dsn::log_level_t>(FLAGS_logging_start_level)];
+        to_google_levels[enum_from_string(FLAGS_logging_start_level, LOG_LEVEL_INVALID)];
     FLAGS_stderrthreshold =
-        to_google_levels[dsn::utils::enum_from_string<dsn::log_level_t>(FLAGS_stderr_start_level)];
+        to_google_levels[enum_from_string(FLAGS_stderr_start_level, LOG_LEVEL_INVALID)];
     FLAGS_logbuflevel = FLAGS_fast_flush ? -1 : 0;
+    FLAGS_max_log_size = FLAGS_max_log_file_bytes >> 20;
+    FLAGS_stop_logging_if_full_disk = true;
 
     google::InstallFailureSignalHandler();
+    // TODO(yingchun): extend LogCleaner to support clean log files by count.
+    google::EnableLogCleaner(std::chrono::minutes(FLAGS_log_file_duration_minutes));
     static const std::vector<google::LogSeverity> severities = {
         google::INFO, google::WARNING, google::ERROR, google::FATAL};
     for (const auto &severity : severities) {
@@ -168,7 +211,11 @@ void dsn_log_init(const std::string &log_dir, const std::string &role_name)
     }
     google::SetLogFilenameExtension(".log");
     google::InitGoogleLogging(role_name.c_str());
-    google::InstallPrefixFormatter(&LogPrefixFormatter, nullptr);
+    if (FLAGS_short_header) {
+        google::InstallPrefixFormatter(&ShortLogPrefixFormatter, nullptr);
+    } else {
+        google::InstallPrefixFormatter(&LogPrefixFormatter, nullptr);
+    }
 
     // register log flush on exit
     if (FLAGS_logging_flush_on_exit) {

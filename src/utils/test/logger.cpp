@@ -38,7 +38,6 @@
 #include "utils/api_utilities.h"
 #include "utils/filesystem.h"
 #include "utils/flags.h"
-#include "utils/simple_logger.h"
 #include "utils/test_macros.h"
 
 DSN_DECLARE_uint64(max_number_of_log_files_on_disk);
