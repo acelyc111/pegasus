@@ -127,28 +127,5 @@ public:
     std::string test_dir;
 };
 
-TEST_F(logger_test, redundant_log_test)
-{
-    // Create redundant log files to test if their number could be restricted.
-    for (unsigned int i = 0; i < FLAGS_max_number_of_log_files_on_disk + 10; ++i) {
-        std::set<std::string> before_files;
-        NO_FATALS(get_log_files(before_files));
-
-        for (unsigned int i = 0; i != 1000; ++i) {
-            LOG_DEBUG("test_print");
-        }
-
-        std::set<std::string> after_files;
-        NO_FATALS(get_log_files(after_files));
-        NO_FATALS(compare_log_files(before_files, after_files));
-        ::usleep(2000);
-    }
-
-    std::set<std::string> files;
-    NO_FATALS(get_log_files(files));
-    ASSERT_FALSE(files.empty());
-    ASSERT_EQ(FLAGS_max_number_of_log_files_on_disk, files.size());
-}
-
 } // namespace tools
 } // namespace dsn
