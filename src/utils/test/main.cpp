@@ -25,7 +25,7 @@ GTEST_API_ int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
 
-    dsn_log_init("./", "test", nullptr);
+    dsn_log_init(".", "test");
 
     dsn::flags_initialize();
 

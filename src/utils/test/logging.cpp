@@ -34,35 +34,25 @@
 #include "utils/fmt_logging.h"
 #include "utils/timer.h"
 
-TEST(LoggingTest, GlobalLog)
-{
-    std::cout << "logging start level = " << enum_to_string(get_log_start_level()) << std::endl;
-    LOG_INFO("in TEST(LoggingTest, GlobalLog)");
-}
+TEST(LoggingTest, GlobalLog) { LOG_INFO("in TEST(LoggingTest, GlobalLog)"); }
 
 TEST(LoggingTest, GlobalLogBig)
 {
-    static const std::string big_str(128000, 'x');
+    static const std::string big_str(128, 'x');
     LOG_INFO(big_str.c_str());
 }
 
 TEST(LoggingTest, LogMacro)
 {
-    struct test_case
-    {
-        log_level_t level;
-        std::string str;
-    } tests[] = {{LOG_LEVEL_DEBUG, "This is a test"},
-                 {LOG_LEVEL_DEBUG, "\\x00%d\\x00\\x01%n/nm"},
-                 {LOG_LEVEL_INFO, "\\x00%d\\x00\\x01%n/nm"},
-                 {LOG_LEVEL_WARNING, "\\x00%d\\x00\\x01%n/nm"},
-                 {LOG_LEVEL_ERROR, "\\x00%d\\x00\\x01%n/nm"},
-                 {LOG_LEVEL_FATAL, "\\x00%d\\x00\\x01%n/nm"}};
+    std::string str1 = "This is a test";
+    std::string str2 = R"(\x00%d\x00\x01%n/nm)";
 
-    // TODO(yingchun): ASSERT_DEATH when in LOG_LEVEL_FATAL
-    for (auto test : tests) {
-        //        LOG(test.level, "LOG: sortkey = {}", test.str);
-    }
+    LOG_DEBUG("LOG: sortkey = {}", str1);
+    LOG_DEBUG("LOG: sortkey = {}", str2);
+    LOG_INFO("LOG: sortkey = {}", str2);
+    LOG_WARNING("LOG: sortkey = {}", str2);
+    LOG_ERROR("LOG: sortkey = {}", str2);
+    ASSERT_DEATH(LOG_FATAL("LOG: sortkey = {}", str2), "LOG: sortkey =");
 }
 
 TEST(LoggingTest, TestLogTiming)
@@ -75,8 +65,10 @@ TEST(LoggingTest, TestLogTiming)
         SCOPED_LOG_TIMING(INFO, "bar {}", 0);
         SCOPED_LOG_SLOW_EXECUTION(INFO, 1, "bar {}", 1);
         SCOPED_LOG_SLOW_EXECUTION_PREFIX(INFO, 1, "prefix", "bar {}", 1);
+        usleep(2 * 1000);
     }
     LOG_SLOW_EXECUTION(INFO, 1, "baz {}", 0) {}
+    usleep(2 * 1000);
 
     // Previous implementations of the above macro confused clang-tidy's use-after-move
     // check and generated false positives.

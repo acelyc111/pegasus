@@ -344,33 +344,6 @@ inline void dsn_global_init()
     dsn::service_engine::instance();
 }
 
-static std::string dsn_log_prefixed_message_func()
-{
-    const int tid = dsn::utils::get_current_tid();
-    const auto t = dsn::task::get_current_task_id();
-    if (t) {
-        if (nullptr != dsn::task::get_current_worker2()) {
-            return fmt::format("{}.{}{}.{:016}: ",
-                               dsn::task::get_current_node_name(),
-                               dsn::task::get_current_worker2()->pool_spec().name,
-                               dsn::task::get_current_worker2()->index(),
-                               t);
-        } else {
-            return fmt::format(
-                "{}.io-thrd.{}.{:016}: ", dsn::task::get_current_node_name(), tid, t);
-        }
-    } else {
-        if (nullptr != dsn::task::get_current_worker2()) {
-            return fmt::format("{}.{}{}: ",
-                               dsn::task::get_current_node_name(),
-                               dsn::task::get_current_worker2()->pool_spec().name,
-                               dsn::task::get_current_worker2()->index());
-        } else {
-            return fmt::format("{}.io-thrd.{}: ", dsn::task::get_current_node_name(), tid);
-        }
-    }
-}
-
 bool run(const char *config_file,
          const char *config_arguments,
          bool is_server,
@@ -474,8 +447,7 @@ bool run(const char *config_file,
     }
 
     // Initialize logging.
-    dsn_log_init(
-        spec.log_dir, fmt::format("{}", fmt::join(app_names, ".")), dsn_log_prefixed_message_func);
+    dsn_log_init(spec.log_dir, fmt::format("{}", fmt::join(app_names, ".")));
 
     // Prepare the minimum necessary.
     ::dsn::service_engine::instance().init_before_toollets(spec);

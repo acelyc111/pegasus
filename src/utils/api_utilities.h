@@ -44,34 +44,6 @@
 @{
 */
 
-enum log_level_t
-{
-    LOG_LEVEL_DEBUG,
-    LOG_LEVEL_INFO,
-    LOG_LEVEL_WARNING,
-    LOG_LEVEL_ERROR,
-    LOG_LEVEL_FATAL,
-    LOG_LEVEL_COUNT,
-    LOG_LEVEL_INVALID
-};
-
-ENUM_BEGIN(log_level_t, LOG_LEVEL_INVALID)
-ENUM_REG(LOG_LEVEL_DEBUG)
-ENUM_REG(LOG_LEVEL_INFO)
-ENUM_REG(LOG_LEVEL_WARNING)
-ENUM_REG(LOG_LEVEL_ERROR)
-ENUM_REG(LOG_LEVEL_FATAL)
-ENUM_END(log_level_t)
-
-USER_DEFINED_ENUM_FORMATTER(log_level_t)
-
-// logs with level smaller than this start_level will not be logged
-extern log_level_t log_start_level;
-extern log_level_t get_log_start_level();
-extern void set_log_start_level(log_level_t level);
-extern void global_log(
-    const char *file, const char *function, const int line, log_level_t log_level, const char *str);
-
 #define dreturn_not_ok_logged(err, ...)                                                            \
     do {                                                                                           \
         if (dsn_unlikely((err) != dsn::ERR_OK)) {                                                  \
@@ -89,7 +61,6 @@ extern void global_log(
 #endif
 
 /*@}*/
-
 #define dverify(exp)                                                                               \
     if (dsn_unlikely(!(exp)))                                                                      \
     return false
@@ -100,25 +71,6 @@ extern void global_log(
             exp;                                                                                   \
         } catch (...) {                                                                            \
             return false;                                                                          \
-        }                                                                                          \
-    } while (0)
-
-#define dverify_logged(exp, level, ...)                                                            \
-    do {                                                                                           \
-        if (dsn_unlikely(!(exp))) {                                                                \
-            LOG(level, __VA_ARGS__);                                                               \
-            return false;                                                                          \
-        }                                                                                          \
-    } while (0)
-
-#define dstop_on_false(exp)                                                                        \
-    if (dsn_unlikely(!(exp)))                                                                      \
-    return
-#define dstop_on_false_logged(exp, level, ...)                                                     \
-    do {                                                                                           \
-        if (dsn_unlikely(!(exp))) {                                                                \
-            LOG(level, __VA_ARGS__);                                                               \
-            return;                                                                                \
         }                                                                                          \
     } while (0)
 /*@}*/

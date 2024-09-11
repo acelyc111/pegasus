@@ -55,7 +55,7 @@ int sasl_simple_logger(void *context, int level, const char *msg)
         return SASL_OK;
     }
 
-    //    LOG(get_log_level(level)) << "sasl log info: " << msg;
+    LOG_AT_LEVEL(get_log_level(level)) << "sasl log info: " << msg;
     return SASL_OK;
 }
 

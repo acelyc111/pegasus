@@ -30,9 +30,4 @@
 #include "utils/command_manager.h"
 #include "utils/factory_store.h"
 
-void set_log_prefixed_message_func(std::function<std::string()> func);
-extern std::function<std::string()> log_prefixed_message_func;
-
-extern void dsn_log_init(const std::string &log_dir,
-                         const std::string &role_name,
-                         const std::function<std::string()> &dsn_log_prefixed_message_func);
+extern void dsn_log_init(const std::string &log_dir, const std::string &role_name);

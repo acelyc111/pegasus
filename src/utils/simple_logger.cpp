@@ -124,40 +124,6 @@ namespace tools {
 //     _symlink_path = utils::filesystem::path_combine(_log_dir, symlink_name);
 //
 //     create_log_file();
-//
-//     static std::once_flag flag;
-//     std::call_once(flag, [&]() {
-//         ::dsn::command_manager::instance().add_global_cmd(
-//             ::dsn::command_manager::instance().register_single_command(
-//                 "flush-log",
-//                 "Flush log to stderr or file",
-//                 "",
-//                 [this](const std::vector<std::string> &args) {
-//                     this->flush();
-//                     return "Flush done.";
-//                 }));
-//
-//         ::dsn::command_manager::instance().add_global_cmd(
-//             ::dsn::command_manager::instance().register_single_command(
-//                 "reset-log-start-level",
-//                 "Reset the log start level",
-//                 "[DEBUG | INFO | WARNING | ERROR | FATAL]",
-//                 [](const std::vector<std::string> &args) {
-//                     log_level_t start_level;
-//                     if (args.size() == 0) {
-//                         start_level =
-//                             enum_from_string(FLAGS_logging_start_level, LOG_LEVEL_INVALID);
-//                     } else {
-//                         std::string level_str = "LOG_LEVEL_" + args[0];
-//                         start_level = enum_from_string(level_str.c_str(), LOG_LEVEL_INVALID);
-//                         if (start_level == LOG_LEVEL_INVALID) {
-//                             return "ERROR: invalid level '" + args[0] + "'";
-//                         }
-//                     }
-//                     set_log_start_level(start_level);
-//                     return std::string("OK, current level is ") + enum_to_string(start_level);
-//                 }));
-//     });
 // }
 //
 // void simple_logger::create_log_file()
@@ -262,10 +228,6 @@ namespace tools {
 //     *str)
 //{
 //     utils::auto_lock<::dsn::utils::ex_lock> l(_lock);
-//
-//     if (FLAGS_fast_flush || log_level >= LOG_LEVEL_ERROR) {
-//         ::fflush(_log);
-//     }
 //     create_log_file();
 // }
 

@@ -40,78 +40,138 @@
 #include "utils/join_point.h"
 #include "utils/sys_exit_hook.h"
 
-// glog: minloglevel (int, default=0, which is INFO)
-// Log messages at or above this level. Again, the numbers of severity levels INFO, WARNING, ERROR,
-// and FATAL are 0, 1, 2, and 3, respectively. glog: v (int, default=0) Show all VLOG(m) messages
-// for m less or equal the value of this flag. Overridable by --vmodule. Refer to verbose logging
-// for more detail. glog: vmodule (string, default="") Per-module verbose level. The argument has to
-// contain a comma-separated list of <module name>=<log level>. <module name> is a glob pattern
-// (e.g., gfs* for all modules whose name starts with "gfs"), matched against the filename base
-// (that is, name ignoring .cc/.h./-inl.h). <log level> overrides any value given by --v. See also
-// verbose logging for more details.
+enum log_level_t
+{
+    LOG_LEVEL_DEBUG,
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_WARNING,
+    LOG_LEVEL_ERROR,
+    LOG_LEVEL_FATAL,
+    LOG_LEVEL_COUNT,
+    LOG_LEVEL_INVALID
+};
+
+ENUM_BEGIN(log_level_t, LOG_LEVEL_INVALID)
+ENUM_REG(LOG_LEVEL_DEBUG)
+ENUM_REG(LOG_LEVEL_INFO)
+ENUM_REG(LOG_LEVEL_WARNING)
+ENUM_REG(LOG_LEVEL_ERROR)
+ENUM_REG(LOG_LEVEL_FATAL)
+ENUM_END(log_level_t)
+
 DSN_DEFINE_string(core,
                   logging_start_level,
                   "LOG_LEVEL_INFO",
                   "Logs with level larger than or equal to this level be logged");
+DSN_DEFINE_validator(logging_start_level, [](const char *value) -> bool {
+    const auto level = enum_from_string(value, LOG_LEVEL_INVALID);
+    return LOG_LEVEL_DEBUG <= level && level <= LOG_LEVEL_FATAL;
+});
+
+static std::map<log_level_t, google::LogSeverity> to_google_levels = {
+    {LOG_LEVEL_DEBUG, google::INFO},
+    {LOG_LEVEL_INFO, google::INFO},
+    {LOG_LEVEL_WARNING, google::WARNING},
+    {LOG_LEVEL_ERROR, google::ERROR},
+    {LOG_LEVEL_FATAL, google::FATAL}};
 
 DSN_DEFINE_bool(core,
                 logging_flush_on_exit,
                 true,
                 "Whether to flush the logs when the process exits");
 
-log_level_t log_start_level = LOG_LEVEL_INFO;
-
-namespace dsn {
-
-using namespace tools;
-
-std::function<std::string()> log_prefixed_message_func = []() -> std::string { return ": "; };
-
-void set_log_prefixed_message_func(std::function<std::string()> func)
+std::string log_prefixed_message_func()
 {
-    log_prefixed_message_func = std::move(func);
+    const static thread_local int tid = dsn::utils::get_current_tid();
+    const auto t = dsn::task::get_current_task_id();
+    if (t != 0) {
+        if (nullptr != dsn::task::get_current_worker2()) {
+            return fmt::format("{}.{}{}.{:016}",
+                               dsn::task::get_current_node_name(),
+                               dsn::task::get_current_worker2()->pool_spec().name,
+                               dsn::task::get_current_worker2()->index(),
+                               t);
+        }
+        return fmt::format("{}.io-thrd.{}.{:016}", dsn::task::get_current_node_name(), tid, t);
+    }
+
+    if (nullptr != dsn::task::get_current_worker2()) {
+        const static thread_local std::string prefix =
+            fmt::format("{}.{}{}",
+                        dsn::task::get_current_node_name(),
+                        dsn::task::get_current_worker2()->pool_spec().name,
+                        dsn::task::get_current_worker2()->index());
+        return prefix;
+    }
+    const static thread_local std::string prefix =
+        fmt::format("{}.io-thrd.{}", dsn::task::get_current_node_name(), tid);
+    return prefix;
 }
-} // namespace dsn
 
-static void log_on_sys_exit(::dsn::sys_exit_type) {}
+static void log_on_sys_exit(::dsn::sys_exit_type) { google::FlushLogFiles(google::INFO); }
 
+// TODO(yingchun): function name is missing!
 void LogPrefixFormatter(std::ostream &s, const google::LogMessage &m, void * /*data*/)
 {
     s << google::GetLogSeverityName(m.severity())[0] // 'I', 'W', 'E' or 'F'.
       << std::setw(4) << 1900 + m.time().year() << '-' << std::setw(2) << 1 + m.time().month()
       << '-' << std::setw(2) << m.time().day() << ' ' << std::setw(2) << m.time().hour() << ':'
       << std::setw(2) << m.time().min() << ':' << std::setw(2) << m.time().sec() << '.'
-      << std::setw(3) << m.time().usec() << ' ' << std::setfill(' ') << std::setw(5)
-      << m.thread_id() << std::setfill('0') << ' ' << m.basename() << ':' << m.line()
-      << dsn::log_prefixed_message_func();
+      << std::setw(6) << m.time().usec() << ' ' << log_prefixed_message_func() << ' '
+      << m.basename() << ':' << m.line() << "]";
 }
 
-void dsn_log_init(const std::string &log_dir,
-                  const std::string &role_name,
-                  const std::function<std::string()> &dsn_log_prefixed_message_func)
+void dsn_log_init(const std::string &log_dir, const std::string &role_name)
 {
+    ::dsn::command_manager::instance().add_global_cmd(
+        ::dsn::command_manager::instance().register_single_command(
+            "flush-log",
+            "Flush log to stderr or file",
+            "",
+            [](const std::vector<std::string> & /*args*/) {
+                google::FlushLogFiles(google::INFO);
+                return "Flush done.";
+            }));
+
+    ::dsn::command_manager::instance().add_global_cmd(
+        ::dsn::command_manager::instance().register_single_command(
+            "reset-log-start-level",
+            "Reset the log start level",
+            "[DEBUG | INFO | WARNING | ERROR | FATAL]",
+            [](const std::vector<std::string> &args) {
+                log_level_t start_level = LOG_LEVEL_INVALID;
+                if (args.empty()) {
+                    start_level = enum_from_string(FLAGS_logging_start_level, LOG_LEVEL_INVALID);
+                } else {
+                    std::string level_str = "LOG_LEVEL_" + args[0];
+                    start_level = enum_from_string(level_str.c_str(), LOG_LEVEL_INVALID);
+                    if (start_level == LOG_LEVEL_INVALID) {
+                        return "ERROR: invalid level '" + args[0] + "'";
+                    }
+                }
+                FLAGS_minloglevel = to_google_levels[start_level];
+                return std::string("OK, current level is ") + enum_to_string(start_level);
+            }));
+
+    FLAGS_minloglevel =
+        to_google_levels[dsn::utils::enum_from_string<dsn::log_level_t>(FLAGS_logging_start_level)];
+    FLAGS_stderrthreshold =
+        to_google_levels[dsn::utils::enum_from_string<dsn::log_level_t>(FLAGS_stderr_start_level)];
+    FLAGS_logbuflevel = FLAGS_fast_flush ? -1 : 0;
+
+    google::InstallFailureSignalHandler();
+    static const std::vector<google::LogSeverity> severities = {
+        google::INFO, google::WARNING, google::ERROR, google::FATAL};
+    for (const auto &severity : severities) {
+        google::SetLogSymlink(severity, fmt::format("{}/{}", log_dir, role_name).c_str());
+        google::SetLogDestination(severity, fmt::format("{}/{}.", log_dir, role_name).c_str());
+    }
+    google::SetLogFilenameExtension(".log");
+    google::InitGoogleLogging(role_name.c_str());
     google::InstallPrefixFormatter(&LogPrefixFormatter, nullptr);
-
-    log_start_level = enum_from_string(FLAGS_logging_start_level, LOG_LEVEL_INVALID);
-
-    CHECK_NE_MSG(
-        log_start_level, LOG_LEVEL_INVALID, "invalid [core] logging_start_level specified");
 
     // register log flush on exit
     if (FLAGS_logging_flush_on_exit) {
         ::dsn::tools::sys_exit.put_back(log_on_sys_exit, "log.flush");
     }
-
-    if (dsn_log_prefixed_message_func != nullptr) {
-        dsn::set_log_prefixed_message_func(dsn_log_prefixed_message_func);
-    }
-}
-
-log_level_t get_log_start_level() { return log_start_level; }
-
-void set_log_start_level(log_level_t level) { log_start_level = level; }
-
-void global_log(
-    const char *file, const char *function, const int line, log_level_t log_level, const char *str)
-{
 }
