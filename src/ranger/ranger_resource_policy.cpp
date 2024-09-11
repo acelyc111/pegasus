@@ -108,7 +108,8 @@ check_ranger_resource_policy_allowed(const std::vector<ranger_resource_policy> &
     if (access_control_result::kDenied == check_res) {
         return access_control_result::kDenied;
     }
-    CHECK(access_control_result::kPending == check_res, "the access control result must kPending.");
+    PGSCHECK(access_control_result::kPending == check_res,
+             "the access control result must kPending.");
 
     // Check if it is allowed by any policy in current resource.
     check_res = do_check_ranger_resource_policy<policy_check_type::kAllow>(
@@ -116,7 +117,8 @@ check_ranger_resource_policy_allowed(const std::vector<ranger_resource_policy> &
     if (access_control_result::kAllowed == check_res) {
         return access_control_result::kAllowed;
     }
-    CHECK(access_control_result::kPending == check_res, "the access control result must kPending.");
+    PGSCHECK(access_control_result::kPending == check_res,
+             "the access control result must kPending.");
 
     // The check that does not match any policy in current reosource returns false.
     return access_control_result::kDenied;
@@ -151,9 +153,9 @@ access_control_result do_check_ranger_resource_policy<policy_check_type::kAllow>
         }
 
         // In a 'allow_policies' and in a 'allow_policies_exclude' or not match.
-        CHECK(policy_check_status::kPending == check_status ||
-                  policy_check_status::kNotMatched == check_status,
-              "the policy check status must be kPending or kNotMatched");
+        PGSCHECK(policy_check_status::kPending == check_status ||
+                     policy_check_status::kNotMatched == check_status,
+                 "the policy check status must be kPending or kNotMatched");
     }
     return access_control_result::kPending;
 }
@@ -187,9 +189,9 @@ access_control_result do_check_ranger_resource_policy<policy_check_type::kDeny>(
         }
 
         // In a 'deny_policies' and in a 'deny_policies_exclude' or not match.
-        CHECK(policy_check_status::kPending == check_status ||
-                  policy_check_status::kNotMatched == check_status,
-              "the policy check status must be kPending or kNotMatched");
+        PGSCHECK(policy_check_status::kPending == check_status ||
+                     policy_check_status::kNotMatched == check_status,
+                 "the policy check status must be kPending or kNotMatched");
     }
     return access_control_result::kPending;
 }
@@ -205,7 +207,8 @@ access_control_result check_ranger_database_table_policy_allowed(
     if (access_control_result::kDenied == check_res) {
         return access_control_result::kDenied;
     }
-    CHECK(access_control_result::kPending == check_res, "the access control result must kPending.");
+    PGSCHECK(access_control_result::kPending == check_res,
+             "the access control result must kPending.");
 
     // Check if it is allowed by any DATABASE_TABLE policy.
     check_res = do_check_ranger_database_table_policy<policy_check_type::kAllow>(
@@ -213,7 +216,8 @@ access_control_result check_ranger_database_table_policy_allowed(
     if (access_control_result::kAllowed == check_res) {
         return access_control_result::kAllowed;
     }
-    CHECK(access_control_result::kPending == check_res, "the access control result must kPending.");
+    PGSCHECK(access_control_result::kPending == check_res,
+             "the access control result must kPending.");
 
     // The check that does not match any DATABASE_TABLE policy returns false.
     return access_control_result::kDenied;
@@ -235,9 +239,9 @@ access_control_result do_check_ranger_database_table_policy<policy_check_type::k
         }
 
         // In a 'policies' and in a 'policies_exclude' or not match.
-        CHECK(policy_check_status::kPending == check_status ||
-                  policy_check_status::kNotMatched == check_status,
-              "the policy check status must be kPending or kNotMatched");
+        PGSCHECK(policy_check_status::kPending == check_status ||
+                     policy_check_status::kNotMatched == check_status,
+                 "the policy check status must be kPending or kNotMatched");
     }
     return access_control_result::kPending;
 }
@@ -257,9 +261,9 @@ access_control_result do_check_ranger_database_table_policy<policy_check_type::k
             return access_control_result::kAllowed;
         }
         // In a 'policies' and in a 'policies_exclude' or not match.
-        CHECK(policy_check_status::kPending == check_status ||
-                  policy_check_status::kNotMatched == check_status,
-              "the policy check status must be kPending or kNotMatched");
+        PGSCHECK(policy_check_status::kPending == check_status ||
+                     policy_check_status::kNotMatched == check_status,
+                 "the policy check status must be kPending or kNotMatched");
     }
     return access_control_result::kPending;
 }

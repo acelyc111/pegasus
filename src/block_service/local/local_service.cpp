@@ -77,9 +77,9 @@ error_code local_service::initialize(const std::vector<std::string> &args)
         if (::dsn::utils::filesystem::directory_exists(_root)) {
             LOG_WARNING("old local block service root dir has already exist, path({})", _root);
         } else {
-            CHECK(::dsn::utils::filesystem::create_directory(_root),
-                  "local block service create directory({}) fail",
-                  _root);
+            PGSCHECK(::dsn::utils::filesystem::create_directory(_root),
+                     "local block service create directory({}) fail",
+                     _root);
         }
         LOG_INFO("local block service initialize succeed with root({})", _root);
     }

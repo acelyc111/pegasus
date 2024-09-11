@@ -138,7 +138,7 @@ void replication_options::initialize()
     std::string error_msg = "";
     bool flag = get_data_dir_and_tag(
         FLAGS_data_dirs, app_dir, app_name, config_data_dirs, config_data_dir_tags, error_msg);
-    CHECK(flag, error_msg);
+    PGSCHECK(flag, error_msg);
 
     // check if data_dir in black list, data_dirs doesn't contain dir in black list
     std::vector<std::string> black_list_dirs;
@@ -151,9 +151,10 @@ void replication_options::initialize()
         data_dir_tags.emplace_back(config_data_dir_tags[i]);
     }
 
-    CHECK(!data_dirs.empty(), "no replica data dir found, maybe not set or excluded by black list");
-    CHECK(replica_helper::parse_server_list(FLAGS_server_list, meta_servers),
-          "invalid meta server config");
+    PGSCHECK(!data_dirs.empty(),
+             "no replica data dir found, maybe not set or excluded by black list");
+    PGSCHECK(replica_helper::parse_server_list(FLAGS_server_list, meta_servers),
+             "invalid meta server config");
 }
 
 int32_t replication_options::app_mutation_2pc_min_replica_count(int32_t app_max_replica_count) const
@@ -297,7 +298,7 @@ replication_options::get_data_dirs_in_black_list(const std::string &fname,
 
     LOG_INFO("data_dirs_black_list_file[{}] found, apply it", fname);
     std::ifstream file(fname);
-    CHECK(file, "open data_dirs_black_list_file failed: {}", fname);
+    PGSCHECK(file, "open data_dirs_black_list_file failed: {}", fname);
 
     std::string str;
     int count = 0;

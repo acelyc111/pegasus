@@ -139,7 +139,7 @@ error_code prepare_list::prepare(mutation_ptr &mu,
         return ERR_OK;
 
     default:
-        CHECK(false, "invalid partition_status, status = {}", enum_to_string(status));
+        PGSCHECK(false, "invalid partition_status, status = {}", enum_to_string(status));
         return ERR_OK;
     }
 }
@@ -200,7 +200,7 @@ void prepare_list::commit(decree d, commit_type ct)
         return;
     }
     default:
-        CHECK(false, "invalid commit type {}", ct);
+        PGSCHECK(false, "invalid commit type {}", ct);
     }
 
     return;

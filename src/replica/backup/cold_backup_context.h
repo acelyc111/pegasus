@@ -242,9 +242,9 @@ public:
     // Progress should be in range of [0, 1000].
     void update_progress(int progress)
     {
-        CHECK(progress >= 0 && progress <= cold_backup_constant::PROGRESS_FINISHED,
-              "invalid progress {}",
-              progress);
+        PGSCHECK(progress >= 0 && progress <= cold_backup_constant::PROGRESS_FINISHED,
+                 "invalid progress {}",
+                 progress);
         _progress.store(progress);
     }
 

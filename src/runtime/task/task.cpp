@@ -61,10 +61,10 @@ __thread uint16_t tls_dsn_lower32_task_id_mask = 0;
         tls_dsn.node_id = node->id();
 
         if (worker != nullptr) {
-            CHECK(worker->pool()->node() == node,
-                  "worker not belonging to the given node: {} vs {}",
-                  worker->pool()->node()->full_name(),
-                  node->full_name());
+            PGSCHECK(worker->pool()->node() == node,
+                     "worker not belonging to the given node: {} vs {}",
+                     worker->pool()->node()->full_name(),
+                     node->full_name());
         }
 
         tls_dsn.node = node;
@@ -91,17 +91,17 @@ __thread uint16_t tls_dsn_lower32_task_id_mask = 0;
 
 /*static*/ void task::on_tls_dsn_not_set()
 {
-    CHECK(service_engine::instance().spec().enable_default_app_mimic,
-          "rDSN context is not initialized properly, to be fixed as follows:\n"
-          "(1). the current thread does NOT belongs to any rDSN service node, please invoke "
-          "dsn_mimic_app first,\n"
-          "     or, you can enable [core] enable_default_app_mimic = true in your config "
-          "file so mimic_app can be omitted\n"
-          "(2). the current thread belongs to a rDSN service node, and you are writing "
-          "providers for rDSN, please use\n"
-          "     task::set_tls_dsn_context(...) at the beginning of your new thread in your "
-          "providers;\n"
-          "(3). this should not happen, please help fire an issue so we we can investigate");
+    PGSCHECK(service_engine::instance().spec().enable_default_app_mimic,
+             "rDSN context is not initialized properly, to be fixed as follows:\n"
+             "(1). the current thread does NOT belongs to any rDSN service node, please invoke "
+             "dsn_mimic_app first,\n"
+             "     or, you can enable [core] enable_default_app_mimic = true in your config "
+             "file so mimic_app can be omitted\n"
+             "(2). the current thread belongs to a rDSN service node, and you are writing "
+             "providers for rDSN, please use\n"
+             "     task::set_tls_dsn_context(...) at the beginning of your new thread in your "
+             "providers;\n"
+             "(3). this should not happen, please help fire an issue so we we can investigate");
     dsn_mimic_app("mimic", 1);
 }
 
@@ -119,9 +119,9 @@ task::task(dsn::task_code code, int hash, service_node *node)
         _node = node;
     } else {
         auto p = get_current_node();
-        CHECK_NOTNULL(p,
-                      "tasks without explicit service node can only be created "
-                      "inside threads which is attached to specific node");
+        PGSCHECK_NOTNULL(p,
+                         "tasks without explicit service node can only be created "
+                         "inside threads which is attached to specific node");
         _node = p;
     }
 
@@ -271,7 +271,7 @@ bool task::wait_on_cancel()
 
 bool task::wait(int timeout_milliseconds)
 {
-    CHECK(this != task::get_current_task(), "task cannot wait itself");
+    PGSCHECK(this != task::get_current_task(), "task cannot wait itself");
 
     auto cs = state();
 
@@ -326,7 +326,7 @@ bool task::cancel(bool wait_until_finished, /*out*/ bool *finished /*= nullptr*/
                 finish = true;
             } else if (wait_until_finished) {
                 _wait_for_cancel = true;
-                CHECK(
+                PGSCHECK(
                     wait_on_cancel(),
                     "wait failed, it is only possible when task runs for more than 0x0fffffff ms");
 
@@ -372,7 +372,7 @@ const char *task::get_current_node_name()
 
 void task::enqueue()
 {
-    CHECK_NOTNULL(_node, "service node unknown for this task");
+    PGSCHECK_NOTNULL(_node, "service node unknown for this task");
     CHECK_NE_MSG(_spec->type,
                  TASK_TYPE_RPC_RESPONSE,
                  "tasks with TASK_TYPE_RPC_RESPONSE type use task::enqueue(caller_pool()) instead");
@@ -386,14 +386,14 @@ void task::enqueue(task_worker_pool *pool)
 {
     this->add_ref(); // released in exec_internal (even when cancelled)
 
-    CHECK_NOTNULL(pool,
-                  "pool {} not ready, and there are usually two cases: "
-                  "(1). thread pool not designatd in '[{}] pools'; "
-                  "(2). the caller is executed in io threads "
-                  "which is forbidden unless you explicitly set [task.{}].allow_inline = true",
-                  _spec->pool_code,
-                  _node->spec().config_section,
-                  _spec->name);
+    PGSCHECK_NOTNULL(pool,
+                     "pool {} not ready, and there are usually two cases: "
+                     "(1). thread pool not designatd in '[{}] pools'; "
+                     "(2). the caller is executed in io threads "
+                     "which is forbidden unless you explicitly set [task.{}].allow_inline = true",
+                     _spec->pool_code,
+                     _node->spec().config_section,
+                     _spec->name);
 
     if (spec().type == TASK_TYPE_COMPUTE) {
         spec().on_task_enqueue.execute(get_current_task(), this);
@@ -407,7 +407,7 @@ void task::enqueue(task_worker_pool *pool)
 
     // fast execution
     if (_is_null) {
-        CHECK(_node == task::get_current_node(), "");
+        PGSCHECK(_node == task::get_current_node(), "");
         exec_internal();
         return;
     }
@@ -478,9 +478,9 @@ void timer_task::exec()
     }
     // valid interval, we reset task state to READY
     if (dsn_likely(_interval_ms > 0)) {
-        CHECK(set_retry(true),
-              "timer task set retry failed, with state = {}",
-              enum_to_string(state()));
+        PGSCHECK(set_retry(true),
+                 "timer task set retry failed, with state = {}",
+                 enum_to_string(state()));
         set_delay(_interval_ms);
     }
 }

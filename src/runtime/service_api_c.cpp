@@ -127,11 +127,12 @@ volatile int *dsn_task_queue_virtual_length_ptr(dsn::task_code code, int hash)
 
 bool dsn_task_is_running_inside(dsn::task *t) { return ::dsn::task::get_current_task() == t; }
 
-void dsn_coredump()
-{
-    ::dsn::utils::coredump::write();
-    ::abort();
-}
+// TODO(yingchun): does it make sense when using ::dsn::utils::coredump::write() ?
+// void dsn_coredump()
+//{
+//    ::dsn::utils::coredump::write();
+//    ::abort();
+//}
 
 //------------------------------------------------------------------------------
 //
@@ -240,7 +241,7 @@ bool dsn_run_config(const char *config, bool is_server)
 bool dsn_mimic_app(const char *app_role, int index)
 {
     auto worker = ::dsn::task::get_current_worker2();
-    CHECK(worker == nullptr, "cannot call dsn_mimic_app in rDSN threads");
+    PGSCHECK(worker == nullptr, "cannot call dsn_mimic_app in rDSN threads");
 
     auto cnode = ::dsn::task::get_current_node2();
     if (cnode != nullptr) {
@@ -343,33 +344,6 @@ inline void dsn_global_init()
     dsn::service_engine::instance();
 }
 
-static std::string dsn_log_prefixed_message_func()
-{
-    const int tid = dsn::utils::get_current_tid();
-    const auto t = dsn::task::get_current_task_id();
-    if (t) {
-        if (nullptr != dsn::task::get_current_worker2()) {
-            return fmt::format("{}.{}{}.{:016}: ",
-                               dsn::task::get_current_node_name(),
-                               dsn::task::get_current_worker2()->pool_spec().name,
-                               dsn::task::get_current_worker2()->index(),
-                               t);
-        } else {
-            return fmt::format(
-                "{}.io-thrd.{}.{:016}: ", dsn::task::get_current_node_name(), tid, t);
-        }
-    } else {
-        if (nullptr != dsn::task::get_current_worker2()) {
-            return fmt::format("{}.{}{}: ",
-                               dsn::task::get_current_node_name(),
-                               dsn::task::get_current_worker2()->pool_spec().name,
-                               dsn::task::get_current_worker2()->index());
-        } else {
-            return fmt::format("{}.io-thrd.{}: ", dsn::task::get_current_node_name(), tid);
-        }
-    }
-}
-
 bool run(const char *config_file,
          const char *config_arguments,
          bool is_server,
@@ -418,14 +392,14 @@ bool run(const char *config_file,
 
     // setup data dir
     auto &data_dir = spec.data_dir;
-    CHECK(!dsn::utils::filesystem::file_exists(data_dir), "{} should not be a file.", data_dir);
+    PGSCHECK(!dsn::utils::filesystem::file_exists(data_dir), "{} should not be a file.", data_dir);
     if (!dsn::utils::filesystem::directory_exists(data_dir)) {
-        CHECK(dsn::utils::filesystem::create_directory(data_dir), "Fail to create {}", data_dir);
+        PGSCHECK(dsn::utils::filesystem::create_directory(data_dir), "Fail to create {}", data_dir);
     }
     std::string cdir;
-    CHECK(dsn::utils::filesystem::get_absolute_path(data_dir, cdir),
-          "Fail to get absolute path from {}",
-          data_dir);
+    PGSCHECK(dsn::utils::filesystem::get_absolute_path(data_dir, cdir),
+             "Fail to get absolute path from {}",
+             data_dir);
     spec.data_dir = cdir;
 
     ::dsn::utils::coredump::init();
@@ -473,10 +447,7 @@ bool run(const char *config_file,
     }
 
     // Initialize logging.
-    dsn_log_init(spec.logging_factory_name,
-                 spec.log_dir,
-                 fmt::format("{}", fmt::join(app_names, ".")),
-                 dsn_log_prefixed_message_func);
+    dsn_log_init(spec.log_dir, fmt::format("{}", fmt::join(app_names, ".")));
 
     // Prepare the minimum necessary.
     ::dsn::service_engine::instance().init_before_toollets(spec);
@@ -490,7 +461,7 @@ bool run(const char *config_file,
     for (const auto &toollet_name : spec.toollets) {
         auto tlet = dsn::tools::internal_use_only::get_toollet(toollet_name.c_str(),
                                                                ::dsn::PROVIDER_TYPE_MAIN);
-        CHECK_NOTNULL(tlet, "toolet not found");
+        PGSCHECK_NOTNULL(tlet, "toolet not found");
         tlet->install(spec);
     }
 
@@ -534,18 +505,18 @@ bool run(const char *config_file,
             for (const auto &app_name_and_index : app_names_and_indexes) {
                 std::vector<std::string> name_and_index;
                 ::dsn::utils::split_args(app_name_and_index.c_str(), name_and_index, '@');
-                CHECK(!name_and_index.empty(),
-                      "app_name should be specified in '{}'",
-                      app_name_and_index);
+                PGSCHECK(!name_and_index.empty(),
+                         "app_name should be specified in '{}'",
+                         app_name_and_index);
                 if (std::string("apps.") + name_and_index.front() == sp.config_section) {
                     if (name_and_index.size() < 2) {
                         create_it = true;
                     } else {
                         int32_t index = 0;
                         const auto index_str = name_and_index.back();
-                        CHECK(dsn::buf2int32(index_str, index),
-                              "'{}' is not a valid index",
-                              index_str);
+                        PGSCHECK(dsn::buf2int32(index_str, index),
+                                 "'{}' is not a valid index",
+                                 index_str);
                         create_it = (index == sp.index);
                     }
                     break;

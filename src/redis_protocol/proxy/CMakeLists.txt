@@ -37,7 +37,9 @@ set(MY_PROJ_LIBS
         rocksdb
         lz4
         zstd
-        snappy)
+        snappy
+        glog
+        gflags)
 
 set(MY_BINPLACES "config.ini")
 

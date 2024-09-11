@@ -196,8 +196,9 @@ error_code replication_app_base::open_internal(replica *r)
 
 error_code replication_app_base::open_new_internal(replica *r, int64_t private_log_start)
 {
-    CHECK(utils::filesystem::remove_path(_dir_data), "remove data dir {} failed", _dir_data);
-    CHECK(utils::filesystem::create_directory(_dir_data), "create data dir {} failed", _dir_data);
+    PGSCHECK(utils::filesystem::remove_path(_dir_data), "remove data dir {} failed", _dir_data);
+    PGSCHECK(
+        utils::filesystem::create_directory(_dir_data), "create data dir {} failed", _dir_data);
     LOG_AND_RETURN_NOT_TRUE(ERROR_PREFIX,
                             utils::filesystem::directory_exists(_dir_data),
                             ERR_FILE_OPERATION_FAILED,
@@ -222,7 +223,7 @@ error_code replication_app_base::open()
 
     std::unique_ptr<char *[]> argvs = std::make_unique<char *[]>(argc);
     char **argv = argvs.get();
-    CHECK_NOTNULL(argv, "");
+    PGSCHECK_NOTNULL(argv, "");
     int idx = 0;
     argv[idx++] = (char *)(info->app_name.c_str());
     if (argc > 1) {

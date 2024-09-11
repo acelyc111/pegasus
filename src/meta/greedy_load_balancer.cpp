@@ -233,7 +233,7 @@ void greedy_load_balancer::report(const dsn::replication::migration_list &list,
             __METRIC_INCREMENT(greedy_copy_secondary_operations);
             break;
         default:
-            CHECK(false, "");
+            CHECK(false);
         }
     }
 

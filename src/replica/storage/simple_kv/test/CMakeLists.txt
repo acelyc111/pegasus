@@ -40,7 +40,9 @@ set(MY_PROJ_LIBS
         rocksdb
         lz4
         zstd
-        snappy)
+        snappy
+        glog
+        gflags)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 FILE(GLOB CASE_FILES "case-*")
 set(MY_BINPLACES

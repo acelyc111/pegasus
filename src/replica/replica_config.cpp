@@ -145,7 +145,7 @@ void replica::on_config_proposal(configuration_update_request &proposal)
         remove(proposal);
         break;
     default:
-        CHECK(false, "invalid config_type, type = {}", enum_to_string(proposal.type));
+        PGSCHECK(false, "invalid config_type, type = {}", enum_to_string(proposal.type));
     }
 }
 
@@ -192,12 +192,12 @@ void replica::add_potential_secondary(const configuration_update_request &propos
     CHECK_EQ(proposal.config.ballot, get_ballot());
     CHECK_EQ(proposal.config.pid, _primary_states.pc.pid);
     CHECK_EQ(proposal.config.hp_primary, _primary_states.pc.hp_primary);
-    CHECK(proposal.config.hp_secondaries == _primary_states.pc.hp_secondaries, "");
+    PGSCHECK(proposal.config.hp_secondaries == _primary_states.pc.hp_secondaries, "");
 
     host_port node;
     GET_HOST_PORT(proposal, node, node);
-    CHECK(!_primary_states.check_exist(node, partition_status::PS_PRIMARY), "node = {}", node);
-    CHECK(!_primary_states.check_exist(node, partition_status::PS_SECONDARY), "node = {}", node);
+    PGSCHECK(!_primary_states.check_exist(node, partition_status::PS_PRIMARY), "node = {}", node);
+    PGSCHECK(!_primary_states.check_exist(node, partition_status::PS_SECONDARY), "node = {}", node);
 
     int potential_secondaries_count =
         _primary_states.pc.hp_secondaries.size() + _primary_states.learners.size();
@@ -218,7 +218,7 @@ void replica::add_potential_secondary(const configuration_update_request &propos
                 LOG_INFO_PREFIX("add a new secondary({}) for future load balancer", node);
             }
         } else {
-            CHECK(false, "invalid config_type, type = {}", enum_to_string(proposal.type));
+            PGSCHECK(false, "invalid config_type, type = {}", enum_to_string(proposal.type));
         }
     }
 
@@ -272,7 +272,7 @@ void replica::downgrade_to_secondary_on_primary(configuration_update_request &pr
 
     CHECK_EQ(proposal.config.pid, _primary_states.pc.pid);
     CHECK_EQ(proposal.config.hp_primary, _primary_states.pc.hp_primary);
-    CHECK(proposal.config.hp_secondaries == _primary_states.pc.hp_secondaries, "");
+    PGSCHECK(proposal.config.hp_secondaries == _primary_states.pc.hp_secondaries, "");
     CHECK_EQ(proposal.hp_node, proposal.config.hp_primary);
     CHECK_EQ(proposal.node, proposal.config.primary);
 
@@ -289,7 +289,7 @@ void replica::downgrade_to_inactive_on_primary(configuration_update_request &pro
 
     CHECK_EQ(proposal.config.pid, _primary_states.pc.pid);
     CHECK_EQ(proposal.config.hp_primary, _primary_states.pc.hp_primary);
-    CHECK(proposal.config.hp_secondaries == _primary_states.pc.hp_secondaries, "");
+    PGSCHECK(proposal.config.hp_secondaries == _primary_states.pc.hp_secondaries, "");
 
     host_port node;
     GET_HOST_PORT(proposal, node, node);
@@ -298,12 +298,12 @@ void replica::downgrade_to_inactive_on_primary(configuration_update_request &pro
         RESET_IP_AND_HOST_PORT(proposal.config, primary);
     } else {
         CHECK_NE(proposal.node, proposal.config.primary);
-        CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
-              "remove node failed, node = {}",
-              proposal.node);
-        CHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
-              "remove node failed, node = {}",
-              node);
+        PGSCHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
+                 "remove node failed, node = {}",
+                 proposal.node);
+        PGSCHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
+                 "remove node failed, node = {}",
+                 node);
     }
 
     update_configuration_on_meta_server(
@@ -317,7 +317,7 @@ void replica::remove(configuration_update_request &proposal)
 
     CHECK_EQ(proposal.config.pid, _primary_states.pc.pid);
     CHECK_EQ(proposal.config.hp_primary, _primary_states.pc.hp_primary);
-    CHECK(proposal.config.hp_secondaries == _primary_states.pc.hp_secondaries, "");
+    PGSCHECK(proposal.config.hp_secondaries == _primary_states.pc.hp_secondaries, "");
 
     host_port node;
     GET_HOST_PORT(proposal, node, node);
@@ -330,12 +330,12 @@ void replica::remove(configuration_update_request &proposal)
         RESET_IP_AND_HOST_PORT(proposal.config, primary);
         break;
     case partition_status::PS_SECONDARY: {
-        CHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
-              "remove node failed, node = {}",
-              proposal.node);
-        CHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
-              "remove_node failed, node = {}",
-              node);
+        PGSCHECK(replica_helper::remove_node(proposal.node, proposal.config.secondaries),
+                 "remove node failed, node = {}",
+                 proposal.node);
+        PGSCHECK(replica_helper::remove_node(node, proposal.config.hp_secondaries),
+                 "remove_node failed, node = {}",
+                 node);
     } break;
     case partition_status::PS_POTENTIAL_SECONDARY:
         break;
@@ -386,9 +386,9 @@ void replica::update_configuration_on_meta_server(config_type::type type,
     new_pc.last_committed_decree = last_committed_decree();
 
     if (type == config_type::CT_PRIMARY_FORCE_UPDATE_BALLOT) {
-        CHECK(status() == partition_status::PS_INACTIVE && _inactive_is_transient &&
-                  _is_initializing,
-              "");
+        PGSCHECK(status() == partition_status::PS_INACTIVE && _inactive_is_transient &&
+                     _is_initializing,
+                 "");
         CHECK_EQ(new_pc.hp_primary, node);
     } else if (type != config_type::CT_ASSIGN_PRIMARY &&
                type != config_type::CT_UPGRADE_TO_PRIMARY) {
@@ -504,7 +504,7 @@ void replica::on_update_configuration_on_meta_server_reply(
     if (resp.err == ERR_OK) {
         CHECK_EQ(req->config.pid, resp.config.pid);
         CHECK_EQ(req->config.hp_primary, resp.config.hp_primary);
-        CHECK(req->config.hp_secondaries == resp.config.hp_secondaries, "");
+        PGSCHECK(req->config.hp_secondaries == resp.config.hp_secondaries, "");
 
         switch (req->type) {
         case config_type::CT_UPGRADE_TO_PRIMARY:
@@ -532,11 +532,11 @@ void replica::on_update_configuration_on_meta_server_reply(
             break;
         }
         case config_type::CT_PRIMARY_FORCE_UPDATE_BALLOT:
-            CHECK(_is_initializing, "");
+            PGSCHECK(_is_initializing, "");
             _is_initializing = false;
             break;
         default:
-            CHECK(false, "invalid config_type, type = {}", enum_to_string(req->type));
+            PGSCHECK(false, "invalid config_type, type = {}", enum_to_string(req->type));
         }
     }
 
@@ -702,10 +702,10 @@ bool replica::update_local_configuration(const replica_configuration &config,
         return true;
     });
 
-    CHECK(config.ballot > get_ballot() || (same_ballot && config.ballot == get_ballot()),
-          "invalid ballot, {} VS {}",
-          config.ballot,
-          get_ballot());
+    PGSCHECK(config.ballot > get_ballot() || (same_ballot && config.ballot == get_ballot()),
+             "invalid ballot, {} VS {}",
+             config.ballot,
+             get_ballot());
     CHECK_EQ(config.pid, get_gpid());
 
     partition_status::type old_status = status();
@@ -856,10 +856,10 @@ bool replica::update_local_configuration(const replica_configuration &config,
             clear_cold_backup_state();
             break;
         case partition_status::PS_POTENTIAL_SECONDARY:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
             break;
         default:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
         }
         break;
     case partition_status::PS_SECONDARY:
@@ -892,13 +892,13 @@ bool replica::update_local_configuration(const replica_configuration &config,
             // _secondary_states.cleanup(true); => do it in close as it may block
             break;
         default:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
         }
         break;
     case partition_status::PS_POTENTIAL_SECONDARY:
         switch (config.status) {
         case partition_status::PS_PRIMARY:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
             break;
         case partition_status::PS_SECONDARY:
             _prepare_list->truncate(_app->last_committed_decree());
@@ -921,7 +921,7 @@ bool replica::update_local_configuration(const replica_configuration &config,
             //                  "potential secondary context cleanup failed");
             break;
         default:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
         }
         break;
     case partition_status::PS_PARTITION_SPLIT:
@@ -935,7 +935,7 @@ bool replica::update_local_configuration(const replica_configuration &config,
             _split_states.cleanup(true);
             break;
         case partition_status::PS_POTENTIAL_SECONDARY:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
             break;
         case partition_status::PS_INACTIVE:
             break;
@@ -943,7 +943,7 @@ bool replica::update_local_configuration(const replica_configuration &config,
             _split_states.cleanup(false);
             break;
         default:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
         }
         break;
     case partition_status::PS_INACTIVE:
@@ -954,13 +954,13 @@ bool replica::update_local_configuration(const replica_configuration &config,
         }
         switch (config.status) {
         case partition_status::PS_PRIMARY:
-            CHECK(_inactive_is_transient, "must be in transient state for being primary next");
+            PGSCHECK(_inactive_is_transient, "must be in transient state for being primary next");
             _inactive_is_transient = false;
             init_group_check();
             replay_prepare_list();
             break;
         case partition_status::PS_SECONDARY:
-            CHECK(_inactive_is_transient, "must be in transient state for being secondary next");
+            PGSCHECK(_inactive_is_transient, "must be in transient state for being secondary next");
             _inactive_is_transient = false;
             break;
         case partition_status::PS_POTENTIAL_SECONDARY:
@@ -982,31 +982,31 @@ bool replica::update_local_configuration(const replica_configuration &config,
             _inactive_is_transient = false;
             break;
         default:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
         }
         break;
     case partition_status::PS_ERROR:
         switch (config.status) {
         case partition_status::PS_PRIMARY:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
             break;
         case partition_status::PS_SECONDARY:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
             break;
         case partition_status::PS_POTENTIAL_SECONDARY:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
             break;
         case partition_status::PS_INACTIVE:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
             break;
         case partition_status::PS_ERROR:
             break;
         default:
-            CHECK(false, "invalid execution path");
+            PGSCHECK(false, "invalid execution path");
         }
         break;
     default:
-        CHECK(false, "invalid execution path");
+        PGSCHECK(false, "invalid execution path");
     }
 
     LOG_INFO_PREFIX(
@@ -1045,7 +1045,7 @@ bool replica::update_local_configuration(const replica_configuration &config,
             init_prepare(next, false);
         }
 
-        CHECK(_primary_states.pc.__isset.hp_secondaries, "");
+        PGSCHECK(_primary_states.pc.__isset.hp_secondaries, "");
         if (_primary_states.pc.hp_secondaries.size() + 1 <
             _options->app_mutation_2pc_min_replica_count(_app_info.max_replica_count)) {
             std::vector<mutation_ptr> queued;

@@ -169,12 +169,12 @@ void test_get(int32_t qps)
                     sortkey,
                     [hashkey, sortkey](int ec, string &&val, pegasus_client::internal_info &&info) {
                         if (ec == PERR_OK) {
-                            CHECK(verify(hashkey, sortkey, val),
-                                  "hashkey({}) - sortkey({}) - value({}), but value({})",
-                                  hashkey,
-                                  sortkey,
-                                  get_value(hashkey, sortkey, FLAGS_value_len),
-                                  val);
+                            PGSCHECK(verify(hashkey, sortkey, val),
+                                     "hashkey({}) - sortkey({}) - value({}), but value({})",
+                                     hashkey,
+                                     sortkey,
+                                     get_value(hashkey, sortkey, FLAGS_value_len),
+                                     val);
                         } else if (ec == PERR_NOT_FOUND) {
                             // don't output info
                         } else if (ec == PERR_TIMEOUT) {
@@ -207,11 +207,11 @@ void test_del(int32_t qps)
                     hashkey,
                     sortkey,
                     [hashkey, sortkey](int ec, pegasus_client::internal_info &&info) {
-                        CHECK(ec == PERR_OK || ec == PERR_NOT_FOUND || ec == PERR_TIMEOUT,
-                              "del hashkey({}) - sortkey({}) failed with err({})",
-                              hashkey,
-                              sortkey,
-                              pg_client->get_error_string(ec));
+                        PGSCHECK(ec == PERR_OK || ec == PERR_NOT_FOUND || ec == PERR_TIMEOUT,
+                                 "del hashkey({}) - sortkey({}) failed with err({})",
+                                 hashkey,
+                                 sortkey,
+                                 pg_client->get_error_string(ec));
                     });
                 cnt -= 1;
             }
@@ -220,7 +220,7 @@ void test_del(int32_t qps)
     quota_task->cancel(false);
 }
 
-void test_scan(int32_t qps) { CHECK(false, "not implemented"); }
+void test_scan(int32_t qps) { PGSCHECK(false, "not implemented"); }
 
 static std::map<std::string, std::function<void(int32_t)>> _all_funcs;
 
@@ -249,14 +249,14 @@ int main(int argc, const char **argv)
     LOG_INFO("pressureclient {} qps = {}", FLAGS_operation_name, FLAGS_qps);
 
     pg_client = pegasus_client_factory::get_client(FLAGS_test_cluster_name, FLAGS_app_name);
-    CHECK_NOTNULL(pg_client, "initialize pg_client failed");
+    PGSCHECK_NOTNULL(pg_client, "initialize pg_client failed");
 
     auto it = _all_funcs.find(FLAGS_operation_name);
     if (it != _all_funcs.end()) {
         LOG_INFO("start pressureclient with {} qps({})", FLAGS_operation_name, FLAGS_qps);
         it->second(FLAGS_qps);
     } else {
-        CHECK(false, "Unknown operation name({})", FLAGS_operation_name);
+        PGSCHECK(false, "Unknown operation name({})", FLAGS_operation_name);
     }
     return 0;
 }

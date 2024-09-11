@@ -351,7 +351,7 @@ const std::unordered_map<app_env_validator::ValueType, std::string>
 nlohmann::json app_env_validator::EnvInfo::to_json() const
 {
     const auto *type_str = gutil::FindOrNull(ValueType2String, type);
-    CHECK_NOTNULL(type_str, "");
+    CHECK_NOTNULL(type_str);
     nlohmann::json info;
     info["type"] = *type_str;
     info["limitation"] = limit_desc;

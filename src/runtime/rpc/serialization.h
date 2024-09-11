@@ -64,7 +64,7 @@ inline void marshall(binary_writer &writer, const ThriftType &value, dsn_msg_ser
         marshall_thrift_json(writer, value);
         break;
     default:
-        CHECK(false, serialization::no_registered_function_error_notice(value, fmt));
+        PGSCHECK(false, serialization::no_registered_function_error_notice(value, fmt));
     }
 }
 
@@ -79,7 +79,7 @@ inline void unmarshall(binary_reader &reader, ThriftType &value, dsn_msg_seriali
         unmarshall_thrift_json(reader, value);
         break;
     default:
-        CHECK(false, serialization::no_registered_function_error_notice(value, fmt));
+        PGSCHECK(false, serialization::no_registered_function_error_notice(value, fmt));
     }
 }
 

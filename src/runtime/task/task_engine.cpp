@@ -148,15 +148,15 @@ void task_worker_pool::add_timer(task *t)
 
 void task_worker_pool::enqueue(task *t)
 {
-    CHECK(t->spec().pool_code == spec().pool_code || t->spec().type == TASK_TYPE_RPC_RESPONSE,
-          "Invalid thread pool used");
+    PGSCHECK(t->spec().pool_code == spec().pool_code || t->spec().type == TASK_TYPE_RPC_RESPONSE,
+             "Invalid thread pool used");
     CHECK_EQ_MSG(
         t->delay_milliseconds(), 0, "task delayed should be dispatched to timer service first");
 
-    CHECK(_is_running,
-          "worker pool {} must be started before enqueue task {}",
-          spec().name,
-          t->spec().name);
+    PGSCHECK(_is_running,
+             "worker pool {} must be started before enqueue task {}",
+             spec().name,
+             t->spec().name);
     unsigned int idx = (_spec.partitioned ? static_cast<unsigned int>(t->hash()) %
                                                 static_cast<unsigned int>(_queues.size())
                                           : 0);

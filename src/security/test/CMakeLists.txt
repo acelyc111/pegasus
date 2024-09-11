@@ -28,7 +28,9 @@ set(MY_PROJ_LIBS
         dsn_runtime
         dsn_utils
         gtest
-        rocksdb)
+        rocksdb
+        glog
+        gflags)
 set(MY_BINPLACES
         config.ini
         run.sh)

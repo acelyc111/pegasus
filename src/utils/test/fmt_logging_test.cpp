@@ -48,7 +48,7 @@ TEST(fmt_logging, basic)
     ASSERT_EQ(fmt::format("{}", LPC_REPLICATION_LOW), "LPC_REPLICATION_LOW");
     ASSERT_EQ(std::string_view("yes"), "yes");
     ASSERT_EQ(fmt::format("{}", std::string_view("yes\0yes")), "yes\0yes");
-    ASSERT_DEATH(CHECK(false, "CHECK false in test"), "CHECK false in test");
+    ASSERT_DEATH(PGSCHECK(false, "PGSCHECK false in test"), "PGSCHECK false in test");
 }
 
 } // namespace replication

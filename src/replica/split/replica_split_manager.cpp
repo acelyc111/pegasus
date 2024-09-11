@@ -574,7 +574,7 @@ void replica_split_manager::child_catch_up_states() // on child partition
                                _replica->_prepare_list->min_decree());
             for (decree d = local_decree + 1; d <= goal_decree; ++d) {
                 auto mu = _replica->_prepare_list->get_mutation_by_decree(d);
-                CHECK_NOTNULL(mu, "");
+                PGSCHECK_NOTNULL(mu, "");
                 error_code ec = _replica->_app->apply_mutation(mu);
                 if (ec != ERR_OK) {
                     child_handle_split_error("child_catchup failed because apply mutation failed");
@@ -822,7 +822,7 @@ void replica_split_manager::parent_send_update_partition_count_request(
                                                0_ms,
                                                0,
                                                get_gpid().thread_hash());
-    DCHECK(request->hp_target, "");
+    DCHECK(request->hp_target);
     DCHECK_EQ(request->target, dsn::dns_resolver::instance().resolve_address(request->hp_target));
     rpc.call(request->target, tracker(), [this, rpc, not_replied_addresses](error_code ec) mutable {
         on_update_child_group_partition_count_reply(
@@ -919,7 +919,7 @@ void replica_split_manager::on_update_child_group_partition_count_reply(
             "failed to update child node({}) partition_count, error = {}, wait and retry",
             FMT_HOST_PORT_AND_IP(request, target),
             error);
-        DCHECK(request.hp_target, "");
+        DCHECK(request.hp_target);
         DCHECK_EQ(request.target, dsn::dns_resolver::instance().resolve_address(request.hp_target));
         tasking::enqueue(
             LPC_PARTITION_SPLIT,

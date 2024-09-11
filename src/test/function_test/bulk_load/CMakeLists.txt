@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(MY_PROJ_NAME "bulk_load_test")
+set(MY_PROJ_NAME bulk_load_test)
 project(${MY_PROJ_NAME} C CXX)
 
 # Source files under CURRENT project directory will be automatically included.
@@ -43,7 +43,9 @@ set(MY_PROJ_LIBS
         rocksdb
         lz4
         zstd
-        snappy)
+        snappy
+        glog
+        gflags)
 
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 

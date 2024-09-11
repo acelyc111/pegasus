@@ -92,7 +92,7 @@ message_ex::~message_ex()
 
     // release_header_buffer();
     if (!_is_read) {
-        CHECK(_rw_committed, "message write is not committed");
+        PGSCHECK(_rw_committed, "message write is not committed");
     }
 }
 
@@ -207,7 +207,7 @@ message_ex *message_ex::copy_message_no_reply(const message_ex &old_msg)
 
 message_ex *message_ex::copy(bool clone_content, bool copy_for_receive)
 {
-    CHECK(this->_rw_committed, "should not copy the message when read/write is not committed");
+    PGSCHECK(this->_rw_committed, "should not copy the message when read/write is not committed");
 
     // ATTENTION:
     // - if this message is a written message, set copied message's write pointer to the end,
@@ -280,8 +280,8 @@ message_ex *message_ex::copy_and_prepare_send(bool clone_content)
     if (_is_read) {
         // the message_header is hidden ahead of the buffer, expose it to buffer
         CHECK_EQ_MSG(buffers.size(), 1, "there must be only one buffer for read msg");
-        CHECK((char *)header + sizeof(message_header) == (char *)buffers[0].data(),
-              "header and content must be contigous");
+        PGSCHECK((char *)header + sizeof(message_header) == (char *)buffers[0].data(),
+                 "header and content must be contigous");
 
         copy->buffers[0] = copy->buffers[0].range(-(int)sizeof(message_header));
 
@@ -409,9 +409,9 @@ void message_ex::release_buffer_header()
 void message_ex::write_next(void **ptr, size_t *size, size_t min_size)
 {
     // printf("%p %s\n", this, __FUNCTION__);
-    CHECK(!this->_is_read && this->_rw_committed,
-          "there are pending msg write not committed"
-          ", please invoke dsn_msg_write_next and dsn_msg_write_commit in pairs");
+    PGSCHECK(!this->_is_read && this->_rw_committed,
+             "there are pending msg write not committed"
+             ", please invoke dsn_msg_write_next and dsn_msg_write_commit in pairs");
     auto ptr_data(utils::make_shared_array<char>(min_size));
     *size = min_size;
     *ptr = ptr_data.get();
@@ -428,9 +428,9 @@ void message_ex::write_next(void **ptr, size_t *size, size_t min_size)
 void message_ex::write_commit(size_t size)
 {
     // printf("%p %s\n", this, __FUNCTION__);
-    CHECK(!this->_rw_committed,
-          "there are no pending msg write to be committed"
-          ", please invoke dsn_msg_write_next and dsn_msg_write_commit in pairs");
+    PGSCHECK(!this->_rw_committed,
+             "there are no pending msg write to be committed"
+             ", please invoke dsn_msg_write_next and dsn_msg_write_commit in pairs");
 
     this->_rw_offset += (int)size;
     *this->buffers.rbegin() = this->buffers.rbegin()->range(0, (int)this->_rw_offset);
@@ -441,9 +441,9 @@ void message_ex::write_commit(size_t size)
 bool message_ex::read_next(void **ptr, size_t *size)
 {
     // printf("%p %s %d\n", this, __FUNCTION__, utils::get_current_tid());
-    CHECK(this->_is_read && this->_rw_committed,
-          "there are pending msg read not committed"
-          ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
+    PGSCHECK(this->_is_read && this->_rw_committed,
+             "there are pending msg read not committed"
+             ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
 
     int idx = this->_rw_index;
     if (-1 == idx || this->_rw_offset == static_cast<int>(this->buffers[idx].length())) {
@@ -466,9 +466,9 @@ bool message_ex::read_next(void **ptr, size_t *size)
 bool message_ex::read_next(blob &data)
 {
     // printf("%p %s %d\n", this, __FUNCTION__, utils::get_current_tid());
-    CHECK(this->_is_read && this->_rw_committed,
-          "there are pending msg read not committed"
-          ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
+    PGSCHECK(this->_is_read && this->_rw_committed,
+             "there are pending msg read not committed"
+             ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
 
     int idx = this->_rw_index;
     if (-1 == idx || this->_rw_offset == static_cast<int>(this->buffers[idx].length())) {
@@ -489,9 +489,9 @@ bool message_ex::read_next(blob &data)
 void message_ex::read_commit(size_t size)
 {
     // printf("%p %s\n", this, __FUNCTION__);
-    CHECK(!this->_rw_committed,
-          "there are no pending msg read to be committed"
-          ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
+    PGSCHECK(!this->_rw_committed,
+             "there are no pending msg read to be committed"
+             ", please invoke dsn_msg_read_next and dsn_msg_read_commit in pairs");
 
     CHECK_NE_MSG(-1, this->_rw_index, "no buffer in curent msg is under read");
     this->_rw_offset += (int)size;

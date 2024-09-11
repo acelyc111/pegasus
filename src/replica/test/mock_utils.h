@@ -250,7 +250,7 @@ create_mock_replica(replica_stub *stub, int app_id = 1, int partition_index = 1)
     app_info.app_name = "temp";
 
     auto *dn = stub->get_fs_manager()->create_replica_dir_if_necessary(app_info.app_type, pid);
-    CHECK_NOTNULL(dn, "");
+    PGSCHECK_NOTNULL(dn, "");
     return std::make_unique<mock_replica>(stub, pid, app_info, dn);
 }
 
@@ -310,7 +310,7 @@ public:
         if (dn == nullptr) {
             dn = _fs_manager.create_replica_dir_if_necessary(info.app_type, pid);
         }
-        CHECK_NOTNULL(dn, "");
+        PGSCHECK_NOTNULL(dn, "");
         mock_replica_ptr rep =
             new mock_replica(this, pid, info, dn, need_restore, is_duplication_follower);
         rep->set_replica_config(config);
@@ -332,7 +332,7 @@ public:
         config.status = status;
 
         auto dn = _fs_manager.create_replica_dir_if_necessary(info.app_type, pid);
-        CHECK_NOTNULL(dn, "");
+        PGSCHECK_NOTNULL(dn, "");
         auto *rep = new mock_replica(this, pid, info, dn, need_restore, is_duplication_follower);
         rep->set_replica_config(config);
         return rep;

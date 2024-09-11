@@ -76,7 +76,7 @@ void perf_counter_number_percentile_atomic::on_timer(
         timer->async_wait(std::bind(
             &perf_counter_number_percentile_atomic::on_timer, this, timer, std::placeholders::_1));
     } else if (boost::system::errc::operation_canceled != ec) {
-        CHECK(false, "on_timer error!!!");
+        PGSCHECK(false, "on_timer error!!!");
     }
 }
 

@@ -81,10 +81,10 @@ void replica_follower::init_master_info()
 
     std::vector<std::string> master_metas;
     dsn::utils::split_args(metas->second.c_str(), master_metas, ',');
-    CHECK(!master_metas.empty(), "master cluster meta list is invalid!");
+    PGSCHECK(!master_metas.empty(), "master cluster meta list is invalid!");
     for (const auto &meta : master_metas) {
         const auto node = host_port::from_string(meta);
-        CHECK(node, "{} is invalid meta host_port", meta);
+        PGSCHECK(node, "{} is invalid meta host_port", meta);
         _master_meta_list.emplace_back(std::move(node));
     }
 }

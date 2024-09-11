@@ -204,7 +204,7 @@ ranger_resource_policy_manager::ranger_resource_policy_manager(
 
 void ranger_resource_policy_manager::start()
 {
-    CHECK_NOTNULL(_meta_svc, "");
+    PGSCHECK_NOTNULL(_meta_svc, "");
     _ranger_policy_meta_root = dsn::utils::filesystem::concat_path_unix_style(
         _meta_svc->cluster_root(), "ranger_policy_meta_root");
     tasking::enqueue_timer(
@@ -260,7 +260,7 @@ access_control_result ranger_resource_policy_manager::allowed(
 void ranger_resource_policy_manager::parse_policies_from_json(const rapidjson::Value &data,
                                                               std::vector<policy_item> &policies)
 {
-    CHECK(policies.empty(), "Ranger policy list should not be empty.");
+    PGSCHECK(policies.empty(), "Ranger policy list should not be empty.");
     RETURN_VOID_IF_NOT_ARRAY(data);
     for (const auto &item : data.GetArray()) {
         CONTINUE_IF_MISSING_MEMBER(item, "accesses");
@@ -604,13 +604,14 @@ dsn::error_code ranger_resource_policy_manager::sync_policies_to_app_envs()
                 {database_name, table_name, policy.policies});
             // This table matches the policy whose database is "*".
             if (policy.database_names.count(database_name) == 0) {
-                CHECK(policy.database_names.count("*") != 0,
-                      "the list of database_name must contain *");
+                PGSCHECK(policy.database_names.count("*") != 0,
+                         "the list of database_name must contain *");
                 database_table_policy.matched_database_name = "*";
             }
             // This table matches the policy whose database table is "*".
             if (policy.table_names.count(table_name) == 0) {
-                CHECK(policy.table_names.count("*") != 0, "the list of table_name must contain *");
+                PGSCHECK(policy.table_names.count("*") != 0,
+                         "the list of table_name must contain *");
                 database_table_policy.matched_table_name = "*";
             }
             matched_database_table_policies.emplace_back(database_table_policy);

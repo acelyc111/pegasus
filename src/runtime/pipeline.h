@@ -108,7 +108,7 @@ struct result
     //
     void step_down_next_stage(Args &&...args)
     {
-        CHECK_NOTNULL(__func, "no next stage is linked");
+        PGSCHECK_NOTNULL(__func, "no next stage is linked");
         __func(std::make_tuple(std::forward<Args>(args)...));
     }
 
@@ -263,7 +263,7 @@ struct when : environment
 
 inline void base::run_pipeline()
 {
-    CHECK_NOTNULL(__conf.tracker, "must configure task tracker");
+    PGSCHECK_NOTNULL(__conf.tracker, "must configure task tracker");
 
     _paused.store(false, std::memory_order_release);
 

@@ -42,7 +42,10 @@ set(REPLICA_SERVER_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/rocksdb_wrapper.cpp)
 
 set(SERVER_COMMON_LIBS
-        dsn_utils)
+        dsn_dist_cmd
+        dsn_utils
+        glog
+        gflags)
 set(COLLECTOR_LIBS
         ${SERVER_COMMON_LIBS}
         dsn_meta_server

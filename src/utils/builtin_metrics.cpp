@@ -50,14 +50,14 @@ builtin_metrics::builtin_metrics()
 
 builtin_metrics::~builtin_metrics()
 {
-    CHECK(!_timer, "timer should have been destroyed by stop()");
+    PGSCHECK(!_timer, "timer should have been destroyed by stop()");
 }
 
 void builtin_metrics::on_close() {}
 
 void builtin_metrics::start()
 {
-    CHECK(!_timer, "timer should not have been initialized before start()");
+    PGSCHECK(!_timer, "timer should not have been initialized before start()");
 
     _timer.reset(new metric_timer(FLAGS_builtin_metrics_update_interval_ms,
                                   std::bind(&builtin_metrics::update, this),
@@ -66,7 +66,7 @@ void builtin_metrics::start()
 
 void builtin_metrics::stop()
 {
-    CHECK(_timer, "timer should have been initialized before stop()");
+    PGSCHECK(_timer, "timer should have been initialized before stop()");
 
     // Close the timer synchronously.
     _timer->close();

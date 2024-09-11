@@ -33,7 +33,9 @@ set(MY_PROJ_LIBS
         lz4
         zstd
         snappy
-        gtest)
+        gtest
+        glog
+        gflags)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         config-test-corrupt-message.ini

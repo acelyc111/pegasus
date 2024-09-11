@@ -96,9 +96,9 @@ public:
     // client side
     virtual void on_master_disconnected(const std::vector<host_port> &)
     {
-        CHECK(false, "unsupported method");
+        PGSCHECK(false, "unsupported method");
     }
-    virtual void on_master_connected(const host_port &) { CHECK(false, "unsupported method"); }
+    virtual void on_master_connected(const host_port &) { PGSCHECK(false, "unsupported method"); }
 
     // server side
     // it is in the protection of failure_detector::_lock

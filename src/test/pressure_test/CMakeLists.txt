@@ -37,7 +37,9 @@ set(MY_PROJ_LIBS
         lz4
         zstd
         snappy
-        dsn_utils)
+        dsn_utils
+        glog
+        gflags)
 
 set(MY_BINPLACES "${CMAKE_CURRENT_SOURCE_DIR}/config-pressure.ini")
 

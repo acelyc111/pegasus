@@ -108,7 +108,7 @@ public:
     void copy_from(mutation_ptr &old);
     void set_logged()
     {
-        CHECK(!is_logged(), "");
+        PGSCHECK(!is_logged(), "");
         _not_logged = 0;
     }
     unsigned int decrease_left_secondary_ack_count() { return --_left_secondary_ack_count; }
@@ -212,10 +212,10 @@ public:
     ~mutation_queue()
     {
         clear();
-        CHECK(_hdr.is_empty(),
-              "work queue is deleted when there are still {} running ops or pending work items "
-              "in queue",
-              _current_op_count);
+        PGSCHECK(_hdr.is_empty(),
+                 "work queue is deleted when there are still {} running ops or pending work items "
+                 "in queue",
+                 _current_op_count);
     }
 
     mutation_ptr add_work(task_code code, dsn::message_ex *request, replica *r);

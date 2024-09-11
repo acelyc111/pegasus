@@ -50,7 +50,7 @@ public:
         ai.duplicating = true;
 
         dir_node *dn = stub->get_fs_manager()->find_best_dir_for_new_replica(pid);
-        CHECK_NOTNULL(dn, "");
+        PGSCHECK_NOTNULL(dn, "");
         auto r = std::make_unique<mock_replica>(stub.get(), pid, ai, dn);
         r->as_primary();
         return r;

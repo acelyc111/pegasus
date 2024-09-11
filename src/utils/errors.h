@@ -198,13 +198,13 @@ public:
 
     const T &get_value() const
     {
-        CHECK(_err.is_ok(), get_error().description());
+        CHECK(_err.is_ok()) << get_error().description();
         return *_value;
     }
 
     T &get_value()
     {
-        CHECK(_err.is_ok(), get_error().description());
+        CHECK(_err.is_ok()) << get_error().description();
         return *_value;
     }
 
@@ -263,7 +263,7 @@ USER_DEFINED_STRUCTURE_FORMATTER(::dsn::error_s);
 #define CHECK_OK(s, ...)                                                                           \
     do {                                                                                           \
         const ::dsn::error_s &_s = (s);                                                            \
-        CHECK(_s.is_ok(), fmt::format(__VA_ARGS__));                                               \
+        PGSCHECK(_s.is_ok(), fmt::format(__VA_ARGS__));                                            \
     } while (false)
 
 #define RETURN_ERRS_NOT_TRUE(exp, code, ...)                                                       \

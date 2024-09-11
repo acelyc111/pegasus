@@ -243,7 +243,7 @@ public:
             for (auto &port : ports) {
                 rpc_address addr(network::get_local_ipv4(), std::stoi(port));
                 const auto hp = ::dsn::host_port::from_address(addr);
-                CHECK(hp, "'{}' can not be reverse resolved", addr);
+                PGSCHECK(hp, "'{}' can not be reverse resolved", addr);
                 _master_fd->add_allow_list(hp);
             }
             use_allow_list = true;

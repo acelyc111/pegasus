@@ -275,11 +275,11 @@ bool is_data_dir_invalid(const std::string &dir)
 void move_to_err_path(const std::string &path, const std::string &log_prefix)
 {
     const std::string new_path = fmt::format("{}.{}{}", path, dsn_now_us(), kFolderSuffixErr);
-    CHECK(dsn::utils::filesystem::rename_path(path, new_path),
-          "{}: failed to move directory from '{}' to '{}'",
-          log_prefix,
-          path,
-          new_path);
+    PGSCHECK(dsn::utils::filesystem::rename_path(path, new_path),
+             "{}: failed to move directory from '{}' to '{}'",
+             log_prefix,
+             path,
+             new_path);
     LOG_WARNING("{}: succeed to move directory from '{}' to '{}'", log_prefix, path, new_path);
 }
 

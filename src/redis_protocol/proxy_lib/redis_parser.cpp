@@ -1319,10 +1319,10 @@ void redis_parser::redis_simple_string::marshalling(::dsn::binary_writer &write_
 
 void redis_parser::redis_bulk_string::marshalling(::dsn::binary_writer &write_stream) const
 {
-    CHECK((-1 == length && data.length() == 0) || data.length() == length,
-          "{} VS {}",
-          data.length(),
-          length);
+    PGSCHECK((-1 == length && data.length() == 0) || data.length() == length,
+             "{} VS {}",
+             data.length(),
+             length);
     write_stream.write_pod('$');
     std::string length_str = std::to_string(length);
     write_stream.write(length_str.c_str(), (int)length_str.length());
@@ -1337,10 +1337,10 @@ void redis_parser::redis_bulk_string::marshalling(::dsn::binary_writer &write_st
 
 void redis_parser::redis_array::marshalling(::dsn::binary_writer &write_stream) const
 {
-    CHECK((-1 == count && array.size() == 0) || array.size() == count,
-          "{} VS {}",
-          array.size(),
-          count);
+    PGSCHECK((-1 == count && array.size() == 0) || array.size() == count,
+             "{} VS {}",
+             array.size(),
+             count);
     write_stream.write_pod('*');
     std::string count_str = std::to_string(count);
     write_stream.write(count_str.c_str(), (int)count_str.length());

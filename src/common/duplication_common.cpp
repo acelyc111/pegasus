@@ -65,18 +65,18 @@ const std::string duplication_constants::kDuplicationEnvMasterAppNameKey /*NOLIN
 /*extern*/ const char *duplication_status_to_string(duplication_status::type status)
 {
     auto it = _duplication_status_VALUES_TO_NAMES.find(status);
-    CHECK(it != _duplication_status_VALUES_TO_NAMES.end(),
-          "unexpected type of duplication_status: {}",
-          status);
+    PGSCHECK(it != _duplication_status_VALUES_TO_NAMES.end(),
+             "unexpected type of duplication_status: {}",
+             status);
     return it->second;
 }
 
 /*extern*/ const char *duplication_fail_mode_to_string(duplication_fail_mode::type fmode)
 {
     auto it = _duplication_fail_mode_VALUES_TO_NAMES.find(fmode);
-    CHECK(it != _duplication_fail_mode_VALUES_TO_NAMES.end(),
-          "unexpected type of duplication_fail_mode: {}",
-          fmode);
+    PGSCHECK(it != _duplication_fail_mode_VALUES_TO_NAMES.end(),
+             "unexpected type of duplication_fail_mode: {}",
+             fmode);
     return it->second;
 }
 
@@ -112,10 +112,10 @@ private:
         for (std::string &cluster : clusters) {
             int64_t cluster_id =
                 dsn_config_get_value_int64("duplication-group", cluster.data(), 0, "");
-            CHECK(cluster_id < 128 && cluster_id > 0,
-                  "cluster_id({}) for {} should be in [1, 127]",
-                  cluster_id,
-                  cluster);
+            PGSCHECK(cluster_id < 128 && cluster_id > 0,
+                     "cluster_id({}) for {} should be in [1, 127]",
+                     cluster_id,
+                     cluster);
             _group.emplace(cluster, static_cast<uint8_t>(cluster_id));
         }
         CHECK_EQ_MSG(clusters.size(),

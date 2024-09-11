@@ -151,8 +151,8 @@ void encode_metrics(dsn::metric_json_writer &writer,
                     const dsn::metric_filters &filters)
 {
     // We shouldn't reach here if no metric is chosen, thus just mark an assertion.
-    CHECK(!metrics.empty(),
-          "this entity should not be encoded into the response since no metric is chosen");
+    PGSCHECK(!metrics.empty(),
+             "this entity should not be encoded into the response since no metric is chosen");
 
     writer.Key(dsn::kMetricEntityMetricsField.c_str());
 
@@ -749,9 +749,9 @@ void metric_timer::on_timer(const boost::system::error_code &ec)
 
         // Cancel can only be launched by close().
         auto expected_state = state::kClosing;
-        CHECK(_state.compare_exchange_strong(expected_state, state::kClosed),
-              "wrong state for metric_timer: {}, while expecting closing state",
-              static_cast<int>(expected_state));
+        PGSCHECK(_state.compare_exchange_strong(expected_state, state::kClosed),
+                 "wrong state for metric_timer: {}, while expecting closing state",
+                 static_cast<int>(expected_state));
         on_close();
 
         return;

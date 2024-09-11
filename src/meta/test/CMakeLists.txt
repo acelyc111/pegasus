@@ -44,7 +44,9 @@ set(MY_PROJ_LIBS
         zookeeper
         hashtable
         gtest
-        hdfs)
+        hdfs
+        glog
+        gflags)
 set(MY_BOOST_LIBS Boost::system Boost::filesystem)
 set(MY_BINPLACES
         clear.sh

@@ -68,7 +68,7 @@ public:
     case type_enum:                                                                                \
         value<type>() = dsn_config_get_value_##suffix(_section, _name, value<type>(), _desc);      \
         if (_validator) {                                                                          \
-            CHECK(_validator(), "validation failed: {}", _name);                                   \
+            PGSCHECK(_validator(), "validation failed: {}", _name);                                \
         }                                                                                          \
         break
 
@@ -274,7 +274,7 @@ public:
     void add_validator(const char *name, validator_fn &validator)
     {
         auto it = _flags.find(name);
-        CHECK(it != _flags.end(), "flag '{}' does not exist", name);
+        PGSCHECK(it != _flags.end(), "flag '{}' does not exist", name);
         flag_data &flag = it->second;
         if (!flag.validator()) {
             flag.set_validator(validator);
@@ -283,9 +283,9 @@ public:
 
     void add_group_validator(const char *name, group_validator_fn &validator)
     {
-        CHECK(_group_flag_validators.find(name) == _group_flag_validators.end(),
-              "duplicate group flag validator '{}'",
-              name);
+        PGSCHECK(_group_flag_validators.find(name) == _group_flag_validators.end(),
+                 "duplicate group flag validator '{}'",
+                 name);
         _group_flag_validators[name] = validator;
     }
 
@@ -298,14 +298,14 @@ public:
 
         std::string total_message;
         if (!run_group_validators(&total_message)) {
-            CHECK(false, "{}", total_message);
+            PGSCHECK(false, "{}", total_message);
         }
     }
 
     void add_tag(const char *name, const flag_tag &tag)
     {
         auto it = _flags.find(name);
-        CHECK(it != _flags.end(), "flag '{}' does not exist", name);
+        PGSCHECK(it != _flags.end(), "flag '{}' does not exist", name);
         it->second.add_tag(tag);
     }
 

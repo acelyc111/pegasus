@@ -20,27 +20,35 @@
 #pragma once
 
 #include <fmt/ostream.h>
+#include <glog/logging.h>
 #include <rocksdb/status.h>
 
 #include "utils/api_utilities.h"
 
-// The macros below no longer use the default snprintf method for log message formatting,
-// instead we use fmt::format.
-// TODO(wutao1): prevent construction of std::string for each log.
-
-// __FILENAME__ macro comes from the cmake, in which we calculate a filename without path.
-#define LOG(level, ...)                                                                            \
+#define LOG_DEBUG(...)                                                                             \
     do {                                                                                           \
-        if (level >= log_start_level)                                                              \
-            global_log(                                                                            \
-                __FILENAME__, __FUNCTION__, __LINE__, level, fmt::format(__VA_ARGS__).c_str());    \
+        VLOG(1) << fmt::format(__VA_ARGS__);                                                       \
     } while (false)
 
-#define LOG_DEBUG(...) LOG(LOG_LEVEL_DEBUG, __VA_ARGS__)
-#define LOG_INFO(...) LOG(LOG_LEVEL_INFO, __VA_ARGS__)
-#define LOG_WARNING(...) LOG(LOG_LEVEL_WARNING, __VA_ARGS__)
-#define LOG_ERROR(...) LOG(LOG_LEVEL_ERROR, __VA_ARGS__)
-#define LOG_FATAL(...) LOG(LOG_LEVEL_FATAL, __VA_ARGS__)
+#define LOG_INFO(...)                                                                              \
+    do {                                                                                           \
+        LOG(INFO) << fmt::format(__VA_ARGS__);                                                     \
+    } while (false)
+
+#define LOG_WARNING(...)                                                                           \
+    do {                                                                                           \
+        LOG(WARNING) << fmt::format(__VA_ARGS__);                                                  \
+    } while (false)
+
+#define LOG_ERROR(...)                                                                             \
+    do {                                                                                           \
+        LOG(ERROR) << fmt::format(__VA_ARGS__);                                                    \
+    } while (false)
+
+#define LOG_FATAL(...)                                                                             \
+    do {                                                                                           \
+        LOG(FATAL) << fmt::format(__VA_ARGS__);                                                    \
+    } while (false)
 
 #define LOG_WARNING_IF(x, ...)                                                                     \
     do {                                                                                           \
@@ -70,9 +78,9 @@
         }                                                                                          \
     } while (false)
 
-#define CHECK(x, ...) CHECK_EXPRESSION(x, x, __VA_ARGS__)
-#define CHECK_NOTNULL(p, ...) CHECK((p) != nullptr, __VA_ARGS__)
-#define CHECK_NULL(p, ...) CHECK((p) == nullptr, __VA_ARGS__)
+#define PGSCHECK(x, ...) CHECK_EXPRESSION(x, x, __VA_ARGS__)
+#define PGSCHECK_NOTNULL(p, ...) PGSCHECK((p) != nullptr, __VA_ARGS__)
+#define CHECK_NULL(p, ...) PGSCHECK((p) == nullptr, __VA_ARGS__)
 
 // Macros for writing log message prefixed by log_prefix().
 #define LOG_DEBUG_PREFIX(...) LOG_DEBUG("[{}] {}", log_prefix(), fmt::format(__VA_ARGS__))
@@ -185,16 +193,6 @@ inline const char *null_str_printer(const char *s) { return s == nullptr ? "(nul
         CHECK_EXPRESSION(                                                                          \
             var1 < var2, _v1 < _v2, "{} vs {} {}", _v1, _v2, fmt::format(__VA_ARGS__));            \
     } while (false)
-
-#define CHECK_STREQ(var1, var2) CHECK_STREQ_MSG(var1, var2, "")
-#define CHECK_STRNE(var1, var2) CHECK_STRNE_MSG(var1, var2, "")
-
-#define CHECK_NE(var1, var2) CHECK_NE_MSG(var1, var2, "")
-#define CHECK_EQ(var1, var2) CHECK_EQ_MSG(var1, var2, "")
-#define CHECK_GE(var1, var2) CHECK_GE_MSG(var1, var2, "")
-#define CHECK_LE(var1, var2) CHECK_LE_MSG(var1, var2, "")
-#define CHECK_GT(var1, var2) CHECK_GT_MSG(var1, var2, "")
-#define CHECK_LT(var1, var2) CHECK_LT_MSG(var1, var2, "")
 
 #define CHECK_TRUE(var) CHECK_EQ(var, true)
 #define CHECK_FALSE(var) CHECK_EQ(var, false)
@@ -325,8 +323,8 @@ inline const char *null_str_printer(const char *s) { return s == nullptr ? "(nul
     } while (0)
 
 #ifndef NDEBUG
-#define DCHECK CHECK
-#define DCHECK_NOTNULL CHECK_NOTNULL
+#define DPGSCHECK PGSCHECK
+#define DPGSCHECK_NOTNULL PGSCHECK_NOTNULL
 
 #define DCHECK_NE_MSG CHECK_NE_MSG
 #define DCHECK_EQ_MSG CHECK_EQ_MSG
@@ -335,13 +333,6 @@ inline const char *null_str_printer(const char *s) { return s == nullptr ? "(nul
 #define DCHECK_GT_MSG CHECK_GT_MSG
 #define DCHECK_LT_MSG CHECK_LT_MSG
 
-#define DCHECK_NE CHECK_NE
-#define DCHECK_EQ CHECK_EQ
-#define DCHECK_GE CHECK_GE
-#define DCHECK_LE CHECK_LE
-#define DCHECK_GT CHECK_GT
-#define DCHECK_LT CHECK_LT
-
 #define DCHECK_NE_PREFIX CHECK_NE_PREFIX
 #define DCHECK_EQ_PREFIX CHECK_EQ_PREFIX
 #define DCHECK_GE_PREFIX CHECK_GE_PREFIX
@@ -349,8 +340,8 @@ inline const char *null_str_printer(const char *s) { return s == nullptr ? "(nul
 #define DCHECK_GT_PREFIX CHECK_GT_PREFIX
 #define DCHECK_LT_PREFIX CHECK_LT_PREFIX
 #else
-#define DCHECK(x, ...)
-#define DCHECK_NOTNULL(p, ...)
+#define DPGSCHECK(x, ...)
+#define DPGSCHECK_NOTNULL(p, ...)
 
 #define DCHECK_NE_MSG(var1, var2, ...)
 #define DCHECK_EQ_MSG(var1, var2, ...)
@@ -358,13 +349,6 @@ inline const char *null_str_printer(const char *s) { return s == nullptr ? "(nul
 #define DCHECK_LE_MSG(var1, var2, ...)
 #define DCHECK_GT_MSG(var1, var2, ...)
 #define DCHECK_LT_MSG(var1, var2, ...)
-
-#define DCHECK_NE(var1, var2)
-#define DCHECK_EQ(var1, var2)
-#define DCHECK_GE(var1, var2)
-#define DCHECK_LE(var1, var2)
-#define DCHECK_GT(var1, var2)
-#define DCHECK_LT(var1, var2)
 
 #define DCHECK_NE_PREFIX(var1, var2)
 #define DCHECK_EQ_PREFIX(var1, var2)

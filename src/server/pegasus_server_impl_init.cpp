@@ -688,16 +688,16 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     _data_cf_opts.level0_slowdown_writes_trigger = FLAGS_rocksdb_level0_slowdown_writes_trigger;
     _data_cf_opts.level0_stop_writes_trigger = FLAGS_rocksdb_level0_stop_writes_trigger;
 
-    CHECK(parse_compression_types(FLAGS_rocksdb_compression_type,
-                                  _data_cf_opts.compression_per_level),
-          "parse rocksdb_compression_type failed.");
+    PGSCHECK(parse_compression_types(FLAGS_rocksdb_compression_type,
+                                     _data_cf_opts.compression_per_level),
+             "parse rocksdb_compression_type failed.");
 
     _meta_cf_opts = _data_cf_opts;
     // Set level0_file_num_compaction_trigger of meta CF as 10 to reduce frequent compaction.
     _meta_cf_opts.level0_file_num_compaction_trigger = 10;
     // Data in meta CF is very little, disable compression to save CPU load.
-    CHECK(parse_compression_types("none", _meta_cf_opts.compression_per_level),
-          "parse rocksdb_compression_type failed.");
+    PGSCHECK(parse_compression_types("none", _meta_cf_opts.compression_per_level),
+             "parse rocksdb_compression_type failed.");
 
     _tbl_opts.read_amp_bytes_per_bit = FLAGS_read_amp_bytes_per_bit;
 
@@ -770,9 +770,9 @@ pegasus_server_impl::pegasus_server_impl(dsn::replication::replica *r)
     LOG_INFO_PREFIX("rocksdb_keep_log_file_num = {}", _db_opts.keep_log_file_num);
 
     auto index_type_item = INDEX_TYPE_STRING_MAP.find(FLAGS_rocksdb_index_type);
-    CHECK(index_type_item != INDEX_TYPE_STRING_MAP.end(),
-          "[pegasus.server]rocksdb_index_type should be one among binary_search, "
-          "hash_search, two_level_index_search or binary_search_with_first_key.");
+    PGSCHECK(index_type_item != INDEX_TYPE_STRING_MAP.end(),
+             "[pegasus.server]rocksdb_index_type should be one among binary_search, "
+             "hash_search, two_level_index_search or binary_search_with_first_key.");
     _tbl_opts.index_type = index_type_item->second;
     LOG_INFO_PREFIX("rocksdb_index_type = {}", FLAGS_rocksdb_index_type);
 

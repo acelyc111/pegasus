@@ -132,7 +132,7 @@ bool construct_replica(meta_view view, const gpid &pid, int max_replica_count)
     // we put max_replica_count-1 recent replicas to last_drops, in case of the DDD-state when the
     // only primary dead
     // when add node to pc.last_drops, we don't remove it from our cc.drop_list
-    CHECK(pc.hp_last_drops.empty(), "last_drops of partition({}) must be empty", pid);
+    PGSCHECK(pc.hp_last_drops.empty(), "last_drops of partition({}) must be empty", pid);
     for (auto iter = drop_list.rbegin(); iter != drop_list.rend(); ++iter) {
         if (pc.hp_last_drops.size() + 1 >= max_replica_count) {
             break;
@@ -170,7 +170,7 @@ bool collect_replica(meta_view view, const host_port &node, const replica_info &
 
     // adjust the drop list
     int ans = cc.collect_drop_replica(node, info);
-    CHECK(cc.check_order(), "");
+    CHECK(cc.check_order());
 
     return info.status == partition_status::PS_POTENTIAL_SECONDARY || ans != -1;
 }
@@ -192,7 +192,7 @@ void proposal_actions::track_current_learner(const dsn::host_port &node, const r
         return;
     }
     const auto &act = acts.front();
-    CHECK(act.hp_node, "");
+    CHECK(act.hp_node);
     if (act.hp_node != node) {
         return;
     }
@@ -375,10 +375,10 @@ int config_context::collect_drop_replica(const host_port &node, const replica_in
 
     iter = find_from_dropped(node);
     if (iter == dropped.end()) {
-        CHECK(!in_dropped,
-              "adjust position of existing node({}) failed, this is a bug, partition({})",
-              node,
-              pc->pid);
+        PGSCHECK(!in_dropped,
+                 "adjust position of existing node({}) failed, this is a bug, partition({})",
+                 node,
+                 pc->pid);
         return -1;
     }
     return in_dropped ? 1 : 0;

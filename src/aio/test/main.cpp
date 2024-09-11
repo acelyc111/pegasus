@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include "runtime/app_model.h"
+#include "utils/logging_provider.h"
 
 GTEST_API_ int main(int argc, char **argv)
 {

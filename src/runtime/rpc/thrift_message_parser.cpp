@@ -305,7 +305,7 @@ message_ex *thrift_message_parser::get_message_on_receive(message_reader *reader
     case 1:
         return parse_request_body_v1(reader, read_next);
     default:
-        CHECK(false, "invalid header version: {}", _header_version);
+        PGSCHECK(false, "invalid header version: {}", _header_version);
     }
 
     return nullptr;
@@ -327,9 +327,9 @@ void thrift_message_parser::prepare_on_send(message_ex *msg)
     auto &header = msg->header;
     auto &buffers = msg->buffers;
 
-    CHECK(!header->context.u.is_request, "only support send response");
-    CHECK(header->server.error_name[0], "error name should be set");
-    CHECK(!buffers.empty(), "buffers can not be empty");
+    PGSCHECK(!header->context.u.is_request, "only support send response");
+    PGSCHECK(header->server.error_name[0], "error name should be set");
+    PGSCHECK(!buffers.empty(), "buffers can not be empty");
 
     // write thrift response header and thrift message begin
     binary_writer header_writer;

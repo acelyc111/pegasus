@@ -41,7 +41,7 @@ std::unique_ptr<value_field> value_schema_v0::extract_field(std::string_view val
         field = extract_timestamp(value);
         break;
     default:
-        CHECK(false, "Unsupported field type: {}", type);
+        PGSCHECK(false, "Unsupported field type: {}", type);
     }
     return field;
 }
@@ -60,7 +60,7 @@ void value_schema_v0::update_field(std::string &value, std::unique_ptr<value_fie
         update_expire_ts(value, std::move(field));
         break;
     default:
-        CHECK(false, "Unsupported update field type: {}", type);
+        PGSCHECK(false, "Unsupported update field type: {}", type);
     }
 }
 
@@ -71,7 +71,7 @@ rocksdb::SliceParts value_schema_v0::generate_value(const value_params &params)
     auto data_field =
         static_cast<user_data_field *>(params.fields[value_field_type::USER_DATA].get());
     if (dsn_unlikely(expire_ts_field == nullptr || data_field == nullptr)) {
-        CHECK(false, "USER_DATA or EXPIRE_TIMESTAMP is not provided");
+        PGSCHECK(false, "USER_DATA or EXPIRE_TIMESTAMP is not provided");
         return {nullptr, 0};
     }
 

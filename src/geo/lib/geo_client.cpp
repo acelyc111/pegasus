@@ -102,13 +102,13 @@ geo_client::geo_client(const char *config_file,
                        const char *geo_app_name)
 {
     bool ok = pegasus_client_factory::initialize(config_file);
-    CHECK(ok, "init pegasus client factory failed");
+    PGSCHECK(ok, "init pegasus client factory failed");
 
     _common_data_client = pegasus_client_factory::get_client(cluster_name, common_app_name);
-    CHECK_NOTNULL(_common_data_client, "init pegasus _common_data_client failed");
+    PGSCHECK_NOTNULL(_common_data_client, "init pegasus _common_data_client failed");
 
     _geo_data_client = pegasus_client_factory::get_client(cluster_name, geo_app_name);
-    CHECK_NOTNULL(_geo_data_client, "init pegasus _geo_data_client failed");
+    PGSCHECK_NOTNULL(_geo_data_client, "init pegasus _geo_data_client failed");
 
     dsn::error_s s = _codec.set_latlng_indices(FLAGS_latitude_index, FLAGS_longitude_index);
     CHECK_OK(s, "set_latlng_indices({}, {}) failed", FLAGS_latitude_index, FLAGS_longitude_index);
@@ -667,7 +667,7 @@ void geo_client::async_get_result_from_cells(const S2CellUnion &cids,
                 }
             }
 
-            CHECK(!start_stop_sort_keys.first.empty(), "");
+            CHECK(!start_stop_sort_keys.first.empty());
             // the last sub slice of current `cid` on FLAGS_max_level in Hilbert curve covered by
             // `cap`
             if (start_stop_sort_keys.second.empty()) {

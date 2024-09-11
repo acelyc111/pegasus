@@ -78,7 +78,7 @@ error_code service_node::init_rpc_engine()
 
 dsn::error_code service_node::start_app()
 {
-    CHECK(_entity, "entity hasn't initialized");
+    PGSCHECK(_entity, "entity hasn't initialized");
     _entity->set_host_port(rpc()->primary_host_port());
 
     std::vector<std::string> args;
@@ -93,7 +93,7 @@ dsn::error_code service_node::start_app()
 
 dsn::error_code service_node::stop_app(bool cleanup)
 {
-    CHECK(_entity, "entity hasn't initialized");
+    PGSCHECK(_entity, "entity hasn't initialized");
     dsn::error_code res = _entity->stop(cleanup);
     if (res == dsn::ERR_OK) {
         _entity->set_started(false);
@@ -124,7 +124,7 @@ error_code service_node::start()
     // init task engine
     _computation = std::make_unique<task_engine>(this);
     _computation->create(_app_spec.pools);
-    CHECK(!_computation->is_started(), "task engine must not be started at this point");
+    PGSCHECK(!_computation->is_started(), "task engine must not be started at this point");
 
     // init rpc
     err = init_rpc_engine();
@@ -133,7 +133,7 @@ error_code service_node::start()
 
     // start task engine
     _computation->start();
-    CHECK(_computation->is_started(), "task engine must be started at this point");
+    PGSCHECK(_computation->is_started(), "task engine must be started at this point");
 
     // create service_app
     {
@@ -225,12 +225,12 @@ void service_engine::start_node(service_app_spec &app_spec)
             // union to existing node if any port is shared
             auto it = app_name_by_port.find(p);
             if (it != app_name_by_port.end()) {
-                CHECK(false,
-                      "network port {} usage confliction for {} vs {}, "
-                      "please reconfig",
-                      p,
-                      it->second,
-                      app_spec.full_name);
+                PGSCHECK(false,
+                         "network port {} usage confliction for {} vs {}, "
+                         "please reconfig",
+                         p,
+                         it->second,
+                         app_spec.full_name);
             }
             app_name_by_port.emplace(p, app_spec.full_name);
         }

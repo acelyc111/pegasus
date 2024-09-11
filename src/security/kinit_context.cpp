@@ -66,9 +66,9 @@ class kinit_context;
 // will not pass.
 error_s check_configuration()
 {
-    CHECK(FLAGS_enable_auth || FLAGS_enable_zookeeper_kerberos,
-          "There is no need to check configuration if FLAGS_enable_auth"
-          " and FLAGS_enable_zookeeper_kerberos both are not true");
+    PGSCHECK(FLAGS_enable_auth || FLAGS_enable_zookeeper_kerberos,
+             "There is no need to check configuration if FLAGS_enable_auth"
+             " and FLAGS_enable_zookeeper_kerberos both are not true");
 
     if (utils::is_empty(FLAGS_krb5_keytab) || !utils::filesystem::file_exists(FLAGS_krb5_keytab)) {
         return error_s::make(ERR_INVALID_PARAMETERS,
@@ -304,7 +304,7 @@ void kinit_context::schedule_renew_credentials()
         } else if (err == boost::system::errc::operation_canceled) {
             LOG_WARNING("the renew credentials timer is cancelled");
         } else {
-            CHECK(false, "unhandled error({})", err.message());
+            PGSCHECK(false, "unhandled error({})", err.message());
         }
     });
 }

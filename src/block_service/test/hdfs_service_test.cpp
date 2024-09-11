@@ -115,11 +115,11 @@ void HDFSClientTest::write_test_files_async(const std::string &local_test_path,
             if (s.ok()) {
                 ++(*success_count);
             } else {
-                CHECK(s.IsIOError(), "{}", s.ToString());
+                PGSCHECK(s.IsIOError(), "{}", s.ToString());
                 auto pos1 = s.ToString().find(
                     "IO error: No such file or directory: While open a file for appending: ");
                 auto pos2 = s.ToString().find("IO error: While appending to file: ");
-                CHECK(pos1 == 0 || pos2 == 0, "{}", s.ToString());
+                PGSCHECK(pos1 == 0 || pos2 == 0, "{}", s.ToString());
             }
         });
     }

@@ -229,9 +229,9 @@ void mutation_log_private::init_states()
 
 void mutation_log_private::write_pending_mutations(bool release_lock_required)
 {
-    CHECK(release_lock_required, "lock must be hold at this point");
-    CHECK(!_is_writing.load(std::memory_order_relaxed), "");
-    CHECK_NOTNULL(_pending_write, "");
+    PGSCHECK(release_lock_required, "lock must be hold at this point");
+    PGSCHECK(!_is_writing.load(std::memory_order_relaxed), "");
+    PGSCHECK_NOTNULL(_pending_write, "");
     CHECK_GT(_pending_write->size(), 0);
     auto pr = mark_new_offset(_pending_write->size(), false);
     CHECK_EQ_PREFIX(pr.second, _pending_write->start_offset());
@@ -270,7 +270,7 @@ void mutation_log_private::commit_pending_mutations(log_file_ptr &lf,
         LPC_WRITE_REPLICATION_LOG_PRIVATE,
         &_tracker,
         [this, lf, pending, max_decree, max_commit](error_code err, size_t sz) mutable {
-            CHECK(_is_writing.load(std::memory_order_relaxed), "");
+            PGSCHECK(_is_writing.load(std::memory_order_relaxed), "");
 
             for (auto &block : pending->all_blocks()) {
                 auto hdr = (log_block_header *)block.front().data();
@@ -374,7 +374,7 @@ error_code mutation_log::open(replay_callback read_callback,
                               io_failure_callback write_error_callback,
                               const std::map<gpid, decree> &replay_condition)
 {
-    CHECK(!_is_opened, "cannot open an opened mutation_log");
+    PGSCHECK(!_is_opened, "cannot open an opened mutation_log");
     CHECK_NULL(_current_log_file, "");
 
     // create dir if necessary
@@ -396,7 +396,7 @@ error_code mutation_log::open(replay_callback read_callback,
     }
 
     if (nullptr == read_callback) {
-        CHECK(file_list.empty(), "");
+        PGSCHECK(file_list.empty(), "");
     }
 
     std::sort(file_list.begin(), file_list.end());
@@ -429,9 +429,9 @@ error_code mutation_log::open(replay_callback read_callback,
                      log->end_offset() - log->start_offset());
         }
 
-        CHECK(_log_files.find(log->index()) == _log_files.end(),
-              "invalid log_index, index = {}",
-              log->index());
+        PGSCHECK(_log_files.find(log->index()) == _log_files.end(),
+                 "invalid log_index, index = {}",
+                 log->index());
         _log_files[log->index()] = log;
     }
 
@@ -443,7 +443,7 @@ error_code mutation_log::open(replay_callback read_callback,
     if (!replay_condition.empty()) {
         if (_is_private) {
             auto find = replay_condition.find(_private_gpid);
-            CHECK(find != replay_condition.end(), "invalid gpid({})", _private_gpid);
+            PGSCHECK(find != replay_condition.end(), "invalid gpid({})", _private_gpid);
             for (auto it = _log_files.begin(); it != _log_files.end(); ++it) {
                 if (it->second->previous_log_max_decree(_private_gpid) <= find->second) {
                     // previous logs can be ignored
@@ -496,13 +496,13 @@ error_code mutation_log::open(replay_callback read_callback,
             if (mark_it != _log_files.rend()) {
                 // set replay_begin to the next position of mark_it.
                 replay_begin = _log_files.find(mark_it->first);
-                CHECK(replay_begin != _log_files.end(),
-                      "invalid log_index, index = {}",
-                      mark_it->first);
+                PGSCHECK(replay_begin != _log_files.end(),
+                         "invalid log_index, index = {}",
+                         mark_it->first);
                 replay_begin++;
-                CHECK(replay_begin != _log_files.end(),
-                      "invalid log_index, index = {}",
-                      mark_it->first);
+                PGSCHECK(replay_begin != _log_files.end(),
+                         "invalid log_index, index = {}",
+                         mark_it->first);
             }
         }
 
@@ -600,9 +600,9 @@ error_code mutation_log::create_new_log_file()
 
     // update states
     _last_file_index++;
-    CHECK(_log_files.find(_last_file_index) == _log_files.end(),
-          "invalid log_offset, offset = {}",
-          _last_file_index);
+    PGSCHECK(_log_files.find(_last_file_index) == _log_files.end(),
+             "invalid log_offset, offset = {}",
+             _last_file_index);
     _log_files[_last_file_index] = logf;
 
     // switch the current log file
@@ -634,7 +634,7 @@ error_code mutation_log::create_new_log_file()
                 LOG_ERROR("write mutation log file header failed, file = {}, err = {}",
                           logf->path(),
                           err);
-                CHECK(_io_error_callback, "");
+                PGSCHECK(_io_error_callback, "");
                 _io_error_callback(err);
             }
         },
@@ -691,7 +691,7 @@ std::pair<log_file_ptr, int64_t> mutation_log::mark_new_offset(size_t size,
             _switch_file_demand = false;
         }
     } else {
-        CHECK_NOTNULL(_current_log_file, "");
+        PGSCHECK_NOTNULL(_current_log_file, "");
     }
 
     int64_t write_start_offset = _global_end_offset;
@@ -711,14 +711,14 @@ decree mutation_log::max_decree(gpid gpid) const
 decree mutation_log::max_decree_on_disk() const
 {
     zauto_lock l(_lock);
-    CHECK(_is_private, "this method is only valid for private logs");
+    PGSCHECK(_is_private, "this method is only valid for private logs");
     return _plog_max_decree_on_disk;
 }
 
 decree mutation_log::max_commit_on_disk() const
 {
     zauto_lock l(_lock);
-    CHECK(_is_private, "this method is only valid for private logs");
+    PGSCHECK(_is_private, "this method is only valid for private logs");
     return _plog_max_commit_on_disk;
 }
 
@@ -730,7 +730,7 @@ decree mutation_log::max_gced_decree(gpid gpid) const
 
 decree mutation_log::max_gced_decree_no_lock(gpid gpid) const
 {
-    CHECK(_is_private, "");
+    PGSCHECK(_is_private, "");
 
     decree result = invalid_decree;
     for (auto &log : _log_files) {
@@ -800,10 +800,10 @@ error_code mutation_log::reset_from(const std::string &dir,
             }
         } else {
             // Once rollback failed, dir should be recovered manually in case data is lost.
-            CHECK(utils::filesystem::rename_path(temp_dir, _dir),
-                  "rename temp dir {} back to current dir {} failed",
-                  temp_dir,
-                  _dir);
+            PGSCHECK(utils::filesystem::rename_path(temp_dir, _dir),
+                     "rename temp dir {} back to current dir {} failed",
+                     temp_dir,
+                     _dir);
         }
     });
 
@@ -816,10 +816,10 @@ error_code mutation_log::reset_from(const std::string &dir,
 
     auto dir_resolve = dsn::defer([this, dir, &err]() {
         if (err != ERR_OK) {
-            CHECK(utils::filesystem::rename_path(_dir, dir),
-                  "rename current dir {} back to source dir {} failed",
-                  _dir,
-                  dir);
+            PGSCHECK(utils::filesystem::rename_path(_dir, dir),
+                     "rename current dir {} back to source dir {} failed",
+                     _dir,
+                     dir);
         }
     });
 
@@ -884,7 +884,7 @@ void mutation_log::update_max_decree_on_disk(decree max_decree, decree max_commi
 
 void mutation_log::update_max_decree_on_disk_no_lock(decree d)
 {
-    CHECK(_is_private, "this method is only valid for private logs");
+    PGSCHECK(_is_private, "this method is only valid for private logs");
     if (d > _plog_max_decree_on_disk) {
         _plog_max_decree_on_disk = d;
     }
@@ -892,7 +892,7 @@ void mutation_log::update_max_decree_on_disk_no_lock(decree d)
 
 void mutation_log::update_max_commit_on_disk_no_lock(decree d)
 {
-    CHECK(_is_private, "this method is only valid for private logs");
+    PGSCHECK(_is_private, "this method is only valid for private logs");
     if (d > _plog_max_commit_on_disk) {
         _plog_max_commit_on_disk = d;
     }
@@ -900,7 +900,7 @@ void mutation_log::update_max_commit_on_disk_no_lock(decree d)
 
 bool mutation_log::get_learn_state(gpid gpid, decree start, /*out*/ learn_state &state) const
 {
-    CHECK(_is_private, "this method is only valid for private logs");
+    PGSCHECK(_is_private, "this method is only valid for private logs");
     CHECK_EQ(_private_gpid, gpid);
 
     binary_writer temp_writer;
@@ -1002,7 +1002,7 @@ void mutation_log::get_parent_mutations_and_logs(gpid pid,
                                                  std::vector<std::string> &files,
                                                  uint64_t &total_file_size) const
 {
-    CHECK(_is_private, "this method is only valid for private logs");
+    PGSCHECK(_is_private, "this method is only valid for private logs");
     CHECK_EQ(_private_gpid, pid);
 
     mutation_list.clear();
@@ -1098,7 +1098,7 @@ int mutation_log::garbage_collection(gpid gpid,
                                      int64_t reserve_max_size,
                                      int64_t reserve_max_time)
 {
-    CHECK(_is_private, "this method is only valid for private log");
+    PGSCHECK(_is_private, "this method is only valid for private log");
 
     log_file_map_by_index files;
     decree max_decree = invalid_decree;
@@ -1119,9 +1119,9 @@ int mutation_log::garbage_collection(gpid gpid,
     }
 
     // the last one should be the current log file
-    CHECK(current_file_index == -1 || files.rbegin()->first == current_file_index,
-          "invalid current_file_index, index = {}",
-          current_file_index);
+    PGSCHECK(current_file_index == -1 || files.rbegin()->first == current_file_index,
+             "invalid current_file_index, index = {}",
+             current_file_index);
 
     // find the largest file which can be deleted.
     // after iterate, the 'mark_it' will point to the largest file which can be deleted.
@@ -1170,7 +1170,7 @@ int mutation_log::garbage_collection(gpid gpid,
         // update max decree for the next log file
         auto &max_decrees = log->previous_log_max_decrees();
         auto it3 = max_decrees.find(gpid);
-        CHECK(it3 != max_decrees.end(), "impossible for private logs");
+        PGSCHECK(it3 != max_decrees.end(), "impossible for private logs");
         max_decree = it3->second.max_decree;
         already_reserved_size += log->end_offset() - log->start_offset();
     }

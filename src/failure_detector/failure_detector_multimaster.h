@@ -62,11 +62,11 @@ public:
     // server side
     void on_worker_disconnected(const std::vector<::dsn::host_port> &nodes) override
     {
-        CHECK(false, "invalid execution flow");
+        PGSCHECK(false, "invalid execution flow");
     }
     void on_worker_connected(const host_port &node) override
     {
-        CHECK(false, "invalid execution flow");
+        PGSCHECK(false, "invalid execution flow");
     }
 
     ::dsn::host_port current_server_contact() const;

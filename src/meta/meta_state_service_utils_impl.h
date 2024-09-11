@@ -55,9 +55,9 @@ struct op_type
             "OP_GET_CHILDREN",
         };
 
-        CHECK(v != OP_NONE && v <= (sizeof(op_type_to_string_map) / sizeof(char *)),
-              "invalid type: {}",
-              v);
+        PGSCHECK(v != OP_NONE && v <= (sizeof(op_type_to_string_map) / sizeof(char *)),
+                 "invalid type: {}",
+                 v);
         return op_type_to_string_map[v - 1];
     }
 };
@@ -84,11 +84,11 @@ struct operation : pipeline::environment
             pipeline::repeat(std::move(*this_instance), 1_s);
             return;
         }
-        CHECK(false,
-              "request({}) on path({}) encountered an unexpected error({})",
-              op_type::to_string(type),
-              path,
-              ec.to_string());
+        PGSCHECK(false,
+                 "request({}) on path({}) encountered an unexpected error({})",
+                 op_type::to_string(type),
+                 path,
+                 ec.to_string());
     }
 
     dist::meta_state_service *remote_storage() const { return _ms->_remote; }

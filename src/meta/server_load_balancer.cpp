@@ -105,7 +105,7 @@ void newly_partitions::newly_add_partition(int32_t app_id)
 void newly_partitions::newly_remove_primary(int32_t app_id, bool only_primary)
 {
     auto iter = primaries.find(app_id);
-    CHECK(iter != primaries.end(), "invalid app_id, app_id = {}", app_id);
+    PGSCHECK(iter != primaries.end(), "invalid app_id, app_id = {}", app_id);
     CHECK_GT_MSG(iter->second, 0, "invalid primary count");
     if (0 == (--iter->second)) {
         primaries.erase(iter);
@@ -122,7 +122,7 @@ void newly_partitions::newly_remove_primary(int32_t app_id, bool only_primary)
 void newly_partitions::newly_remove_partition(int32_t app_id)
 {
     auto iter = partitions.find(app_id);
-    CHECK(iter != partitions.end(), "invalid app_id, app_id = {}", app_id);
+    PGSCHECK(iter != partitions.end(), "invalid app_id, app_id = {}", app_id);
     CHECK_GT_MSG(iter->second, 0, "invalid partition count");
     if ((--iter->second) == 0) {
         partitions.erase(iter);
@@ -201,10 +201,10 @@ void server_load_balancer::apply_balancer(meta_view view, const migration_list &
             // TODO(yingchun): use CHECK_EQ instead
             if (resp.err != dsn::ERR_OK) {
                 const dsn::gpid &pid = pairs.first;
-                CHECK(false,
-                      "apply balancer for gpid({}.{}) failed",
-                      pid.get_app_id(),
-                      pid.get_partition_index());
+                PGSCHECK(false,
+                         "apply balancer for gpid({}.{}) failed",
+                         pid.get_app_id(),
+                         pid.get_partition_index());
             }
         }
     }

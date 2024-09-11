@@ -138,9 +138,9 @@ void simple_kv_service_impl::on_append(const kv_pair &pr, ::dsn::rpc_replier<int
 
     dsn::zauto_lock l(_lock);
     if (clear_state) {
-        CHECK(dsn::utils::filesystem::remove_path(data_dir()),
-              "Fail to delete directory {}",
-              data_dir());
+        PGSCHECK(dsn::utils::filesystem::remove_path(data_dir()),
+                 "Fail to delete directory {}",
+                 data_dir());
         _store.clear();
         reset_state();
     }
@@ -160,9 +160,9 @@ void simple_kv_service_impl::recover()
 
     std::vector<std::string> sub_list;
     std::string path = data_dir();
-    CHECK(dsn::utils::filesystem::get_subfiles(path, sub_list, false),
-          "Fail to get subfiles in {}",
-          path);
+    PGSCHECK(dsn::utils::filesystem::get_subfiles(path, sub_list, false),
+             "Fail to get subfiles in {}",
+             path);
     for (auto &fpath : sub_list) {
         auto &&s = dsn::utils::filesystem::get_file_name(fpath);
         if (s.substr(0, strlen("checkpoint.")) != std::string("checkpoint."))
@@ -190,7 +190,7 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
     std::unique_ptr<rocksdb::SequentialFile> rfile;
     auto s = dsn::utils::PegasusEnv(dsn::utils::FileDataType::kSensitive)
                  ->NewSequentialFile(name, &rfile, rocksdb::EnvOptions());
-    CHECK(s.ok(), "open log file '{}' failed, err = {}", name, s.ToString());
+    PGSCHECK(s.ok(), "open log file '{}' failed, err = {}", name, s.ToString());
 
     _store.clear();
 
@@ -201,8 +201,8 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
     static const uint64_t kHeaderSize = sizeof(count) + sizeof(magic);
     char buff[kHeaderSize] = {0};
     s = rfile->Read(kHeaderSize, &result, buff);
-    CHECK(s.ok(), "read header failed, err = {}", s.ToString());
-    CHECK(!result.empty(), "read EOF of file '{}'", name);
+    PGSCHECK(s.ok(), "read header failed, err = {}", s.ToString());
+    PGSCHECK(!result.empty(), "read EOF of file '{}'", name);
 
     binary_reader reader(blob(buff, 0, kHeaderSize));
     CHECK_EQ(sizeof(count), reader.read(count));
@@ -214,24 +214,24 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
         // Read key.
         uint32_t sz = 0;
         s = rfile->Read(sizeof(sz), &result, (char *)&sz);
-        CHECK(s.ok(), "read key size failed, err = {}", s.ToString());
-        CHECK(!result.empty(), "read EOF of file '{}'", name);
+        PGSCHECK(s.ok(), "read key size failed, err = {}", s.ToString());
+        PGSCHECK(!result.empty(), "read EOF of file '{}'", name);
 
         std::shared_ptr<char> key_buffer(dsn::utils::make_shared_array<char>(sz));
         s = rfile->Read(sz, &result, key_buffer.get());
-        CHECK(s.ok(), "read key failed, err = {}", s.ToString());
-        CHECK(!result.empty(), "read EOF of file '{}'", name);
+        PGSCHECK(s.ok(), "read key failed, err = {}", s.ToString());
+        PGSCHECK(!result.empty(), "read EOF of file '{}'", name);
         std::string key = result.ToString();
 
         // Read value.
         s = rfile->Read(sizeof(sz), &result, (char *)&sz);
-        CHECK(s.ok(), "read value size failed, err = {}", s.ToString());
-        CHECK(!result.empty(), "read EOF of file '{}'", name);
+        PGSCHECK(s.ok(), "read value size failed, err = {}", s.ToString());
+        PGSCHECK(!result.empty(), "read EOF of file '{}'", name);
 
         std::shared_ptr<char> value_buffer(dsn::utils::make_shared_array<char>(sz));
         s = rfile->Read(sz, &result, value_buffer.get());
-        CHECK(s.ok(), "read value failed, err = {}", s.ToString());
-        CHECK(!result.empty(), "read EOF of file '{}'", name);
+        PGSCHECK(s.ok(), "read value failed, err = {}", s.ToString());
+        PGSCHECK(!result.empty(), "read EOF of file '{}'", name);
         std::string value = result.ToString();
 
         // Store the kv pair.
@@ -253,7 +253,7 @@ void simple_kv_service_impl::recover(const std::string &name, int64_t version)
 
     std::string fname = fmt::format("{}/checkpoint.{}", data_dir(), last_commit);
     auto wfile = file::open(fname, file::FileOpenType::kWriteOnly);
-    CHECK_NOTNULL(wfile, "");
+    PGSCHECK_NOTNULL(wfile, "");
 
 #define WRITE_DATA_SIZE(data, size)                                                                \
     do {                                                                                           \

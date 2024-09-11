@@ -44,7 +44,7 @@ struct Blob
 
     // no crash: NoDestructor indeed does not destruct (the moved-out Blob
     // temporaries do get destroyed though)
-    ~Blob() { CHECK(moved_out, "~Blob"); }
+    ~Blob() { PGSCHECK(moved_out, "~Blob"); }
 
     int val;
     bool moved_out = false;

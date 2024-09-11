@@ -113,31 +113,31 @@ public:
 
     const TRequest &request() const
     {
-        CHECK(_i, "rpc_holder is uninitialized");
+        PGSCHECK(_i, "rpc_holder is uninitialized");
         return *(_i->thrift_request);
     }
 
     TRequest *mutable_request() const
     {
-        CHECK(_i, "rpc_holder is uninitialized");
+        PGSCHECK(_i, "rpc_holder is uninitialized");
         return _i->thrift_request.get();
     }
 
     TResponse &response() const
     {
-        CHECK(_i, "rpc_holder is uninitialized");
+        PGSCHECK(_i, "rpc_holder is uninitialized");
         return _i->thrift_response;
     }
 
     dsn::error_code &error() const
     {
-        CHECK(_i, "rpc_holder is uninitialized");
+        PGSCHECK(_i, "rpc_holder is uninitialized");
         return _i->rpc_error;
     }
 
     message_ex *dsn_request() const
     {
-        CHECK(_i, "rpc_holder is uninitialized");
+        PGSCHECK(_i, "rpc_holder is uninitialized");
         return _i->dsn_request;
     }
 
@@ -242,8 +242,8 @@ public:
     using mail_box_u_ptr = std::unique_ptr<mail_box_t>;
     static void enable_mocking()
     {
-        CHECK(_mail_box == nullptr && _forward_mail_box == nullptr,
-              "remember to call clear_mocking_env after testing");
+        PGSCHECK(_mail_box == nullptr && _forward_mail_box == nullptr,
+                 "remember to call clear_mocking_env after testing");
         _mail_box = std::make_unique<mail_box_t>();
         _forward_mail_box = std::make_unique<mail_box_t>();
     }
@@ -259,13 +259,13 @@ public:
 
     static mail_box_t &mail_box()
     {
-        CHECK(_mail_box, "call this function only when you are in mock mode");
+        PGSCHECK(_mail_box, "call this function only when you are in mock mode");
         return *_mail_box.get();
     }
 
     static mail_box_t &forward_mail_box()
     {
-        CHECK(_forward_mail_box, "call this function only when you are in mock mode");
+        PGSCHECK(_forward_mail_box, "call this function only when you are in mock mode");
         return *_forward_mail_box.get();
     }
 
@@ -292,7 +292,7 @@ private:
                  int thread_hash)
             : thrift_request(std::move(req)), auto_reply(false)
         {
-            CHECK(thrift_request, "req should not be null");
+            PGSCHECK(thrift_request, "req should not be null");
 
             dsn_request = message_ex::create_request(
                 code, static_cast<int>(timeout.count()), thread_hash, partition_hash);

@@ -18,6 +18,7 @@
 #pragma once
 
 #include <string>
+#include <glog/logging.h>
 
 #include "utils/api_utilities.h"
 #include "utils/chrono_literals.h"
@@ -37,9 +38,8 @@
 // printed.
 #define LOG_TIMING_PREFIX_IF(severity, condition, prefix, ...)                                     \
     for (dsn::timer_internal::LogTiming _l(__FILENAME__,                                           \
-                                           __FUNCTION__,                                           \
                                            __LINE__,                                               \
-                                           LOG_LEVEL_##severity,                                   \
+                                           google::severity,                                       \
                                            prefix,                                                 \
                                            fmt::format(__VA_ARGS__),                               \
                                            -1,                                                     \
@@ -60,21 +60,14 @@
 
 // Macro to log the time spent in the rest of the block.
 #define SCOPED_LOG_TIMING(severity, ...)                                                           \
-    dsn::timer_internal::LogTiming VARNAME_LINENUM(_log_timing)(__FILENAME__,                      \
-                                                                __FUNCTION__,                      \
-                                                                __LINE__,                          \
-                                                                LOG_LEVEL_##severity,              \
-                                                                "",                                \
-                                                                fmt::format(__VA_ARGS__),          \
-                                                                -1,                                \
-                                                                true);
+    dsn::timer_internal::LogTiming VARNAME_LINENUM(_log_timing)(                                   \
+        __FILENAME__, __LINE__, google::severity, "", fmt::format(__VA_ARGS__), -1, true);
 
 // Scoped version of LOG_SLOW_EXECUTION().
 #define SCOPED_LOG_SLOW_EXECUTION(severity, max_expected_millis, ...)                              \
     dsn::timer_internal::LogTiming VARNAME_LINENUM(_log_timing)(__FILENAME__,                      \
-                                                                __FUNCTION__,                      \
                                                                 __LINE__,                          \
-                                                                LOG_LEVEL_##severity,              \
+                                                                google::severity,                  \
                                                                 "",                                \
                                                                 fmt::format(__VA_ARGS__),          \
                                                                 max_expected_millis,               \
@@ -83,9 +76,8 @@
 // Scoped version of LOG_SLOW_EXECUTION() but with a prefix.
 #define SCOPED_LOG_SLOW_EXECUTION_PREFIX(severity, max_expected_millis, prefix, ...)               \
     dsn::timer_internal::LogTiming VARNAME_LINENUM(_log_timing)(__FILENAME__,                      \
-                                                                __FUNCTION__,                      \
                                                                 __LINE__,                          \
-                                                                LOG_LEVEL_##severity,              \
+                                                                google::severity,                  \
                                                                 prefix,                            \
                                                                 fmt::format(__VA_ARGS__),          \
                                                                 max_expected_millis,               \
@@ -100,9 +92,8 @@
 //   real 3.729s user 3.570s sys 0.150s
 #define LOG_SLOW_EXECUTION(severity, max_expected_millis, ...)                                     \
     for (dsn::timer_internal::LogTiming _l(__FILENAME__,                                           \
-                                           __FUNCTION__,                                           \
                                            __LINE__,                                               \
-                                           LOG_LEVEL_##severity,                                   \
+                                           google::severity,                                       \
                                            "",                                                     \
                                            fmt::format(__VA_ARGS__),                               \
                                            max_expected_millis,                                    \
@@ -156,15 +147,13 @@ class LogTiming
 {
 public:
     LogTiming(const char *file,
-              const char *function,
               int line,
-              log_level_t severity,
+              google::LogSeverity severity,
               std::string prefix,
               std::string description,
               int64_t max_expected_millis,
               bool should_print)
         : file_(file),
-          function_(function),
           line_(line),
           severity_(severity),
           prefix_(std::move(prefix)),
@@ -194,9 +183,9 @@ public:
 private:
     timer stopwatch_;
     const char *file_;
-    const char *function_;
+    //    const char *function_;
     const int line_;
-    const log_level_t severity_;
+    const google::LogSeverity severity_;
     const std::string prefix_;
     const std::string description_;
     const int64_t max_expected_millis_;
@@ -210,15 +199,14 @@ private:
         stopwatch_.stop();
         auto ms = stopwatch_.m_elapsed();
         if (max_expected_millis < 0 || ms.count() > max_expected_millis) {
-            global_log(file_,
-                       function_,
-                       line_,
-                       severity_,
-                       fmt::format("{}ime spent {}: {}ms",
-                                   prefix_.empty() ? "T" : fmt::format("{} t", prefix_),
-                                   description_,
-                                   ms.count())
-                           .c_str());
+            auto log = google::LogMessage(file_,
+                                          //                               function_,
+                                          line_,
+                                          severity_);
+            log.stream() << fmt::format("{}ime spent {}: {}ms",
+                                        prefix_.empty() ? "T" : fmt::format("{} t", prefix_),
+                                        description_,
+                                        ms.count());
         }
     }
 };

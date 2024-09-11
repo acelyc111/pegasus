@@ -165,7 +165,7 @@ void mutation::add_client_request(task_code code, dsn::message_ex *request)
 
         void *ptr;
         size_t size;
-        CHECK(request->read_next(&ptr, &size), "payload is not present");
+        PGSCHECK(request->read_next(&ptr, &size), "payload is not present");
         request->read_commit(0); // so we can re-read the request buffer in replicated app
         update.data.assign((char *)ptr, 0, (int)size);
 
@@ -317,7 +317,7 @@ void mutation::write_to(binary_writer &writer, dsn::message_ex * /*to*/) const
         reader.read_pod(isset);
         header.timestamp = 0;
     } else {
-        CHECK(false, "invalid mutation log version: {:#018x}", version);
+        PGSCHECK(false, "invalid mutation log version: {:#018x}", version);
     }
 }
 
@@ -396,7 +396,7 @@ mutation_ptr mutation_queue::add_work(task_code code, dsn::message_ex *request, 
     if (_current_op_count >= _max_concurrent_op)
         return nullptr;
     else if (_hdr.is_empty()) {
-        CHECK_NOTNULL(_pending_mutation, "pending mutation cannot be null");
+        PGSCHECK_NOTNULL(_pending_mutation, "pending mutation cannot be null");
 
         auto ret = _pending_mutation;
         _pending_mutation = nullptr;

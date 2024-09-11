@@ -124,7 +124,7 @@ dsn::error_s read_block(dsn::replication::log_file_ptr &log,
     while (!reader->is_eof()) {
         auto old_size = reader->get_remaining_size();
         mutation_ptr mu = mutation::read_from(*reader, nullptr);
-        CHECK_NOTNULL(mu, "");
+        PGSCHECK_NOTNULL(mu, "");
         mu->set_logged();
 
         if (mu->data.header.log_offset != end_offset) {
@@ -162,7 +162,8 @@ dsn::error_s read_block(dsn::replication::log_file_ptr &log,
             }
         }
 
-        CHECK(logs.find(log->index()) == logs.end(), "invalid log index, index = {}", log->index());
+        PGSCHECK(
+            logs.find(log->index()) == logs.end(), "invalid log index, index = {}", log->index());
         logs[log->index()] = log;
     }
 

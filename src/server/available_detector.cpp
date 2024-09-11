@@ -100,16 +100,16 @@ available_detector::available_detector()
     _cluster_name = dsn::get_current_cluster_name();
     _meta_list.clear();
     dsn::replication::replica_helper::parse_server_list(FLAGS_server_list, _meta_list);
-    CHECK(!_meta_list.empty(), "");
+    PGSCHECK(!_meta_list.empty(), "");
     // initialize the _client.
     if (!pegasus_client_factory::initialize(nullptr)) {
-        CHECK(false, "Initialize the pegasus client failed");
+        PGSCHECK(false, "Initialize the pegasus client failed");
     }
     _client = pegasus_client_factory::get_client(_cluster_name.c_str(), FLAGS_available_detect_app);
-    CHECK_NOTNULL(_client, "Initialize the _client failed");
+    PGSCHECK_NOTNULL(_client, "Initialize the _client failed");
     _result_writer = std::make_unique<result_writer>(_client);
     _ddl_client.reset(new replication_ddl_client(_meta_list));
-    CHECK_NOTNULL(_ddl_client, "Initialize the _ddl_client failed");
+    PGSCHECK_NOTNULL(_ddl_client, "Initialize the _ddl_client failed");
     if (!dsn::utils::is_empty(FLAGS_available_detect_alert_email_address)) {
         _send_alert_email_cmd = std::string("cd ") + FLAGS_available_detect_alert_script_dir +
                                 "; bash sendmail.sh alert " +

@@ -169,11 +169,12 @@ static void profiler_on_task_create(task *caller, task *callee)
 static void profiler_on_task_enqueue(task *caller, task *callee)
 {
     auto callee_code = callee->spec().code;
-    CHECK(callee_code >= 0 && callee_code <= s_task_code_max, "code = {}", callee_code.code());
+    PGSCHECK(callee_code >= 0 && callee_code <= s_task_code_max, "code = {}", callee_code.code());
 
     if (caller != nullptr) {
         auto caller_code = caller->spec().code;
-        CHECK(caller_code >= 0 && caller_code <= s_task_code_max, "code = {}", caller_code.code());
+        PGSCHECK(
+            caller_code >= 0 && caller_code <= s_task_code_max, "code = {}", caller_code.code());
 
         auto &prof = s_spec_profilers[caller_code];
         if (prof.collect_call_count) {
@@ -191,7 +192,7 @@ static void profiler_on_task_begin(task *this_)
 {
     auto code = this_->spec().code;
     // TODO(yingchun): duplicate checks, should refactor later
-    CHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
+    PGSCHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
 
     uint64_t &qts = task_ext_for_profiler::get(this_);
     uint64_t now = dsn_now_ns();
@@ -204,7 +205,7 @@ static void profiler_on_task_begin(task *this_)
 static void profiler_on_task_end(task *this_)
 {
     auto code = this_->spec().code;
-    CHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
+    PGSCHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
 
     uint64_t qts = task_ext_for_profiler::get(this_);
     uint64_t now = dsn_now_ns();
@@ -216,7 +217,7 @@ static void profiler_on_task_end(task *this_)
 static void profiler_on_task_cancelled(task *this_)
 {
     auto code = this_->spec().code;
-    CHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
+    PGSCHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
 
     METRIC_INCREMENT(s_spec_profilers[code], profiler_cancelled_tasks);
 }
@@ -232,14 +233,15 @@ static void profiler_on_aio_call(task *caller, aio_task *callee)
 {
     if (nullptr != caller) {
         auto caller_code = caller->spec().code;
-        CHECK(caller_code >= 0 && caller_code <= s_task_code_max, "code = {}", caller_code.code());
+        PGSCHECK(
+            caller_code >= 0 && caller_code <= s_task_code_max, "code = {}", caller_code.code());
 
         auto &prof = s_spec_profilers[caller_code];
         if (prof.collect_call_count) {
             auto callee_code = callee->spec().code;
-            CHECK(callee_code >= 0 && callee_code <= s_task_code_max,
-                  "code = {}",
-                  callee_code.code());
+            PGSCHECK(callee_code >= 0 && callee_code <= s_task_code_max,
+                     "code = {}",
+                     callee_code.code());
             prof.call_counts[callee_code]++;
         }
     }
@@ -251,7 +253,7 @@ static void profiler_on_aio_call(task *caller, aio_task *callee)
 static void profiler_on_aio_enqueue(aio_task *this_)
 {
     auto code = this_->spec().code;
-    CHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
+    PGSCHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
 
     uint64_t &ats = task_ext_for_profiler::get(this_);
     uint64_t now = dsn_now_ns();
@@ -267,13 +269,14 @@ static void profiler_on_rpc_call(task *caller, message_ex *req, rpc_response_tas
 {
     if (nullptr != caller) {
         auto caller_code = caller->spec().code;
-        CHECK(caller_code >= 0 && caller_code <= s_task_code_max, "code = {}", caller_code.code());
+        PGSCHECK(
+            caller_code >= 0 && caller_code <= s_task_code_max, "code = {}", caller_code.code());
 
         auto &prof = s_spec_profilers[caller_code];
         if (prof.collect_call_count) {
-            CHECK(req->local_rpc_code >= 0 && req->local_rpc_code <= s_task_code_max,
-                  "code = {}",
-                  req->local_rpc_code.code());
+            PGSCHECK(req->local_rpc_code >= 0 && req->local_rpc_code <= s_task_code_max,
+                     "code = {}",
+                     req->local_rpc_code.code());
             prof.call_counts[req->local_rpc_code]++;
         }
     }
@@ -287,7 +290,7 @@ static void profiler_on_rpc_call(task *caller, message_ex *req, rpc_response_tas
 static void profiler_on_rpc_request_enqueue(rpc_request_task *callee)
 {
     auto callee_code = callee->spec().code;
-    CHECK(callee_code >= 0 && callee_code <= s_task_code_max, "code = {}", callee_code.code());
+    PGSCHECK(callee_code >= 0 && callee_code <= s_task_code_max, "code = {}", callee_code.code());
 
     uint64_t now = dsn_now_ns();
     task_ext_for_profiler::get(callee) = now;
@@ -315,22 +318,22 @@ static void profiler_on_rpc_create_response(message_ex *req, message_ex *resp)
 static void profiler_on_rpc_reply(task *caller, message_ex *msg)
 {
     auto caller_code = caller->spec().code;
-    CHECK(caller_code >= 0 && caller_code <= s_task_code_max, "code = {}", caller_code.code());
+    PGSCHECK(caller_code >= 0 && caller_code <= s_task_code_max, "code = {}", caller_code.code());
 
     auto &prof = s_spec_profilers[caller_code];
     if (prof.collect_call_count) {
-        CHECK(msg->local_rpc_code >= 0 && msg->local_rpc_code <= s_task_code_max,
-              "code = {}",
-              msg->local_rpc_code.code());
+        PGSCHECK(msg->local_rpc_code >= 0 && msg->local_rpc_code <= s_task_code_max,
+                 "code = {}",
+                 msg->local_rpc_code.code());
         prof.call_counts[msg->local_rpc_code]++;
     }
 
     uint64_t qts = message_ext_for_profiler::get(msg);
     uint64_t now = dsn_now_ns();
     task_spec *spec = task_spec::get(msg->local_rpc_code);
-    CHECK_NOTNULL(spec, "task_spec cannot be null, code = {}", msg->local_rpc_code.code());
+    PGSCHECK_NOTNULL(spec, "task_spec cannot be null, code = {}", msg->local_rpc_code.code());
     auto code = spec->rpc_paired_code;
-    CHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
+    PGSCHECK(code >= 0 && code <= s_task_code_max, "code = {}", code.code());
 
     METRIC_SET(s_spec_profilers[code], profiler_server_rpc_latency_ns, now - qts);
 
@@ -341,7 +344,7 @@ static void profiler_on_rpc_reply(task *caller, message_ex *msg)
 static void profiler_on_rpc_response_enqueue(rpc_response_task *resp)
 {
     auto resp_code = resp->spec().code;
-    CHECK(resp_code >= 0 && resp_code <= s_task_code_max, "code = {}", resp_code.code());
+    PGSCHECK(resp_code >= 0 && resp_code <= s_task_code_max, "code = {}", resp_code.code());
 
     uint64_t &cts = task_ext_for_profiler::get(resp);
     uint64_t now = dsn_now_ns();
@@ -376,7 +379,7 @@ task_spec_profiler::task_spec_profiler(int code)
 {
     const auto &section_name = fmt::format("task.{}", _task_name);
     auto spec = task_spec::get(code);
-    CHECK_NOTNULL(spec, "spec should be non-null: task_code={}, task_name={}", code, _task_name);
+    PGSCHECK_NOTNULL(spec, "spec should be non-null: task_code={}, task_name={}", code, _task_name);
 
     collect_call_count = dsn_config_get_value_bool(
         section_name.c_str(), "collect_call_count", FLAGS_collect_call_count, "");
@@ -501,10 +504,10 @@ task_spec_profiler::task_spec_profiler(int code)
 
 const metric_entity_ptr &task_spec_profiler::profiler_metric_entity() const
 {
-    CHECK_NOTNULL(_profiler_metric_entity,
-                  "profiler metric entity (task_name={}) should has been instantiated: "
-                  "uninitialized entity cannot be used to instantiate metric",
-                  _task_name);
+    PGSCHECK_NOTNULL(_profiler_metric_entity,
+                     "profiler metric entity (task_name={}) should has been instantiated: "
+                     "uninitialized entity cannot be used to instantiate metric",
+                     _task_name);
     return _profiler_metric_entity;
 }
 

@@ -238,20 +238,21 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
     const auto request_count = mu->client_requests.size();
     mu->data.header.last_committed_decree = last_committed_decree();
 
-    log_level_t level = LOG_LEVEL_DEBUG;
+    //    log_level_t level = LOG_LEVEL_DEBUG;
     if (mu->data.header.decree == invalid_decree) {
         mu->set_id(get_ballot(), _prepare_list->max_decree() + 1);
         // print a debug log if necessary
         if (FLAGS_prepare_decree_gap_for_debug_logging > 0 &&
             mu->get_decree() % FLAGS_prepare_decree_gap_for_debug_logging == 0)
-            level = LOG_LEVEL_INFO;
-        mu->set_timestamp(_uniq_timestamp_us.next());
+            //            level = LOG_LEVEL_INFO;
+            mu->set_timestamp(_uniq_timestamp_us.next());
     } else {
         mu->set_id(get_ballot(), mu->data.header.decree);
     }
 
     mu->_tracer->set_name(fmt::format("mutation[{}]", mu->name()));
-    LOG(level, "{}: mutation {} init_prepare, mutation_tid={}", name(), mu->name(), mu->tid());
+    //    LOG(level, "{}: mutation {} init_prepare, mutation_tid={}", name(), mu->name(),
+    //    mu->tid());
 
     // child should prepare mutation synchronously
     mu->set_is_sync_to_child(_primary_states.sync_send_write_request);
@@ -332,7 +333,7 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
         do_possible_commit_on_primary(mu);
     } else {
         CHECK_EQ(mu->data.header.log_offset, invalid_offset);
-        CHECK(mu->log_task() == nullptr, "");
+        PGSCHECK(mu->log_task() == nullptr, "");
         int64_t pending_size;
         mu->log_task() = _private_log->append(mu,
                                               LPC_WRITE_REPLICATION_LOG,
@@ -344,7 +345,7 @@ void replica::init_prepare(mutation_ptr &mu, bool reconciliation, bool pop_all_c
                                                         std::placeholders::_2),
                                               get_gpid().thread_hash(),
                                               &pending_size);
-        CHECK_NOTNULL(mu->log_task(), "");
+        PGSCHECK_NOTNULL(mu->log_task(), "");
     }
 
     _primary_states.last_prepare_ts_ms = mu->prepare_ts_ms();
@@ -539,7 +540,7 @@ void replica::on_prepare(dsn::message_ex *request)
         _split_mgr->copy_mutation(mu);
     }
 
-    CHECK(mu->log_task() == nullptr, "");
+    PGSCHECK(mu->log_task() == nullptr, "");
     mu->log_task() = _private_log->append(mu,
                                           LPC_WRITE_REPLICATION_LOG,
                                           &_tracker,
@@ -549,7 +550,7 @@ void replica::on_prepare(dsn::message_ex *request)
                                                     std::placeholders::_1,
                                                     std::placeholders::_2),
                                           get_gpid().thread_hash());
-    CHECK_NOTNULL(mu->log_task(), "");
+    PGSCHECK_NOTNULL(mu->log_task(), "");
 }
 
 void replica::on_append_log_completed(mutation_ptr &mu, error_code err, size_t size)
@@ -596,7 +597,7 @@ void replica::on_append_log_completed(mutation_ptr &mu, error_code err, size_t s
         case partition_status::PS_ERROR:
             break;
         default:
-            CHECK(false, "invalid partition_status, status = {}", enum_to_string(status()));
+            PGSCHECK(false, "invalid partition_status, status = {}", enum_to_string(status()));
             break;
         }
     }
@@ -666,9 +667,9 @@ void replica::on_prepare_reply(std::pair<mutation_ptr, partition_status::type> p
 
         switch (target_status) {
         case partition_status::PS_SECONDARY:
-            CHECK(_primary_states.check_exist(node, partition_status::PS_SECONDARY),
-                  "invalid secondary node address, address = {}",
-                  node);
+            PGSCHECK(_primary_states.check_exist(node, partition_status::PS_SECONDARY),
+                     "invalid secondary node address, address = {}",
+                     node);
             CHECK_GT(mu->left_secondary_ack_count(), 0);
             if (0 == mu->decrease_left_secondary_ack_count()) {
                 do_possible_commit_on_primary(mu);
@@ -771,7 +772,7 @@ void replica::ack_prepare_message(error_code err, mutation_ptr &mu)
     resp.last_committed_decree_in_prepare_list = last_committed_decree();
 
     const std::vector<dsn::message_ex *> &prepare_requests = mu->prepare_requests();
-    CHECK(!prepare_requests.empty(), "mutation = {}", mu->name());
+    PGSCHECK(!prepare_requests.empty(), "mutation = {}", mu->name());
 
     if (err == ERR_OK) {
         if (mu->is_child_acked()) {
