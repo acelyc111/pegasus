@@ -192,6 +192,7 @@ void dsn_log_init(const std::string &log_dir, const std::string &role_name)
                 return std::string("OK, current level is ") + enum_to_string(start_level);
             }));
 
+    FLAGS_log_dir = log_dir;
     FLAGS_minloglevel =
         to_google_levels[enum_from_string(FLAGS_logging_start_level, LOG_LEVEL_INVALID)];
     FLAGS_stderrthreshold =
@@ -206,8 +207,7 @@ void dsn_log_init(const std::string &log_dir, const std::string &role_name)
     static const std::vector<google::LogSeverity> severities = {
         google::INFO, google::WARNING, google::ERROR, google::FATAL};
     for (const auto &severity : severities) {
-        google::SetLogSymlink(severity, fmt::format("{}/{}", log_dir, role_name).c_str());
-        google::SetLogDestination(severity, fmt::format("{}/{}.", log_dir, role_name).c_str());
+        google::SetLogSymlink(severity, role_name.c_str());
     }
     google::SetLogFilenameExtension(".log");
     google::InitGoogleLogging(role_name.c_str());
