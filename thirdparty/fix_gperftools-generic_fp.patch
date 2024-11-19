@@ -1,0 +1,174 @@
+From 31cfb1b58cf988416da8c06b0b161a17d1a14628 Mon Sep 17 00:00:00 2001
+From: Yikai Zhao <yikai@z1k.dev>
+Date: Mon, 25 Sep 2023 19:04:23 +0800
+Subject: [PATCH]
+ 1. generic_fp stacktrace: check frame size threshold for initial frame
+ 2. Fix result overflow in generic_fp stacktrace
+ 3. avoid runtime initialization of null stacktrace implementation
+ 4. avoid unused variable warning in stacktrace_libunwind
+ 5. [stacktrace_generic_fp] clear aarch64 pointer auth bits
+
+---
+ src/stacktrace.cc               | 42 ++++++++++++++++++++-------------
+ src/stacktrace_generic_fp-inl.h | 36 ++++++++++++++++++++++++----
+ src/stacktrace_libunwind-inl.h  |  1 +
+ 3 files changed, 57 insertions(+), 22 deletions(-)
+
+diff --git a/src/stacktrace.cc b/src/stacktrace.cc
+index 4f56334..add350f 100644
+--- a/src/stacktrace.cc
++++ b/src/stacktrace.cc
+@@ -207,24 +207,32 @@ struct GetStackImplementation {
+ #error user asked for libgcc unwinder to be default but it is not available
+ #endif
+ 
++static int null_GetStackFrames(void** result, int* sizes, int max_depth,
++                               int skip_count) {
++  return 0;
++}
++
++static int null_GetStackFramesWithContext(void** result, int* sizes, int max_depth,
++                                          int skip_count, const void *uc) {
++  return 0;
++}
++
++static int null_GetStackTrace(void** result, int max_depth,
++                              int skip_count) {
++  return 0;
++}
++
++static int null_GetStackTraceWithContext(void** result, int max_depth,
++                                         int skip_count, const void *uc) {
++  return 0;
++}
++
+ static GetStackImplementation impl__null = {
+-  // GetStackFrames
+-  [] (void **result, int *sizes, int max_depth, int skip_count) {
+-    return 0;
+-  },
+-  // GetStackTraceWithContext
+-  [] (void **result, int *sizes, int max_depth, int skip_count, const void* uc) {
+-    return 0;
+-  },
+-  // GetStackTrace
+-  [] (void **result, int max_depth, int skip_count) {
+-    return 0;
+-  },
+-  // GetStackTraceWithContext
+-  [] (void **result, int max_depth, int skip_count, const void* uc) {
+-    return 0;
+-  },
+-  "null"   // name
++  null_GetStackFrames,
++  null_GetStackFramesWithContext,
++  null_GetStackTrace,
++  null_GetStackTraceWithContext,
++  "null"
+ };
+ 
+ static GetStackImplementation *all_impls[] = {
+diff --git a/src/stacktrace_generic_fp-inl.h b/src/stacktrace_generic_fp-inl.h
+index aa32bc5..f7f5af3 100644
+--- a/src/stacktrace_generic_fp-inl.h
++++ b/src/stacktrace_generic_fp-inl.h
+@@ -77,6 +77,27 @@ namespace stacktrace_generic_fp {
+ #define PAD_FRAME
+ #endif
+ 
++#if __aarch64__
++// Aarch64 has pointer authentication and uses the upper 16bit of a stack
++// or return address to sign it. These bits needs to be strip in order for
++// stacktraces to work.
++void *strip_PAC(void* _ptr) {
++  void *ret;
++  asm volatile(
++      "mov x30, %1\n\t"
++      "hint #7\n\t"  // xpaclri, is NOP for < armv8.3-a
++      "mov %0, x30\n\t"
++      : "=r"(ret)
++      : "r"(_ptr)
++      : "x30");
++  return ret;
++}
++
++#define STRIP_PAC(x) (strip_PAC((x)))
++#else
++#define STRIP_PAC(x) (x)
++#endif
++
+ struct frame {
+   uintptr_t parent;
+ #ifdef PAD_FRAME
+@@ -123,8 +144,6 @@ int capture(void **result, int max_depth, int skip_count,
+             int *sizes) {
+   int i = 0;
+ 
+-  max_depth += skip_count;
+-
+   if (initial_pc != nullptr) {
+     // This is 'with ucontext' case. We take first pc from ucontext
+     // and then skip_count is ignored as we assume that caller only
+@@ -133,10 +152,13 @@ int capture(void **result, int max_depth, int skip_count,
+     if (max_depth == 0) {
+       return 0;
+     }
+-    result[0] = *initial_pc;
++    result[0] = STRIP_PAC(*initial_pc);
++
+     i++;
+   }
+ 
++  max_depth += skip_count;
++
+   constexpr uintptr_t kTooSmallAddr = 16 << 10;
+   constexpr uintptr_t kFrameSizeThreshold = 128 << 10;
+ 
+@@ -156,6 +178,7 @@ int capture(void **result, int max_depth, int skip_count,
+   constexpr uintptr_t kAlignment = 16;
+ #endif
+ 
++  uintptr_t current_frame_addr = reinterpret_cast<uintptr_t>(__builtin_frame_address(0));
+   uintptr_t initial_frame_addr = reinterpret_cast<uintptr_t>(initial_frame);
+   if (((initial_frame_addr + sizeof(frame)) & (kAlignment - 1)) != 0) {
+     return i;
+@@ -163,11 +186,14 @@ int capture(void **result, int max_depth, int skip_count,
+   if (initial_frame_addr < kTooSmallAddr) {
+     return i;
+   }
++  if (initial_frame_addr - current_frame_addr > kFrameSizeThreshold) {
++    return i;
++  }
+ 
+   // Note, we assume here that this functions frame pointer is not
+   // bogus. Which is true if this code is built with
+   // -fno-omit-frame-pointer.
+-  frame* prev_f = reinterpret_cast<frame*>(__builtin_frame_address(0));
++  frame* prev_f = reinterpret_cast<frame*>(current_frame_addr);
+   frame *f = adjust_fp(reinterpret_cast<frame*>(initial_frame));
+ 
+   while (i < max_depth) {
+@@ -185,7 +211,7 @@ int capture(void **result, int max_depth, int skip_count,
+       if (WithSizes) {
+         sizes[i - skip_count] = reinterpret_cast<uintptr_t>(prev_f) - reinterpret_cast<uintptr_t>(f);
+       }
+-      result[i - skip_count] = pc;
++      result[i - skip_count] = STRIP_PAC(pc);
+     }
+ 
+     i++;
+diff --git a/src/stacktrace_libunwind-inl.h b/src/stacktrace_libunwind-inl.h
+index 6f361ec..647caa0 100644
+--- a/src/stacktrace_libunwind-inl.h
++++ b/src/stacktrace_libunwind-inl.h
+@@ -114,6 +114,7 @@ static int GET_STACK_TRACE_OR_FRAMES {
+ #endif
+ 
+   int ret = unw_init_local(&cursor, &uc);
++  (void)ret;
+   assert(ret >= 0);
+ 
+   while (skip_count--) {
+-- 
+2.41.0
+
