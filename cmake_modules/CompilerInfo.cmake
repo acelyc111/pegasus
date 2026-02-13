@@ -24,8 +24,14 @@ execute_process(COMMAND env LANG=C "${CMAKE_CXX_COMPILER}" -v
                 ERROR_VARIABLE COMPILER_VERSION_FULL)
 message(${COMPILER_VERSION_FULL})
 
+# Apple clang (macOS)
+if("${COMPILER_VERSION_FULL}" MATCHES ".*Apple clang version.*")
+  set(COMPILER_FAMILY "clang")
+  string(REGEX REPLACE ".*Apple clang version ([0-9]+\\.[0-9]+).*" "\\1"
+    COMPILER_VERSION "${COMPILER_VERSION_FULL}")
+
 # clang on Linux and Mac OS X before 10.9
-if("${COMPILER_VERSION_FULL}" MATCHES ".*clang version.*")
+elseif("${COMPILER_VERSION_FULL}" MATCHES ".*clang version.*")
   set(COMPILER_FAMILY "clang")
   string(REGEX REPLACE ".*clang version ([0-9]+\\.[0-9]+).*" "\\1"
     COMPILER_VERSION "${COMPILER_VERSION_FULL}")

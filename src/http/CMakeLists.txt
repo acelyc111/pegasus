@@ -17,7 +17,13 @@
 
 set(MY_PROJ_NAME dsn_http)
 
-set(MY_PROJ_SRC ${THIRDPARTY_ROOT}/build/Source/http-parser/http_parser.c)
+set(HTTP_PARSER_SRC ${THIRDPARTY_ROOT}/build/Source/http-parser/http_parser.c)
+if(EXISTS ${HTTP_PARSER_SRC})
+    set(MY_PROJ_SRC ${HTTP_PARSER_SRC})
+else()
+    message(WARNING "http_parser.c not found at ${HTTP_PARSER_SRC}. Please build thirdparty first.")
+    set(MY_PROJ_SRC "")
+endif()
 
 set(MY_SRC_SEARCH_MODE "GLOB")
 

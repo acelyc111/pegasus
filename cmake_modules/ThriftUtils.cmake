@@ -23,6 +23,13 @@ find_program(THRIFT_COMPILER
     NO_DEFAULT_PATH
 )
 
+if(NOT THRIFT_COMPILER)
+    message(WARNING "thrift compiler not found in ${THIRDPARTY_INSTALL_DIR}/bin. Please build thirdparty first. Thrift code generation will be skipped.")
+    set(THRIFT_COMPILER_FOUND FALSE CACHE INTERNAL "Thrift compiler found")
+else()
+    set(THRIFT_COMPILER_FOUND TRUE CACHE INTERNAL "Thrift compiler found")
+endif()
+
 set(THRIFT_GENERATED_FILE_PATH ${CMAKE_BINARY_DIR}/thrift-gen CACHE INTERNAL "Where the thrift generated sources locate")
 if(NOT EXISTS ${THRIFT_GENERATED_FILE_PATH})
     file(MAKE_DIRECTORY ${THRIFT_GENERATED_FILE_PATH})
@@ -45,6 +52,13 @@ include_directories(${THRIFT_GENERATED_FILE_PATH})
 #     ...
 # )
 function(THRIFT_GENERATE_CPP SRCS HDRS thrift_file)
+    if(NOT THRIFT_COMPILER_FOUND)
+        message(WARNING "Skipping thrift code generation for ${thrift_file} because thrift compiler is not found.")
+        set(${SRCS} "" PARENT_SCOPE)
+        set(${HDRS} "" PARENT_SCOPE)
+        return()
+    endif()
+
     if(NOT EXISTS ${thrift_file})
         message(FATAL_ERROR "thrift file ${thrift_file} does not exist")
     endif()

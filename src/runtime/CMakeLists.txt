@@ -24,11 +24,22 @@
 
 add_subdirectory(test)
 
+# Check if thrift generated file exists
+set(DSN_LAYER2_TYPES_SRC ${CMAKE_CURRENT_SOURCE_DIR}/dsn.layer2_types.cpp)
+if(NOT EXISTS ${DSN_LAYER2_TYPES_SRC})
+    # Try to find it in thrift generated path
+    set(DSN_LAYER2_TYPES_SRC ${THRIFT_GENERATED_FILE_PATH}/dsn.layer2_types.cpp)
+endif()
+if(NOT EXISTS ${DSN_LAYER2_TYPES_SRC})
+    message(WARNING "dsn.layer2_types.cpp not found. Please build thirdparty and run thrift compiler first.")
+    set(DSN_LAYER2_TYPES_SRC "")
+endif()
+
 # TODO(zlw) remove perf_counter from dsn_runtime after the refactor by WuTao
 add_library(dsn_runtime STATIC
         $<TARGET_OBJECTS:dsn.perf_counter>
         core_main.cpp
-        dsn.layer2_types.cpp
+        ${DSN_LAYER2_TYPES_SRC}
         env.sim.cpp
         fault_injector.cpp
         global_config.cpp
